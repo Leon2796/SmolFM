@@ -1,46 +1,46 @@
-# JUCE FM-Synthesizer – Implementierungsplan für einen Coding-Agent
+# JUCE FM Synthesizer – Implementation Plan for a Coding Agent
 
-## Originalanforderung
+## Original Requirement
 
-Baue mit JUCE einen einfachen Synthesizer mit UI, der:
+Build a simple synthesizer with JUCE that:
 
-* FM-Synthese anwenden kann, mit einem Carrier und einem Modulator
-* Eine ADSR-Hüllkurve besitzt
-* Eine UI mit Slidern besitzt, welche die Frequenz von Carrier und Modulator steuern können
-* Für jeden Oszillator Radio-Buttons für die Auswahl der Signalquelle besitzt:
+* Uses FM synthesis with one carrier and one modulator.
+* Has an ADSR envelope.
+* Has a UI with sliders that control the carrier and modulator frequencies.
+* Provides waveform radio buttons for each oscillator:
 
   * Sine
   * Saw
   * Square
 
-Die Funktion soll zunächst **minimal gehalten werden**, aber die Architektur soll so aufgebaut sein, dass sie später einfach erweitert werden kann.
+The functionality should initially remain **minimal**, but the architecture should make it easy to extend later.
 
-Der gesamte Code muss **vollständig und C++-einsteigerfreundlich dokumentiert** werden. Kommentare sollen insbesondere erklären, warum etwas gemacht wird und wie die Audioverarbeitung funktioniert – nicht nur wiederholen, was eine Codezeile offensichtlich tut.
+The entire codebase must be documented in a **C++ beginner-friendly way**. Comments should primarily explain why something is done and how the audio processing works, rather than merely repeating what an obvious line of code does.
 
 ---
 
-# 1. Ziel des Projekts
+# 1. Project Goal
 
-Erstelle einen kleinen polyphonen FM-Synthesizer als JUCE-Audio-Plugin.
+Create a small polyphonic FM synthesizer as a JUCE audio plugin.
 
-Der Synthesizer besitzt pro Voice:
+Each voice should follow this signal flow:
 
 ```text
 MIDI Note
     │
     ├──────────────► Carrier Oscillator ──────┐
     │                                         │
-    │              FM                       ▼
+    │              FM                         ▼
     └──► Modulator Oscillator ─────► Carrier Phase
                                              │
                                              ▼
                                         ADSR Envelope
                                              │
                                              ▼
-                                          Output
+                                           Output
 ```
 
-Die grundlegende FM-Gleichung soll konzeptionell sein:
+The conceptual FM equation is:
 
 ```text
 carrier(t) = waveformCarrier(
@@ -49,25 +49,25 @@ carrier(t) = waveformCarrier(
 )
 ```
 
-Die Implementierung muss nicht mathematisch unnötig kompliziert werden.
+The implementation does not need to become mathematically unnecessarily complex.
 
-Wichtig ist zunächst:
+The initial implementation must provide:
 
-1. Zwei Oszillatoren.
-2. Ein Oszillator moduliert die Phase/Frequenz des anderen.
-3. Beide Oszillatoren können Sine, Saw oder Square verwenden.
-4. Carrier- und Modulator-Frequenz sind per UI steuerbar.
-5. Die Gesamtlautstärke wird durch eine ADSR-Hüllkurve gesteuert.
-6. MIDI-Noten triggern die Voices.
-7. Mehrere Voices sollen gleichzeitig funktionieren.
+1. Two oscillators.
+2. One oscillator modulating the phase of the other.
+3. Sine, Saw, and Square waveforms for both oscillators.
+4. UI control of carrier and modulator frequency.
+5. Overall volume controlled by an ADSR envelope.
+6. MIDI notes triggering voices.
+7. Multiple voices working simultaneously.
 
 ---
 
-# 2. JUCE-Version und Dokumentationsgrundlage
+# 2. JUCE Version and Documentation
 
-Verwende die aktuell installierte/stabile JUCE-Version des Projekts.
+Use the currently installed/stable JUCE version of the project.
 
-Orientiere dich an der aktuellen offiziellen JUCE-Dokumentation, insbesondere an:
+Use the current official JUCE documentation, especially for:
 
 * `juce::Synthesiser`
 * `juce::SynthesiserVoice`
@@ -79,21 +79,23 @@ Orientiere dich an der aktuellen offiziellen JUCE-Dokumentation, insbesondere an
 * `juce::AudioProcessorValueTreeState::ButtonAttachment`
 * `juce::AudioProcessorEditor`
 * `juce::Slider`
-* `juce::ToggleButton` bzw. geeignete JUCE-Button-Klassen
+* `juce::ToggleButton`
 
-Die aktuelle JUCE-Dokumentation beschreibt `Synthesiser` als Container für Voices und Sounds. Die Audioerzeugung findet in `SynthesiserVoice` statt.
+Use **Context7** to check current JUCE/library documentation before implementing APIs whose exact behavior or signature matters.
 
-`juce::dsp::Oscillator` soll verwendet werden, weil es eine eigene periodische Funktion akzeptiert und damit die drei gewünschten Wellenformen einfach abbilden kann.
+`juce::Synthesiser` provides the voice/sound infrastructure for polyphonic synthesis. Audio generation happens inside `SynthesiserVoice`.
 
-Für die Hüllkurve soll `juce::ADSR` verwendet werden. Sie stellt `setSampleRate()`, `setParameters()`, `noteOn()`, `noteOff()` und `getNextSample()` bereit.
+`juce::dsp::Oscillator` can be initialized with a periodic waveform function, prepared with a `ProcessSpec`, and controlled with `setFrequency()`. Its `processSample()` method accepts an input value that is used during oscillator processing, which can be used for the planned phase modulation.
 
-Für die Parameterverwaltung soll `AudioProcessorValueTreeState` eingesetzt werden. JUCE stellt dafür insbesondere `SliderAttachment` zur Verfügung.
+`juce::ADSR` provides `setSampleRate()`, `setParameters()`, `noteOn()`, `noteOff()`, and `getNextSample()`.
+
+`AudioProcessorValueTreeState` should be used as the central parameter/state system. Its attachments keep UI controls synchronized with plugin parameters.
 
 ---
 
-# 3. Architektur
+# 3. Architecture
 
-Verwende zunächst folgende einfache Struktur:
+Use the following simple structure:
 
 ```text
 PluginProcessor
@@ -133,25 +135,25 @@ PluginProcessor
         └── Release Slider
 ```
 
-Die Architektur soll bewusst einfach bleiben.
+Keep the architecture deliberately simple.
 
-Vermeide zunächst:
+Avoid:
 
-* komplizierte DSP-Graphen
-* unnötige abstrakte Factory-Klassen
-* Dependency Injection
-* komplexe GUI-Frameworks
-* eigene Parameterverwaltung
-* eigene State-Speichermechanismen
-* unnötige Thread-Abstraktionen
+* Complex DSP graphs
+* Unnecessary abstract factory classes
+* Dependency injection frameworks
+* Complex GUI frameworks
+* Custom parameter-management systems
+* Custom state-storage systems
+* Unnecessary threading abstractions
 
-Die Architektur soll aber so geschrieben werden, dass später beispielsweise weitere Operatoren oder Filter hinzugefügt werden können.
+The architecture should still make later additions such as additional operators or filters reasonably straightforward.
 
 ---
 
-# 4. Dateien
+# 4. Files
 
-Erstelle zunächst folgende Dateien:
+Initially create:
 
 ```text
 PluginProcessor.h
@@ -167,58 +169,58 @@ SynthSound.h
 SynthSound.cpp
 ```
 
-Optional kann später eine Datei hinzukommen:
+An additional file may later be introduced:
 
 ```text
 OscillatorWaveform.h
 ```
 
-Diese soll aber erst angelegt werden, wenn dadurch die Verständlichkeit tatsächlich verbessert wird.
+However, only introduce it if it genuinely improves readability.
 
 ---
 
 # 5. SynthSound
 
-Erstelle eine einfache Klasse:
+Create a simple class:
 
 ```cpp
 class SynthSound : public juce::SynthesiserSound
 ```
 
-Die Klasse beschreibt lediglich den Sound, den die Voices abspielen können.
+The class only describes the sound that the voices can play.
 
-Sie soll:
+It must:
 
-* alle MIDI-Noten akzeptieren
-* alle MIDI-Kanäle akzeptieren
-* keine eigene Audioberechnung enthalten
+* Accept all MIDI notes.
+* Accept all MIDI channels.
+* Contain no audio-generation code.
 
-Implementiere insbesondere:
+Implement:
 
 ```cpp
 bool appliesToNote (int midiNoteNumber) override;
 bool appliesToChannel (int midiChannel) override;
 ```
 
-Beide Funktionen können für diesen ersten Synthesizer einfach `true` zurückgeben.
+Both functions can simply return `true` for this first synthesizer.
 
-Erkläre im Kommentar, warum `SynthSound` selbst keinen Audio-Code enthält:
+Document why `SynthSound` does not contain audio-processing code:
 
-> `SynthSound` beschreibt, welche Sounds gespielt werden können. Die eigentliche Audioerzeugung übernimmt `SynthesiserVoice`.
+> `SynthSound` describes which sounds can be played. The actual audio rendering is performed by `SynthesiserVoice`.
 
-Das entspricht dem von JUCE vorgesehenen Modell.
+This follows the intended JUCE synthesizer model.
 
 ---
 
 # 6. SynthVoice
 
-Erstelle:
+Create:
 
 ```cpp
 class SynthVoice : public juce::SynthesiserVoice
 ```
 
-Die Voice besitzt:
+The voice contains:
 
 ```cpp
 juce::dsp::Oscillator<float> carrierOscillator;
@@ -227,7 +229,7 @@ juce::dsp::Oscillator<float> modulatorOscillator;
 juce::ADSR adsr;
 ```
 
-Zusätzlich benötigst du:
+Additionally, keep the required per-voice state, for example:
 
 ```cpp
 double sampleRate = 44100.0;
@@ -235,18 +237,19 @@ double sampleRate = 44100.0;
 float currentVelocity = 0.0f;
 float currentCarrierFrequency = 440.0f;
 float currentModulatorFrequency = 440.0f;
-float currentFMAmount = 0.0f;
 ```
 
-Die Parameter sollen später nicht als dauerhaft kopierte Werte behandelt werden, wenn dies vermeidbar ist. Die Voice soll die aktuellen Plugin-Parameter aus einer geeigneten gemeinsamen Parameterstruktur erhalten.
+The FM amount and other values should preferably not be permanently copied into each voice. The voice should access the current plugin parameters through a shared, clearly defined parameter interface.
 
-Für die erste Implementierung darf die Voice einen Verweis auf den Parameter-State bzw. eine klar definierte Parameter-Schnittstelle bekommen.
+A simple reference to the parameter state or a small parameter-access structure is acceptable.
+
+Because `juce::SynthesiserVoice` has pure virtual functions such as `startNote()`, `stopNote()`, `renderNextBlock()`, and `pitchWheelMoved()`, all required functions must be implemented even if pitch wheel support is outside the feature scope. `pitchWheelMoved()` can simply do nothing for version 1.
 
 ---
 
 # 7. Waveforms
 
-Beide Oszillatoren müssen diese drei Signalformen unterstützen:
+Both oscillators must support:
 
 ```text
 Sine
@@ -254,7 +257,7 @@ Saw
 Square
 ```
 
-Definiere eine kleine Enumeration:
+Define a small enumeration:
 
 ```cpp
 enum class Waveform
@@ -265,7 +268,7 @@ enum class Waveform
 };
 ```
 
-Für jede Waveform soll eine mathematische Funktion definiert werden.
+Each waveform should have a mathematical function.
 
 ## Sine
 
@@ -275,51 +278,49 @@ std::sin (phase)
 
 ## Saw
 
-Verwende eine einfache mathematische Sawtooth-Funktion.
+Use a simple mathematical sawtooth function.
 
-Wichtig:
-
-Die Funktion muss den Eingang im Bereich `-pi ... +pi` berücksichtigen, weil `juce::dsp::Oscillator` die periodische Funktion mit diesem Phasenbereich verwendet.
+The waveform function should use the phase range expected by the oscillator implementation. When using `juce::dsp::Oscillator`, verify the current JUCE phase convention in the documentation rather than assuming it from an older example.
 
 ## Square
 
-Eine einfache Variante:
+A simple implementation is sufficient:
 
 ```cpp
 phase < 0.0f ? -1.0f : 1.0f
 ```
 
-Die Wellenformen müssen nicht bandlimitiert sein.
+The waveforms do not need to be band-limited.
 
-Das ist für Version 1 akzeptabel.
+This is acceptable for version 1.
 
-Dokumentiere ausdrücklich, dass diese einfache Variante bei hohen Frequenzen Aliasing erzeugen kann und dass bandbegrenzte Oszillatoren später ergänzt werden könnten.
+Document explicitly that these simple waveforms can produce aliasing at higher frequencies. Band-limited oscillators can be added later.
 
 ---
 
-# 8. Oscillator-Initialisierung
+# 8. Oscillator Initialization
 
-Initialisiere beide `juce::dsp::Oscillator<float>` mit einer geeigneten periodischen Funktion.
+Initialize both `juce::dsp::Oscillator<float>` instances with suitable periodic waveform functions.
 
-Verwende:
+Use:
 
 ```cpp
 oscillator.initialise (...);
 ```
 
-und:
+and:
 
 ```cpp
 oscillator.prepare (spec);
 ```
 
-Die JUCE-Dokumentation sieht `prepare()` vor der Audioverarbeitung vor und bietet `setFrequency()` zur Frequenzsteuerung.
+`prepare()` must be called before audio processing. The oscillator must not be unnecessarily rebuilt for every audio block.
 
-Die Initialisierung darf nicht unnötig pro Audioblock neu aufgebaut werden.
+The oscillator frequency can then be updated with `setFrequency()` when required.
 
 ---
 
-# 9. MIDI Note → Frequenz
+# 9. MIDI Note → Frequency
 
 In `startNote()`:
 
@@ -327,78 +328,82 @@ In `startNote()`:
 double frequency = juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber);
 ```
 
-Die MIDI-Notenfrequenz ist zunächst die Basis für den Carrier.
+The MIDI note frequency is the basis for the carrier frequency.
 
-Der Modulator erhält seine Frequenz ebenfalls aus der MIDI-Note, multipliziert mit dem vom Benutzer eingestellten Verhältnis bzw. einer geeigneten Frequenzeinstellung.
-
-Für die erste Version kann die UI direkt Frequenzwerte anbieten.
-
-Beispiel:
+Use musical frequency ratios internally:
 
 ```text
-Carrier Frequency:
-0.25x – 4.0x
-
-Modulator Frequency:
-0.25x – 8.0x
-```
-
-Empfohlen ist allerdings, intern mit Frequenzverhältnissen zu arbeiten:
-
-```text
-carrierFrequency = midiFrequency * carrierRatio
+carrierFrequency  = midiFrequency * carrierRatio
 modulatorFrequency = midiFrequency * modulatorRatio
 ```
 
-Das macht den Synthesizer musikalischer und transponierbar.
+This makes the synthesizer musical and automatically transposable.
 
-Die UI darf die Werte als Ratio darstellen:
+The UI should display these values as ratios:
 
 ```text
 Carrier:    1.00x
 Modulator:  2.00x
 ```
 
-Wenn die Anforderung ausdrücklich absolute Hz-Slider verlangt, kann alternativ direkt in Hz gearbeitet werden.
+Recommended ranges:
 
----
+```text
+Carrier Ratio:
+0.25x – 4.0x
 
-# 10. FM-Implementierung
-
-Der wichtigste Teil ist die FM-Synthese.
-
-Für jedes Sample:
-
-1. Modulator-Sample erzeugen.
-2. Dieses Sample für die Phasenmodulation des Carriers verwenden.
-3. Carrier-Sample erzeugen.
-4. ADSR auf das Ergebnis anwenden.
-5. In den Output schreiben.
-
-Konzeptionell:
-
-```cpp
-float modulatorSample = modulatorOscillator.processSample (0.0f);
-
-float modulation = modulatorSample * fmAmount;
-
-float carrierSample =
-    carrierOscillator.processSample (modulation);
+Modulator Ratio:
+0.25x – 8.0x
 ```
 
-Falls die gewählte JUCE-Oszillator-Schnittstelle nicht exakt diese Form der Phasenmodulation erlaubt, implementiere die minimale eigene Phase-Accumulation für die Voice.
-
-Wichtig:
-
-Der Agent darf nicht blind davon ausgehen, dass `processSample(input)` bei `juce::dsp::Oscillator` bereits genau die gewünschte FM-Architektur darstellt.
-
-Prüfe die aktuelle JUCE-Dokumentation und implementiere die mathematisch korrekte Phasenmodulation.
+If the existing project specification explicitly requires absolute Hz sliders, absolute frequencies may be used instead. Otherwise, ratios are preferred.
 
 ---
 
-# 11. Empfehlung für die eigentliche FM-Engine
+# 10. FM Implementation
 
-Für maximale Verständlichkeit ist es sogar sinnvoll, die eigentliche FM-Berechnung zunächst als kleine eigene Klasse zu kapseln:
+The important part is the FM synthesis.
+
+For each sample:
+
+1. Generate a modulator sample.
+2. Convert that sample into a phase-modulation amount.
+3. Generate the carrier using the modulated phase.
+4. Apply the ADSR envelope.
+5. Add the result to the output buffer.
+
+Conceptually:
+
+```cpp
+float modulatorSample =
+    modulatorOscillator.processSample (0.0f);
+
+float phaseModulation =
+    modulatorSample * fmAmount;
+
+float carrierSample =
+    carrierOscillator.processSample (phaseModulation);
+```
+
+The important detail is that `phaseModulation` represents a **phase offset in radians**.
+
+Do not treat the `processSample()` input as a frequency value. The current JUCE implementation accepts an input value as part of oscillator phase processing. Verify the exact behavior against the JUCE version used by the project.
+
+A suitable `fmAmount` range for version 1 can therefore be:
+
+```text
+0.0 – 10.0 radians
+```
+
+This is a modulation-depth control rather than a frequency value.
+
+The resulting sample is then multiplied by the ADSR envelope and added to the output buffer.
+
+---
+
+# 11. Optional SimpleOscillator Abstraction
+
+For maximum educational clarity, it is possible to encapsulate the basic oscillator mathematics in a small class:
 
 ```cpp
 class SimpleOscillator
@@ -417,9 +422,7 @@ private:
 };
 ```
 
-Damit wird die FM-Logik für einen C++-Anfänger deutlich transparenter.
-
-Die Klasse soll:
+The class would implement:
 
 ```text
 Phase
@@ -429,61 +432,65 @@ Waveform Function
 Sample
 ```
 
-implementieren.
-
-Bei jedem Sample:
+For every sample:
 
 ```cpp
 phase += phaseIncrement;
 ```
 
-und für den Carrier:
+For the carrier:
 
 ```cpp
 float output = waveformFunction (phase + phaseModulation);
 ```
 
-Dadurch wird die eigentliche FM-Mathematik explizit sichtbar.
+This makes the FM mathematics very explicit.
 
-`juce::dsp::Oscillator` kann trotzdem als Referenz oder für spätere Erweiterungen betrachtet werden. Für die minimalste Lernarchitektur ist eine kleine eigene Oszillator-Klasse jedoch zulässig und möglicherweise verständlicher.
+However, for this version, **prefer `juce::dsp::Oscillator` unless the custom class clearly improves understanding**. The original requirement explicitly calls for JUCE's oscillator, and it already provides the necessary processing interface.
+
+A custom oscillator may be introduced later if it provides a clear educational or architectural benefit.
 
 ---
 
 # 12. ADSR
 
-Jede `SynthVoice` besitzt eine eigene:
+Each `SynthVoice` has its own:
 
 ```cpp
 juce::ADSR adsr;
 ```
 
-Beim Start einer Note:
+When a note starts:
 
 ```cpp
 adsr.noteOn();
 ```
 
-Beim Ende:
+When the note ends:
 
 ```cpp
 adsr.noteOff();
 ```
 
-Bei jedem Sample:
+For each sample:
 
 ```cpp
 float envelope = adsr.getNextSample();
 ```
 
-und:
+Then:
 
 ```cpp
 outputSample *= envelope;
 ```
 
-JUCE verlangt, dass vor Verwendung die Sample Rate gesetzt wird. Die ADSR stellt außerdem `setParameters()` mit Attack, Decay, Sustain und Release bereit.
+Before use, configure the ADSR with the current sample rate:
 
-Die Parameter:
+```cpp
+adsr.setSampleRate (sampleRate);
+```
+
+and its parameters:
 
 ```text
 Attack
@@ -492,35 +499,45 @@ Sustain
 Release
 ```
 
-sollen aus dem zentralen Parameter-State kommen.
+The ADSR parameters come from the central parameter state.
 
-Wichtig: Die aktuelle JUCE-Dokumentation weist darauf hin, dass ADSR-Parameter während der Wiedergabe nicht einfach verändert werden sollen. Der Agent soll deshalb eine sichere Strategie verwenden, z. B. die ADSR-Parameter beim Start einer Note bzw. an geeigneten sicheren Stellen aktualisieren und bei Änderungen während einer laufenden Release-Phase korrekt `reset()` berücksichtigen.
+Important: JUCE explicitly states that ADSR parameters should not be changed during playback. If parameters are changed before the release stage has completed, `reset()` must be called before the next `noteOn()`. The implementation must therefore avoid blindly calling `setParameters()` on an active envelope.
+
+A simple safe strategy for version 1 is:
+
+* Read the current ADSR parameter values when `startNote()` is called.
+* Create/update the `juce::ADSR::Parameters` structure there.
+* Call `setParameters()` before `noteOn()`.
+* Do not modify ADSR parameters while that voice is actively playing.
+* Apply newly changed ADSR settings to the next note.
+
+This keeps the implementation simple and follows JUCE's documented behavior.
 
 ---
 
 # 13. stopNote()
 
-Implementiere:
+Implement:
 
 ```cpp
 void stopNote (float velocity, bool allowTailOff) override
 ```
 
-Wenn:
+If:
 
 ```cpp
 allowTailOff == true
 ```
 
-dann:
+call:
 
 ```cpp
 adsr.noteOff();
 ```
 
-Die Voice darf anschließend weiterlaufen, bis die Release-Phase beendet ist.
+The voice should continue rendering until the release phase has finished.
 
-In `renderNextBlock()`:
+Inside `renderNextBlock()`:
 
 ```cpp
 if (! adsr.isActive())
@@ -530,52 +547,50 @@ if (! adsr.isActive())
 }
 ```
 
-JUCE verlangt bei einer beendeten Voice `clearCurrentNote()`, damit die Voice wieder für andere Noten verfügbar wird.
+When a voice has finished its sound, `clearCurrentNote()` must be called so the synthesizer can reuse the voice.
+
+If `allowTailOff` is `false`, immediately stop the voice and clear its current note after resetting the necessary per-note state.
 
 ---
 
-# 14. Polyphonie
+# 14. Polyphony
 
-Im `PluginProcessor`:
+In `PluginProcessor`:
 
 ```cpp
 juce::Synthesiser synth;
 ```
 
-füge beispielsweise 8 Voices hinzu:
+Add eight voices:
 
 ```cpp
-for (int i = 0; i < 8; ++i)
+constexpr int numberOfVoices = 8;
+
+for (int i = 0; i < numberOfVoices; ++i)
     synth.addVoice (new SynthVoice (...));
 ```
 
-und einen Sound:
+Add one sound:
 
 ```cpp
 synth.addSound (new SynthSound());
 ```
 
-JUCE unterstützt Polyphonie über mehrere `SynthesiserVoice`-Objekte.
-
-Die Voice-Anzahl soll als einfache Konstante definiert werden:
-
-```cpp
-constexpr int numberOfVoices = 8;
-```
+JUCE provides polyphony by assigning notes to multiple `SynthesiserVoice` instances.
 
 ---
 
-# 15. Parameter-System
+# 15. Parameter System
 
-Verwende:
+Use:
 
 ```cpp
 juce::AudioProcessorValueTreeState parameters;
 ```
 
-mit einem `ParameterLayout`.
+with a `ParameterLayout`.
 
-Die Parameter sollen ungefähr folgende IDs erhalten:
+Use stable parameter IDs:
 
 ```text
 carrierRatio
@@ -597,11 +612,11 @@ Optional:
 outputLevel
 ```
 
-Die Parameter-IDs müssen stabil bleiben.
+Parameter IDs must remain stable because they are part of the plugin state and automation/preset compatibility.
 
-Verwende keine GUI-Komponenten als Quelle der Wahrheit.
+Do not use GUI components as the source of truth.
 
-Die Architektur muss sein:
+The architecture must be:
 
 ```text
 Parameter
@@ -611,7 +626,7 @@ AudioProcessorValueTreeState
    └── GUI
 ```
 
-nicht:
+not:
 
 ```text
 Slider
@@ -619,27 +634,27 @@ Slider
 Audio Engine
 ```
 
-JUCE beschreibt `AudioProcessorValueTreeState` ausdrücklich als zentrale Verwaltung des Processor-Zustands und seiner Parameter.
+`AudioProcessorValueTreeState` is intended to manage the processor's parameter/state information and provides the attachment classes used to connect the GUI.
 
 ---
 
-# 16. Parameter-Typen
+# 16. Parameter Types
 
-Für numerische Parameter:
+Use:
 
 ```cpp
 juce::AudioParameterFloat
 ```
 
-verwenden.
+for numeric parameters.
 
-Für Waveform-Auswahl ist ein Choice-Parameter sinnvoll:
+For waveform selection, use:
 
 ```cpp
 juce::AudioParameterChoice
 ```
 
-mit:
+with:
 
 ```text
 Sine
@@ -647,9 +662,7 @@ Saw
 Square
 ```
 
-Dadurch muss nicht versucht werden, drei voneinander unabhängige boolesche Parameter synchron zu halten.
-
-Intern:
+Internally:
 
 ```text
 0 = Sine
@@ -657,15 +670,17 @@ Intern:
 2 = Square
 ```
 
-Die UI stellt diese Auswahl trotzdem als drei Radio-Buttons dar.
+Do not use three independent boolean parameters for a waveform selection. A `Choice` parameter guarantees that the state represents exactly one selected waveform.
+
+The UI can still represent this choice with three radio-style buttons.
 
 ---
 
 # 17. UI
 
-Die UI soll bewusst einfach aussehen.
+The UI should remain deliberately simple.
 
-Empfohlene Struktur:
+Recommended structure:
 
 ```text
 -----------------------------------------
@@ -686,11 +701,10 @@ Empfohlene Struktur:
  Attack   Decay   Sustain   Release
  [---]    [---]   [---]     [---]
 
-
 -----------------------------------------
 ```
 
-Jeder Oszillator MUSS seine eigenen drei Radio-Buttons besitzen:
+Each oscillator MUST have its own three waveform buttons.
 
 ### Carrier
 
@@ -708,21 +722,19 @@ Jeder Oszillator MUSS seine eigenen drei Radio-Buttons besitzen:
 ( ) Square
 ```
 
-Es darf nicht nur eine gemeinsame Waveform-Auswahl geben.
+The two waveform selections must be independent.
 
 ---
 
-# 18. Radio-Button-Verhalten
+# 18. Radio-Button Behavior
 
-Verwende drei `ToggleButton`s pro Oszillator.
+Use three `ToggleButton`s per oscillator.
 
-Die Buttons müssen sich jeweils gegenseitig ausschließen.
+The three buttons in each group must behave as a radio group.
 
-Verwende dafür JUCEs Button-Group-/Radio-Group-Mechanismus.
+Use JUCE's radio-group mechanism, for example by assigning the same radio group ID to the three buttons in a group.
 
-Alternativ kann bei einer sehr einfachen Implementierung ein `AudioParameterChoice` verwendet und die drei Buttons als UI-Repräsentation dieses Parameters behandelt werden.
-
-Wichtig:
+There must be two independent groups:
 
 ```text
 Carrier Radio Group
@@ -736,23 +748,31 @@ Modulator Radio Group
     Square
 ```
 
-Diese beiden Gruppen müssen unabhängig voneinander funktionieren.
+Do not use one radio group for all six buttons.
+
+The selected button must represent the corresponding `AudioParameterChoice`.
+
+The parameter remains the source of truth; the buttons are only its UI representation.
+
+If `ButtonAttachment` is used, verify the attachment behavior for the installed JUCE version. JUCE provides `AudioProcessorValueTreeState::ButtonAttachment` specifically for synchronizing buttons and parameters.
 
 ---
 
-# 19. Slider
+# 19. Sliders
 
-Verwende `juce::Slider`.
+Use:
 
-Die Slider sollen mit:
+```cpp
+juce::Slider
+```
+
+and connect the sliders to parameters using:
 
 ```cpp
 juce::AudioProcessorValueTreeState::SliderAttachment
 ```
 
-verbunden werden.
-
-Beispielsweise:
+For example:
 
 ```cpp
 std::unique_ptr<
@@ -760,15 +780,15 @@ std::unique_ptr<
     carrierRatioAttachment;
 ```
 
-JUCEs `SliderAttachment` hält Slider und Parameter automatisch synchron.
+`SliderAttachment` automatically keeps the slider and parameter synchronized during its lifetime.
 
-Für die UI müssen deshalb keine manuellen `sliderValueChanged()`-Callbacks verwendet werden, um Plugin-Parameter zu setzen.
+Do not implement manual `sliderValueChanged()` callbacks just to transfer slider values into the plugin parameters.
 
 ---
 
-# 20. Empfohlene Parameterbereiche
+# 20. Recommended Parameter Ranges
 
-Verwende sinnvolle Bereiche:
+Use:
 
 ### Carrier Ratio
 
@@ -787,21 +807,21 @@ Default: 1.0
 ### FM Amount
 
 ```text
-0.0 – 10.0
+0.0 – 10.0 radians
 Default: 0.0
 ```
 
 ### Attack
 
 ```text
-0.001 – 5.0 Sekunden
+0.001 – 5.0 seconds
 Default: 0.01
 ```
 
 ### Decay
 
 ```text
-0.001 – 5.0 Sekunden
+0.001 – 5.0 seconds
 Default: 0.2
 ```
 
@@ -815,17 +835,17 @@ Default: 0.8
 ### Release
 
 ```text
-0.001 – 10.0 Sekunden
+0.001 – 10.0 seconds
 Default: 0.5
 ```
 
-Für Attack/Decay/Release ist eine logarithmische bzw. sinnvoll skalierten Slider-Darstellung zu bevorzugen, damit kleine Zeiten gut einstellbar sind.
+For Attack, Decay, and Release, use a logarithmic or otherwise musically useful slider mapping so that short envelope times can be adjusted precisely.
 
 ---
 
 # 21. AudioProcessor
 
-`PluginProcessor` übernimmt:
+`PluginProcessor` is responsible for:
 
 ```text
 MIDI
@@ -839,26 +859,38 @@ Output
 
 In `prepareToPlay()`:
 
-1. Sample Rate speichern.
-2. `Synthesiser::setCurrentPlaybackSampleRate()` aufrufen.
-3. Voices entsprechend vorbereiten.
+1. Store the sample rate.
+2. Call:
 
-JUCE weist ausdrücklich darauf hin, dass der Synthesizer vor dem Rendering seine aktuelle Playback-Sample-Rate erhalten muss.
+```cpp
+synth.setCurrentPlaybackSampleRate (sampleRate);
+```
+
+3. Ensure all voice DSP objects are prepared for the new sample rate.
+
+JUCE requires the synthesizer to receive the current playback sample rate before rendering; this value is then propagated to the voices.
 
 In `processBlock()`:
 
-1. Audio-Buffer löschen bzw. korrekt vorbereiten.
-2. MIDI-Daten an den Synthesizer weitergeben.
-3. `renderNextBlock()` aufrufen.
-4. Ausgangspegel kontrollieren.
+1. Prepare/clear the audio buffer as appropriate.
+2. Pass the MIDI data to the synthesizer.
+3. Call:
+
+```cpp
+synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+```
+
+4. Apply any final output-level handling required by the specification.
+
+The synthesizer adds its generated audio to the supplied buffer, so the buffer must be cleared first if no existing audio should be mixed with the synthesizer output.
 
 ---
 
-# 22. Audio-Thread-Regeln
+# 22. Audio-Thread Rules
 
-Der Agent muss besonders auf Echtzeit-Sicherheit achten.
+Pay particular attention to real-time safety.
 
-Innerhalb von:
+Inside:
 
 ```cpp
 processBlock()
@@ -867,27 +899,29 @@ startNote()
 stopNote()
 ```
 
-dürfen keine unnötigen Operationen ausgeführt werden, die den Audio-Thread blockieren könnten.
+avoid operations that can block or introduce unpredictable latency.
 
-Insbesondere vermeiden:
+In particular, avoid:
 
 ```text
 std::cout
-Datei-I/O
+File I/O
 Locks
-Speicherallokationen pro Sample
-GUI-Zugriffe
+Memory allocation per sample
+GUI access
 ```
 
-Parameterwerte sollen effizient gelesen werden.
+Do not allocate memory inside the per-sample rendering loop.
 
-Die Voice-Rendering-Funktionen müssen möglichst deterministisch und klein bleiben.
+Parameter values should be read efficiently.
+
+Voice rendering should remain small, deterministic, and predictable.
 
 ---
 
-# 23. Parameterzugriff in Voices
+# 23. Parameter Access in Voices
 
-Bevorzuge eine einfache gemeinsame Parameterstruktur, z. B.:
+Prefer a simple shared parameter-access structure, for example:
 
 ```cpp
 struct SynthParameters
@@ -906,13 +940,13 @@ struct SynthParameters
 };
 ```
 
-Falls dies die Lesbarkeit unnötig verschlechtert, darf stattdessen eine kleine Parameter-Zugriffsklasse erstellt werden.
+Alternatively, create a small parameter-access class if this makes the code easier to understand.
 
-Wichtig ist:
+The important rule is:
 
-**Die GUI darf nicht direkt auf die Voice zugreifen.**
+**The GUI must not directly access a voice.**
 
-Die Datenflussrichtung lautet:
+The data flow is:
 
 ```text
 UI
@@ -922,77 +956,81 @@ APVTS
 Voice
 ```
 
+The voice reads the current parameter values from the processor-side parameter system.
+
+For parameters that can change while notes are playing, such as frequency ratios and FM amount, use the current parameter values during rendering.
+
+For ADSR parameters, follow the safe update strategy described in section 12 because JUCE does not allow arbitrary parameter changes during an active envelope.
+
 ---
 
-# 24. State-Speicherung
+# 24. State Saving
 
-Der Synthesizer soll seinen Zustand speichern und wiederherstellen können.
+The synthesizer must be able to save and restore its state.
 
-Verwende dafür:
+Use:
 
 ```cpp
 AudioProcessorValueTreeState
 ```
 
-sowie die üblichen:
+together with the standard:
 
 ```cpp
 getStateInformation()
 setStateInformation()
 ```
 
-im `AudioProcessor`.
+methods of the `AudioProcessor`.
 
-Die JUCE-Dokumentation empfiehlt `AudioProcessorValueTreeState` ausdrücklich für Parameter-State und dessen Verbindung zur Plugin-Oberfläche.
-
----
-
-# 25. C++-Einsteigerfreundlichkeit
-
-Der gesamte Code muss didaktisch geschrieben werden.
-
-Jede zentrale Klasse bekommt am Anfang eine kurze Erklärung:
-
-```cpp
-/**
-    SynthVoice erzeugt eine einzelne Note unseres Synthesizers.
-
-    Eine Voice besitzt ihren eigenen Carrier, Modulator und ihre eigene
-    ADSR-Hüllkurve.
-
-    Dadurch können mehrere Voices gleichzeitig unterschiedliche MIDI-Noten
-    spielen.
-*/
-```
-
-Ebenso wichtige Funktionen kommentieren:
-
-```cpp
-/**
-    Wird von JUCE aufgerufen, wenn eine MIDI-Note startet.
-
-    Hier setzen wir die Frequenzen der beiden Oszillatoren und starten
-    die ADSR-Hüllkurve.
-*/
-```
-
-Nicht jede triviale Getter-/Setter-Zeile kommentieren.
-
-Kommentare sollen vor allem erklären:
-
-* Audiofluss
-* FM-Prinzip
-* Voice-Lebenszyklus
-* MIDI → Frequenz
-* ADSR
-* Parameterfluss
-* Threading-/Realtime-Aspekte
+The APVTS should be the single source of truth for all plugin parameters and state. JUCE documents `AudioProcessorValueTreeState` as the state/parameter-management mechanism for an `AudioProcessor`.
 
 ---
 
-# 26. Erweiterbare Architektur
+# 25. C++ Beginner Friendliness
 
-Obwohl das Projekt minimal bleiben soll, soll die Architektur später folgende Erweiterungen ermöglichen:
+The entire codebase must be written in a didactic way.
+
+Each important class should have a short introductory comment:
+
+```cpp
+/**
+    SynthVoice generates one note of our synthesizer.
+
+    A voice owns its own carrier, modulator, and ADSR envelope.
+    This allows multiple voices to play different MIDI notes
+    simultaneously.
+*/
+```
+
+Important functions should also explain their purpose:
+
+```cpp
+/**
+    Called by JUCE when a MIDI note starts.
+
+    We calculate the oscillator frequencies and start
+    the ADSR envelope for this voice.
+*/
+```
+
+Do not comment every trivial getter or setter.
+
+Comments should primarily explain:
+
+* Audio flow
+* FM synthesis
+* Voice lifecycle
+* MIDI → frequency conversion
+* ADSR behavior
+* Parameter flow
+* Real-time/threading considerations
+
+---
+
+# 26. Extensible Architecture
+
+Although the project should remain minimal, the architecture should allow later additions such as:
 
 ```text
 Version 1
@@ -1005,7 +1043,7 @@ Version 2
 + Filter
         ↓
 Version 3
-+ zweiter Modulator
++ Second Modulator
         ↓
 Version 4
 + Modulator Envelope
@@ -1014,12 +1052,12 @@ Version 5
 + LFO
         ↓
 Version 6
-+ mehrere FM-Operatoren
++ Multiple FM Operators
 ```
 
-Deshalb sollte die Voice nicht so geschrieben werden, dass Carrier und Modulator überall als hart codierte Sonderfälle auftauchen.
+Do not structure version 1 in a way that makes carrier and modulator impossible to generalize later.
 
-Eine spätere Struktur wie:
+A future structure such as:
 
 ```cpp
 struct Operator
@@ -1030,17 +1068,17 @@ struct Operator
 };
 ```
 
-soll möglich bleiben.
+should remain possible.
 
-Für Version 1 ist jedoch ausdrücklich **nur ein Carrier + ein Modulator** zu implementieren.
+However, version 1 must implement **only one carrier and one modulator**.
 
 ---
 
-# 27. Keine unnötigen Features
+# 27. No Unnecessary Features
 
-Nicht implementieren:
+Do not implement:
 
-* Preset Browser
+* Preset browser
 * Reverb
 * Delay
 * Chorus
@@ -1053,22 +1091,22 @@ Nicht implementieren:
 * Pitch Bend
 * Mod Wheel
 * Automation UI
-* Custom Skin
-* Spectrum Analyzer
+* Custom skin
+* Spectrum analyzer
 
-Diese Dinge sind ausdrücklich außerhalb des Scopes.
+These features are explicitly outside the scope.
 
-Der Agent soll nicht versuchen, aus dem kleinen Synthesizer ein vollständiges kommerzielles Instrument zu machen.
+The agent must not turn the small synthesizer into a complete commercial instrument.
 
 ---
 
-# 28. Entwicklungsreihenfolge
+# 28. Development Order
 
-Implementiere das Projekt in folgenden Phasen.
+Implement the project in the following phases.
 
-## Phase 1 – Minimaler Audio-Output
+## Phase 1 – Minimal Audio Output
 
-Zunächst:
+Initially implement:
 
 ```text
 MIDI Note
@@ -1076,18 +1114,18 @@ MIDI Note
 → Output
 ```
 
-Nur Sine.
+Use only Sine.
 
 Test:
 
-* MIDI Note C3 erzeugt einen hörbaren Ton.
-* MIDI Note C4 erzeugt die doppelte Frequenz.
+* MIDI note C3 produces an audible tone.
+* MIDI note C4 produces a frequency approximately twice that of C3.
 
 ---
 
-## Phase 2 – Voice-System
+## Phase 2 – Voice System
 
-Implementieren:
+Implement:
 
 ```text
 Synthesiser
@@ -1095,17 +1133,17 @@ SynthesiserSound
 SynthesiserVoice
 ```
 
-8 Voices hinzufügen.
+Add eight voices.
 
 Test:
 
-* mehrere Noten gleichzeitig spielen.
+* Multiple notes can be played simultaneously.
 
 ---
 
 ## Phase 3 – Modulator
 
-Zweiten Oszillator hinzufügen.
+Add the second oscillator.
 
 Test:
 
@@ -1113,21 +1151,21 @@ Test:
 FM Amount = 0
 ```
 
-muss ungefähr wie ein normaler Carrier klingen.
+should sound approximately like the carrier alone.
 
-Dann:
+Then:
 
 ```text
 FM Amount > 0
 ```
 
-muss das Klangspektrum hörbar verändern.
+must audibly change the spectrum.
 
 ---
 
 ## Phase 4 – Waveforms
 
-Carrier:
+Implement for the carrier:
 
 ```text
 Sine
@@ -1135,7 +1173,7 @@ Saw
 Square
 ```
 
-Modulator:
+and for the modulator:
 
 ```text
 Sine
@@ -1143,46 +1181,46 @@ Saw
 Square
 ```
 
-implementieren.
-
-Jede Auswahl unabhängig testen.
+Test each selection independently.
 
 ---
 
 ## Phase 5 – ADSR
 
-ADSR hinzufügen.
-
-Testfälle:
-
-```text
-Attack = kurz
-Decay = kurz
-Sustain = 0.8
-Release = lang
-```
-
-Note-On und Note-Off müssen klar hörbar sein.
-
----
-
-## Phase 6 – Parameter-State
-
-`AudioProcessorValueTreeState` vollständig integrieren.
+Add the ADSR envelope.
 
 Test:
 
-1. Parameter verändern.
-2. Plugin schließen.
-3. Plugin-State speichern.
-4. Plugin neu laden.
-5. Parameter müssen wiederhergestellt sein.
+```text
+Attack = short
+Decay = short
+Sustain = 0.8
+Release = long
+```
+
+Note-On and Note-Off must produce clearly audible envelope behavior.
+
+Verify that changing ADSR controls affects subsequent notes without violating JUCE's ADSR parameter-update rules.
+
+---
+
+## Phase 6 – Parameter State
+
+Fully integrate `AudioProcessorValueTreeState`.
+
+Test:
+
+1. Change parameters.
+2. Save the plugin state.
+3. Close/reload the plugin.
+4. Restore the saved state.
+5. Verify that all parameters are restored.
 
 ---
 
 ## Phase 7 – UI
 
-UI hinzufügen:
+Add:
 
 ```text
 Carrier Frequency
@@ -1198,375 +1236,109 @@ Sustain
 Release
 ```
 
-Alle numerischen Parameter über `SliderAttachment` verbinden.
+Connect all numeric controls through `SliderAttachment`.
+
+Connect waveform buttons through the parameter system.
 
 ---
 
-# 29. Akzeptanzkriterien
+# 29. Acceptance Criteria
 
-Das Projekt gilt erst als fertig, wenn alle folgenden Punkte erfüllt sind:
+The project is complete only when all of the following are satisfied:
 
-* [ ] JUCE-Projekt kompiliert ohne Fehler.
-* [ ] Plugin kann von einer DAW geladen werden.
-* [ ] MIDI-Noten erzeugen Audio.
-* [ ] Mindestens 8 Voices funktionieren polyphon.
-* [ ] Carrier-Oszillator funktioniert.
-* [ ] Modulator-Oszillator funktioniert.
-* [ ] FM Amount = 0 erzeugt keine FM-Modulation.
-* [ ] FM Amount > 0 verändert das Spektrum.
-* [ ] Carrier kann Sine auswählen.
-* [ ] Carrier kann Saw auswählen.
-* [ ] Carrier kann Square auswählen.
-* [ ] Modulator kann Sine auswählen.
-* [ ] Modulator kann Saw auswählen.
-* [ ] Modulator kann Square auswählen.
-* [ ] Carrier- und Modulator-Waveform sind unabhängig.
-* [ ] Carrier-Frequenz kann verändert werden.
-* [ ] Modulator-Frequenz kann verändert werden.
-* [ ] Attack funktioniert.
-* [ ] Decay funktioniert.
-* [ ] Sustain funktioniert.
-* [ ] Release funktioniert.
-* [ ] Note-Off startet die Release-Phase.
-* [ ] Eine Voice wird nach abgeschlossener Release-Phase freigegeben.
-* [ ] Parameter sind über `AudioProcessorValueTreeState` verwaltet.
-* [ ] UI bleibt mit den Parametern synchron.
-* [ ] Plugin-State kann gespeichert und wiederhergestellt werden.
-* [ ] Keine unnötigen Echtzeit-allokierenden Operationen im Audio-Rendering.
-* [ ] Code ist vollständig C++-einsteigerfreundlich kommentiert.
-* [ ] Keine unnötigen Features außerhalb des Scopes wurden hinzugefügt.
+* [ ] The JUCE project compiles without errors.
+* [ ] The plugin can be loaded by a DAW.
+* [ ] MIDI notes produce audio.
+* [ ] At least 8 voices work polyphonically.
+* [ ] The carrier oscillator works.
+* [ ] The modulator oscillator works.
+* [ ] FM Amount = 0 produces no phase modulation.
+* [ ] FM Amount > 0 changes the resulting spectrum.
+* [ ] The carrier can select Sine.
+* [ ] The carrier can select Saw.
+* [ ] The carrier can select Square.
+* [ ] The modulator can select Sine.
+* [ ] The modulator can select Saw.
+* [ ] The modulator can select Square.
+* [ ] Carrier and modulator waveforms are independent.
+* [ ] Carrier frequency can be changed.
+* [ ] Modulator frequency can be changed.
+* [ ] Attack works.
+* [ ] Decay works.
+* [ ] Sustain works.
+* [ ] Release works.
+* [ ] Note-Off starts the release phase.
+* [ ] A voice is released after its release phase has completed.
+* [ ] All parameters are managed through `AudioProcessorValueTreeState`.
+* [ ] The UI stays synchronized with the parameters.
+* [ ] Plugin state can be saved and restored.
+* [ ] No unnecessary real-time allocations occur during audio rendering.
+* [ ] `pitchWheelMoved()` is implemented as required by `SynthesiserVoice`, even though pitch bend is outside the scope of version 1.
+* [ ] The code is fully documented for C++ beginners.
+* [ ] No unnecessary features outside the scope have been added.
 
 ---
 
-# 30. Wichtige Implementierungsentscheidung
+# 30. Important Implementation Decision
 
-Bevor du Code schreibst, entscheide dich bewusst zwischen:
+Before writing the code, consider the oscillator implementation carefully.
 
-### Option A – `juce::dsp::Oscillator`
+### Preferred: `juce::dsp::Oscillator`
 
-Vorteil:
+Advantages:
 
 ```text
 JUCE-native
-weniger eigener DSP-Code
+Less custom DSP code
+Well integrated with JUCE's DSP infrastructure
 ```
 
-### Option B – kleiner eigener `SimpleOscillator`
+The oscillator supports a periodic waveform function, `prepare()`, frequency control, and sample-by-sample processing. Its `processSample()` input can be used as the phase-modulation input required for the FM implementation.
 
-Vorteil:
+### Optional: Small Custom `SimpleOscillator`
+
+Advantages:
 
 ```text
-FM-Prinzip vollständig transparent
-Phasenmodulation leicht verständlich
-Waveform-Logik vollständig kontrollierbar
+FM mathematics is completely explicit
+Phase modulation is easy to understand
+Waveform logic is fully controlled
 ```
 
-Für dieses Lernprojekt ist **Option B zu bevorzugen**, sofern die Implementierung sauber und klein bleibt.
+For this project, prefer **`juce::dsp::Oscillator`** for the first implementation.
 
-Der Agent soll aber die aktuelle JUCE-Dokumentation von `juce::dsp::Oscillator` berücksichtigen und nicht aufgrund veralteter JUCE-Beispiele eine falsche API verwenden.
+Only introduce a custom `SimpleOscillator` if it provides a clear educational benefit and does not unnecessarily increase the complexity of the project.
+
+Always verify the exact JUCE API against the version installed in the project before implementation.
 
 ---
 
 # 31. Definition of Done
 
-Am Ende soll kein bloßes Code-Skelett entstehen.
+The final result must not be a code skeleton.
 
-Der Agent soll ein **kompilierbares Minimalprojekt** liefern.
+The agent must deliver a **compilable minimal plugin**.
 
-Dabei soll der Code so strukturiert sein, dass ein C++-Anfänger anhand der Dateien nachvollziehen kann:
+The code should be structured so that a C++ beginner can follow:
 
 ```text
-Wie kommt MIDI in den Synth?
+How does MIDI enter the synthesizer?
         ↓
-Wie wird daraus eine Voice?
+How does MIDI become a voice?
         ↓
-Wie wird die Frequenz berechnet?
+How is the frequency calculated?
         ↓
-Wie erzeugt der Carrier Samples?
+How does the carrier generate samples?
         ↓
-Wie moduliert der Modulator den Carrier?
+How does the modulator affect the carrier?
         ↓
-Wie wird die ADSR angewendet?
+How is the ADSR envelope applied?
         ↓
-Wie landet das Ergebnis im Audio-Output?
+How does the result reach the audio output?
         ↓
-Wie steuert die GUI die Parameter?
+How does the GUI control the parameters?
 ```
 
-Die Implementierung soll lieber **klein, klar und korrekt** sein als umfangreich.
+The implementation should be **small, clear, and correct** rather than unnecessarily extensive.
 
-Wenn eine Designentscheidung zwischen maximaler Erweiterbarkeit und Verständlichkeit besteht, hat bei Version 1 die **Verständlichkeit Vorrang**, solange eine spätere Erweiterung nicht unnötig erschwert wird.
-
-----
-
-# 32. Build- und Export-Dokumentation für die VST-Datei
-
-Erstelle zusätzlich eine Markdown-Datei:
-
-```text
-BUILD.md
-```
-
-Diese Datei muss einem C++-/JUCE-Einsteiger vollständig erklären, **wie aus dem Quellcode eine fertige VST3-Datei gebaut und anschließend in einer DAW getestet wird**.
-
-Die Dokumentation muss sich auf den tatsächlich verwendeten Build-Aufbau des Projekts beziehen und darf keine hypothetischen oder nicht verwendeten Build-Schritte beschreiben.
-
-## 32.1 Build-System dokumentieren
-
-Beschreibe:
-
-* welche JUCE-Version verwendet wird
-* welche C++-Version benötigt wird
-* welches Build-System verwendet wird, z. B. CMake
-* welche Compiler unterstützt werden
-* welche Betriebssysteme unterstützt werden
-* welche zusätzlichen Abhängigkeiten benötigt werden
-* welche Dateien für den Build relevant sind
-
-Wenn das Projekt CMake verwendet, erkläre insbesondere:
-
-```text
-CMakeLists.txt
-JUCE-Verzeichnis bzw. JUCE-Abhängigkeit
-Source/
-Build/
-```
-
-und die Beziehung dieser Komponenten.
-
-## 32.2 Voraussetzungen
-
-Dokumentiere die notwendigen Installationen.
-
-Beispielsweise:
-
-### Windows
-
-* Visual Studio
-* C++ Desktop Development Workload
-* CMake
-* JUCE
-
-### macOS
-
-* Xcode
-* Command Line Tools
-* CMake
-* JUCE
-
-### Linux
-
-* geeigneter C++-Compiler
-* CMake
-* notwendige Entwicklungsbibliotheken
-* JUCE
-
-Nur Plattformen dokumentieren, die das Projekt tatsächlich unterstützt.
-
-## 32.3 Projekt konfigurieren
-
-Beschreibe den vollständigen Ablauf:
-
-```text
-Quellcode
-    ↓
-CMake konfigurieren
-    ↓
-Build-Verzeichnis erzeugen
-    ↓
-Projektdateien/Buildsystem generieren
-    ↓
-Plugin kompilieren
-```
-
-Gib konkrete Terminalbefehle für die jeweilige Plattform an.
-
-Beispielstruktur:
-
-```bash
-cmake -B build
-cmake --build build --config Release
-```
-
-Falls das Projekt andere Befehle benötigt, müssen diese an die tatsächliche `CMakeLists.txt` angepasst werden.
-
-## 32.4 VST3 als Build-Ziel
-
-Erkläre, dass das Projekt als **VST3-Plugin** gebaut wird.
-
-Dokumentiere:
-
-* den Namen des VST3-Targets
-* wo die fertige `.vst3`-Datei nach dem Build liegt
-* ob die Datei/der Bundle-Ordner auf dem jeweiligen Betriebssystem anders strukturiert ist
-* welche Build-Konfiguration verwendet werden soll
-
-Bevorzugt soll für die Verteilung bzw. den normalen DAW-Test:
-
-```text
-Release
-```
-
-verwendet werden.
-
-## 32.5 Plugin-Installationspfad
-
-Dokumentiere die üblichen VST3-Installationspfade.
-
-Beispielsweise:
-
-### Windows
-
-```text
-C:\Program Files\Common Files\VST3\
-```
-
-### macOS
-
-```text
-/Library/Audio/Plug-Ins/VST3/
-```
-
-### Linux
-
-den für das Projekt vorgesehenen VST3-Pfad.
-
-Erkläre außerdem, dass ein VST3-Plugin nicht einfach nur eine einzelne `.dll`/`.dylib` sein muss, sondern abhängig vom Betriebssystem als Plugin-Bundle bzw. entsprechendes VST3-Paket vorliegen kann.
-
-## 32.6 Installation
-
-Beschreibe Schritt für Schritt:
-
-1. Release-Build erstellen.
-2. erzeugtes VST3-Plugin finden.
-3. Plugin in den korrekten VST3-Ordner kopieren/installieren.
-4. DAW starten.
-5. Plugin-Scan durchführen bzw. Plugin-Cache aktualisieren.
-6. Synthesizer als Instrument laden.
-
-## 32.7 Test in einer DAW
-
-Beschreibe einen minimalen Funktionstest.
-
-Der Test muss überprüfen:
-
-```text
-MIDI Note
-    ↓
-Synthesizer
-    ↓
-Audio
-```
-
-und anschließend:
-
-* Carrier-Frequenz ändern
-* Modulator-Frequenz ändern
-* FM Amount ändern
-* Carrier Sine/Saw/Square testen
-* Modulator Sine/Saw/Square testen
-* Attack testen
-* Decay testen
-* Sustain testen
-* Release testen
-* Polyphonie testen
-
-Dokumentiere außerdem, wie festgestellt werden kann, ob das Plugin von der DAW korrekt erkannt wurde.
-
-## 32.8 Debug- und Release-Build
-
-Erkläre den Unterschied zwischen:
-
-```text
-Debug
-Release
-```
-
-und wann welcher Build verwendet wird.
-
-Der Agent soll insbesondere erklären, dass der Debug-Build für Entwicklung und Fehlersuche geeignet ist, während der Release-Build für normale Plugin-Tests verwendet werden soll.
-
-## 32.9 Häufige Build-Probleme
-
-Füge einen Abschnitt hinzu:
-
-```markdown
-## Troubleshooting
-```
-
-Behandle mindestens:
-
-* CMake findet JUCE nicht
-* Compiler nicht gefunden
-* fehlende C++-Abhängigkeiten
-* Build schlägt wegen einer falschen JUCE-Version fehl
-* VST3 erscheint nicht in der DAW
-* DAW findet Plugin erst nach erneutem Scan
-* Plugin lädt, erzeugt aber keinen Ton
-* Plugin lädt und stürzt beim Spielen ab
-* Plugin wird wegen eines ungültigen Plugin-Bundles nicht akzeptiert
-
-Die Erklärungen müssen für C++-Einsteiger verständlich sein.
-
-## 32.10 Reproduzierbarer Build
-
-Dokumentiere, wie ein anderer Entwickler das Projekt von einem frisch ausgecheckten Repository aus bauen kann.
-
-Das Ziel ist:
-
-```text
-git clone
-    ↓
-Dependencies installieren
-    ↓
-CMake konfigurieren
-    ↓
-Release bauen
-    ↓
-VST3 installieren
-    ↓
-DAW öffnen
-    ↓
-Synthesizer verwenden
-```
-
-Alle notwendigen Schritte müssen in `BUILD.md` enthalten sein.
-
-## 32.11 Keine erfundenen Pfade
-
-Verwende keine erfundenen Dateinamen, Targets oder Build-Verzeichnisse.
-
-Prüfe vor dem Schreiben von `BUILD.md`:
-
-* tatsächliche `CMakeLists.txt`
-* tatsächliche Target-Namen
-* tatsächliche JUCE-Einbindung
-* tatsächliche Source-Dateien
-* tatsächliche Output-Pfade
-
-Die Dokumentation muss anschließend zum tatsächlich erzeugten Projekt passen.
-
-## 32.12 Abschluss
-
-Am Ende von `BUILD.md` soll eine kurze Checkliste stehen:
-
-```markdown
-## Build-Checkliste
-
-- [ ] Voraussetzungen installiert
-- [ ] JUCE verfügbar
-- [ ] CMake-Konfiguration erfolgreich
-- [ ] Release-Build erfolgreich
-- [ ] VST3 wurde erzeugt
-- [ ] VST3 im korrekten Plugin-Verzeichnis installiert
-- [ ] DAW erkennt das Plugin
-- [ ] MIDI erzeugt Audio
-- [ ] Carrier funktioniert
-- [ ] Modulator funktioniert
-- [ ] FM funktioniert
-- [ ] Sine/Saw/Square funktionieren
-- [ ] ADSR funktioniert
-- [ ] Polyphonie funktioniert
-```
-
-`BUILD.md` ist Teil des fertigen Projekts und muss gemeinsam mit dem Quellcode ausgeliefert werden.
+When a design decision has to choose between maximum extensibility and readability, **readability has priority for version 1**, as long as future extension is not unnecessarily prevented.
