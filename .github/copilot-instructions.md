@@ -1,5 +1,9 @@
 # Instructions
 
+## Coding Style
+
+- Do **not** use `auto`. Always write explicit types so the code is readable at a glance.
+
 ## Skill Usage
 
 Use the cavemen skill to reduce token costs.
