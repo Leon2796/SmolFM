@@ -24,6 +24,10 @@ target_sources(${PROJECT_NAME}
         PluginProcessor.cpp
         SynthSound.cpp
         SynthVoice.cpp
+        gui/components/WaveformSelector.cpp
+        gui/components/OscillatorPanel.cpp
+        gui/components/FmAmountComponent.cpp
+        gui/components/AdsrPanel.cpp
         # JUMAKE_SOURCES_END
 )
 
