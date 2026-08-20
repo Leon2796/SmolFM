@@ -1,17 +1,52 @@
+/*
+    PluginProcessor.cpp wires MIDI, synthesis and parameters together.
+
+    The most important parts are:
+
+    1. The constructor builds the AudioProcessorValueTreeState parameter layout.
+    2. prepareToPlay() passes the sample rate to the Synthesiser and each voice.
+    3. processBlock() clears the output buffer and asks the Synthesiser to render.
+    4. getStateInformation() / setStateInformation() save and restore APVTS state.
+*/
+
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
 //==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor()
-     : AudioProcessor (BusesProperties()
+    : AudioProcessor (BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
                       #if ! JucePlugin_IsSynth
                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ),
+      parameters (*this, nullptr, juce::Identifier ("SmolFMParameters"), createParameterLayout())
 {
+    // Add the single sound definition that every voice can play.
+    synth.addSound (new smolfm::SynthSound());
+
+    // Create eight polyphonic voices.  Each voice receives a lightweight view
+    // of the parameters so it can read the current slider values on the audio
+    // thread without locks or allocations.
+    constexpr int numberOfVoices = 8;
+
+    smolfm::SynthVoiceParameters voiceParameters
+    {
+        parameters.getRawParameterValue ("carrierRatio"),
+        parameters.getRawParameterValue ("modulatorRatio"),
+        parameters.getRawParameterValue ("fmAmount"),
+        parameters.getRawParameterValue ("carrierWaveform"),
+        parameters.getRawParameterValue ("modulatorWaveform"),
+        parameters.getRawParameterValue ("attack"),
+        parameters.getRawParameterValue ("decay"),
+        parameters.getRawParameterValue ("sustain"),
+        parameters.getRawParameterValue ("release")
+    };
+
+    for (int i = 0; i < numberOfVoices; ++i)
+        synth.addVoice (new smolfm::SynthVoice (voiceParameters));
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
@@ -86,15 +121,22 @@ void AudioPluginAudioProcessor::changeProgramName (int index, const juce::String
 //==============================================================================
 void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
-    juce::ignoreUnused (sampleRate, samplesPerBlock);
+    // JUCE needs to know the current sample rate so it can pass it on to each
+    // SynthesiserVoice.  The voices then prepare their oscillators and ADSR.
+    juce::ignoreUnused (samplesPerBlock);
+    synth.setCurrentPlaybackSampleRate (sampleRate);
+
+    for (int i = 0; i < synth.getNumVoices(); ++i)
+    {
+        if (auto* voice = dynamic_cast<smolfm::SynthVoice*> (synth.getVoice (i)))
+            voice->prepare (sampleRate);
+    }
 }
 
 void AudioPluginAudioProcessor::releaseResources()
 {
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
+    // Nothing to release in this minimal synthesizer.  Real-time resources
+    // are owned directly by the voices and are cleaned up automatically.
 }
 
 bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -124,33 +166,14 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layou
 void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                                               juce::MidiBuffer& midiMessages)
 {
-    juce::ignoreUnused (midiMessages);
-
     juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+    // A synthesizer has no audio input, so start with a clean output buffer.
+    buffer.clear();
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
-        juce::ignoreUnused (channelData);
-        // ..do something to the data...
-    }
+    // Let JUCE handle incoming MIDI events and render all active voices.
+    // Voices add their samples into the buffer, which is why we cleared it first.
+    synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
 }
 
 //==============================================================================
@@ -167,21 +190,83 @@ juce::AudioProcessorEditor* AudioPluginAudioProcessor::createEditor()
 //==============================================================================
 void AudioPluginAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
-    juce::ignoreUnused (destData);
+    // Save the entire APVTS state as XML.  This includes all slider values,
+    // waveform choices and ADSR settings, which is everything the host needs
+    // to restore the plugin later.
+    auto state = parameters.copyState();
+    std::unique_ptr<juce::XmlElement> xml (state.createXml());
+    copyXmlToBinary (*xml, destData);
 }
 
 void AudioPluginAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
-    juce::ignoreUnused (data, sizeInBytes);
+    // Restore the saved APVTS state.  Once the value tree is updated, the
+    // editor attachments will automatically reflect the restored values.
+    std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
+
+    if (xmlState != nullptr)
+        if (xmlState->hasTagName (parameters.state.getType()))
+            parameters.replaceState (juce::ValueTree::fromXml (*xmlState));
 }
 
 //==============================================================================
-// This creates new instances of the plugin..
+juce::AudioProcessorValueTreeState& AudioPluginAudioProcessor::getParameters()
+{
+    return parameters;
+}
+
+juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameterLayout()
+{
+    // Parameter IDs must stay stable forever.  They identify parameters to the
+    // host for automation and presets.
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
+
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        "carrierRatio", "Carrier Ratio",
+        juce::NormalisableRange<float> (0.25f, 4.0f), 1.0f));
+
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        "modulatorRatio", "Modulator Ratio",
+        juce::NormalisableRange<float> (0.25f, 8.0f), 1.0f));
+
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        "fmAmount", "FM Amount",
+        juce::NormalisableRange<float> (0.0f, 10.0f), 0.0f));
+
+    layout.add (std::make_unique<juce::AudioParameterChoice> (
+        "carrierWaveform", "Carrier Waveform",
+        juce::StringArray { "Sine", "Saw", "Square" },
+        static_cast<int> (smolfm::Waveform::sine)));
+
+    layout.add (std::make_unique<juce::AudioParameterChoice> (
+        "modulatorWaveform", "Modulator Waveform",
+        juce::StringArray { "Sine", "Saw", "Square" },
+        static_cast<int> (smolfm::Waveform::sine)));
+
+    // Logarithmic ranges for envelope times let users adjust short values
+    // precisely while still reaching long values.  A skew of 0.5 maps the
+    // slider position through a square-root curve.
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        "attack", "Attack",
+        juce::NormalisableRange<float> (0.001f, 5.0f, 0.001f, 0.5f), 0.01f));
+
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        "decay", "Decay",
+        juce::NormalisableRange<float> (0.001f, 5.0f, 0.001f, 0.5f), 0.2f));
+
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        "sustain", "Sustain",
+        juce::NormalisableRange<float> (0.0f, 1.0f), 0.8f));
+
+    layout.add (std::make_unique<juce::AudioParameterFloat> (
+        "release", "Release",
+        juce::NormalisableRange<float> (0.001f, 10.0f, 0.001f, 0.5f), 0.5f));
+
+    return layout;
+}
+
+//==============================================================================
+// This creates new instances of the plugin.
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new AudioPluginAudioProcessor();

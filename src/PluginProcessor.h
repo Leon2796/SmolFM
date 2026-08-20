@@ -1,6 +1,18 @@
+/*
+    PluginProcessor is the heart of the audio plugin.
+
+    It receives MIDI from the host, routes it to a JUCE Synthesiser, and lets
+    the Synthesiser render all active voices into the output buffer.  It also
+    owns the AudioProcessorValueTreeState, which stores every parameter and
+    handles state save/restore.
+*/
+
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+
+#include "SynthSound.h"
+#include "SynthVoice.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
@@ -42,7 +54,22 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    //==============================================================================
+    /**
+        Give the editor access to the parameter state so it can attach UI controls.
+    */
+    juce::AudioProcessorValueTreeState& getParameters();
+
 private:
+    //==============================================================================
+    /**
+        Build the parameter layout used by AudioProcessorValueTreeState.
+    */
+    static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+
+    juce::AudioProcessorValueTreeState parameters;
+    juce::Synthesiser synth;
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };
