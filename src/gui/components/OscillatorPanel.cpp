@@ -22,28 +22,28 @@ namespace
 //==============================================================================
 OscillatorPanel::OscillatorPanel (juce::AudioProcessorValueTreeState& apvts,
                                   const juce::String& title,
-                                  const juce::String& ratioParameterID,
+                                  const juce::String& frequencyParameterID,
                                   const juce::String& waveformParameterID,
                                   int radioGroupId)
 {
     titleLabel.setText (title, juce::dontSendNotification);
     titleLabel.setJustificationType (juce::Justification::centred);
 
-    configureSlider (ratioSlider, " Hz");
+    configureSlider (frequencySlider, " Hz");
 
     configureWaveformButton (sineButton,   "Sine",   radioGroupId);
     configureWaveformButton (sawButton,    "Saw",    radioGroupId);
     configureWaveformButton (squareButton, "Square", radioGroupId);
 
     addAndMakeVisible (titleLabel);
-    addAndMakeVisible (ratioSlider);
+    addAndMakeVisible (frequencySlider);
     addAndMakeVisible (sineButton);
     addAndMakeVisible (sawButton);
     addAndMakeVisible (squareButton);
 
-    ratioAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts,
-                                                                                     ratioParameterID,
-                                                                                     ratioSlider));
+    frequencyAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts,
+                                                                                         frequencyParameterID,
+                                                                                         frequencySlider));
     waveformSelector.reset (new WaveformSelector (apvts,
                                                   waveformParameterID,
                                                   sineButton,
@@ -73,8 +73,8 @@ void OscillatorPanel::resized()
     // Title spans all three columns.
     grid.items.add (juce::GridItem (titleLabel).withArea (1, juce::GridItem::Span (3)));
 
-    // Ratio slider spans all three columns.
-    grid.items.add (juce::GridItem (ratioSlider).withArea (2, juce::GridItem::Span (3)));
+    // Frequency slider spans all three columns.
+    grid.items.add (juce::GridItem (frequencySlider).withArea (2, juce::GridItem::Span (3)));
 
     // Waveform buttons each occupy one column of the bottom row.
     grid.items.add (juce::GridItem (sineButton).withArea (3, 1));

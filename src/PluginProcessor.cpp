@@ -34,8 +34,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 
     smolfm::SynthVoiceParameters voiceParameters
     {
-        parameters.getRawParameterValue ("carrierRatio"),
-        parameters.getRawParameterValue ("modulatorRatio"),
+        parameters.getRawParameterValue ("carrierFrequency"),
+        parameters.getRawParameterValue ("modulatorFrequency"),
         parameters.getRawParameterValue ("fmAmount"),
         parameters.getRawParameterValue ("carrierWaveform"),
         parameters.getRawParameterValue ("modulatorWaveform"),
@@ -222,12 +222,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
     layout.add (std::make_unique<juce::AudioParameterFloat> (
-        "carrierRatio", "Carrier Ratio",
-        juce::NormalisableRange<float> (0.25f, 4.0f), 1.0f));
+        "carrierFrequency", "Carrier Frequency",
+        juce::NormalisableRange<float> (50.0f, 8000.0f), 440.0f));
 
     layout.add (std::make_unique<juce::AudioParameterFloat> (
-        "modulatorRatio", "Modulator Ratio",
-        juce::NormalisableRange<float> (0.25f, 8.0f), 1.0f));
+        "modulatorFrequency", "Modulator Frequency",
+        juce::NormalisableRange<float> (50.0f, 8000.0f), 220.0f));
 
     layout.add (std::make_unique<juce::AudioParameterFloat> (
         "fmAmount", "FM Amount",

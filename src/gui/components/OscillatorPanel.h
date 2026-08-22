@@ -20,7 +20,7 @@ class OscillatorPanel final : public juce::Component
 public:
     OscillatorPanel (juce::AudioProcessorValueTreeState& apvts,
                      const juce::String& title,
-                     const juce::String& ratioParameterID,
+                     const juce::String& frequencyParameterID,
                      const juce::String& waveformParameterID,
                      int radioGroupId);
 
@@ -32,13 +32,13 @@ private:
     void configureSlider (juce::Slider& slider, const juce::String& suffix);
 
     juce::Label titleLabel;
-    juce::Slider ratioSlider;
+    juce::Slider frequencySlider;
 
     juce::ToggleButton sineButton;
     juce::ToggleButton sawButton;
     juce::ToggleButton squareButton;
 
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> ratioAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> frequencyAttachment;
     std::unique_ptr<gui::WaveformSelector> waveformSelector;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OscillatorPanel)

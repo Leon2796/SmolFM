@@ -43,8 +43,8 @@ namespace smolfm
 */
 struct SynthVoiceParameters
 {
-    std::atomic<float>* carrierRatio;
-    std::atomic<float>* modulatorRatio;
+    std::atomic<float>* carrierFrequency;
+    std::atomic<float>* modulatorFrequency;
     std::atomic<float>* fmAmount;
 
     std::atomic<float>* carrierWaveform;

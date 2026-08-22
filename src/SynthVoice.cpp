@@ -34,13 +34,11 @@ void SynthVoice::startNote (int midiNoteNumber,
 {
     currentVelocity = velocity;
 
-    // Convert the MIDI note number to a fundamental frequency in Hertz.
-    double midiFrequency = juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber);
-
-    // The UI controls frequency ratios, not absolute frequencies.  This makes
-    // the synth automatically follow the musical pitch of the played note.
-    float carrierFrequency  = static_cast<float> (midiFrequency * parameters.carrierRatio->load());
-    float modulatorFrequency = static_cast<float> (midiFrequency * parameters.modulatorRatio->load());
+    // The UI controls absolute oscillator frequencies in Hz.  These override
+    // the musical pitch of the played MIDI note for a classic FM drum/sound
+    // design workflow.
+    float carrierFrequency  = parameters.carrierFrequency->load();
+    float modulatorFrequency = parameters.modulatorFrequency->load();
 
     // Update oscillator frequencies and waveforms from the current parameters.
     carrier.setFrequency (carrierFrequency);
@@ -116,15 +114,9 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
     // effect for the next note.
     const float fmAmount = parameters.fmAmount->load();
 
-    // Optional: also allow live carrier/modulator ratio changes while playing.
-    // We avoid reallocations and just update the oscillator frequency each block.
-    carrier.setFrequency (static_cast<float> (
-        juce::MidiMessage::getMidiNoteInHertz (getCurrentlyPlayingNote())
-        * parameters.carrierRatio->load()));
-
-    modulator.setFrequency (static_cast<float> (
-        juce::MidiMessage::getMidiNoteInHertz (getCurrentlyPlayingNote())
-        * parameters.modulatorRatio->load()));
+    // Allow live carrier/modulator frequency changes while the note is playing.
+    carrier.setFrequency (parameters.carrierFrequency->load());
+    modulator.setFrequency (parameters.modulatorFrequency->load());
 
     updateOscillatorWaveform (carrier,  parameters.carrierWaveform);
     updateOscillatorWaveform (modulator, parameters.modulatorWaveform);
