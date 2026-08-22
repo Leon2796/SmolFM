@@ -14,7 +14,8 @@
 
 #pragma once
 
-#include <juce_audio_processors/juce_audio_processors.h>
+#include <cmath>
+#include <juce_core/juce_core.h>
 
 namespace smolfm
 {
@@ -31,6 +32,23 @@ enum class Waveform
     saw,
     square
 };
+
+/**
+    Convert an integer waveform index (as stored by juce::AudioParameterChoice)
+    into the matching Waveform.  Unknown indices fall back to sine.
+
+    This replaces three identical private mapping helpers (OscillatorProcessor,
+    FMModulationProcessor, SynthVoice) with a single source of truth.
+*/
+inline Waveform waveformFromIndex (int index) noexcept
+{
+    switch (index)
+    {
+        case 1:  return Waveform::saw;
+        case 2:  return Waveform::square;
+        default: return Waveform::sine;
+    }
+}
 
 /**
     A small oscillator with selectable waveform and explicit phase handling.
@@ -137,10 +155,10 @@ private:
     float evaluateWaveform (float phaseAngle) const
     {
         // Wrap any phase offset back into the fundamental [0, 2*pi) range.
-        while (phaseAngle >= juce::MathConstants<float>::twoPi)
-            phaseAngle -= juce::MathConstants<float>::twoPi;
-
-        while (phaseAngle < 0.0f)
+        // fmod keeps the sign of the numerator; adding twoPi once after a
+        // negative result normalises back into [0, 2*pi).
+        phaseAngle = std::fmod (phaseAngle, juce::MathConstants<float>::twoPi);
+        if (phaseAngle < 0.0f)
             phaseAngle += juce::MathConstants<float>::twoPi;
 
         switch (waveform)

@@ -1,13 +1,16 @@
 /*
     SynthVoice.cpp contains the per-note audio rendering logic.
 
-    This is the only place in the plugin where samples are actually generated,
-    so it is written to be small, predictable and real-time safe.  There are no
-    memory allocations, file accesses or locks inside the audio callback path.
+    The actual signal processing is now delegated to the processor graph in
+    src/processors.  This file builds the graph per voice and orchestrates it.
 */
 
 #include "SynthVoice.h"
 #include "SynthSound.h"
+#include "processors/NoteProcessor.h"
+#include "processors/OscillatorProcessor.h"
+#include "processors/FMModulationProcessor.h"
+#include "processors/AdsrProcessor.h"
 
 namespace smolfm
 {
@@ -15,16 +18,65 @@ namespace smolfm
 SynthVoice::SynthVoice (SynthVoiceParameters params)
     : parameters (params)
 {
+    buildGraph();
+}
+
+void SynthVoice::buildGraph()
+{
+    // Optional: convert the played MIDI note into a Hertz value that can drive
+    // the carrier oscillator while leaving the modulator on its fixed Hertz
+    // parameter.
+    auto note = std::make_unique<NoteProcessor>();
+    noteProcessor = note.get();
+
+    // Modulator oscillator feeds the FM amount stage.  It always uses the fixed
+    // Hertz parameter.
+    auto modulator = std::make_unique<OscillatorProcessor> (parameters.modulatorFrequency,
+                                                               parameters.modulatorWaveform);
+    modulatorProcessor = modulator.get();
+
+    // FM modulator owns the carrier oscillator and applies the phase offset.
+    // The carrier gets its frequency from the MIDI note source, so the synth
+    // follows the played key pitch.
+    auto fm = std::make_unique<FMModulationProcessor> (parameters.carrierFrequency,
+                                                          parameters.carrierWaveform,
+                                                          parameters.fmAmount);
+    fmProcessor = fm.get();
+
+    // IMPORTANT: connect() must NOT live inside jassert().  In release builds
+    // jassert expands to nothing, so the expression would be eliminated and the
+    // ports would never be connected -- the ADSR would read 0.0f forever and
+    // the plugin would stay silent.  All ports carry PortType::signal, so these
+    // calls can only fail if the port types are changed in the future.
+    const bool modulatorConnected = fmProcessor->getModulatorInput().connect (modulatorProcessor->getOutput());
+    const bool carrierNoteConnected = fmProcessor->getCarrierNoteInput().connect (noteProcessor->getOutput());
+    jassert (modulatorConnected && carrierNoteConnected);
+    juce::ignoreUnused (modulatorConnected, carrierNoteConnected);
+
+    // ADSR shapes the FM output.
+    auto adsr = std::make_unique<AdsrProcessor> (parameters.attack,
+                                                  parameters.decay,
+                                                  parameters.sustain,
+                                                  parameters.release);
+    adsrProcessor = adsr.get();
+
+    const bool adsrConnected = adsrProcessor->getInput().connect (fmProcessor->getOutput());
+    jassert (adsrConnected);
+    juce::ignoreUnused (adsrConnected);
+
+    // Processors must be added in execution order:
+    // note → carrier oscillator inside FM, modulator → FM → ADSR.
+    // The note processor is processed first so its frequency value is ready.
+    graph.addProcessor (std::move (note));
+    graph.addProcessor (std::move (modulator));
+    graph.addProcessor (std::move (fm));
+    graph.addProcessor (std::move (adsr));
 }
 
 void SynthVoice::prepare (double newSampleRate)
 {
     sampleRate = newSampleRate;
-
-    // Tell every oscillator and the ADSR envelope about the sample rate.
-    carrier.prepare (sampleRate);
-    modulator.prepare (sampleRate);
-    adsr.setSampleRate (sampleRate);
+    graph.prepare (sampleRate);
 }
 
 void SynthVoice::startNote (int midiNoteNumber,
@@ -34,35 +86,11 @@ void SynthVoice::startNote (int midiNoteNumber,
 {
     currentVelocity = velocity;
 
-    // The UI controls absolute oscillator frequencies in Hz.  These override
-    // the musical pitch of the played MIDI note for a classic FM drum/sound
-    // design workflow.
-    float carrierFrequency  = parameters.carrierFrequency->load();
-    float modulatorFrequency = parameters.modulatorFrequency->load();
+    // Feed the played MIDI note into the carrier frequency source.
+    if (noteProcessor != nullptr)
+        noteProcessor->setMidiNoteNumber (midiNoteNumber);
 
-    // Update oscillator frequencies and waveforms from the current parameters.
-    carrier.setFrequency (carrierFrequency);
-    modulator.setFrequency (modulatorFrequency);
-
-    updateOscillatorWaveform (carrier,  parameters.carrierWaveform);
-    updateOscillatorWaveform (modulator, parameters.modulatorWaveform);
-
-    // Reset the oscillator phase so each note starts from a clean state.
-    carrier.resetPhase();
-    modulator.resetPhase();
-
-    // Read the ADSR parameters now, at note-on time.  JUCE's ADSR documentation
-    // warns that parameters should not be changed while the envelope is active;
-    // applying new settings to the next note is the safe, simple strategy.
-    juce::ADSR::Parameters adsrParameters;
-    adsrParameters.attack  = parameters.attack->load();
-    adsrParameters.decay   = parameters.decay->load();
-    adsrParameters.sustain = parameters.sustain->load();
-    adsrParameters.release = parameters.release->load();
-
-    adsr.reset();
-    adsr.setParameters (adsrParameters);
-    adsr.noteOn();
+    graph.startNote();
 }
 
 void SynthVoice::stopNote (float /*velocity*/, bool allowTailOff)
@@ -71,12 +99,11 @@ void SynthVoice::stopNote (float /*velocity*/, bool allowTailOff)
     {
         // Enter the release phase; the voice will keep rendering until the
         // envelope has finished.
-        adsr.noteOff();
+        adsrProcessor->noteOff();
     }
     else
     {
         // Stop immediately and mark the voice as free for the next note.
-        adsr.reset();
         clearCurrentNote();
     }
 }
@@ -103,44 +130,19 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
                                   int numSamples)
 {
     // If the envelope has finished, release this voice so JUCE can reuse it.
-    if (! adsr.isActive())
+    if (! adsrProcessor->isActive())
     {
         clearCurrentNote();
         return;
     }
 
-    // Read the live FM amount on the audio thread.  Frequency ratio and FM
-    // depth changes are allowed while a note is playing; ADSR changes only take
-    // effect for the next note.
-    const float fmAmount = parameters.fmAmount->load();
-
-    // Allow live carrier/modulator frequency changes while the note is playing.
-    carrier.setFrequency (parameters.carrierFrequency->load());
-    modulator.setFrequency (parameters.modulatorFrequency->load());
-
-    updateOscillatorWaveform (carrier,  parameters.carrierWaveform);
-    updateOscillatorWaveform (modulator, parameters.modulatorWaveform);
-
-    // Generate the requested number of samples.
+    // Generate the requested number of samples by traversing the graph.
     for (int sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex)
     {
-        // 1. Generate the modulator sample.  It has its own independent phase.
-        float modulatorSample = modulator.getNextSample (0.0f);
+        float outputSample = graph.processSample() * currentVelocity;
 
-        // 2. Convert the modulator sample into a phase offset in radians.
-        //    A modulator value of 0 produces no phase shift.  A larger FM amount
-        //    pushes the carrier phase further, creating more sidebands.
-        float phaseModulation = modulatorSample * fmAmount;
-
-        // 3. Generate the carrier using the modulated phase.
-        float carrierSample = carrier.getNextSample (phaseModulation);
-
-        // 4. Apply the ADSR envelope and the note velocity.
-        float envelope = adsr.getNextSample();
-        float outputSample = carrierSample * envelope * currentVelocity;
-
-        // 5. Add the result to every output channel.  JUCE mixes voices by
-        //    summing their output buffers, so we must use += here.
+        // Add the result to every output channel.  JUCE mixes voices by
+        // summing their output buffers, so we must use += here.
         for (int channel = 0; channel < outputBuffer.getNumChannels(); ++channel)
         {
             auto* channelData = outputBuffer.getWritePointer (channel);
@@ -149,26 +151,8 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
     }
 
     // If the envelope has just ended during this block, release the voice.
-    if (! adsr.isActive())
+    if (! adsrProcessor->isActive())
         clearCurrentNote();
-}
-
-void SynthVoice::updateOscillatorWaveform (SimpleOscillator& oscillator,
-                                           std::atomic<float>* waveformParameter)
-{
-    oscillator.setWaveform (waveformIndexToEnum (
-        static_cast<int> (std::round (waveformParameter->load()))));
-}
-
-Waveform SynthVoice::waveformIndexToEnum (int index)
-{
-    switch (index)
-    {
-        case 0:  return Waveform::sine;
-        case 1:  return Waveform::saw;
-        case 2:  return Waveform::square;
-        default: return Waveform::sine;
-    }
 }
 
 } // namespace smolfm

@@ -3,6 +3,7 @@
 */
 
 #include "FmAmountComponent.h"
+#include "SliderUtils.h"
 
 namespace gui
 {
@@ -13,7 +14,7 @@ FmAmountComponent::FmAmountComponent (juce::AudioProcessorValueTreeState& apvts,
     titleLabel.setText ("FM Amount", juce::dontSendNotification);
     titleLabel.setJustificationType (juce::Justification::centred);
 
-    configureSlider (fmSlider);
+    configureRotarySlider (fmSlider, " rad");
 
     addAndMakeVisible (titleLabel);
     addAndMakeVisible (fmSlider);
@@ -39,14 +40,6 @@ void FmAmountComponent::resized()
     grid.items.add (juce::GridItem (fmSlider));
 
     grid.performLayout (getLocalBounds());
-}
-
-void FmAmountComponent::configureSlider (juce::Slider& slider)
-{
-    slider.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
-    slider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 90, 24);
-    slider.setTextValueSuffix (" rad");
-    slider.setColour (juce::Slider::rotarySliderFillColourId, juce::Colours::lightblue);
 }
 
 } // namespace gui

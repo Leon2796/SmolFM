@@ -29,6 +29,11 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include "SimpleOscillator.h"
+#include "processors/SignalGraph.h"
+#include "processors/NoteProcessor.h"
+#include "processors/OscillatorProcessor.h"
+#include "processors/FMModulationProcessor.h"
+#include "processors/AdsrProcessor.h"
 
 namespace smolfm
 {
@@ -71,6 +76,15 @@ public:
         and envelope is configured before any audio is generated.
     */
     void prepare (double newSampleRate);
+
+    /**
+        Build the static processor graph for one voice.
+
+        The graph is created once per voice in the constructor.  Order is:
+        modulator oscillator → FM modulator (with carrier oscillator inside)
+        → ADSR envelope.
+    */
+    void buildGraph();
 
     /**
         JUCE calls this when a MIDI note starts.
@@ -127,22 +141,11 @@ private:
     double sampleRate = 44100.0;
     float  currentVelocity = 0.0f;
 
-    SimpleOscillator carrier;
-    SimpleOscillator modulator;
-
-    juce::ADSR adsr;
-
-    /**
-        Read the current waveform choice parameter and apply it to an oscillator.
-    */
-    void updateOscillatorWaveform (SimpleOscillator& oscillator,
-                                   std::atomic<float>* waveformParameter);
-
-    /**
-        Convert the integer waveform index used by AudioParameterChoice into
-        our Waveform enum.
-    */
-    static Waveform waveformIndexToEnum (int index);
+    SignalGraph graph;
+    NoteProcessor* noteProcessor = nullptr;
+    OscillatorProcessor* modulatorProcessor = nullptr;
+    FMModulationProcessor* fmProcessor = nullptr;
+    AdsrProcessor* adsrProcessor = nullptr;
 };
 
 } // namespace smolfm

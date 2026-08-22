@@ -3,6 +3,7 @@
 */
 
 #include "OscillatorPanel.h"
+#include "SliderUtils.h"
 
 namespace gui
 {
@@ -29,7 +30,7 @@ OscillatorPanel::OscillatorPanel (juce::AudioProcessorValueTreeState& apvts,
     titleLabel.setText (title, juce::dontSendNotification);
     titleLabel.setJustificationType (juce::Justification::centred);
 
-    configureSlider (frequencySlider, " Hz");
+    configureRotarySlider (frequencySlider, " Hz");
 
     configureWaveformButton (sineButton,   "Sine",   radioGroupId);
     configureWaveformButton (sawButton,    "Saw",    radioGroupId);
@@ -82,14 +83,6 @@ void OscillatorPanel::resized()
     grid.items.add (juce::GridItem (squareButton).withArea (3, 3));
 
     grid.performLayout (getLocalBounds());
-}
-
-void OscillatorPanel::configureSlider (juce::Slider& slider, const juce::String& suffix)
-{
-    slider.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
-    slider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 90, 24);
-    slider.setTextValueSuffix (suffix);
-    slider.setColour (juce::Slider::rotarySliderFillColourId, juce::Colours::lightblue);
 }
 
 } // namespace gui

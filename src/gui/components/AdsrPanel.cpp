@@ -3,6 +3,7 @@
 */
 
 #include "AdsrPanel.h"
+#include "SliderUtils.h"
 
 namespace gui
 {
@@ -12,10 +13,10 @@ AdsrPanel::AdsrPanel (juce::AudioProcessorValueTreeState& apvts)
     titleLabel.setText ("ADSR", juce::dontSendNotification);
     titleLabel.setJustificationType (juce::Justification::centred);
 
-    configureSlider (attackSlider,  " s");
-    configureSlider (decaySlider,   " s");
-    configureSlider (sustainSlider, "");
-    configureSlider (releaseSlider, " s");
+    configureRotarySlider (attackSlider,  " s");
+    configureRotarySlider (decaySlider,   " s");
+    configureRotarySlider (sustainSlider, "");
+    configureRotarySlider (releaseSlider, " s");
 
     addAndMakeVisible (titleLabel);
     addAndMakeVisible (attackSlider);
@@ -56,14 +57,6 @@ void AdsrPanel::resized()
     grid.items.add (juce::GridItem (releaseSlider));
 
     grid.performLayout (getLocalBounds());
-}
-
-void AdsrPanel::configureSlider (juce::Slider& slider, const juce::String& suffix)
-{
-    slider.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
-    slider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 90, 24);
-    slider.setTextValueSuffix (suffix);
-    slider.setColour (juce::Slider::rotarySliderFillColourId, juce::Colours::lightblue);
 }
 
 } // namespace gui

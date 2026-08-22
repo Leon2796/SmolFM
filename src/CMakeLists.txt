@@ -24,6 +24,10 @@ target_sources(${PROJECT_NAME}
         PluginProcessor.cpp
         SynthSound.cpp
         SynthVoice.cpp
+        processors/NoteProcessor.cpp
+        processors/OscillatorProcessor.cpp
+        processors/FMModulationProcessor.cpp
+        processors/AdsrProcessor.cpp
         gui/components/WaveformSelector.cpp
         gui/components/OscillatorPanel.cpp
         gui/components/FmAmountComponent.cpp
@@ -48,3 +52,17 @@ target_link_libraries(${PROJECT_NAME}
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
+
+# Small console test harness for the processor graph.  It does not need the
+# full plugin machinery and can be run directly to verify that the graph
+# produces samples.
+add_executable(SmolFM_GraphTests
+    processors/ProcessorGraphTests.cpp
+    processors/NoteProcessor.cpp
+    processors/OscillatorProcessor.cpp
+    processors/FMModulationProcessor.cpp
+    processors/AdsrProcessor.cpp)
+
+target_include_directories(SmolFM_GraphTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
+target_link_libraries(SmolFM_GraphTests PRIVATE juce::juce_audio_basics juce::juce_core juce::juce_graphics)
+

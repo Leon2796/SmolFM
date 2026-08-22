@@ -7,18 +7,6 @@
 namespace gui
 {
 
-namespace
-{
-    void configureWaveformButton (juce::ToggleButton& button,
-                                  const juce::String& text,
-                                  int radioGroupId)
-    {
-        button.setButtonText (text);
-        button.setRadioGroupId (radioGroupId);
-        button.setClickingTogglesState (true);
-    }
-}
-
 //==============================================================================
 WaveformSelector::WaveformSelector (juce::AudioProcessorValueTreeState& apvts,
                                   const juce::String& parameterID,

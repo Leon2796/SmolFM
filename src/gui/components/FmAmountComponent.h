@@ -23,8 +23,6 @@ public:
     void resized() override;
 
 private:
-    void configureSlider (juce::Slider& slider);
-
     juce::Label titleLabel;
     juce::Slider fmSlider;
 

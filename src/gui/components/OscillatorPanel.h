@@ -29,8 +29,6 @@ public:
     void resized() override;
 
 private:
-    void configureSlider (juce::Slider& slider, const juce::String& suffix);
-
     juce::Label titleLabel;
     juce::Slider frequencySlider;
 
