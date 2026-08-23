@@ -28,7 +28,6 @@ target_sources(${PROJECT_NAME}
         processors/OscillatorProcessor.cpp
         processors/FMModulationProcessor.cpp
         processors/AdsrProcessor.cpp
-        gui/components/WaveformSelector.cpp
         gui/components/OscillatorPanel.cpp
         gui/components/FmAmountComponent.cpp
         gui/components/AdsrPanel.cpp

@@ -30,15 +30,16 @@ enum class Waveform
 {
     sine,
     saw,
-    square
+    square,
+    triangle
 };
 
 /**
     Convert an integer waveform index (as stored by juce::AudioParameterChoice)
     into the matching Waveform.  Unknown indices fall back to sine.
 
-    This replaces three identical private mapping helpers (OscillatorProcessor,
-    FMModulationProcessor, SynthVoice) with a single source of truth.
+    The mapping must stay in sync with the choices listed in
+    PluginProcessor::createParameterLayout() ("Sine", "Saw", "Square", "Triangle").
 */
 inline Waveform waveformFromIndex (int index) noexcept
 {
@@ -46,6 +47,7 @@ inline Waveform waveformFromIndex (int index) noexcept
     {
         case 1:  return Waveform::saw;
         case 2:  return Waveform::square;
+        case 3:  return Waveform::triangle;
         default: return Waveform::sine;
     }
 }
@@ -173,6 +175,14 @@ private:
 
             case Waveform::square:
                 return (phaseAngle < juce::MathConstants<float>::pi) ? 1.0f : -1.0f;
+
+            case Waveform::triangle:
+                // A triangle ramps linearly from -1 to +1 and back across one
+                // cycle.  Not band-limited; aliases like the saw at high
+                // frequencies, but softer because its harmonics decay faster.
+                return (phaseAngle < juce::MathConstants<float>::pi)
+                     ? 2.0f * (phaseAngle / juce::MathConstants<float>::pi) - 1.0f
+                     : 3.0f - 2.0f * (phaseAngle / juce::MathConstants<float>::pi);
         }
 
         // This line is never reached, but it keeps the compiler happy.

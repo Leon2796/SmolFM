@@ -12,9 +12,9 @@
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p),
       processorRef (p),
-      carrierPanel (processorRef.getParameters(), "Carrier", "carrierFrequency", "carrierWaveform", 1001),
+      carrierPanel (processorRef.getParameters(), "Carrier", "carrierFrequency", "carrierWaveform"),
       fmAmountComponent (processorRef.getParameters(), "fmAmount"),
-      modulatorPanel (processorRef.getParameters(), "Modulator", "modulatorFrequency", "modulatorWaveform", 1002),
+      modulatorPanel (processorRef.getParameters(), "Modulator", "modulatorFrequency", "modulatorWaveform"),
       adsrPanel (processorRef.getParameters())
 {
     titleLabel.setText ("SmolFM", juce::dontSendNotification);

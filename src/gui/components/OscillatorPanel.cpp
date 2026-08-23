@@ -8,49 +8,31 @@
 namespace gui
 {
 
-namespace
-{
-    void configureWaveformButton (juce::ToggleButton& button,
-                                  const juce::String& text,
-                                  int radioGroupId)
-    {
-        button.setButtonText (text);
-        button.setRadioGroupId (radioGroupId);
-        button.setClickingTogglesState (true);
-    }
-}
-
-//==============================================================================
 OscillatorPanel::OscillatorPanel (juce::AudioProcessorValueTreeState& apvts,
                                   const juce::String& title,
                                   const juce::String& frequencyParameterID,
-                                  const juce::String& waveformParameterID,
-                                  int radioGroupId)
+                                  const juce::String& waveformParameterID)
 {
     titleLabel.setText (title, juce::dontSendNotification);
     titleLabel.setJustificationType (juce::Justification::centred);
 
     configureRotarySlider (frequencySlider, " Hz");
 
-    configureWaveformButton (sineButton,   "Sine",   radioGroupId);
-    configureWaveformButton (sawButton,    "Saw",    radioGroupId);
-    configureWaveformButton (squareButton, "Square", radioGroupId);
+    // Item order must match the choices declared in
+    // PluginProcessor::createParameterLayout() ("Sine", "Saw", "Square", "Triangle").
+    // ComboBox item IDs start at 1; ComboBoxAttachment maps them to the choice index.
+    waveformBox.addItemList ({ "Sine", "Saw", "Square", "Triangle" }, 1);
 
     addAndMakeVisible (titleLabel);
     addAndMakeVisible (frequencySlider);
-    addAndMakeVisible (sineButton);
-    addAndMakeVisible (sawButton);
-    addAndMakeVisible (squareButton);
+    addAndMakeVisible (waveformBox);
 
     frequencyAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts,
                                                                                          frequencyParameterID,
                                                                                          frequencySlider));
-    waveformSelector.reset (new WaveformSelector (apvts,
-                                                  waveformParameterID,
-                                                  sineButton,
-                                                  sawButton,
-                                                  squareButton));
-    waveformSelector->sendInitialUpdate();
+    waveformAttachment.reset (new juce::AudioProcessorValueTreeState::ComboBoxAttachment (apvts,
+                                                                                          waveformParameterID,
+                                                                                          waveformBox));
 }
 
 OscillatorPanel::~OscillatorPanel()
@@ -59,30 +41,17 @@ OscillatorPanel::~OscillatorPanel()
 
 void OscillatorPanel::resized()
 {
-    // Title, ratio slider and waveform buttons laid out with a grid.
-    // The bottom row has three columns for the waveform buttons.
-    juce::Grid grid;
-    grid.templateRows = { juce::Grid::TrackInfo (juce::Grid::Fr (1)),
-                          juce::Grid::TrackInfo (juce::Grid::Fr (4)),
-                          juce::Grid::TrackInfo (juce::Grid::Fr (2)) };
-    grid.templateColumns = { juce::Grid::TrackInfo (juce::Grid::Fr (1)),
-                               juce::Grid::TrackInfo (juce::Grid::Fr (1)),
-                               juce::Grid::TrackInfo (juce::Grid::Fr (1)) };
-    grid.rowGap = juce::Grid::Px (8);
-    grid.columnGap = juce::Grid::Px (4);
+    auto bounds = getLocalBounds().reduced (8);
 
-    // Title spans all three columns.
-    grid.items.add (juce::GridItem (titleLabel).withArea (1, juce::GridItem::Span (3)));
+    titleLabel.setBounds (bounds.removeFromTop (24));
+    bounds.removeFromTop (8);
 
-    // Frequency slider spans all three columns.
-    grid.items.add (juce::GridItem (frequencySlider).withArea (2, juce::GridItem::Span (3)));
-
-    // Waveform buttons each occupy one column of the bottom row.
-    grid.items.add (juce::GridItem (sineButton).withArea (3, 1));
-    grid.items.add (juce::GridItem (sawButton).withArea (3, 2));
-    grid.items.add (juce::GridItem (squareButton).withArea (3, 3));
-
-    grid.performLayout (getLocalBounds());
+    // The remaining space goes to the frequency slider; the ComboBox gets a
+    // fixed height anchored to the bottom so it doesn't balloon with the
+    // rotary control.
+    waveformBox.setBounds (bounds.removeFromBottom (26).withSizeKeepingCentre (200, 26));
+    bounds.removeFromBottom (8);
+    frequencySlider.setBounds (bounds);
 }
 
 } // namespace gui

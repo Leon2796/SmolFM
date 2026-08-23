@@ -1,8 +1,8 @@
 /*
     OscillatorPanel is a reusable JUCE component for one FM oscillator.
 
-    It contains a title label, a frequency/ratio rotary slider and three
-    radio-style waveform buttons.  The layout is built with juce::Grid.
+    It contains a title label, a frequency rotary slider and a ComboBox for
+    waveform selection.  The layout is built with juce::Grid.
 
     The same component class is used for both the Carrier and Modulator.
 */
@@ -10,7 +10,6 @@
 #pragma once
 
 #include "../../PluginProcessor.h"
-#include "WaveformSelector.h"
 
 namespace gui
 {
@@ -21,8 +20,7 @@ public:
     OscillatorPanel (juce::AudioProcessorValueTreeState& apvts,
                      const juce::String& title,
                      const juce::String& frequencyParameterID,
-                     const juce::String& waveformParameterID,
-                     int radioGroupId);
+                     const juce::String& waveformParameterID);
 
     ~OscillatorPanel() override;
 
@@ -31,13 +29,10 @@ public:
 private:
     juce::Label titleLabel;
     juce::Slider frequencySlider;
-
-    juce::ToggleButton sineButton;
-    juce::ToggleButton sawButton;
-    juce::ToggleButton squareButton;
+    juce::ComboBox waveformBox;
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> frequencyAttachment;
-    std::unique_ptr<gui::WaveformSelector> waveformSelector;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> waveformAttachment;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (OscillatorPanel)
 };

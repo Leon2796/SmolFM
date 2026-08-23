@@ -235,12 +235,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 
     layout.add (std::make_unique<juce::AudioParameterChoice> (
         "carrierWaveform", "Carrier Waveform",
-        juce::StringArray { "Sine", "Saw", "Square" },
+        juce::StringArray { "Sine", "Saw", "Square", "Triangle" },
         static_cast<int> (smolfm::Waveform::sine)));
 
     layout.add (std::make_unique<juce::AudioParameterChoice> (
         "modulatorWaveform", "Modulator Waveform",
-        juce::StringArray { "Sine", "Saw", "Square" },
+        juce::StringArray { "Sine", "Saw", "Square", "Triangle" },
         static_cast<int> (smolfm::Waveform::sine)));
 
     // Logarithmic ranges for envelope times let users adjust short values
