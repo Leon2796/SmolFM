@@ -31,6 +31,9 @@ target_sources(${PROJECT_NAME}
         gui/components/OscillatorPanel.cpp
         gui/components/FmAmountComponent.cpp
         gui/components/AdsrPanel.cpp
+        gui/components/NoteNodeComponent.cpp
+        gui/DraggableComponent.cpp
+        gui/DraggablePanel.cpp
         # JUMAKE_SOURCES_END
 )
 
