@@ -3,6 +3,8 @@
 */
 
 #include "DraggableComponent.h"
+#include "PinComponent.h"
+#include "DraggablePanel.h"
 
 namespace gui
 {
@@ -20,6 +22,9 @@ DraggableComponent::DraggableComponent (const juce::String& id,
 
     const juce::Rectangle<int> preferred = getPreferredSize();
     setSize (preferred.getWidth(), preferred.getHeight());
+
+    // The ctor's initial setSize() triggers resized() so pins added later
+    // still need an explicit layout pass (see addInputPin/addOutputPin).
 }
 
 void DraggableComponent::paint (juce::Graphics& g)
@@ -45,6 +50,77 @@ void DraggableComponent::resized()
                         titleBarHeight + contentPadding,
                         getWidth() - 2 * contentPadding,
                         getHeight() - titleBarHeight - 2 * contentPadding);
+
+    layoutPins();
+}
+
+void DraggableComponent::layoutPins()
+{
+    const int w = getWidth();
+    const int h = getHeight();
+
+    const int pinD = PinComponent::diameter;
+
+    auto distribute = [pinD] (juce::OwnedArray<PinComponent>& pins, int x, int top, int bottom)
+    {
+        const int num = pins.size();
+        for (int i = 0; i < num; ++i)
+        {
+            const float t = num == 1 ? 0.5f : static_cast<float> (i) / static_cast<float> (num - 1);
+            const int cy = static_cast<int> (top + (bottom - top) * t);
+            pins[i]->setBounds (x, cy - pinD / 2, pinD, pinD);
+        }
+    };
+
+    const int pinTop = titleBarHeight + pinMargin + pinD / 2;
+    const int pinBottom = h - pinMargin - pinD / 2;
+
+    distribute (inputPins,  -pinD / 2,     pinTop, pinBottom);
+    distribute (outputPins, w - pinD / 2,  pinTop, pinBottom);
+}
+
+void DraggableComponent::addInputPin (const juce::String& pinId, smolfm::PortType type)
+{
+    auto* parentPanel = dynamic_cast<DraggablePanel*> (getParentComponent());
+    jassert (parentPanel != nullptr);
+    if (parentPanel == nullptr)
+        return;
+
+    auto* pin = new PinComponent (*parentPanel, boxId, pinId, false, type);
+    inputPins.add (pin);
+    addAndMakeVisible (*pin);
+    layoutPins();
+}
+
+void DraggableComponent::addOutputPin (const juce::String& pinId, smolfm::PortType type)
+{
+    auto* parentPanel = dynamic_cast<DraggablePanel*> (getParentComponent());
+    jassert (parentPanel != nullptr);
+    if (parentPanel == nullptr)
+        return;
+
+    auto* pin = new PinComponent (*parentPanel, boxId, pinId, true, type);
+    outputPins.add (pin);
+    addAndMakeVisible (*pin);
+    layoutPins();
+}
+
+juce::Point<float> DraggableComponent::getInputPinCentre (int index) const noexcept
+{
+    if (index < 0 || index >= getNumInputPins())
+        return {};
+
+    const auto b = inputPins[index]->getBounds();
+    return b.getCentre().toFloat();
+}
+
+juce::Point<float> DraggableComponent::getOutputPinCentre (int index) const noexcept
+{
+    if (index < 0 || index >= getNumOutputPins())
+        return {};
+
+    const auto b = outputPins[index]->getBounds();
+    return b.getCentre().toFloat();
 }
 
 void DraggableComponent::mouseDown (const juce::MouseEvent& e)
@@ -75,6 +151,9 @@ void DraggableComponent::mouseDrag (const juce::MouseEvent& e)
     }
 
     setTopLeftPosition (newPos);
+
+    if (auto* parent = getParentComponent())
+        parent->repaint();
 }
 
 void DraggableComponent::mouseUp (const juce::MouseEvent& /*e*/)

@@ -50,28 +50,35 @@ namespace
         auto note = std::make_unique<smolfm::NoteProcessor>();
         smolfm::NoteProcessor* notePtr = note.get();
 
+        auto carrier = std::make_unique<smolfm::OscillatorProcessor> (
+            &params.carrierFrequency, &params.carrierWaveform);
+        smolfm::OscillatorProcessor* carrierPtr = carrier.get();
+
         auto modulator = std::make_unique<smolfm::OscillatorProcessor> (
             &params.modulatorFrequency, &params.modulatorWaveform);
         smolfm::OscillatorProcessor* modulatorPtr = modulator.get();
 
-        auto fm = std::make_unique<smolfm::FMModulationProcessor> (
-            &params.carrierFrequency, &params.carrierWaveform, &params.fmAmount);
+        auto fm = std::make_unique<smolfm::FMModulationProcessor> (&params.fmAmount);
         smolfm::FMModulationProcessor* fmPtr = fm.get();
 
         auto adsr = std::make_unique<smolfm::AdsrProcessor> (
             &params.attack, &params.decay, &params.sustain, &params.release);
         smolfm::AdsrProcessor* adsrPtr = adsr.get();
 
-        if (! fmPtr->getCarrierNoteInput().connect (notePtr->getOutput()))
-            return { false, "Failed to connect note input to FM carrier" };
+        if (! carrierPtr->getNoteInput().connect (notePtr->getOutput()))
+            return { false, "Failed to connect note input to carrier" };
+
+        if (! fmPtr->getCarrierInput().connect (carrierPtr->getOutput()))
+            return { false, "Failed to connect carrier to FM carrier_in" };
 
         if (! fmPtr->getModulatorInput().connect (modulatorPtr->getOutput()))
-            return { false, "Failed to connect modulator to FM input" };
+            return { false, "Failed to connect modulator to FM modulator_in" };
 
         if (! adsrPtr->getInput().connect (fmPtr->getOutput()))
             return { false, "Failed to connect FM to ADSR" };
 
         graph.addProcessor (std::move (note));
+        graph.addProcessor (std::move (carrier));
         graph.addProcessor (std::move (modulator));
         graph.addProcessor (std::move (fm));
         graph.addProcessor (std::move (adsr));
@@ -104,24 +111,32 @@ namespace
         TestParameters params;
         smolfm::SignalGraph graph;
 
+        // No NoteProcessor: both oscillators must fall back to their Hz sliders.
+        auto carrier = std::make_unique<smolfm::OscillatorProcessor> (
+            &params.carrierFrequency, &params.carrierWaveform);
+        smolfm::OscillatorProcessor* carrierPtr = carrier.get();
+
         auto modulator = std::make_unique<smolfm::OscillatorProcessor> (
             &params.modulatorFrequency, &params.modulatorWaveform);
         smolfm::OscillatorProcessor* modulatorPtr = modulator.get();
 
-        auto fm = std::make_unique<smolfm::FMModulationProcessor> (
-            &params.carrierFrequency, &params.carrierWaveform, &params.fmAmount);
+        auto fm = std::make_unique<smolfm::FMModulationProcessor> (&params.fmAmount);
         smolfm::FMModulationProcessor* fmPtr = fm.get();
 
         auto adsr = std::make_unique<smolfm::AdsrProcessor> (
             &params.attack, &params.decay, &params.sustain, &params.release);
         smolfm::AdsrProcessor* adsrPtr = adsr.get();
 
+        if (! fmPtr->getCarrierInput().connect (carrierPtr->getOutput()))
+            return { false, "Failed to connect carrier to FM carrier_in" };
+
         if (! fmPtr->getModulatorInput().connect (modulatorPtr->getOutput()))
-            return { false, "Failed to connect modulator to FM input" };
+            return { false, "Failed to connect modulator to FM modulator_in" };
 
         if (! adsrPtr->getInput().connect (fmPtr->getOutput()))
             return { false, "Failed to connect FM to ADSR" };
 
+        graph.addProcessor (std::move (carrier));
         graph.addProcessor (std::move (modulator));
         graph.addProcessor (std::move (fm));
         graph.addProcessor (std::move (adsr));

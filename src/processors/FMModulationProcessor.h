@@ -1,79 +1,65 @@
 /*
-    FMModulationProcessor applies frequency modulation to a carrier oscillator.
+    FMModulationProcessor applies frequency modulation between two signals.
 
-    It has two inputs and one output:
-        - modulator: the signal used as the phase offset source
-        - carrier:   the oscillator whose phase is modulated
+    It has two inputs and one output, all plain signal ports (no Hertz):
+        - carrier:    the waveform whose phase is modulated
+        - modulator:  the signal that pushes the carrier's phase
 
-    The carrier input is expected to already be an oscillator that accepts a
-    phase offset.  This processor reads the modulator sample, scales it by the
-    FM amount parameter, and passes it as a phase offset to the carrier
-    oscillator.
+    The node owns only a phase accumulator.  Per sample it measures the
+    carrier input's period via zero-crossings and evaluates
+    sin(phase + modulator * fmAmount).  That is real phase-modulation FM:
+    the modulator stays a signal, it is never turned back into a frequency.
 */
 
 #pragma once
 
-#include "../SimpleOscillator.h"
 #include "ProcessorPort.h"
 
 namespace smolfm
 {
 
 /**
-    FM modulator node.
+    Two-signal FM node.
 
-    Internally owns the carrier oscillator.  The modulator signal comes from a
-    connected OutputPort.
+    Both inputs are signal ports.  The output is a sine whose phase follows
+    the wired carrier and is offset by (modulator * fmAmount).
 */
 class FMModulationProcessor final : public Processor
 {
 public:
     /**
-        Create an FM modulator node.
+        Create the FM node.
 
-        @param carrierFrequency atomic pointer to carrier frequency in Hz
-        @param carrierWaveform  atomic pointer to carrier waveform index
-        @param fmAmount         atomic pointer to FM amount
+        @param fmAmount atomic pointer to the FM index (radians of phase
+                        offset per unit of modulator signal)
     */
-    FMModulationProcessor (std::atomic<float>* carrierFrequency,
-                           std::atomic<float>* carrierWaveform,
-                           std::atomic<float>* fmAmount);
+    explicit FMModulationProcessor (std::atomic<float>* fmAmount);
 
     void prepare (double newSampleRate) override;
     void startNote() override;
     float processSample() override;
 
-    /**
-        Access the input ports for graph wiring.
-    */
-    InputPort& getModulatorInput() noexcept
-    {
-        return modulatorInput;
-    }
-
-    /**
-        Optional note input that overrides the carrier frequency parameter.
-    */
-    InputPort& getCarrierNoteInput() noexcept
-    {
-        return carrierNoteInput;
-    }
-
-    OutputPort& getOutput() noexcept
-    {
-        return output;
-    }
+    InputPort& getCarrierInput() noexcept   { return carrierInput; }
+    InputPort& getModulatorInput() noexcept { return modulatorInput; }
+    OutputPort& getOutput() noexcept        { return output; }
 
 private:
-    SimpleOscillator carrier;
-
-    std::atomic<float>* carrierFrequency;
-    std::atomic<float>* carrierWaveform;
     std::atomic<float>* fmAmount;
 
-    InputPort modulatorInput;
-    InputPort carrierNoteInput;
-    OutputPort output;
+    InputPort carrierInput { PortType::signal };
+    InputPort modulatorInput { PortType::signal };
+    OutputPort output { PortType::signal, *this };
+
+    // Carrier pitch is measured from the wired signal's zero-crossings, so
+    // the node works with any oscillator the user connects instead of
+    // re-creating the waveform internally.
+    double sampleRate = 44100.0;
+    float phase = 0.0f;
+    float lastCarrierSample = 0.0f;
+    int   samplesSinceCrossing = 0;
+    float lastMeasuredPeriodInSamples = 0.0f;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FMModulationProcessor)
 };
 
 } // namespace smolfm

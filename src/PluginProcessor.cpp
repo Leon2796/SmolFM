@@ -47,6 +47,23 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 
     for (int i = 0; i < numberOfVoices; ++i)
         synth.addVoice (new smolfm::SynthVoice (voiceParameters));
+
+    // -----------------------------------------------------------------
+    // Wire the default FM chain into every voice.  Without this the voices
+    // would start with every input disconnected and produce silence.
+    //
+    //   note.out     -> carrier.note_in  (played note drives carrier hz)
+    //   carrier.out  -> fm.carrier_in    (waveform that gets modulated)
+    //   modulator.out -> fm.modulator_in (waveform doing the modulating)
+    //   fm.out       -> adsr.in          (envelope shapes the result)
+    // -----------------------------------------------------------------
+    smolfm::ConnectionPatch defaultPatch;
+    defaultPatch.connections.push_back ({ { "note",      "out" }, { "carrier", "note_in" } });
+    defaultPatch.connections.push_back ({ { "carrier",   "out" }, { "fm", "carrier_in" } });
+    defaultPatch.connections.push_back ({ { "modulator", "out" }, { "fm", "modulator_in" } });
+    defaultPatch.connections.push_back ({ { "fm",        "out" }, { "adsr", "in" } });
+
+    applyConnectionPatch (defaultPatch);
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
@@ -213,6 +230,13 @@ void AudioPluginAudioProcessor::setStateInformation (const void* data, int sizeI
 juce::AudioProcessorValueTreeState& AudioPluginAudioProcessor::getParameters()
 {
     return parameters;
+}
+
+void AudioPluginAudioProcessor::applyConnectionPatch (const smolfm::ConnectionPatch& patch)
+{
+    for (int i = 0; i < synth.getNumVoices(); ++i)
+        if (auto* voice = dynamic_cast<smolfm::SynthVoice*> (synth.getVoice (i)))
+            voice->applyConnectionPatch (patch);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameterLayout()

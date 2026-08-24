@@ -22,7 +22,16 @@ namespace smolfm
 */
 enum class PortType
 {
-    signal
+    signal,
+
+    /**
+        Carries a frequency in Hertz rather than an amplitude sample.
+
+        Frequencies are conceptually a different "kind" of value from audio
+        samples.  They only flow from sources that know how to produce
+        Hertz (NoteProcessor) into an oscillator's note_in port.
+    */
+    frequency
 };
 
 /**

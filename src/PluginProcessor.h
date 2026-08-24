@@ -13,6 +13,7 @@
 
 #include "SynthSound.h"
 #include "SynthVoice.h"
+#include "graph/GraphNodes.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
@@ -59,6 +60,16 @@ public:
         Give the editor access to the parameter state so it can attach UI controls.
     */
     juce::AudioProcessorValueTreeState& getParameters();
+
+    /**
+        Rewire every voice's internal processor graph according to a connection
+        patch received from the UI.
+
+        This is called from the message thread when the user drags a wire or
+        clicks an input pin.  The change is picked up on the audio thread on
+        the next sample because port connections are atomic.
+    */
+    void applyConnectionPatch (const smolfm::ConnectionPatch& patch);
 
 private:
     //==============================================================================

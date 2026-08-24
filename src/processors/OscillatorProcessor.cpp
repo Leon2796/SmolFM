@@ -12,9 +12,12 @@ OscillatorProcessor::OscillatorProcessor (std::atomic<float>* frequencyParameter
     : Processor (ProcessorRole::oscillator),
       frequency (frequencyParameter),
       waveform (waveformParameter),
-      noteInput (PortType::signal),
+      noteInput (PortType::frequency),
       output (PortType::signal, *this)
 {
+    // 0 Hz on the frequency input means "silence" — exactly what's needed for
+    // a disconnected note input.  Anything else uses the slider parameter.
+    noteInput.setDefaultValue (0.0f);
 }
 
 void OscillatorProcessor::prepare (double newSampleRate)
@@ -29,12 +32,12 @@ void OscillatorProcessor::startNote()
 
 float OscillatorProcessor::processSample()
 {
-    float freq = frequency->load();
+    float freq = noteInput.isConnected() ? noteInput.getSample()
+                                         : frequency->load();
 
-    // If a note source is connected (e.g. MIDI note), use its frequency.
-    if (noteInput.isConnected())
-        freq = noteInput.getSample();
-
+    // Hard guard against accidentally propagating a broken parameter value.
+    // If the APVTS ever feeds a non-positive Hz in, the oscillator would
+    // spin forever and produce DC.  Clamping here is cheaper than diagnosing.
     if (freq <= 0.0f)
         freq = 440.0f;
 

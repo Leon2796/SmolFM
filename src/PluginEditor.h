@@ -37,9 +37,9 @@ private:
     // Top-level title label.
     juce::Label titleLabel;
 
-    // Draggable canvas hosting the signal-graph nodes.
+    // Draggable canvas hosting the signal-graph nodes.  This includes ADSR
+    // and all processor UIs as draggable boxes.
     gui::DraggablePanel graphPanel;
-    gui::AdsrPanel adsrPanel;
 
     // Window resize handle (bottom-right corner).  Declared before the
     // resizer below so the constrainer exists when the corner component is

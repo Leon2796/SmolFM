@@ -34,6 +34,7 @@
 #include "processors/OscillatorProcessor.h"
 #include "processors/FMModulationProcessor.h"
 #include "processors/AdsrProcessor.h"
+#include "graph/GraphNodes.h"
 
 namespace smolfm
 {
@@ -135,6 +136,18 @@ public:
                           int startSample,
                           int numSamples) override;
 
+    /**
+        Rewire this voice's processor graph to match a connection patch.
+
+        Called from the message thread when the user changes the wiring in the
+        UI.  The connection pointers on the processors are atomic, so the
+        change is picked up on the audio thread on the next sample.
+
+        Note: this updates only the wiring of one voice.  The UI applies the
+        patch to every voice in a loop.
+    */
+    void applyConnectionPatch (const ConnectionPatch& patch);
+
 private:
     SynthVoiceParameters parameters;
 
@@ -143,6 +156,7 @@ private:
 
     SignalGraph graph;
     NoteProcessor* noteProcessor = nullptr;
+    OscillatorProcessor* carrierProcessor = nullptr;
     OscillatorProcessor* modulatorProcessor = nullptr;
     FMModulationProcessor* fmProcessor = nullptr;
     AdsrProcessor* adsrProcessor = nullptr;

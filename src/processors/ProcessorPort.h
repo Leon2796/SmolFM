@@ -2,7 +2,8 @@
     ProcessorPort.h defines the connection points between processors.
 
     An OutputPort belongs to a processor and provides one sample per tick.
-    An InputPort points to exactly one OutputPort and reads its sample.
+    An InputPort points (atomically) to exactly one OutputPort and reads its
+    sample, or a user-supplied default if no source is connected.
 
     Ports are typed so that invalid connections can be rejected at setup time.
 */
@@ -11,6 +12,8 @@
 
 #include "Processor.h"
 #include <juce_core/juce_core.h>
+
+#include <atomic>
 
 namespace smolfm
 {
@@ -57,6 +60,14 @@ public:
         return type;
     }
 
+    /**
+        Return the Processor that owns this port.
+    */
+    Processor& getOwner() const noexcept
+    {
+        return owner;
+    }
+
 private:
     PortType type;
     Processor& owner;
@@ -65,6 +76,11 @@ private:
 
 /**
     A sink that reads from exactly one OutputPort.
+
+    The connection pointer is atomic so the UI thread can rewire the graph
+    without stopping audio.  Audio-thread consumers only need the relaxed
+    "current source + its latest sample" pair; with one writer (the message
+    thread), release/acquire on the pointer is sufficient.
 */
 class InputPort
 {
@@ -84,21 +100,40 @@ public:
         if (source.getType() != type)
             return false;
 
-        connection = &source;
+        connection.store (&source, std::memory_order_release);
         return true;
+    }
+
+    /**
+        Disconnect this input from its current output.
+
+        Always succeeds and is safe to call from any thread.
+    */
+    void disconnect() noexcept
+    {
+        connection.store (nullptr, std::memory_order_release);
+    }
+
+    /**
+        Default value used when no output is connected (or after disconnect).
+
+        Signal inputs default to 0.0f, frequency inputs to 440.0f.
+    */
+    void setDefaultValue (float value) noexcept
+    {
+        defaultValue = value;
     }
 
     /**
         Read the current sample from the connected output.
 
-        Returns 0.0f if nothing is connected.
+        Returns the default value if nothing is connected.  Used by processor
+        code inside processSample().
     */
     float getSample() const noexcept
     {
-        if (connection == nullptr)
-            return 0.0f;
-
-        return connection->getSample();
+        OutputPort* src = connection.load (std::memory_order_acquire);
+        return src != nullptr ? src->getSample() : defaultValue;
     }
 
     /**
@@ -106,12 +141,31 @@ public:
     */
     bool isConnected() const noexcept
     {
-        return connection != nullptr;
+        return connection.load (std::memory_order_acquire) != nullptr;
+    }
+
+    /**
+        Return the connected OutputPort, or nullptr.
+
+        Used by the UI to render existing connections.
+    */
+    OutputPort* getConnectedSource() const noexcept
+    {
+        return connection.load (std::memory_order_acquire);
+    }
+
+    /**
+        Return the type of signal this port expects.
+    */
+    PortType getType() const noexcept
+    {
+        return type;
     }
 
 private:
     PortType type;
-    OutputPort* connection = nullptr;
+    std::atomic<OutputPort*> connection { nullptr };
+    float defaultValue = 0.0f;
 };
 
 } // namespace smolfm

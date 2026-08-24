@@ -38,6 +38,22 @@ public:
     */
     void setMidiNoteNumber (int midiNoteNumber) noexcept;
 
+    /**
+        Disable the note source (e.g. when the UI disconnected the port).
+
+        While disabled, processSample() emits 0 Hz.  Re-enabled by the next
+        setMidiNoteNumber() or by an explicit setEnabled(true).
+    */
+    void setEnabled (bool shouldBeEnabled) noexcept
+    {
+        enabled.store (shouldBeEnabled, std::memory_order_release);
+    }
+
+    bool isEnabled() const noexcept
+    {
+        return enabled.load (std::memory_order_acquire);
+    }
+
     OutputPort& getOutput() noexcept
     {
         return output;
@@ -46,6 +62,7 @@ public:
 private:
     int currentNote = 60;
     float currentFrequency = 261.625565f;
+    std::atomic<bool> enabled { true };
     OutputPort output;
 };
 

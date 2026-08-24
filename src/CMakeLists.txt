@@ -28,11 +28,13 @@ target_sources(${PROJECT_NAME}
         processors/OscillatorProcessor.cpp
         processors/FMModulationProcessor.cpp
         processors/AdsrProcessor.cpp
+        graph/GraphNodes.cpp
         gui/components/OscillatorPanel.cpp
         gui/components/FmAmountComponent.cpp
         gui/components/AdsrPanel.cpp
         gui/components/NoteNodeComponent.cpp
         gui/DraggableComponent.cpp
+        gui/PinComponent.cpp
         gui/DraggablePanel.cpp
         # JUMAKE_SOURCES_END
 )

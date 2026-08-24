@@ -9,7 +9,7 @@ namespace smolfm
 
 NoteProcessor::NoteProcessor()
     : Processor (ProcessorRole::generic),
-      output (PortType::signal, *this)
+      output (PortType::frequency, *this)
 {
 }
 
@@ -26,14 +26,16 @@ void NoteProcessor::startNote()
 
 float NoteProcessor::processSample()
 {
-    output.setSample (currentFrequency);
-    return currentFrequency;
+    const float f = isEnabled() ? currentFrequency : 0.0f;
+    output.setSample (f);
+    return f;
 }
 
 void NoteProcessor::setMidiNoteNumber (int midiNoteNumber) noexcept
 {
     currentNote = midiNoteNumber;
     currentFrequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (currentNote));
+    enabled.store (true, std::memory_order_release);
 }
 
 } // namespace smolfm

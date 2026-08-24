@@ -15,6 +15,65 @@
 namespace smolfm
 {
 
+namespace
+{
+    // Resolve (nodeId, portId) to a real InputPort / OutputPort on this voice.
+    // The ids here mirror GraphNodes.h; drift between the two will surface
+    // as a failed lookup and the wire silently no-ops, which is acceptable
+    // for a v1 — adding a new spec must update this function.
+
+    smolfm::OutputPort* findOutputPort (const juce::String& nodeId,
+                                        const juce::String& portId,
+                                        smolfm::NoteProcessor& note,
+                                        smolfm::OscillatorProcessor& carrier,
+                                        smolfm::OscillatorProcessor& modulator,
+                                        smolfm::FMModulationProcessor& fm,
+                                        smolfm::AdsrProcessor& adsr)
+    {
+        if (portId != "out")
+            return nullptr;
+
+        if (nodeId == "note")      return &note.getOutput();
+        if (nodeId == "carrier")   return &carrier.getOutput();
+        if (nodeId == "modulator") return &modulator.getOutput();
+        if (nodeId == "fm")        return &fm.getOutput();
+        if (nodeId == "adsr")      return &adsr.getOutput();
+        return nullptr;
+    }
+
+    smolfm::InputPort* findInputPort (const juce::String& nodeId,
+                                      const juce::String& portId,
+                                      smolfm::NoteProcessor& /*note*/,
+                                      smolfm::OscillatorProcessor& carrier,
+                                      smolfm::OscillatorProcessor& modulator,
+                                      smolfm::FMModulationProcessor& fm,
+                                      smolfm::AdsrProcessor& adsr)
+    {
+        if (portId == "note_in")
+        {
+            if (nodeId == "carrier")    return &carrier.getNoteInput();
+            if (nodeId == "modulator")  return &modulator.getNoteInput();
+            return nullptr;
+        }
+        if (portId == "carrier_in")
+        {
+            if (nodeId == "fm")         return &fm.getCarrierInput();
+            return nullptr;
+        }
+        if (portId == "modulator_in")
+        {
+            if (nodeId == "fm")         return &fm.getModulatorInput();
+            return nullptr;
+        }
+        if (portId == "in")
+        {
+            if (nodeId == "adsr")       return &adsr.getInput();
+            return nullptr;
+        }
+        return nullptr;
+    }
+}
+
 SynthVoice::SynthVoice (SynthVoiceParameters params)
     : parameters (params)
 {
@@ -23,51 +82,40 @@ SynthVoice::SynthVoice (SynthVoiceParameters params)
 
 void SynthVoice::buildGraph()
 {
-    // Optional: convert the played MIDI note into a Hertz value that can drive
-    // the carrier oscillator while leaving the modulator on its fixed Hertz
-    // parameter.
+    // Note source: converts the played MIDI note into Hertz that can drive
+    // the carrier oscillator and/or the modulator.
     auto note = std::make_unique<NoteProcessor>();
     noteProcessor = note.get();
 
-    // Modulator oscillator feeds the FM amount stage.  It always uses the fixed
-    // Hertz parameter.
+    // Carrier oscillator: same node type as the modulator, only different
+    // parameter ids.  note_in (Hz from Note In, or its frequency slider when
+    // unwired) drives the pitch; out carries the waveform.
+    auto carrier = std::make_unique<OscillatorProcessor> (parameters.carrierFrequency,
+                                                          parameters.carrierWaveform);
+    carrierProcessor = carrier.get();
+
+    // Modulator oscillator — identical structure, "modulator" is just a label.
     auto modulator = std::make_unique<OscillatorProcessor> (parameters.modulatorFrequency,
-                                                               parameters.modulatorWaveform);
+                                                            parameters.modulatorWaveform);
     modulatorProcessor = modulator.get();
 
-    // FM modulator owns the carrier oscillator and applies the phase offset.
-    // The carrier gets its frequency from the MIDI note source, so the synth
-    // follows the played key pitch.
-    auto fm = std::make_unique<FMModulationProcessor> (parameters.carrierFrequency,
-                                                          parameters.carrierWaveform,
-                                                          parameters.fmAmount);
+    // FM stage: no oscillator of its own.  It takes the wired carrier and
+    // modulator signals and emits sin(carrierPhase + modulator * fmAmount).
+    auto fm = std::make_unique<FMModulationProcessor> (parameters.fmAmount);
     fmProcessor = fm.get();
 
-    // IMPORTANT: connect() must NOT live inside jassert().  In release builds
-    // jassert expands to nothing, so the expression would be eliminated and the
-    // ports would never be connected -- the ADSR would read 0.0f forever and
-    // the plugin would stay silent.  All ports carry PortType::signal, so these
-    // calls can only fail if the port types are changed in the future.
-    const bool modulatorConnected = fmProcessor->getModulatorInput().connect (modulatorProcessor->getOutput());
-    const bool carrierNoteConnected = fmProcessor->getCarrierNoteInput().connect (noteProcessor->getOutput());
-    jassert (modulatorConnected && carrierNoteConnected);
-    juce::ignoreUnused (modulatorConnected, carrierNoteConnected);
-
-    // ADSR shapes the FM output.
+    // ADSR envelope — shapes whichever signal reaches its input.
     auto adsr = std::make_unique<AdsrProcessor> (parameters.attack,
                                                   parameters.decay,
                                                   parameters.sustain,
                                                   parameters.release);
     adsrProcessor = adsr.get();
 
-    const bool adsrConnected = adsrProcessor->getInput().connect (fmProcessor->getOutput());
-    jassert (adsrConnected);
-    juce::ignoreUnused (adsrConnected);
-
-    // Processors must be added in execution order:
-    // note → carrier oscillator inside FM, modulator → FM → ADSR.
-    // The note processor is processed first so its frequency value is ready.
+    // Processors are executed in the order they are added.  Note and both
+    // oscillators run first so their outputs are fresh when FM and ADSR read
+    // them.  The actual wiring is decided by applyConnectionPatch.
     graph.addProcessor (std::move (note));
+    graph.addProcessor (std::move (carrier));
     graph.addProcessor (std::move (modulator));
     graph.addProcessor (std::move (fm));
     graph.addProcessor (std::move (adsr));
@@ -153,6 +201,51 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
     // If the envelope has just ended during this block, release the voice.
     if (! adsrProcessor->isActive())
         clearCurrentNote();
+}
+
+void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
+{
+    if (noteProcessor == nullptr || carrierProcessor == nullptr
+        || modulatorProcessor == nullptr || fmProcessor == nullptr
+        || adsrProcessor == nullptr)
+    {
+        return;
+    }
+
+    // First: disconnect every wired input on this voice so that any port not
+    // mentioned in the patch returns to its default (parameter slider).
+    carrierProcessor->getNoteInput().disconnect();
+    modulatorProcessor->getNoteInput().disconnect();
+    fmProcessor->getCarrierInput().disconnect();
+    fmProcessor->getModulatorInput().disconnect();
+    adsrProcessor->getInput().disconnect();
+
+    // The note node is the only "frequency source".  If nothing is wired from
+    // note.out, it is switched off so silence stays silence and both
+    // oscillators fall back to their frequency sliders.
+    bool noteConnectedToSomething = false;
+
+    for (const auto& conn : patch.connections)
+    {
+        smolfm::OutputPort* out = findOutputPort (conn.from.nodeId, conn.from.portId,
+                                                  *noteProcessor, *carrierProcessor,
+                                                  *modulatorProcessor, *fmProcessor,
+                                                  *adsrProcessor);
+        smolfm::InputPort*  in  = findInputPort  (conn.to.nodeId,   conn.to.portId,
+                                                  *noteProcessor, *carrierProcessor,
+                                                  *modulatorProcessor, *fmProcessor,
+                                                  *adsrProcessor);
+
+        if (out == nullptr || in == nullptr)
+            continue;
+
+        in->connect (*out);
+
+        if (conn.from.nodeId == "note")
+            noteConnectedToSomething = true;
+    }
+
+    noteProcessor->setEnabled (noteConnectedToSomething);
 }
 
 } // namespace smolfm

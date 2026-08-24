@@ -2,20 +2,22 @@
     DraggableComponent wraps a content juce::Component in a small titled box
     that the user can move with the mouse.
 
-    The box draws a label bar at the top and a frame around the content.  The
-    content is laid out below the bar.  Dragging anywhere in the title bar
-    moves the whole box.
-
-    Each box carries a stable String ID so the DraggablePanel can save and
-    restore its position in a PropertiesFile.
+    Additionally the box exposes pins on its left / right edge so the parent
+    DraggablePanel can draw connections between them.  Pin ids and types come
+    from GraphNodeRegistry; the component itself only renders and forwards
+    mouse events.
 */
 
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#include "../processors/Processor.h"
+
 namespace gui
 {
+
+class PinComponent;
 
 class DraggableComponent final : public juce::Component
 {
@@ -45,13 +47,42 @@ public:
     /** Preferred size of the box (content + title bar). */
     juce::Rectangle<int> getPreferredSize() const noexcept;
 
+    //-- Pin management ------------------------------------------------------
+
+    /**
+        Add an input pin at the left edge.
+
+        Index controls vertical stacking; the component repositions pins in
+        resized().
+    */
+    void addInputPin  (const juce::String& pinId, smolfm::PortType type);
+    void addOutputPin (const juce::String& pinId, smolfm::PortType type);
+
+    /** Get the pin centre in this component's own coordinates (for drawing). */
+    juce::Point<float> getInputPinCentre  (int index) const noexcept;
+    juce::Point<float> getOutputPinCentre (int index) const noexcept;
+
+    /** Number of input / output pins. */
+    int getNumInputPins()  const noexcept { return inputPins.size(); }
+    int getNumOutputPins() const noexcept { return outputPins.size(); }
+
+    /** Access the underlying pin components (used by the panel for hit tests). */
+    PinComponent* getInputPin  (int index) noexcept { return index >= 0 && index < getNumInputPins()  ? inputPins[index]  : nullptr; }
+    PinComponent* getOutputPin (int index) noexcept { return index >= 0 && index < getNumOutputPins() ? outputPins[index] : nullptr; }
+
 private:
     static constexpr int titleBarHeight = 24;
     static constexpr int contentPadding = 4;
+    static constexpr int pinMargin      = 8;
+
+    void layoutPins();
 
     juce::String boxId;
     juce::String title;
     std::unique_ptr<juce::Component> content;
+
+    juce::OwnedArray<PinComponent> inputPins;
+    juce::OwnedArray<PinComponent> outputPins;
 
     // Drag state recorded at mouseDown.  draggingFromTitleBar is false until
     // the user presses the title bar; the mouseDrag handler bails out early
