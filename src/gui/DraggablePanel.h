@@ -37,6 +37,17 @@ public:
     /** Add a box and adopt its position.  Ownership passes to the panel. */
     DraggableComponent& addComponent (std::unique_ptr<DraggableComponent> box);
 
+    // -- Introspection for .smolfm save/load --------------------------------
+
+    /** All box ids currently on the canvas, in insertion order. */
+    juce::StringArray getBoxIds() const;
+
+    /** Current bounds of one box (empty rect when the id is unknown). */
+    juce::Rectangle<int> getBoxBounds (const juce::String& boxId) const;
+
+    /** Move a box to a new top-left position (clamped into the panel). */
+    void setBoxPosition (const juce::String& boxId, juce::Point<int> pos);
+
     /** Persist positions AND wiring to disk. */
     void saveLayout();
 

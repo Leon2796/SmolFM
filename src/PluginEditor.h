@@ -37,9 +37,20 @@ private:
     // Top-level title label.
     juce::Label titleLabel;
 
+    // Thin toolbar with patch import/export next to the title.
+    juce::TextButton exportButton { "Export" };
+    juce::TextButton importButton { "Import" };
+
     // Draggable canvas hosting the signal-graph nodes.  This includes ADSR
     // and all processor UIs as draggable boxes.
     gui::DraggablePanel graphPanel;
+
+    // File chooser for the toolbar buttons.  Kept alive so the async dialog
+    // stays valid until the user picks a file.
+    std::unique_ptr<juce::FileChooser> fileChooser;
+
+    void exportPatch();
+    void importPatch();
 
     // Window resize handle (bottom-right corner).  Declared before the
     // resizer below so the constrainer exists when the corner component is

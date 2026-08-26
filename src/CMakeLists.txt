@@ -29,6 +29,7 @@ target_sources(${PROJECT_NAME}
         processors/FMModulationProcessor.cpp
         processors/AdsrProcessor.cpp
         graph/GraphNodes.cpp
+        graph/SmolFmFile.cpp
         gui/components/OscillatorPanel.cpp
         gui/components/FmAmountComponent.cpp
         gui/components/AdsrPanel.cpp

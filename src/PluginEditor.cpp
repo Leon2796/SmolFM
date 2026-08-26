@@ -7,6 +7,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "graph/SmolFmFile.h"
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
@@ -20,6 +21,11 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
     addAndMakeVisible (titleLabel);
     addAndMakeVisible (graphPanel);
+    addAndMakeVisible (exportButton);
+    addAndMakeVisible (importButton);
+
+    exportButton.onClick = [this] { exportPatch(); };
+    importButton.onClick = [this] { importPatch(); };
 
     boundsConstrainer->setMinimumSize (700, 500);
     boundsConstrainer->setMaximumSize (2400, 1600);
@@ -136,7 +142,11 @@ void AudioPluginAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds().reduced (24);
 
-    titleLabel.setBounds (bounds.removeFromTop (32));
+    auto toolbar = bounds.removeFromTop (32);
+    auto titleArea = toolbar;
+    titleLabel.setBounds (titleArea.removeFromLeft (juce::jmax (60, toolbar.getWidth() - 180)));
+    importButton.setBounds (toolbar.removeFromRight (84).reduced (2));
+    exportButton.setBounds (toolbar.removeFromRight (84).reduced (2));
     bounds.removeFromTop (8);
 
     graphPanel.setBounds (bounds);
@@ -147,5 +157,45 @@ void AudioPluginAudioProcessorEditor::resized()
     // Once the graph panel has its real bounds we can restore any saved layout
     // without clamping boxes off-screen.
     graphPanel.loadLayout();
+}
+
+//==============================================================================
+void AudioPluginAudioProcessorEditor::exportPatch()
+{
+    fileChooser = std::make_unique<juce::FileChooser> (
+        "Export SmolFM patch",
+        juce::File::getSpecialLocation (juce::File::userDocumentsDirectory),
+        "*.smolfm");
+
+    fileChooser->launchAsync (juce::FileBrowserComponent::saveMode
+                            | juce::FileBrowserComponent::canSelectFiles
+                            | juce::FileBrowserComponent::warnAboutOverwriting,
+        [this] (const juce::FileChooser& chooser)
+        {
+            const juce::File target = chooser.getResult();
+            if (target == juce::File())
+                return;
+
+            smolfm::SmolFmFile::save (graphPanel, processorRef.getParameters(), target);
+        });
+}
+
+void AudioPluginAudioProcessorEditor::importPatch()
+{
+    fileChooser = std::make_unique<juce::FileChooser> (
+        "Import SmolFM patch",
+        juce::File::getSpecialLocation (juce::File::userDocumentsDirectory),
+        "*.smolfm");
+
+    fileChooser->launchAsync (juce::FileBrowserComponent::openMode
+                            | juce::FileBrowserComponent::canSelectFiles,
+        [this] (const juce::FileChooser& chooser)
+        {
+            const juce::File source = chooser.getResult();
+            if (source == juce::File() || ! source.existsAsFile())
+                return;
+
+            smolfm::SmolFmFile::load (graphPanel, processorRef.getParameters(), source);
+        });
 }
 

@@ -76,6 +76,34 @@ DraggableComponent* DraggablePanel::findBox (const juce::String& boxId) noexcept
     return nullptr;
 }
 
+juce::StringArray DraggablePanel::getBoxIds() const
+{
+    juce::StringArray ids;
+    for (const auto* b : boxes)
+        ids.add (b->getBoxId());
+    return ids;
+}
+
+juce::Rectangle<int> DraggablePanel::getBoxBounds (const juce::String& boxId) const
+{
+    for (const auto* b : boxes)
+        if (b->getBoxId() == boxId)
+            return b->getBounds();
+
+    return {};
+}
+
+void DraggablePanel::setBoxPosition (const juce::String& boxId, juce::Point<int> pos)
+{
+    if (auto* box = findBox (boxId))
+    {
+        pos.x = juce::jlimit (0, juce::jmax (0, getWidth()  - box->getWidth()),  pos.x);
+        pos.y = juce::jlimit (0, juce::jmax (0, getHeight() - box->getHeight()), pos.y);
+        box->setTopLeftPosition (pos);
+        repaint();
+    }
+}
+
 PinComponent* DraggablePanel::findInputPin (const juce::String& nodeId, const juce::String& portId) noexcept
 {
     if (auto* box = findBox (nodeId))
