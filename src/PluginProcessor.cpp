@@ -60,22 +60,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     for (int i = 0; i < numberOfVoices; ++i)
         synth.addVoice (new smolfm::SynthVoice (voiceParameters));
 
-    // -----------------------------------------------------------------
-    // Wire the default FM chain into every voice.  Without this the voices
-    // would start with every input disconnected and produce silence.
-    //
-    //   note.out      -> fm.freq_in       (played note is the carrier pitch)
-    //   modulator.out -> fm.modulator_in  (waveform doing the modulating)
-    //   fm.out        -> carrier.note_in  (modulated Hertz drive the carrier)
-    //   carrier.out   -> adsr.in          (envelope shapes the result)
-    // -----------------------------------------------------------------
-    smolfm::ConnectionPatch defaultPatch;
-    defaultPatch.connections.push_back ({ { "note0", "out" }, { "fm0", "freq_in" } });
-    defaultPatch.connections.push_back ({ { "osc1", "out" }, { "fm0", "modulator_in" } });
-    defaultPatch.connections.push_back ({ { "fm0",  "out" }, { "osc0", "note_in" } });
-    defaultPatch.connections.push_back ({ { "osc0", "out" }, { "adsr", "in" } });
-
-    applyConnectionPatch (defaultPatch);
+    // No default graph: voices start with every port disconnected.  The
+    // editor canvas is empty until the user adds nodes or imports a patch.
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()

@@ -150,26 +150,9 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     };
 
     // -----------------------------------------------------------------
-    // Seed the canvas with the sensible starting set: the classic FM chain.
-    // loadLayout() may overwrite positions/wiring from the saved patch.
+    // The canvas starts empty: no seeded nodes, no default patch.  Nodes
+    // appear only via the palette or a loaded .smolfm file.
     // -----------------------------------------------------------------
-    addNodeFromToolbar ("note");
-    auto* osc0 = graphPanel.addNodeOfType ("osc", processorRef.getParameters(), makeOscillatorContent);   // carrier seat
-    graphPanel.addNodeOfType ("osc", processorRef.getParameters(), makeOscillatorContent);                 // modulator seat
-    auto* fm0  = graphPanel.addNodeOfType ("fm",  processorRef.getParameters(), makeFmContent);
-    addNodeFromToolbar ("adsr");
-
-    // Default patch across those instances (osc0 = carrier, osc1 = modulator).
-    // FM works in the frequency domain: it bends the Hertz that drive osc0.
-    smolfm::ConnectionPatch defaultPatch;
-    defaultPatch.connections.push_back ({ { "note0", "out" }, { "fm0",  "freq_in" } });
-    defaultPatch.connections.push_back ({ { "osc1", "out" }, { "fm0",  "modulator_in" } });
-    defaultPatch.connections.push_back ({ { "fm0",  "out" }, { "osc0", "note_in" } });
-    defaultPatch.connections.push_back ({ { "osc0", "out" }, { "adsr", "in" } });
-
-    if (osc0 != nullptr && fm0 != nullptr)
-        graphPanel.applyPatch (defaultPatch);
-
     refreshToolbarBadges();
 
     setSize (1200, 800);
