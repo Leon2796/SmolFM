@@ -55,16 +55,19 @@ namespace
 
         if (baseId == "osc")
         {
-            const auto freqId = GraphNodeRegistry::frequencyParameterIdFor (nodeId);
             const auto wfmId  = GraphNodeRegistry::waveformParameterIdFor  (nodeId);
 
-            if (freqId.isNotEmpty()) specs.add ({ "frequency", freqId });
             if (wfmId.isNotEmpty())  specs.add ({ "waveform",  wfmId });
         }
         else if (baseId == "fm")
         {
             const auto amtId = GraphNodeRegistry::amountParameterIdFor (nodeId);
             if (amtId.isNotEmpty()) specs.add ({ "amount", amtId });
+        }
+        else if (baseId == "fscale")
+        {
+            const auto factorId = GraphNodeRegistry::amountParameterIdFor (nodeId);
+            if (factorId.isNotEmpty()) specs.add ({ "factor", factorId });
         }
         else if (baseId == "adsr")
         {

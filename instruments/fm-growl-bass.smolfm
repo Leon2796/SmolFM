@@ -12,18 +12,18 @@
 -->
 <SmolFM version="2">
   <Nodes>
-    <Node id="note" x="60" y="300">
+    <Node id="note0" x="60" y="300">
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
-    <Node id="osc0" x="940" y="180" frequency="440.0" waveform="1">
+    <Node id="osc0" x="940" y="180" waveform="1">
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-    <Node id="osc1" x="60" y="540" frequency="220.0" waveform="0">
+    <Node id="osc1" x="60" y="540" waveform="0">
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-    <Node id="osc2" x="360" y="580" frequency="442.0" waveform="0">
+    <Node id="osc2" x="360" y="580" waveform="0">
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
@@ -43,7 +43,7 @@
     </Node>
   </Nodes>
   <Connections>
-    <Wire from="note" fromPort="out" to="fm0" toPort="freq_in"/>
+    <Wire from="note0" fromPort="out" to="fm0" toPort="freq_in"/>
     <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in"/>
     <Wire from="fm0" fromPort="out" to="fm1" toPort="freq_in"/>
     <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in"/>

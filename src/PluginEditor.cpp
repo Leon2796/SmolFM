@@ -10,6 +10,7 @@
 #include "graph/SmolFmFile.h"
 #include "gui/components/OscillatorPanel.h"
 #include "gui/components/FMModulationComponent.h"
+#include "gui/components/FrequencyScaleComponent.h"
 #include "gui/components/AdsrPanel.h"
 #include "gui/components/NoteNodeComponent.h"
 
@@ -23,7 +24,6 @@ namespace
     {
         return std::make_unique<gui::OscillatorPanel> (
             apvts, "Oscillator",
-            smolfm::GraphNodeRegistry::frequencyParameterIdFor (instanceId),
             smolfm::GraphNodeRegistry::waveformParameterIdFor  (instanceId));
     }
 
@@ -31,6 +31,13 @@ namespace
                                                     juce::AudioProcessorValueTreeState& apvts)
     {
         return std::make_unique<gui::FMModulationComponent> (
+            apvts, smolfm::GraphNodeRegistry::amountParameterIdFor (instanceId));
+    }
+
+    std::unique_ptr<juce::Component> makeFrequencyScaleContent (const juce::String& instanceId,
+                                                                juce::AudioProcessorValueTreeState& apvts)
+    {
+        return std::make_unique<gui::FrequencyScaleComponent> (
             apvts, smolfm::GraphNodeRegistry::amountParameterIdFor (instanceId));
     }
 
@@ -82,6 +89,13 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                                           r.getRight() - r.getWidth() * 0.3f, r.getBottom(), r.getRight(), r.getCentreY());
                                return p; },
                            smolfm::GraphNodeRegistry::maxFmAmounts);
+    scaleButton.configure ("fscale", "Scale", [] (const juce::Rectangle<float>& r)
+                           {   juce::Path p; const float c = r.getCentreY();
+                               p.startNewSubPath (r.getX(), c); p.lineTo (r.getRight(), r.getY());
+                               p.startNewSubPath (r.getX(), c); p.lineTo (r.getRight(), c);
+                               p.startNewSubPath (r.getX(), c); p.lineTo (r.getRight(), r.getBottom());
+                               return p; },
+                           smolfm::GraphNodeRegistry::maxFrequencyScales);
     adsrButton .configure ("adsr", "ADSR",  [] (const juce::Rectangle<float>& r)
                            {   juce::Path p; p.startNewSubPath (r.getX(), r.getBottom());
                                p.lineTo (r.getX() + r.getWidth() * 0.25f, r.getY());
@@ -96,7 +110,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                                return p; },
                            smolfm::GraphNodeRegistry::maxNotes);
 
-    for (auto* b : { &oscButton, &fmButton, &adsrButton, &noteButton })
+    for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &noteButton })
     {
         addAndMakeVisible (*b);
         b->onAddRequested = [this] (const juce::String& baseId) { addNodeFromToolbar (baseId); };
@@ -125,6 +139,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             return graphPanel.addNodeOfType ("osc",  processorRef.getParameters(), makeOscillatorContent);
         if (baseId == "fm")
             return graphPanel.addNodeOfType ("fm",   processorRef.getParameters(), makeFmContent);
+        if (baseId == "fscale")
+            return graphPanel.addNodeOfType ("fscale", processorRef.getParameters(), makeFrequencyScaleContent);
         if (baseId == "adsr")
             return graphPanel.addNodeOfType ("adsr", processorRef.getParameters(), makeAdsrContent);
         if (baseId == "note")
@@ -146,7 +162,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     // Default patch across those instances (osc0 = carrier, osc1 = modulator).
     // FM works in the frequency domain: it bends the Hertz that drive osc0.
     smolfm::ConnectionPatch defaultPatch;
-    defaultPatch.connections.push_back ({ { "note", "out" }, { "fm0",  "freq_in" } });
+    defaultPatch.connections.push_back ({ { "note0", "out" }, { "fm0",  "freq_in" } });
     defaultPatch.connections.push_back ({ { "osc1", "out" }, { "fm0",  "modulator_in" } });
     defaultPatch.connections.push_back ({ { "fm0",  "out" }, { "osc0", "note_in" } });
     defaultPatch.connections.push_back ({ { "osc0", "out" }, { "adsr", "in" } });
@@ -166,10 +182,11 @@ void AudioPluginAudioProcessorEditor::addNodeFromToolbar (const juce::String& ba
 
     static const std::map<juce::String, ContentFactory> factories
     {
-        { "note", makeNoteContent    },
-        { "osc",  makeOscillatorContent },
-        { "fm",   makeFmContent      },
-        { "adsr", makeAdsrContent    }
+        { "note",   makeNoteContent    },
+        { "osc",    makeOscillatorContent },
+        { "fm",     makeFmContent      },
+        { "fscale", makeFrequencyScaleContent },
+        { "adsr",   makeAdsrContent    }
     };
 
     const auto it = factories.find (baseId);
@@ -181,10 +198,11 @@ void AudioPluginAudioProcessorEditor::addNodeFromToolbar (const juce::String& ba
 
 void AudioPluginAudioProcessorEditor::refreshToolbarBadges()
 {
-    oscButton .setRemaining (smolfm::GraphNodeRegistry::maxOscillators - graphPanel.countBoxesOfType ("osc"));
-    fmButton  .setRemaining (smolfm::GraphNodeRegistry::maxFmAmounts   - graphPanel.countBoxesOfType ("fm"));
-    adsrButton.setRemaining (smolfm::GraphNodeRegistry::maxAdsr        - graphPanel.countBoxesOfType ("adsr"));
-    noteButton.setRemaining (smolfm::GraphNodeRegistry::maxNotes       - graphPanel.countBoxesOfType ("note"));
+    oscButton  .setRemaining (smolfm::GraphNodeRegistry::maxOscillators     - graphPanel.countBoxesOfType ("osc"));
+    fmButton   .setRemaining (smolfm::GraphNodeRegistry::maxFmAmounts       - graphPanel.countBoxesOfType ("fm"));
+    scaleButton.setRemaining (smolfm::GraphNodeRegistry::maxFrequencyScales - graphPanel.countBoxesOfType ("fscale"));
+    adsrButton .setRemaining (smolfm::GraphNodeRegistry::maxAdsr            - graphPanel.countBoxesOfType ("adsr"));
+    noteButton .setRemaining (smolfm::GraphNodeRegistry::maxNotes           - graphPanel.countBoxesOfType ("note"));
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -210,13 +228,14 @@ void AudioPluginAudioProcessorEditor::resized()
     importButton.setBounds (buttonsArea.removeFromRight (84).reduced (2));
     exportButton.setBounds (buttonsArea.removeFromRight (84).reduced (2));
 
-    // Palette tiles, 4 × 56 px each.
+    // Palette tiles, 5 × 62 px each.
     auto palette = toolbar.reduced (4, 2);
     const int tileWidth = 62;
-    oscButton .setBounds (palette.removeFromLeft (tileWidth));
-    fmButton  .setBounds (palette.removeFromLeft (tileWidth));
-    adsrButton.setBounds (palette.removeFromLeft (tileWidth));
-    noteButton.setBounds (palette.removeFromLeft (tileWidth));
+    oscButton  .setBounds (palette.removeFromLeft (tileWidth));
+    fmButton   .setBounds (palette.removeFromLeft (tileWidth));
+    scaleButton.setBounds (palette.removeFromLeft (tileWidth));
+    adsrButton .setBounds (palette.removeFromLeft (tileWidth));
+    noteButton .setBounds (palette.removeFromLeft (tileWidth));
 
     bounds.removeFromTop (8);
 

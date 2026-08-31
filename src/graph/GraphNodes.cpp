@@ -34,7 +34,6 @@ namespace
             osc.outputType = PortType::signal;
             osc.inputPortIds = { "note_in" };
             osc.inputTypes = { PortType::frequency };
-            osc.frequencyParameterTemplate = "osc%Frequency";
             osc.waveformParameterTemplate  = "osc%Waveform";
             specs.push_back (osc);
         }
@@ -48,6 +47,19 @@ namespace
             fm.inputTypes = { PortType::frequency, PortType::signal };
             fm.amountParameterTemplate = "fmAmount%";
             specs.push_back (fm);
+        }
+        {
+            NodeSpec fscale;
+            fscale.id = "fscale";
+            fscale.title = "Freq Scale";
+            fscale.outputPortId = "out";
+            fscale.outputType = PortType::frequency;
+            fscale.inputPortIds = { "freq_in" };
+            fscale.inputTypes = { PortType::frequency };
+            // Must match the APVTS id pattern "fscale<N>Factor" used by
+            // createParameterLayout() and SynthVoice.
+            fscale.amountParameterTemplate = "fscale%Factor";
+            specs.push_back (fscale);
         }
         {
             NodeSpec adsr;
@@ -89,10 +101,11 @@ const NodeSpec* GraphNodeRegistry::findSpec (const juce::String& baseId)
 NodeType GraphNodeRegistry::typeOf (const juce::String& nodeId)
 {
     const juce::String base = baseIdOf (nodeId);
-    if (base == "note") return NodeType::note;
-    if (base == "osc")  return NodeType::oscillator;
-    if (base == "fm")   return NodeType::fmAmount;
-    if (base == "adsr") return NodeType::adsr;
+    if (base == "note")   return NodeType::note;
+    if (base == "osc")    return NodeType::oscillator;
+    if (base == "fm")     return NodeType::fmAmount;
+    if (base == "fscale") return NodeType::frequencyScale;
+    if (base == "adsr")   return NodeType::adsr;
     return NodeType::unknown;
 }
 
@@ -123,7 +136,7 @@ juce::String GraphNodeRegistry::makeInstanceId (const juce::String& baseId, int 
     const int max = maxInstancesOf (typeOf (baseId));
 
     if (max == 1)
-        return baseId;              // "note", "adsr" need no index
+        return baseId;              // "adsr" needs no index
 
     return baseId + juce::String (index);
 }
@@ -132,11 +145,12 @@ int GraphNodeRegistry::maxInstancesOf (NodeType type)
 {
     switch (type)
     {
-        case NodeType::note:       return maxNotes;
-        case NodeType::oscillator: return maxOscillators;
-        case NodeType::fmAmount:   return maxFmAmounts;
-        case NodeType::adsr:       return maxAdsr;
-        case NodeType::unknown:    break;
+        case NodeType::note:           return maxNotes;
+        case NodeType::oscillator:     return maxOscillators;
+        case NodeType::fmAmount:       return maxFmAmounts;
+        case NodeType::frequencyScale: return maxFrequencyScales;
+        case NodeType::adsr:           return maxAdsr;
+        case NodeType::unknown:        break;
     }
     return 0;
 }

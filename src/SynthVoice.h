@@ -26,6 +26,7 @@
 #include "processors/SignalGraph.h"
 #include "processors/OscillatorProcessor.h"
 #include "processors/FMModulationProcessor.h"
+#include "processors/FrequencyScaleProcessor.h"
 #include "processors/NoteProcessor.h"
 #include "processors/AdsrProcessor.h"
 #include "graph/GraphNodes.h"
@@ -43,9 +44,9 @@ namespace smolfm
 struct SynthVoiceParameters
 {
     // Index into these arrays is the instance index of the node.
-    std::array<std::atomic<float>*, GraphNodeRegistry::maxOscillators> oscFrequency;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxOscillators> oscWaveform;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFmAmounts>   fmAmount;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxFrequencyScales> freqScaleFactor;
 
     // ADSR is a singleton.
     std::atomic<float>* attack;
@@ -89,12 +90,15 @@ private:
     SignalGraph graph;
 
     // Single nodes.
-    NoteProcessor* noteProcessor = nullptr;
     AdsrProcessor* adsrProcessor = nullptr;
 
     // Processor pools, indexed by instance index parsed from the node id.
+    // Every note source mirrors the currently played MIDI note; each wired
+    // "note<N>" box simply taps the same pitch on its own output.
+    std::array<NoteProcessor*, GraphNodeRegistry::maxNotes> noteSources {};
     std::array<OscillatorProcessor*, GraphNodeRegistry::maxOscillators> oscillators {};
     std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts> fmProcessors {};
+    std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales> frequencyScalers {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynthVoice)
 };

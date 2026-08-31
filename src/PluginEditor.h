@@ -39,6 +39,7 @@ private:
     // Add-node palette: one tile per node type, with budget badge.
     gui::PaletteButton oscButton;
     gui::PaletteButton fmButton;
+    gui::PaletteButton scaleButton;
     gui::PaletteButton adsrButton;
     gui::PaletteButton noteButton;
 

@@ -37,7 +37,6 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxOscillators; ++i)
     {
         const juce::String num (i);
-        voiceParameters.oscFrequency[static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "Frequency");
         voiceParameters.oscWaveform [static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "Waveform");
     }
 
@@ -45,6 +44,12 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     {
         const juce::String num (i);
         voiceParameters.fmAmount[static_cast<size_t> (i)]     = parameters.getRawParameterValue ("fmAmount" + num);
+    }
+
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxFrequencyScales; ++i)
+    {
+        const juce::String num (i);
+        voiceParameters.freqScaleFactor[static_cast<size_t> (i)] = parameters.getRawParameterValue ("fscale" + num + "Factor");
     }
 
     voiceParameters.attack  = parameters.getRawParameterValue ("attack");
@@ -65,7 +70,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     //   carrier.out   -> adsr.in          (envelope shapes the result)
     // -----------------------------------------------------------------
     smolfm::ConnectionPatch defaultPatch;
-    defaultPatch.connections.push_back ({ { "note", "out" }, { "fm0", "freq_in" } });
+    defaultPatch.connections.push_back ({ { "note0", "out" }, { "fm0", "freq_in" } });
     defaultPatch.connections.push_back ({ { "osc1", "out" }, { "fm0", "modulator_in" } });
     defaultPatch.connections.push_back ({ { "fm0",  "out" }, { "osc0", "note_in" } });
     defaultPatch.connections.push_back ({ { "osc0", "out" }, { "adsr", "in" } });
@@ -253,16 +258,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
     // -- Oscillator pool ---------------------------------------------------
-    // 8 oscillator parameter pairs.  The UI may create up to 8 oscillator
-    // boxes; index 0/1 default to the old carrier/modulator ids so existing
-    // presets keep their sound ("osc0Frequency" == old "carrierFrequency").
+    // 8 oscillator waveform parameters.  Frequency comes exclusively from the
+    // note_in port; there is no fallback slider value.
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxOscillators; ++i)
     {
         const juce::String num (i);
-
-        layout.add (std::make_unique<juce::AudioParameterFloat> (
-            "osc" + num + "Frequency", "Oscillator " + num + " Frequency",
-            juce::NormalisableRange<float> (50.0f, 8000.0f), 440.0f));
 
         layout.add (std::make_unique<juce::AudioParameterChoice> (
             "osc" + num + "Waveform", "Oscillator " + num + " Waveform",
@@ -278,6 +278,18 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "fmAmount" + num, "FM Amount " + num,
             juce::NormalisableRange<float> (0.0f, 10.0f), 0.0f));
+    }
+
+    // -- Frequency scale pool ------------------------------------------------
+    // 1.0 is the transparent default: f_out = f_in.  The UI range caps the
+    // factor at 10.
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxFrequencyScales; ++i)
+    {
+        const juce::String num (i);
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "fscale" + num + "Factor", "Frequency Scale " + num + " Factor",
+            juce::NormalisableRange<float> (0.0f, 10.0f), 1.0f));
     }
 
     // -- ADSR (single) ------------------------------------------------------

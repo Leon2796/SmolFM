@@ -7,10 +7,10 @@
 -->
 <SmolFM version="2">
   <Nodes>
-    <Node id="note" x="272" y="403">
+    <Node id="note0" x="272" y="403">
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
-    <Node id="osc0" x="734" y="69" frequency="1195.000610351562" waveform="0.0">
+    <Node id="osc0" x="734" y="69" waveform="0.0">
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
@@ -19,7 +19,7 @@
       <Pin id="modulator_in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
-    <Node id="osc1" x="738" y="544" frequency="50.0" waveform="0.0">
+    <Node id="osc1" x="738" y="544" waveform="0.0">
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
@@ -30,7 +30,7 @@
     </Node>
   </Nodes>
   <Connections>
-    <Wire from="note" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="note0" fromPort="out" to="osc0" toPort="note_in"/>
     <Wire from="osc0" fromPort="out" to="adsr" toPort="in"/>
   </Connections>
 </SmolFM>

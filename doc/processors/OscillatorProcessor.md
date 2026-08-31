@@ -16,17 +16,16 @@ Momentanfrequenz in die Phase — das ist die Stelle, an der echte FM entsteht.
 
 | Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
 |---|---|---|---|---|
-| Frequenz | `osc<N>Frequency` | Float, 50–8000 Hz | `std::atomic<float>* frequency` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
 | Wellenform | `osc<N>Waveform` | Choice: Sine/Saw/Square/Triangle | `std::atomic<float>* waveform` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
 
-`<N>` = Instanzindex 0–7. `note_in` ist verbunden → die Port-Frequenz
-überschreibt den Slider-Wert.
+`<N>` = Instanzindex 0–7. Die Frequenz kommt ausschließlich über `note_in`;
+ohne Verbindung liefert der Oszillator 0 Hz (Stille).
 
 ## Abschnitt 2 — UI-Konfiguration
 
 | UI-Funktion | Bedeutung | UI-Symbol | Datei |
 |---|---|---|---|
-| *(noch keine)* | Rotary-Slider (Frequenz) + ComboBox (Wellenform) | `OscillatorPanel::frequencySlider`, `OscillatorPanel::waveformBox` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
+| *(noch keine)* | ComboBox (Wellenform) | `OscillatorPanel::waveformBox` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
 
 ## Abschnitt 3 — Mathematische Beschreibung
 
@@ -42,8 +41,8 @@ Momentanfrequenz in die Phase — das ist die Stelle, an der echte FM entsteht.
 
 Funktionsablauf pro Sample:
 
-1. Frequenzwahl: $f = f_{note\_in}$ falls verbunden, sonst $f_{slider}$;
-   Schutz gegen ungültige Werte: $f \le 0 \Rightarrow f := 440$.
+1. Frequenzwahl: $f = f_{note\_in}$ falls verbunden, sonst $0$ (kein Ton);
+   es gibt keinen Slider-Fallback.
 2. Phase-Increment:
 $$\Delta\varphi = \frac{2\pi f}{f_s}$$
 3. Phasenintegration mit Wrap in $[0, 2\pi)$:
@@ -78,7 +77,7 @@ verändert, entsteht FM beziehungsweise Phasenmodulation.
 
 | Formales Symbol | C++-Symbol / Aufruf | Datei | Berechnungsschritt |
 |---|---|---|---|
-| $f$ | `freq` (lokal), `noteInput.getSample()`, `frequency->load()` | [OscillatorProcessor.cpp](../../src/processors/OscillatorProcessor.cpp) | Port-Wert falls `isConnected()`, sonst Slider; Guard `freq <= 0 → 440` |
+| $f$ | `freq` (lokal), `noteInput.getSample()` | [OscillatorProcessor.cpp](../../src/processors/OscillatorProcessor.cpp) | Port-Wert falls `isConnected()`, sonst `0.0f` |
 | $f_s$ | `sampleRate` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | gesetzt in `prepare(double)` |
 | $\Delta\varphi$ | `phaseIncrement` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | `updatePhaseIncrement()`: `twoPi * frequency / sampleRate` |
 | $\varphi_n$ | `phase` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | `getNextSample()`: `phase += phaseIncrement`, Wrap per `while` |

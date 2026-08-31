@@ -26,11 +26,12 @@ public:
     /**
         Create an oscillator node.
 
-        @param frequencyParameter atomic pointer to the frequency in Hz
         @param waveformParameter  atomic pointer to the waveform index
+
+        The frequency comes exclusively from the note_in port; without a
+        connection the oscillator stays silent (0 Hz).
     */
-    OscillatorProcessor (std::atomic<float>* frequencyParameter,
-                         std::atomic<float>* waveformParameter);
+    explicit OscillatorProcessor (std::atomic<float>* waveformParameter);
 
     void prepare (double newSampleRate) override;
     void startNote() override;
@@ -58,7 +59,6 @@ public:
 private:
     SimpleOscillator oscillator;
 
-    std::atomic<float>* frequency;
     std::atomic<float>* waveform;
 
     InputPort noteInput;

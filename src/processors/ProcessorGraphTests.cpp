@@ -23,8 +23,6 @@ namespace
 {
     struct TestParameters
     {
-        std::atomic<float> carrierFrequency { 440.0f };
-        std::atomic<float> modulatorFrequency { 220.0f };
         std::atomic<float> fmAmount { 0.0f };
         std::atomic<float> carrierWaveform { 0.0f };
         std::atomic<float> modulatorWaveform { 0.0f };
@@ -49,11 +47,11 @@ namespace
         smolfm::NoteProcessor* notePtr = note.get();
 
         auto carrier = std::make_unique<smolfm::OscillatorProcessor> (
-            &params.carrierFrequency, &params.carrierWaveform);
+            &params.carrierWaveform);
         smolfm::OscillatorProcessor* carrierPtr = carrier.get();
 
         auto modulator = std::make_unique<smolfm::OscillatorProcessor> (
-            &params.modulatorFrequency, &params.modulatorWaveform);
+            &params.modulatorWaveform);
         smolfm::OscillatorProcessor* modulatorPtr = modulator.get();
 
         auto fm = std::make_unique<smolfm::FMModulationProcessor> (&params.fmAmount);
@@ -108,18 +106,19 @@ namespace
         return { true, "Note-driven graph produced samples (peak = " + std::to_string (peak) + ", sum = " + std::to_string (sum) + ")" };
     }
 
+    // Without any note wiring the carrier's note_in stays unconnected and the
+    // oscillator must produce silence — there is no frequency fallback.
     TestResult runHzOnlyGraphTest()
     {
         TestParameters params;
         smolfm::SignalGraph graph;
 
-        // No NoteProcessor: both oscillators must fall back to their Hz sliders.
         auto carrier = std::make_unique<smolfm::OscillatorProcessor> (
-            &params.carrierFrequency, &params.carrierWaveform);
+            &params.carrierWaveform);
         smolfm::OscillatorProcessor* carrierPtr = carrier.get();
 
         auto modulator = std::make_unique<smolfm::OscillatorProcessor> (
-            &params.modulatorFrequency, &params.modulatorWaveform);
+            &params.modulatorWaveform);
         smolfm::OscillatorProcessor* modulatorPtr = modulator.get();
 
         auto fm = std::make_unique<smolfm::FMModulationProcessor> (&params.fmAmount);
@@ -129,8 +128,6 @@ namespace
             &params.attack, &params.decay, &params.sustain, &params.release);
         smolfm::AdsrProcessor* adsrPtr = adsr.get();
 
-        // No note wired: fm.freq_in stays disconnected (0 Hz), so the FM
-        // stage hands 0 Hz to the carrier, whose guard falls back to 440 Hz.
         if (! fmPtr->getModulatorInput().connect (modulatorPtr->getOutput()))
             return { false, "Failed to connect modulator to FM modulator_in" };
 
@@ -149,19 +146,16 @@ namespace
         graph.startNote();
 
         float peak = 0.0f;
-        float sum = 0.0f;
         for (int i = 0; i < 1000; ++i)
         {
-            float sample = graph.processSample();
-            float absSample = std::abs (sample);
-            peak = std::max (peak, absSample);
-            sum += absSample;
+            const float sample = graph.processSample();
+            peak = std::max (peak, std::abs (sample));
         }
 
-        if (peak < 0.001f)
-            return { false, "Hz-only graph produced silence (peak too low)" };
+        if (peak > 0.0001f)
+            return { false, "Unconnected note_in should produce silence (peak = " + std::to_string (peak) + ")" };
 
-        return { true, "Hz-only graph produced samples (peak = " + std::to_string (peak) + ", sum = " + std::to_string (sum) + ")" };
+        return { true, "Unconnected note_in produced silence as expected" };
     }
 
     // Two FM stages chained in the Hertz domain:
@@ -170,9 +164,7 @@ namespace
     // (2) an active modulator bends the instantaneous frequency itself.
     TestResult runChainedFmTest()
     {
-        std::atomic<float> carrierFrequency { 440.0f };
         std::atomic<float> carrierWaveform { 0.0f };
-        std::atomic<float> modFrequency { 2.0f };   // slow: full cycle fits in 1 s
         std::atomic<float> modWaveform { 0.0f };
         std::atomic<float> amountA { 0.0f };
         std::atomic<float> amountB { 0.0f };
@@ -186,10 +178,10 @@ namespace
         auto note = std::make_unique<smolfm::NoteProcessor>();
         smolfm::NoteProcessor* notePtr = note.get();
 
-        auto carrier = std::make_unique<smolfm::OscillatorProcessor> (&carrierFrequency, &carrierWaveform);
+        auto carrier = std::make_unique<smolfm::OscillatorProcessor> (&carrierWaveform);
         smolfm::OscillatorProcessor* carrierPtr = carrier.get();
 
-        auto modulator = std::make_unique<smolfm::OscillatorProcessor> (&modFrequency, &modWaveform);
+        auto modulator = std::make_unique<smolfm::OscillatorProcessor> (&modWaveform);
         smolfm::OscillatorProcessor* modulatorPtr = modulator.get();
 
         auto fmA = std::make_unique<smolfm::FMModulationProcessor> (&amountA);

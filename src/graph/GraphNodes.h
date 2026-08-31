@@ -5,7 +5,7 @@
     processor in the voice pool and its own APVTS parameter pair.
 
         Node id scheme
-            note          exactly one (MIDI input node)
+            note0 .. note3  up to 4 MIDI note sources (all emit the played note)
             osc0 .. osc7  up to 8 oscillators (carrier or modulator — same thing)
             fm0 .. fm3    up to 4 FM amount stages
             adsr          exactly one (final envelope)
@@ -48,6 +48,7 @@ enum class NodeType
     note,
     oscillator,
     fmAmount,
+    frequencyScale,
     adsr,
     unknown
 };
@@ -126,7 +127,8 @@ class GraphNodeRegistry
 public:
     static constexpr int maxOscillators = 8;
     static constexpr int maxFmAmounts   = 4;
-    static constexpr int maxNotes       = 1;
+    static constexpr int maxFrequencyScales = 4;
+    static constexpr int maxNotes       = 4;
     static constexpr int maxAdsr        = 1;
 
     static const std::vector<NodeSpec>& getAllSpecs();

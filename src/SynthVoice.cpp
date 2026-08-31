@@ -25,12 +25,13 @@ namespace
     smolfm::InputPort* resolveInput (const juce::String& nodeId,
                                      const juce::String& portId,
                                      SynthVoiceParameters& params,
-                                     NoteProcessor* note,
+                                     std::array<NoteProcessor*, GraphNodeRegistry::maxNotes>& noteSources,
                                      AdsrProcessor* adsr,
                                      std::array<OscillatorProcessor*, GraphNodeRegistry::maxOscillators>& oscillators,
-                                     std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts>& fmProcessors)
+                                     std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts>& fmProcessors,
+                                     std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales>& frequencyScalers)
     {
-        juce::ignoreUnused (params, note);
+        juce::ignoreUnused (params, noteSources);
 
         const NodeType type = GraphNodeRegistry::typeOf (nodeId);
         const int index = GraphNodeRegistry::indexOf (nodeId);
@@ -58,6 +59,16 @@ namespace
             return nullptr;
         }
 
+        if (type == NodeType::frequencyScale
+         && index >= 0 && index < GraphNodeRegistry::maxFrequencyScales
+         && frequencyScalers[static_cast<size_t> (index)] != nullptr)
+        {
+            if (portId == "freq_in")
+                return &frequencyScalers[static_cast<size_t> (index)]->getFreqInput();
+
+            return nullptr;
+        }
+
         if (type == NodeType::adsr && adsr != nullptr && portId == "in")
             return &adsr->getInput();
 
@@ -66,10 +77,11 @@ namespace
 
     smolfm::OutputPort* resolveOutput (const juce::String& nodeId,
                                        const juce::String& portId,
-                                       NoteProcessor* note,
+                                       std::array<NoteProcessor*, GraphNodeRegistry::maxNotes>& noteSources,
                                        AdsrProcessor* adsr,
                                        std::array<OscillatorProcessor*, GraphNodeRegistry::maxOscillators>& oscillators,
-                                       std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts>& fmProcessors)
+                                       std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts>& fmProcessors,
+                                       std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales>& frequencyScalers)
     {
         if (portId != "out")
             return nullptr;
@@ -77,8 +89,10 @@ namespace
         const NodeType type = GraphNodeRegistry::typeOf (nodeId);
         const int index = GraphNodeRegistry::indexOf (nodeId);
 
-        if (type == NodeType::note && note != nullptr)
-            return &note->getOutput();
+        if (type == NodeType::note
+         && index >= 0 && index < GraphNodeRegistry::maxNotes
+         && noteSources[static_cast<size_t> (index)] != nullptr)
+            return &noteSources[static_cast<size_t> (index)]->getOutput();
 
         if (type == NodeType::oscillator
          && index >= 0 && index < GraphNodeRegistry::maxOscillators
@@ -89,6 +103,11 @@ namespace
          && index >= 0 && index < GraphNodeRegistry::maxFmAmounts
          && fmProcessors[static_cast<size_t> (index)] != nullptr)
             return &fmProcessors[static_cast<size_t> (index)]->getOutput();
+
+        if (type == NodeType::frequencyScale
+         && index >= 0 && index < GraphNodeRegistry::maxFrequencyScales
+         && frequencyScalers[static_cast<size_t> (index)] != nullptr)
+            return &frequencyScalers[static_cast<size_t> (index)]->getOutput();
 
         if (type == NodeType::adsr && adsr != nullptr)
             return &adsr->getOutput();
@@ -106,18 +125,21 @@ SynthVoice::SynthVoice (SynthVoiceParameters params)
 
 void SynthVoice::buildGraph()
 {
-    // Note source (singleton).
-    auto note = std::make_unique<NoteProcessor>();
-    noteProcessor = note.get();
-    graph.addProcessor (std::move (note));
+    // Note source pool — every instance mirrors the same played MIDI note
+    // on its own output, so several "note" boxes can feed different chains.
+    for (int i = 0; i < GraphNodeRegistry::maxNotes; ++i)
+    {
+        auto note = std::make_unique<NoteProcessor>();
+        noteSources[static_cast<size_t> (i)] = note.get();
+        graph.addProcessor (std::move (note));
+    }
 
     // Oscillator pool — all created up front, all fed by their own parameter
     // pair.  An osc box that is never wired just renders (harmlessly, it's
     // cheap) and its output is never read by anyone.
     for (int i = 0; i < GraphNodeRegistry::maxOscillators; ++i)
     {
-        auto osc = std::make_unique<OscillatorProcessor> (parameters.oscFrequency[static_cast<size_t> (i)],
-                                                          parameters.oscWaveform [static_cast<size_t> (i)]);
+        auto osc = std::make_unique<OscillatorProcessor> (parameters.oscWaveform [static_cast<size_t> (i)]);
         oscillators[static_cast<size_t> (i)] = osc.get();
         graph.addProcessor (std::move (osc));
     }
@@ -128,6 +150,14 @@ void SynthVoice::buildGraph()
         auto fm = std::make_unique<FMModulationProcessor> (parameters.fmAmount[static_cast<size_t> (i)]);
         fmProcessors[static_cast<size_t> (i)] = fm.get();
         graph.addProcessor (std::move (fm));
+    }
+
+    // Frequency scale pool.
+    for (int i = 0; i < GraphNodeRegistry::maxFrequencyScales; ++i)
+    {
+        auto fscale = std::make_unique<FrequencyScaleProcessor> (parameters.freqScaleFactor[static_cast<size_t> (i)]);
+        frequencyScalers[static_cast<size_t> (i)] = fscale.get();
+        graph.addProcessor (std::move (fscale));
     }
 
     // ADSR (singleton).
@@ -152,8 +182,9 @@ void SynthVoice::startNote (int midiNoteNumber,
 {
     currentVelocity = velocity;
 
-    if (noteProcessor != nullptr)
-        noteProcessor->setMidiNoteNumber (midiNoteNumber);
+    for (auto* note : noteSources)
+        if (note != nullptr)
+            note->setMidiNoteNumber (midiNoteNumber);
 
     graph.startNote();
 }
@@ -206,7 +237,7 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
 
 void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
 {
-    if (noteProcessor == nullptr || adsrProcessor == nullptr)
+    if (adsrProcessor == nullptr)
         return;
 
     // -- 1. Disconnect everything -------------------------------------------
@@ -220,20 +251,24 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
             fm->getModulatorInput().disconnect();
         }
 
+    for (auto* fscale : frequencyScalers)
+        if (fscale != nullptr)  fscale->getFreqInput().disconnect();
+
     adsrProcessor->getInput().disconnect();
 
-    // -- 2. Rewire according to the patch ------------------------------------
-    bool noteConnected = false;
+    for (auto* note : noteSources)
+        if (note != nullptr)  note->setEnabled (false);
 
+    // -- 2. Rewire according to the patch ------------------------------------
     for (const auto& conn : patch.connections)
     {
         OutputPort* out = resolveOutput (conn.from.nodeId, conn.from.portId,
-                                         noteProcessor, adsrProcessor,
-                                         oscillators, fmProcessors);
+                                         noteSources, adsrProcessor,
+                                         oscillators, fmProcessors, frequencyScalers);
         InputPort*  in  = resolveInput  (conn.to.nodeId,   conn.to.portId,
                                          const_cast<SynthVoiceParameters&> (parameters),
-                                         noteProcessor, adsrProcessor,
-                                         oscillators, fmProcessors);
+                                         noteSources, adsrProcessor,
+                                         oscillators, fmProcessors, frequencyScalers);
 
         if (out == nullptr || in == nullptr)
             continue;
@@ -241,10 +276,15 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
         in->connect (*out);
 
         if (GraphNodeRegistry::typeOf (conn.from.nodeId) == NodeType::note)
-            noteConnected = true;
+        {
+            const int noteIndex = GraphNodeRegistry::indexOf (conn.from.nodeId);
+            if (noteIndex >= 0 && noteIndex < GraphNodeRegistry::maxNotes
+             && noteSources[static_cast<size_t> (noteIndex)] != nullptr)
+                noteSources[static_cast<size_t> (noteIndex)]->setEnabled (true);
+        }
     }
 
-    noteProcessor->setEnabled (noteConnected);
+    // Note sources that are not wired stay silent until the next patch or note.
 }
 
 } // namespace smolfm

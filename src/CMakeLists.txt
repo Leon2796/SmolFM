@@ -27,11 +27,13 @@ target_sources(${PROJECT_NAME}
         processors/NoteProcessor.cpp
         processors/OscillatorProcessor.cpp
         processors/FMModulationProcessor.cpp
+        processors/FrequencyScaleProcessor.cpp
         processors/AdsrProcessor.cpp
         graph/GraphNodes.cpp
         graph/SmolFmFile.cpp
         gui/components/OscillatorPanel.cpp
         gui/components/FMModulationComponent.cpp
+        gui/components/FrequencyScaleComponent.cpp
         gui/components/AdsrPanel.cpp
         gui/components/NoteNodeComponent.cpp
         gui/DraggableComponent.cpp

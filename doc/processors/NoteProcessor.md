@@ -2,13 +2,14 @@
 > Template: [../processor-template.md](../processor-template.md) — Struktur nicht ändern.
 
 Wandelt die zuletzt gespielte MIDI-Note in eine Frequenz in Hertz um und stellt
-sie als `frequency`-Quelle im Graph bereit. Der einzige MIDI-Eingang des Synths.
+sie als `frequency`-Quelle im Graph bereit. Alle Instanzen liefern dieselbe
+gespielte Note; mehrere Boxen können so verschiedene Ketten speisen.
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
-| Max. Instanzen | 1 | `GraphNodeRegistry::maxNotes` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
+| Max. Instanzen | 4 | `GraphNodeRegistry::maxNotes` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
 | Input-Ports | *(keine)* | — | — |
 | Output-Ports | `out` (`PortType::frequency`) | `OutputPort output` | [src/processors/NoteProcessor.h](../../src/processors/NoteProcessor.h) |
 
@@ -41,8 +42,11 @@ Pro Sample wird der Wert unverändert ausgegeben, solange der Node aktiviert ist
 
 $$out = \begin{cases} f & e = \text{true} \\ 0 & e = \text{false} \end{cases}$$
 
-$e$ ist `false`, wenn im Patch keine Verbindung von `note.out` existiert — der
-Note-Eingang ist dann abgeschaltet und liefert 0 Hz.
+$e$ ist `false`, wenn im Patch keine Verbindung von `note<N>.out` dieser
+Instanz existiert — die Instanz ist dann abgeschaltet und liefert 0 Hz.
+
+Bei einem Notenanschlag setzt die Voice **alle** Instanzen auf dieselbe
+MIDI-Note (`SynthVoice::startNote`).
 
 ## Abschnitt 4 — Symbol ↔ Code
 
