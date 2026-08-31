@@ -12,13 +12,12 @@
 
 #pragma once
 
+#pragma once
+
 #include "PluginProcessor.h"
 #include "gui/DraggablePanel.h"
 #include "gui/DraggableComponent.h"
-#include "gui/components/OscillatorPanel.h"
-#include "gui/components/FmAmountComponent.h"
-#include "gui/components/AdsrPanel.h"
-#include "gui/components/NoteNodeComponent.h"
+#include "gui/PaletteButton.h"
 
 //==============================================================================
 class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor
@@ -27,34 +26,30 @@ public:
     explicit AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor&);
     ~AudioPluginAudioProcessorEditor() override;
 
-    //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
 
 private:
     AudioPluginAudioProcessor& processorRef;
 
-    // Top-level title label.
     juce::Label titleLabel;
-
-    // Thin toolbar with patch import/export next to the title.
     juce::TextButton exportButton { "Export" };
     juce::TextButton importButton { "Import" };
 
-    // Draggable canvas hosting the signal-graph nodes.  This includes ADSR
-    // and all processor UIs as draggable boxes.
-    gui::DraggablePanel graphPanel;
+    // Add-node palette: one tile per node type, with budget badge.
+    gui::PaletteButton oscButton;
+    gui::PaletteButton fmButton;
+    gui::PaletteButton adsrButton;
+    gui::PaletteButton noteButton;
 
-    // File chooser for the toolbar buttons.  Kept alive so the async dialog
-    // stays valid until the user picks a file.
+    gui::DraggablePanel graphPanel;
     std::unique_ptr<juce::FileChooser> fileChooser;
 
     void exportPatch();
     void importPatch();
+    void addNodeFromToolbar (const juce::String& baseId);
+    void refreshToolbarBadges();
 
-    // Window resize handle (bottom-right corner).  Declared before the
-    // resizer below so the constrainer exists when the corner component is
-    // constructed.
     std::unique_ptr<juce::ComponentBoundsConstrainer> boundsConstrainer;
     juce::ResizableCornerComponent resizer;
 

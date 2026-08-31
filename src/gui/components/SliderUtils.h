@@ -16,7 +16,7 @@ namespace gui
 /**
     Configure a rotary slider with the standard SmolFM look and feel.
 
-    Used identically by OscillatorPanel, AdsrPanel and FmAmountComponent.
+    Used identically by OscillatorPanel, AdsrPanel and FMModulationComponent.
 */
 inline void configureRotarySlider (juce::Slider& slider, const juce::String& suffix) noexcept
 {

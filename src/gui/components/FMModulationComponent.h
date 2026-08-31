@@ -1,5 +1,5 @@
 /*
-    FmAmountComponent owns the FM Amount label and slider.
+    FMModulationComponent owns the FM Amount label and slider.
 
     The component handles its own internal layout and exposes no parameter
     logic outside of the constructor, where the APVTS attachment is created.
@@ -12,13 +12,13 @@
 namespace gui
 {
 
-class FmAmountComponent final : public juce::Component
+class FMModulationComponent final : public juce::Component
 {
 public:
-    FmAmountComponent (juce::AudioProcessorValueTreeState& apvts,
+    FMModulationComponent (juce::AudioProcessorValueTreeState& apvts,
                        const juce::String& parameterID);
 
-    ~FmAmountComponent() override;
+    ~FMModulationComponent() override;
 
     void resized() override;
 
@@ -28,7 +28,7 @@ private:
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> fmAttachment;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FmAmountComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FMModulationComponent)
 };
 
 } // namespace gui

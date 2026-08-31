@@ -32,18 +32,25 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     // thread without locks or allocations.
     constexpr int numberOfVoices = 8;
 
-    smolfm::SynthVoiceParameters voiceParameters
+    smolfm::SynthVoiceParameters voiceParameters {};
+
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxOscillators; ++i)
     {
-        parameters.getRawParameterValue ("carrierFrequency"),
-        parameters.getRawParameterValue ("modulatorFrequency"),
-        parameters.getRawParameterValue ("fmAmount"),
-        parameters.getRawParameterValue ("carrierWaveform"),
-        parameters.getRawParameterValue ("modulatorWaveform"),
-        parameters.getRawParameterValue ("attack"),
-        parameters.getRawParameterValue ("decay"),
-        parameters.getRawParameterValue ("sustain"),
-        parameters.getRawParameterValue ("release")
-    };
+        const juce::String num (i);
+        voiceParameters.oscFrequency[static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "Frequency");
+        voiceParameters.oscWaveform [static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "Waveform");
+    }
+
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxFmAmounts; ++i)
+    {
+        const juce::String num (i);
+        voiceParameters.fmAmount[static_cast<size_t> (i)]     = parameters.getRawParameterValue ("fmAmount" + num);
+    }
+
+    voiceParameters.attack  = parameters.getRawParameterValue ("attack");
+    voiceParameters.decay   = parameters.getRawParameterValue ("decay");
+    voiceParameters.sustain = parameters.getRawParameterValue ("sustain");
+    voiceParameters.release = parameters.getRawParameterValue ("release");
 
     for (int i = 0; i < numberOfVoices; ++i)
         synth.addVoice (new smolfm::SynthVoice (voiceParameters));
@@ -52,16 +59,16 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     // Wire the default FM chain into every voice.  Without this the voices
     // would start with every input disconnected and produce silence.
     //
-    //   note.out     -> carrier.note_in  (played note drives carrier hz)
-    //   carrier.out  -> fm.carrier_in    (waveform that gets modulated)
-    //   modulator.out -> fm.modulator_in (waveform doing the modulating)
-    //   fm.out       -> adsr.in          (envelope shapes the result)
+    //   note.out      -> fm.freq_in       (played note is the carrier pitch)
+    //   modulator.out -> fm.modulator_in  (waveform doing the modulating)
+    //   fm.out        -> carrier.note_in  (modulated Hertz drive the carrier)
+    //   carrier.out   -> adsr.in          (envelope shapes the result)
     // -----------------------------------------------------------------
     smolfm::ConnectionPatch defaultPatch;
-    defaultPatch.connections.push_back ({ { "note",      "out" }, { "carrier", "note_in" } });
-    defaultPatch.connections.push_back ({ { "carrier",   "out" }, { "fm", "carrier_in" } });
-    defaultPatch.connections.push_back ({ { "modulator", "out" }, { "fm", "modulator_in" } });
-    defaultPatch.connections.push_back ({ { "fm",        "out" }, { "adsr", "in" } });
+    defaultPatch.connections.push_back ({ { "note", "out" }, { "fm0", "freq_in" } });
+    defaultPatch.connections.push_back ({ { "osc1", "out" }, { "fm0", "modulator_in" } });
+    defaultPatch.connections.push_back ({ { "fm0",  "out" }, { "osc0", "note_in" } });
+    defaultPatch.connections.push_back ({ { "osc0", "out" }, { "adsr", "in" } });
 
     applyConnectionPatch (defaultPatch);
 }
@@ -245,31 +252,35 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     // host for automation and presets.
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    layout.add (std::make_unique<juce::AudioParameterFloat> (
-        "carrierFrequency", "Carrier Frequency",
-        juce::NormalisableRange<float> (50.0f, 8000.0f), 440.0f));
+    // -- Oscillator pool ---------------------------------------------------
+    // 8 oscillator parameter pairs.  The UI may create up to 8 oscillator
+    // boxes; index 0/1 default to the old carrier/modulator ids so existing
+    // presets keep their sound ("osc0Frequency" == old "carrierFrequency").
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxOscillators; ++i)
+    {
+        const juce::String num (i);
 
-    layout.add (std::make_unique<juce::AudioParameterFloat> (
-        "modulatorFrequency", "Modulator Frequency",
-        juce::NormalisableRange<float> (50.0f, 8000.0f), 220.0f));
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "osc" + num + "Frequency", "Oscillator " + num + " Frequency",
+            juce::NormalisableRange<float> (50.0f, 8000.0f), 440.0f));
 
-    layout.add (std::make_unique<juce::AudioParameterFloat> (
-        "fmAmount", "FM Amount",
-        juce::NormalisableRange<float> (0.0f, 10.0f), 0.0f));
+        layout.add (std::make_unique<juce::AudioParameterChoice> (
+            "osc" + num + "Waveform", "Oscillator " + num + " Waveform",
+            juce::StringArray { "Sine", "Saw", "Square", "Triangle" },
+            static_cast<int> (smolfm::Waveform::sine)));
+    }
 
-    layout.add (std::make_unique<juce::AudioParameterChoice> (
-        "carrierWaveform", "Carrier Waveform",
-        juce::StringArray { "Sine", "Saw", "Square", "Triangle" },
-        static_cast<int> (smolfm::Waveform::sine)));
+    // -- FM pool ------------------------------------------------------------
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxFmAmounts; ++i)
+    {
+        const juce::String num (i);
 
-    layout.add (std::make_unique<juce::AudioParameterChoice> (
-        "modulatorWaveform", "Modulator Waveform",
-        juce::StringArray { "Sine", "Saw", "Square", "Triangle" },
-        static_cast<int> (smolfm::Waveform::sine)));
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "fmAmount" + num, "FM Amount " + num,
+            juce::NormalisableRange<float> (0.0f, 10.0f), 0.0f));
+    }
 
-    // Logarithmic ranges for envelope times let users adjust short values
-    // precisely while still reaching long values.  A skew of 0.5 maps the
-    // slider position through a square-root curve.
+    // -- ADSR (single) ------------------------------------------------------
     layout.add (std::make_unique<juce::AudioParameterFloat> (
         "attack", "Attack",
         juce::NormalisableRange<float> (0.001f, 5.0f, 0.001f, 0.5f), 0.01f));

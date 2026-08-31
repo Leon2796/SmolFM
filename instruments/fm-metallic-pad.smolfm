@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Demo 4: Metallische Flaeche / Metallic Pad  (doppelte FM: fm0 -> fm1 -> osc0)
+
+  Klangidee: Zwei irrationale Verhaeltnisse hintereinander: Mod1 = 622 Hz
+  (~sqrt(2):1), Mod2 = 3111 Hz (~7.07:1). Die multiplikative Kette
+  verschachtelt die inharmonischen Seitenbaender zu einem dichten,
+  metallischen Spektrum. Langes Attack/Release macht die Flaeche.
+
+  Durch die hohen Amounts fahren beide Stufen teils Through-Zero
+  (negative Momentanfrequenz) - das ist der sirrende Charakter.
+-->
+<SmolFM version="2">
+  <Nodes>
+    <Node id="note" x="60" y="300">
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="osc0" x="940" y="180" frequency="440.0" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="osc1" x="60" y="540" frequency="622.0" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="osc2" x="360" y="580" frequency="3111.0" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="fm0" x="360" y="220" amount="3.0">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="fm1" x="660" y="260" amount="2.2">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="adsr" x="1220" y="280" attack="0.4" decay="1.5" sustain="0.7" release="2.5">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+  </Nodes>
+  <Connections>
+    <Wire from="note" fromPort="out" to="fm0" toPort="freq_in"/>
+    <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in"/>
+    <Wire from="fm0" fromPort="out" to="fm1" toPort="freq_in"/>
+    <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in"/>
+    <Wire from="fm1" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="osc0" fromPort="out" to="adsr" toPort="in"/>
+  </Connections>
+</SmolFM>

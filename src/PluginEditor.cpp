@@ -8,6 +8,44 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "graph/SmolFmFile.h"
+#include "gui/components/OscillatorPanel.h"
+#include "gui/components/FMModulationComponent.h"
+#include "gui/components/AdsrPanel.h"
+#include "gui/components/NoteNodeComponent.h"
+
+namespace
+{
+    // Node-type content factories.  Each produces the panel a box needs, bound
+    // to the instance's own parameter ids (via GraphNodeRegistry).
+
+    std::unique_ptr<juce::Component> makeOscillatorContent (const juce::String& instanceId,
+                                                            juce::AudioProcessorValueTreeState& apvts)
+    {
+        return std::make_unique<gui::OscillatorPanel> (
+            apvts, "Oscillator",
+            smolfm::GraphNodeRegistry::frequencyParameterIdFor (instanceId),
+            smolfm::GraphNodeRegistry::waveformParameterIdFor  (instanceId));
+    }
+
+    std::unique_ptr<juce::Component> makeFmContent (const juce::String& instanceId,
+                                                    juce::AudioProcessorValueTreeState& apvts)
+    {
+        return std::make_unique<gui::FMModulationComponent> (
+            apvts, smolfm::GraphNodeRegistry::amountParameterIdFor (instanceId));
+    }
+
+    std::unique_ptr<juce::Component> makeAdsrContent (const juce::String&,
+                                                      juce::AudioProcessorValueTreeState& apvts)
+    {
+        return std::make_unique<gui::AdsrPanel> (apvts);
+    }
+
+    std::unique_ptr<juce::Component> makeNoteContent (const juce::String&,
+                                                      juce::AudioProcessorValueTreeState&)
+    {
+        return std::make_unique<gui::NoteNodeComponent>();
+    }
+}
 
 //==============================================================================
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
@@ -29,102 +67,124 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
     boundsConstrainer->setMinimumSize (700, 500);
     boundsConstrainer->setMaximumSize (2400, 1600);
-
     addAndMakeVisible (resizer);
-
-    // Tell hosts (especially the Standalone wrapper) that this editor has a
-    // preferred size it can be resized from.
     setResizable (true, true);
 
     // -----------------------------------------------------------------
-    // Build the five boxes we show in the graph view.  Content is the same
-    // panels as before, so controls still work as usual.
-    //
-    // IMPORTANT: add the box to the panel FIRST, then add pins.  Pin
-    // construction needs the panel as a parent so its component tree sits
-    // under the right JUCE hierarchy.
+    // Toolbar palette: one tile per node type, showing how many are left.
     // -----------------------------------------------------------------
+    oscButton  .configure ("osc",  "Osc",   [] (const juce::Rectangle<float>& r)
+                           {   juce::Path p; p.addEllipse (r.reduced (1.0f)); return p; },
+                           smolfm::GraphNodeRegistry::maxOscillators);
+    fmButton   .configure ("fm",   "FM",    [] (const juce::Rectangle<float>& r)
+                           {   juce::Path p; p.startNewSubPath (r.getX(), r.getCentreY());
+                               p.cubicTo (r.getX() + r.getWidth() * 0.3f, r.getY(),
+                                          r.getRight() - r.getWidth() * 0.3f, r.getBottom(), r.getRight(), r.getCentreY());
+                               return p; },
+                           smolfm::GraphNodeRegistry::maxFmAmounts);
+    adsrButton .configure ("adsr", "ADSR",  [] (const juce::Rectangle<float>& r)
+                           {   juce::Path p; p.startNewSubPath (r.getX(), r.getBottom());
+                               p.lineTo (r.getX() + r.getWidth() * 0.25f, r.getY());
+                               p.lineTo (r.getX() + r.getWidth() * 0.5f, r.getCentreY());
+                               p.lineTo (r.getX() + r.getWidth() * 0.75f, r.getCentreY());
+                               p.lineTo (r.getRight(), r.getBottom()); return p; },
+                           smolfm::GraphNodeRegistry::maxAdsr);
+    noteButton .configure ("note", "Note",  [] (const juce::Rectangle<float>& r)
+                           {   juce::Path p; const float cx = r.getCentreX(), cy = r.getCentreY();
+                               p.startNewSubPath (cx, cy); p.lineTo (cx, r.getY());
+                               p.startNewSubPath (cx - 4, cy); p.addEllipse (cx - 8, cy - 6, 10, 8);
+                               return p; },
+                           smolfm::GraphNodeRegistry::maxNotes);
 
-    auto carrier = std::make_unique<gui::DraggableComponent> (
-        "carrier", "Carrier",
-        std::make_unique<gui::OscillatorPanel> (processorRef.getParameters(),
-                                                "Carrier",
-                                                "carrierFrequency",
-                                                "carrierWaveform"));
-    auto modulator = std::make_unique<gui::DraggableComponent> (
-        "modulator", "Modulator",
-        std::make_unique<gui::OscillatorPanel> (processorRef.getParameters(),
-                                                "Modulator",
-                                                "modulatorFrequency",
-                                                "modulatorWaveform"));
-    auto fmAmount = std::make_unique<gui::DraggableComponent> (
-        "fm", "FM Amount",
-        std::make_unique<gui::FmAmountComponent> (processorRef.getParameters(), "fmAmount"));
-    auto note = std::make_unique<gui::DraggableComponent> (
-        "note", "Note In",
-        std::make_unique<gui::NoteNodeComponent>());
-    auto adsr = std::make_unique<gui::DraggableComponent> (
-        "adsr", "ADSR",
-        std::make_unique<gui::AdsrPanel> (processorRef.getParameters()));
+    for (auto* b : { &oscButton, &fmButton, &adsrButton, &noteButton })
+    {
+        addAndMakeVisible (*b);
+        b->onAddRequested = [this] (const juce::String& baseId) { addNodeFromToolbar (baseId); };
+    }
 
     // -----------------------------------------------------------------
-    // Wire the UI into the processor graph, then add the boxes so they have
-    // a parent before any pin is attached.
+    // Wire the panel: patch changes go to the processor, node-set changes
+    // refresh the toolbar budgets.
     // -----------------------------------------------------------------
-
     graphPanel.onConnectionPatchChanged = [this] (const smolfm::ConnectionPatch& patch)
     {
         processorRef.applyConnectionPatch (patch);
     };
 
-    auto& noteRef      = graphPanel.addComponent (std::move (note));
-    auto& carrierRef   = graphPanel.addComponent (std::move (carrier));
-    auto& fmRef        = graphPanel.addComponent (std::move (fmAmount));
-    auto& modulatorRef = graphPanel.addComponent (std::move (modulator));
-    auto& adsrRef      = graphPanel.addComponent (std::move (adsr));
+    graphPanel.onNodeSetChanged = [this] { refreshToolbarBadges(); };
 
-    // Now that the boxes live inside the panel, attach the pins.  The ids
-    // match GraphNodes.h ("note.out", "carrier.note_in", ...) so the panel
-    // can resolve them when the user drags a wire.
-    //
-    // Carrier and Modulator are the same node shape: one note_in (frequency)
-    // and one signal out.  FM Amount takes two signals and puts one out.
-    noteRef.addOutputPin     ("out",          smolfm::PortType::frequency);
-    carrierRef.addInputPin   ("note_in",      smolfm::PortType::frequency);
-    carrierRef.addOutputPin  ("out",          smolfm::PortType::signal);
-    modulatorRef.addInputPin ("note_in",      smolfm::PortType::frequency);
-    modulatorRef.addOutputPin("out",          smolfm::PortType::signal);
-    fmRef.addInputPin        ("carrier_in",   smolfm::PortType::signal);
-    fmRef.addInputPin        ("modulator_in", smolfm::PortType::signal);
-    fmRef.addOutputPin       ("out",          smolfm::PortType::signal);
-    adsrRef.addInputPin      ("in",           smolfm::PortType::signal);
+    // SmolFmFile::load calls this when the XML references a node that isn't
+    // currently on the canvas (e.g. "osc4").
+    graphPanel.onCreateMissingNode = [this] (const juce::String& instanceId)
+        -> gui::DraggableComponent*
+    {
+        const juce::String baseId = smolfm::GraphNodeRegistry::baseIdOf (instanceId);
 
-    constexpr int margin = 16;
-    constexpr int spacing = 32;
+        // Reuse the same factories the toolbar uses.
+        if (baseId == "osc")
+            return graphPanel.addNodeOfType ("osc",  processorRef.getParameters(), makeOscillatorContent);
+        if (baseId == "fm")
+            return graphPanel.addNodeOfType ("fm",   processorRef.getParameters(), makeFmContent);
+        if (baseId == "adsr")
+            return graphPanel.addNodeOfType ("adsr", processorRef.getParameters(), makeAdsrContent);
+        if (baseId == "note")
+            return graphPanel.addNodeOfType ("note", processorRef.getParameters(), makeNoteContent);
 
-    noteRef.setTopLeftPosition     (margin, margin);
-    carrierRef.setTopLeftPosition  (margin + spacing + carrierRef.getWidth(), margin);
-    fmRef.setTopLeftPosition       (margin + 2 * (spacing + fmRef.getWidth()), margin);
-    modulatorRef.setTopLeftPosition(margin + 3 * (spacing + modulatorRef.getWidth()), margin);
-    adsrRef.setTopLeftPosition     (margin, margin + 200);
+        return nullptr;
+    };
 
     // -----------------------------------------------------------------
-    // Default wiring — the classic FM chain through the new node shapes:
-    //   note.out   -> carrier.note_in     (MIDI note drives carrier hz)
-    //   carrier.out -> fm.carrier_in      (carrier waveform to be modulated)
-    //   modulator.out -> fm.modulator_in  (modulator waveform)
-    //   fm.out     -> adsr.in             (envelope shapes the FM result)
-    //
-    // loadLayout() may replace this entirely from the saved patch.
+    // Seed the canvas with the sensible starting set: the classic FM chain.
+    // loadLayout() may overwrite positions/wiring from the saved patch.
     // -----------------------------------------------------------------
+    addNodeFromToolbar ("note");
+    auto* osc0 = graphPanel.addNodeOfType ("osc", processorRef.getParameters(), makeOscillatorContent);   // carrier seat
+    graphPanel.addNodeOfType ("osc", processorRef.getParameters(), makeOscillatorContent);                 // modulator seat
+    auto* fm0  = graphPanel.addNodeOfType ("fm",  processorRef.getParameters(), makeFmContent);
+    addNodeFromToolbar ("adsr");
+
+    // Default patch across those instances (osc0 = carrier, osc1 = modulator).
+    // FM works in the frequency domain: it bends the Hertz that drive osc0.
     smolfm::ConnectionPatch defaultPatch;
-    defaultPatch.connections.push_back ({ { "note",      "out" }, { "carrier", "note_in" } });
-    defaultPatch.connections.push_back ({ { "carrier",   "out" }, { "fm", "carrier_in" } });
-    defaultPatch.connections.push_back ({ { "modulator", "out" }, { "fm", "modulator_in" } });
-    defaultPatch.connections.push_back ({ { "fm",        "out" }, { "adsr", "in" } });
-    graphPanel.applyPatch (defaultPatch);
+    defaultPatch.connections.push_back ({ { "note", "out" }, { "fm0",  "freq_in" } });
+    defaultPatch.connections.push_back ({ { "osc1", "out" }, { "fm0",  "modulator_in" } });
+    defaultPatch.connections.push_back ({ { "fm0",  "out" }, { "osc0", "note_in" } });
+    defaultPatch.connections.push_back ({ { "osc0", "out" }, { "adsr", "in" } });
+
+    if (osc0 != nullptr && fm0 != nullptr)
+        graphPanel.applyPatch (defaultPatch);
+
+    refreshToolbarBadges();
 
     setSize (1200, 800);
+}
+
+void AudioPluginAudioProcessorEditor::addNodeFromToolbar (const juce::String& baseId)
+{
+    using ContentFactory = std::function<std::unique_ptr<juce::Component> (const juce::String&,
+                                                                           juce::AudioProcessorValueTreeState&)>;
+
+    static const std::map<juce::String, ContentFactory> factories
+    {
+        { "note", makeNoteContent    },
+        { "osc",  makeOscillatorContent },
+        { "fm",   makeFmContent      },
+        { "adsr", makeAdsrContent    }
+    };
+
+    const auto it = factories.find (baseId);
+    if (it == factories.end())
+        return;
+
+    graphPanel.addNodeOfType (baseId, processorRef.getParameters(), it->second);
+}
+
+void AudioPluginAudioProcessorEditor::refreshToolbarBadges()
+{
+    oscButton .setRemaining (smolfm::GraphNodeRegistry::maxOscillators - graphPanel.countBoxesOfType ("osc"));
+    fmButton  .setRemaining (smolfm::GraphNodeRegistry::maxFmAmounts   - graphPanel.countBoxesOfType ("fm"));
+    adsrButton.setRemaining (smolfm::GraphNodeRegistry::maxAdsr        - graphPanel.countBoxesOfType ("adsr"));
+    noteButton.setRemaining (smolfm::GraphNodeRegistry::maxNotes       - graphPanel.countBoxesOfType ("note"));
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -142,11 +202,22 @@ void AudioPluginAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds().reduced (24);
 
-    auto toolbar = bounds.removeFromTop (32);
-    auto titleArea = toolbar;
-    titleLabel.setBounds (titleArea.removeFromLeft (juce::jmax (60, toolbar.getWidth() - 180)));
-    importButton.setBounds (toolbar.removeFromRight (84).reduced (2));
-    exportButton.setBounds (toolbar.removeFromRight (84).reduced (2));
+    // Toolbar: title left, palette center, import/export right.
+    auto toolbar = bounds.removeFromTop (34);
+    titleLabel.setBounds (toolbar.removeFromLeft (110));
+
+    auto buttonsArea = toolbar.removeFromRight (toolbar.getWidth() > 420 ? 400 : toolbar.getWidth() / 2);
+    importButton.setBounds (buttonsArea.removeFromRight (84).reduced (2));
+    exportButton.setBounds (buttonsArea.removeFromRight (84).reduced (2));
+
+    // Palette tiles, 4 × 56 px each.
+    auto palette = toolbar.reduced (4, 2);
+    const int tileWidth = 62;
+    oscButton .setBounds (palette.removeFromLeft (tileWidth));
+    fmButton  .setBounds (palette.removeFromLeft (tileWidth));
+    adsrButton.setBounds (palette.removeFromLeft (tileWidth));
+    noteButton.setBounds (palette.removeFromLeft (tileWidth));
+
     bounds.removeFromTop (8);
 
     graphPanel.setBounds (bounds);

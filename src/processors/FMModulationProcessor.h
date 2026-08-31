@@ -1,14 +1,33 @@
 /*
-    FMModulationProcessor applies frequency modulation between two signals.
+    FMModulationProcessor applies true frequency modulation in the
+    frequency domain.
 
-    It has two inputs and one output, all plain signal ports (no Hertz):
-        - carrier:    the waveform whose phase is modulated
-        - modulator:  the signal that pushes the carrier's phase
+    Ports:
+        - freq_in       (frequency): carrier base frequency in Hertz, wired
+                          from note.out or from the previous FM stage's out.
+        - modulator_in  (signal):    the signal that bends the frequency.
+        - out           (frequency): instantaneous carrier frequency.
 
-    The node owns only a phase accumulator.  Per sample it measures the
-    carrier input's period via zero-crossings and evaluates
-    sin(phase + modulator * fmAmount).  That is real phase-modulation FM:
-    the modulator stays a signal, it is never turned back into a frequency.
+    Per sample:
+
+        f_out = f_in * (1 + amount * modulator)
+
+    This is real FM, not phase modulation: the modulator never touches a
+    phase directly.  It only scales the Hertz value; the phase accumulator
+    lives in the oscillator at the end of the chain.  The oscillator
+    integrates the instantaneous frequency and renders whatever waveform
+    (sine/saw/square/triangle/wavetable) the user picked — which is what
+    makes the stages chainable:
+
+        note.out -> fm0.freq_in -> fm0.out -> fm1.freq_in -> ... -> osc.note_in
+
+    The deviation is proportional to the incoming carrier frequency, so the
+    modulation index (and therefore the timbre) is identical on every key.
+    Negative instantaneous frequencies (through-zero FM) are fine: the
+    oscillator's phase simply runs backwards.
+
+    amount = 0 or no modulator wired: f_out = f_in — the stage is fully
+    transparent, so idle links in an FM chain cost nothing.
 */
 
 #pragma once
@@ -19,10 +38,10 @@ namespace smolfm
 {
 
 /**
-    Two-signal FM node.
+    Chainable FM stage operating on Hertz values.
 
-    Both inputs are signal ports.  The output is a sine whose phase follows
-    the wired carrier and is offset by (modulator * fmAmount).
+    Inputs are the carrier frequency and the modulator signal; the output is
+    the instantaneous frequency that drives an oscillator's note_in port.
 */
 class FMModulationProcessor final : public Processor
 {
@@ -30,8 +49,9 @@ public:
     /**
         Create the FM node.
 
-        @param fmAmount atomic pointer to the FM index (radians of phase
-                        offset per unit of modulator signal)
+        @param fmAmount atomic pointer to the FM index.  A value of 1 lets
+                        the modulator push the carrier up to +/-100 % around
+                        its base frequency.
     */
     explicit FMModulationProcessor (std::atomic<float>* fmAmount);
 
@@ -39,25 +59,16 @@ public:
     void startNote() override;
     float processSample() override;
 
-    InputPort& getCarrierInput() noexcept   { return carrierInput; }
+    InputPort& getFreqInput() noexcept      { return freqInput; }
     InputPort& getModulatorInput() noexcept { return modulatorInput; }
     OutputPort& getOutput() noexcept        { return output; }
 
 private:
     std::atomic<float>* fmAmount;
 
-    InputPort carrierInput { PortType::signal };
+    InputPort freqInput { PortType::frequency };
     InputPort modulatorInput { PortType::signal };
-    OutputPort output { PortType::signal, *this };
-
-    // Carrier pitch is measured from the wired signal's zero-crossings, so
-    // the node works with any oscillator the user connects instead of
-    // re-creating the waveform internally.
-    double sampleRate = 44100.0;
-    float phase = 0.0f;
-    float lastCarrierSample = 0.0f;
-    int   samplesSinceCrossing = 0;
-    float lastMeasuredPeriodInSamples = 0.0f;
+    OutputPort output { PortType::frequency, *this };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FMModulationProcessor)
 };

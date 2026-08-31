@@ -41,6 +41,13 @@ abstractions, configs, or fallbacks for values that should never occur.
 
 Use **JuMake** to add new C++ classes and JUCE components.
 
+## Naming Processor Components
+
+Die GUI-Komponente eines Prozessors und dessen Implementierungsdateien verwenden
+denselben Präfix: `<ProcessorPrefix>Component.h/.cpp` und
+`<ProcessorPrefix>Processor.h/.cpp`. Beispiel:
+`FMModulationComponent.h/.cpp` gehört zu `FMModulationProcessor.h/.cpp`.
+
 Reference: [JuMake GitHub Repository](https://github.com/BaraMGB/JuMake?utm_source=chatgpt.com)
 
 > **Windows:** Run the commands from a PowerShell or Command Prompt.
@@ -73,6 +80,15 @@ This will:
 Use **Context7** to check current JUCE and library documentation before implementing APIs or functionality.
 
 The JUCE source code is also available as a git submodule in this Repository.
+
+### Processor Documentation (doc/processors)
+
+Jeder Prozessortyp ist unter [doc/processors](../doc/processors) dokumentiert. Verbindliche Regeln:
+
+- **Template beachten:** Die feste Struktur steht in [doc/processor-template.md](../doc/processor-template.md). Richte dich beim Erstellen und Updaten strikt danach. Die Struktur (Abschnitte 1–4, Reihenfolge, Tabellenform) darf **nie** geändert werden.
+- **Immer synchron zum Code:** Bei neuen Prozessoren **und** bei jeder Änderung an bestehenden Prozessoren (neue/entfernte Ports, Typwechsel im Parameterfluss, neue Parameter, neue UI-Funktionen) wird die zugehörige Markdown-Datei **im selben Arbeitsschritt** aktualisiert. Dokumentation und Code dürfen nie auseinanderlaufen.
+- **Nur Symbole referenzieren:** Felder, Typen und Funktionsnamen mit Dateipfad — keine langen Code-Routinen in den Docs.
+- **UI-Funktionen:** Neue GUI-Modi/-Schalter gehören in Abschnitt 2. Beim **ersten Auftreten** einer solchen Funktion wird das Template gezielt erweitert und danach alle Prozessor-Dateien auf die neue Struktur gezogen.
 
 ## Quick Reference
 

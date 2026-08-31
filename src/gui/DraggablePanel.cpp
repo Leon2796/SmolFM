@@ -64,7 +64,98 @@ DraggableComponent& DraggablePanel::addComponent (std::unique_ptr<DraggableCompo
     auto* raw = box.get();
     boxes.add (std::move (box));
     addAndMakeVisible (*raw);
+
+    raw->onCloseRequested = [this] (DraggableComponent& b) { removeNode (b); };
     return *raw;
+}
+
+//==============================================================================
+DraggableComponent* DraggablePanel::addNodeOfType (const juce::String& baseId,
+                                                   juce::AudioProcessorValueTreeState& apvts,
+                                                   std::function<std::unique_ptr<juce::Component> (const juce::String& instanceId,
+                                                                                                   juce::AudioProcessorValueTreeState&)> makeContent)
+{
+    // Find the lowest free instance index for this type (or the only allowed
+    // id for single-instance types like note/adsr).
+    const smolfm::NodeType type = smolfm::GraphNodeRegistry::typeOf (baseId);
+    const int max = smolfm::GraphNodeRegistry::maxInstancesOf (type);
+    if (max <= 0)
+        return nullptr;
+
+    int index = -1;
+    juce::String instanceId;
+
+    if (max == 1)
+    {
+        instanceId = baseId;
+        if (findBox (instanceId) != nullptr)
+            return nullptr;      // only one allowed
+        index = 0;
+    }
+    else
+    {
+        for (int i = 0; i < max; ++i)
+        {
+            const juce::String candidate = smolfm::GraphNodeRegistry::makeInstanceId (baseId, i);
+            if (findBox (candidate) == nullptr)
+            {
+                index = i;
+                instanceId = candidate;
+                break;
+            }
+        }
+        if (index < 0)
+            return nullptr;      // budget exhausted
+    }
+
+    const smolfm::NodeSpec* spec = smolfm::GraphNodeRegistry::findSpec (baseId);
+    if (spec == nullptr || makeContent == nullptr)
+        return nullptr;
+
+    auto content = makeContent (instanceId, apvts);
+    if (content == nullptr)
+        return nullptr;
+
+    juce::String title = spec->title;
+    if (max > 1)
+        title += " " + juce::String (index + 1);
+
+    auto box = std::make_unique<DraggableComponent> (instanceId, title, std::move (content));
+    auto* raw = &addComponent (std::move (box));
+
+    // Attach the pins declared by this node's spec.
+    for (int i = 0; i < spec->inputPortIds.size(); ++i)
+    {
+        const smolfm::PortType t = i < static_cast<int> (spec->inputTypes.size())
+                                       ? spec->inputTypes[static_cast<size_t> (i)]
+                                       : smolfm::PortType::signal;
+        raw->addInputPin (spec->inputPortIds[i], t);
+    }
+
+    if (spec->outputPortId.isNotEmpty())
+        raw->addOutputPin (spec->outputPortId, spec->outputType);
+
+    // Park the new box beside the previous ones so they don't stack exactly.
+    raw->setTopLeftPosition ({ 16 + 24 * (boxes.size() - 1), 16 + 24 * (boxes.size() - 1) });
+
+    if (onNodeSetChanged)
+        onNodeSetChanged();
+
+    repaint();
+    return raw;
+}
+
+void DraggablePanel::removeNode (DraggableComponent& box)
+{
+    // Remove every wire that touches this box, then the box itself.
+    removeAllConnectionsForBox (box.getBoxId());
+
+    boxes.removeObject (&box);
+
+    if (onNodeSetChanged)
+        onNodeSetChanged();
+
+    repaint();
 }
 
 //==============================================================================
@@ -102,6 +193,20 @@ void DraggablePanel::setBoxPosition (const juce::String& boxId, juce::Point<int>
         box->setTopLeftPosition (pos);
         repaint();
     }
+}
+
+int DraggablePanel::countBoxesOfType (const juce::String& baseId) const
+{
+    int n = 0;
+    for (const auto* b : boxes)
+        if (smolfm::GraphNodeRegistry::baseIdOf (b->getBoxId()) == baseId)
+            ++n;
+    return n;
+}
+
+bool DraggablePanel::hasBox (const juce::String& baseId) const
+{
+    return countBoxesOfType (baseId) > 0;
 }
 
 PinComponent* DraggablePanel::findInputPin (const juce::String& nodeId, const juce::String& portId) noexcept
@@ -179,6 +284,20 @@ bool DraggablePanel::isConnected (const smolfm::ConnectionPatch::Endpoint& to) c
         if (c.to == to)
             return true;
     return false;
+}
+
+void DraggablePanel::removeAllConnectionsForBox (const juce::String& boxId)
+{
+    auto& cs = currentPatch.connections;
+
+    for (size_t i = cs.size(); i-- > 0; )
+    {
+        if (cs[i].from.nodeId == boxId || cs[i].to.nodeId == boxId)
+            cs.erase (cs.begin() + static_cast<ptrdiff_t> (i));
+    }
+
+    if (onConnectionPatchChanged)
+        onConnectionPatchChanged (currentPatch);
 }
 
 void DraggablePanel::applyPatch (const smolfm::ConnectionPatch& patch)

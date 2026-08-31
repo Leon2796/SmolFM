@@ -41,6 +41,10 @@ public:
     void mouseDrag (const juce::MouseEvent& e) override;
     void mouseUp (const juce::MouseEvent& e) override;
 
+    /** Fired when the little × in the title bar is clicked.  The panel
+        removes the box via this callback. */
+    std::function<void (DraggableComponent&)> onCloseRequested;
+
     /** Stable identifier used for persistence. */
     const juce::String& getBoxId() const noexcept { return boxId; }
 
@@ -80,6 +84,7 @@ private:
     juce::String boxId;
     juce::String title;
     std::unique_ptr<juce::Component> content;
+    juce::TextButton closeButton { "close" };
 
     juce::OwnedArray<PinComponent> inputPins;
     juce::OwnedArray<PinComponent> outputPins;

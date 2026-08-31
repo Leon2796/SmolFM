@@ -20,11 +20,19 @@ DraggableComponent::DraggableComponent (const juce::String& id,
 
     addAndMakeVisible (*content);
 
+    closeButton.setButtonText (juce::String::charToString (0x2715)); // ✕
+    closeButton.setTooltip ("Remove this node");
+    closeButton.setColour (juce::TextButton::buttonColourId, juce::Colours::transparentBlack);
+    closeButton.setColour (juce::TextButton::textColourOffId, juce::Colours::white.withAlpha (0.8f));
+    closeButton.onClick = [this]
+    {
+        if (onCloseRequested)
+            onCloseRequested (*this);
+    };
+    addAndMakeVisible (closeButton);
+
     const juce::Rectangle<int> preferred = getPreferredSize();
     setSize (preferred.getWidth(), preferred.getHeight());
-
-    // The ctor's initial setSize() triggers resized() so pins added later
-    // still need an explicit layout pass (see addInputPin/addOutputPin).
 }
 
 void DraggableComponent::paint (juce::Graphics& g)
@@ -50,6 +58,9 @@ void DraggableComponent::resized()
                         titleBarHeight + contentPadding,
                         getWidth() - 2 * contentPadding,
                         getHeight() - titleBarHeight - 2 * contentPadding);
+
+    // Keep the little close × parked in the top-right corner of the title bar.
+    closeButton.setBounds (getWidth() - titleBarHeight, 0, titleBarHeight, titleBarHeight);
 
     layoutPins();
 }

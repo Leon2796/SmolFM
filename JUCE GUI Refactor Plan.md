@@ -27,8 +27,8 @@ source/
     └── components/
         ├── OscillatorPanel.h
         ├── OscillatorPanel.cpp
-        ├── FmAmountComponent.h
-        ├── FmAmountComponent.cpp
+        ├── FMModulationComponent.h
+        ├── FMModulationComponent.cpp
         ├── AdsrPanel.h
         └── AdsrPanel.cpp
 ```
@@ -49,7 +49,7 @@ Create one reusable `OscillatorPanel` class for both the Carrier and Modulator.
 - The component should expose whatever parameters/state the editor needs to configure it as Carrier or Modulator.
 - Use `juce::Grid` or `juce::FlexBox` for the internal layout rather than manual rectangle slicing where practical.
 
-### `FmAmountComponent`
+### `FMModulationComponent`
 
 Create a dedicated component for the FM Amount control.
 
@@ -88,7 +88,7 @@ The Carrier, FM Amount, and Modulator must occupy **one horizontal row**, in thi
 Carrier → FM Amount → Modulator
 ```
 
-The `FmAmountComponent` is therefore positioned **between** the two `OscillatorPanel` instances.
+The `FMModulationComponent` is therefore positioned **between** the two `OscillatorPanel` instances.
 
 The editor's `resized()` should primarily define this high-level grid and delegate internal layout to the child components.
 

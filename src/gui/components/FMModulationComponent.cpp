@@ -1,14 +1,14 @@
 /*
-    FmAmountComponent implementation.
+    FMModulationComponent implementation.
 */
 
-#include "FmAmountComponent.h"
+#include "FMModulationComponent.h"
 #include "SliderUtils.h"
 
 namespace gui
 {
 
-FmAmountComponent::FmAmountComponent (juce::AudioProcessorValueTreeState& apvts,
+FMModulationComponent::FMModulationComponent (juce::AudioProcessorValueTreeState& apvts,
                                       const juce::String& parameterID)
 {
     titleLabel.setText ("FM Amount", juce::dontSendNotification);
@@ -24,11 +24,11 @@ FmAmountComponent::FmAmountComponent (juce::AudioProcessorValueTreeState& apvts,
                                                                                 fmSlider));
 }
 
-FmAmountComponent::~FmAmountComponent()
+FMModulationComponent::~FMModulationComponent()
 {
 }
 
-void FmAmountComponent::resized()
+void FMModulationComponent::resized()
 {
     juce::Grid grid;
     grid.templateRows = { juce::Grid::TrackInfo (juce::Grid::Fr (1)),

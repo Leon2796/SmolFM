@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Demo 5: Marimba / Pluck  (doppelte FM: fm0 -> fm1 -> osc0)
+
+  Klangidee: Mod1 = 1760 Hz (4:1) mit grossem Amount erzeugt den hohen,
+  holzigen Anschlags-Transienten, Mod2 = 440 Hz (1:1) haelt den Ton
+  musikalisch geerdet. Sehr kurzes Decay ohne Sustain = typisches
+  Marimba-"Plop".
+
+  Spielbereich: C4-C6, kurze Anschläge.
+-->
+<SmolFM version="2">
+  <Nodes>
+    <Node id="note" x="60" y="300">
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="osc0" x="940" y="180" frequency="440.0" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="osc1" x="60" y="540" frequency="1760.0" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="osc2" x="360" y="580" frequency="440.0" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="fm0" x="360" y="220" amount="3.5">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="fm1" x="660" y="260" amount="0.8">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="adsr" x="1220" y="280" attack="0.001" decay="0.25" sustain="0.0" release="0.3">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+  </Nodes>
+  <Connections>
+    <Wire from="note" fromPort="out" to="fm0" toPort="freq_in"/>
+    <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in"/>
+    <Wire from="fm0" fromPort="out" to="fm1" toPort="freq_in"/>
+    <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in"/>
+    <Wire from="fm1" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="osc0" fromPort="out" to="adsr" toPort="in"/>
+  </Connections>
+</SmolFM>

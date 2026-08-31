@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Demo 1: Glocke / Bell  (doppelte FM: fm0 -> fm1 -> osc0)
+
+  Klangidee: Inharmonische Modulator-Verhaeltnisse erzeugen den typischen
+  Glocken-Teiltonaufbau. Mod1 liegt bei ~3.55:1 (1564 Hz), Mod2 bei
+  ~1.19:1 (523 Hz) - beide bezogen auf A4 = 440 Hz. Durch die
+  multiplikative Kette entstehen Cluster-Seitenbaender.
+
+  Spielbereich: klingt am besten um A3-A5, weil die Modulatoren feste Hz
+  haben und der Carrier der Taste folgt.
+-->
+<SmolFM version="2">
+  <Nodes>
+    <Node id="note" x="60" y="300">
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="osc0" x="940" y="180" frequency="440.0" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="osc1" x="60" y="540" frequency="1564.0" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="osc2" x="360" y="580" frequency="523.0" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="fm0" x="360" y="220" amount="2.5">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="fm1" x="660" y="260" amount="1.2">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="adsr" x="1220" y="280" attack="0.001" decay="1.8" sustain="0.0" release="1.5">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+  </Nodes>
+  <Connections>
+    <Wire from="note" fromPort="out" to="fm0" toPort="freq_in"/>
+    <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in"/>
+    <Wire from="fm0" fromPort="out" to="fm1" toPort="freq_in"/>
+    <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in"/>
+    <Wire from="fm1" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="osc0" fromPort="out" to="adsr" toPort="in"/>
+  </Connections>
+</SmolFM>

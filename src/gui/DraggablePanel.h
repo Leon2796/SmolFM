@@ -18,6 +18,7 @@
 #include <juce_core/juce_core.h>
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_gui_basics/juce_gui_basics.h>
+#include <juce_audio_processors/juce_audio_processors.h>
 
 #include <functional>
 
@@ -37,6 +38,23 @@ public:
     /** Add a box and adopt its position.  Ownership passes to the panel. */
     DraggableComponent& addComponent (std::unique_ptr<DraggableComponent> box);
 
+    // -- Dynamic add/remove --------------------------------------------------
+
+    /**
+        Add a box for one node TYPE ("osc", "fm", ...) and return its instance
+        id (e.g. "osc2").  The content factory receives the instance id and
+        the APVTS so it can bind its own sliders.
+
+        Returns nullptr when the budget for this type is exhausted.
+    */
+    DraggableComponent* addNodeOfType (const juce::String& baseId,
+                                       juce::AudioProcessorValueTreeState& apvts,
+                                       std::function<std::unique_ptr<juce::Component> (const juce::String& instanceId,
+                                                                                       juce::AudioProcessorValueTreeState&)> makeContent);
+
+    /** Remove a box (and all its wires) from the canvas. */
+    void removeNode (DraggableComponent& box);
+
     // -- Introspection for .smolfm save/load --------------------------------
 
     /** All box ids currently on the canvas, in insertion order. */
@@ -47,6 +65,10 @@ public:
 
     /** Move a box to a new top-left position (clamped into the panel). */
     void setBoxPosition (const juce::String& boxId, juce::Point<int> pos);
+
+    /** Toolbar helpers: how many boxes of this base type ("osc"/"fm") exist. */
+    int countBoxesOfType (const juce::String& baseId) const;
+    bool hasBox (const juce::String& baseId) const;   // for single-instance types
 
     /** Persist positions AND wiring to disk. */
     void saveLayout();
@@ -82,11 +104,24 @@ public:
     /** Remove the wire that ends at (nodeId, portId). */
     bool removeConnectionTo (const smolfm::ConnectionPatch::Endpoint& to);
 
+    /** Remove every wire that starts or ends at the given box. */
+    void removeAllConnectionsForBox (const juce::String& boxId);
+
     /** True when an input pin already has a wire. */
     bool isConnected (const smolfm::ConnectionPatch::Endpoint& to) const noexcept;
 
     /** External notification hook (PluginEditor wires this to the processor). */
     std::function<void (const smolfm::ConnectionPatch&)> onConnectionPatchChanged;
+
+    /** Fired when a box is added or removed (for toolbar badges). */
+    std::function<void()> onNodeSetChanged;
+
+    /**
+        Used by SmolFmFile::load to re-create a box that exists in the XML
+        but isn't on the canvas.  Returns the new box or nullptr.  Set by
+        PluginEditor at construction.
+    */
+    std::function<DraggableComponent* (const juce::String& instanceId)> onCreateMissingNode;
 
     void paintOverChildren (juce::Graphics& g) override;
     void resized() override;
