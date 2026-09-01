@@ -98,7 +98,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     patchBrowser.onPatchSelected = [this] (const juce::File& file)
     {
         if (smolfm::SmolFmFile::load (graphPanel, processorRef.getParameters(), file))
+        {
             patchBrowser.setInstrumentName (smolfm::SmolFmFile::readInstrumentName (file));
+            fitWindowToContent();
+        }
     };
     patchBrowser.setDirectory (processorRef.getPatchDirectory());
 
@@ -283,6 +286,41 @@ void AudioPluginAudioProcessorEditor::resized()
     graphPanel.loadLayout();
 }
 
+void AudioPluginAudioProcessorEditor::fitWindowToContent()
+{
+    // The panel needs this much room for the loaded layout.
+    const auto content = graphPanel.getContentBounds();
+    if (content.isEmpty())
+        return;
+
+    // Fixed chrome: margins (24 each side) + toolbar (34) + gaps (8+4) +
+    // patch browser (64).  The canvas sits below all of that.
+    const int chromeLeft   = 24;
+    const int chromeTop    = 24 + 34 + 8 + 64 + 4;
+    const int chromeRight  = 24;
+    const int chromeBottom = 24;
+
+    // content.getRight()/getBottom() are panel-local coordinates.  The panel
+    // itself starts at (24, chromeTop) inside the editor, so the window needs
+    // that offset plus the panel-local far edge, plus the far-side margin.
+    const int neededW = chromeLeft + content.getRight()  + chromeRight;
+    const int neededH = chromeTop  + content.getBottom() + chromeBottom;
+
+    // Never grow past the usable screen area; respect our own constrainer.
+    const auto screen = juce::Desktop::getInstance().getDisplays()
+                            .getPrimaryDisplay()->userArea;
+
+    const int newW = juce::jlimit (boundsConstrainer->getMinimumWidth(),
+                                   juce::jmin (boundsConstrainer->getMaximumWidth(),  screen.getWidth()),
+                                   neededW);
+    const int newH = juce::jlimit (boundsConstrainer->getMinimumHeight(),
+                                   juce::jmin (boundsConstrainer->getMaximumHeight(), screen.getHeight()),
+                                   neededH);
+
+    if (newW != getWidth() || newH != getHeight())
+        setSize (newW, newH);
+}
+
 //==============================================================================
 void AudioPluginAudioProcessorEditor::exportPatch()
 {
@@ -322,6 +360,7 @@ void AudioPluginAudioProcessorEditor::importPatch()
             smolfm::SmolFmFile::load (graphPanel, processorRef.getParameters(), source);
             patchBrowser.setInstrumentName (smolfm::SmolFmFile::readInstrumentName (source));
             patchBrowser.selectPatch (source);
+            fitWindowToContent();
         });
 }
 

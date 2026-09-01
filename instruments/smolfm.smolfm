@@ -8,30 +8,30 @@
 -->
 <SmolFM version="2">
   <Nodes>
-    <Node id="note0" x="272" y="403">
+    <Node id="note0" x="60" y="60">
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
-    <Node id="osc0" x="734" y="69" waveform="0.0">
+    <Node id="osc0" x="1020" y="60" waveform="0.0">
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-    <Node id="fm0" x="1212" y="269" amount="1.080000281333923">
+    <Node id="fm0" x="700" y="60" amount="1.080000281333923">
       <Pin id="freq_in" direction="in" type="frequency"/>
       <Pin id="modulator_in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
-    <Node id="osc1" x="738" y="544" waveform="0.0">
+    <Node id="osc1" x="1020" y="380" waveform="0.0">
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-    <Node id="note1" x="272" y="620"/>
-    <Node id="fscale0" x="420" y="600" factor="0.1136"/>
-    <Node id="adsr0" x="1699" y="271" attack="0.02800000086426735" decay="1.310000061988831"
+    <Node id="note1" x="60" y="380"/>
+    <Node id="fscale0" x="380" y="60" factor="0.1136"/>
+    <Node id="adsr0" x="1340" y="60" attack="0.02800000086426735" decay="1.310000061988831"
           sustain="0.4480000138282776" release="0.5">
       <Pin id="in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-      <Node id="output" x="2500" y="80" level="0.8"/>
+      <Node id="output" x="1660" y="60" level="0.8"/>
   </Nodes>
   <Connections>
     <Wire from="note0" fromPort="out" to="fm0" toPort="freq_in"/>

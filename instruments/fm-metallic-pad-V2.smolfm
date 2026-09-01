@@ -2,22 +2,22 @@
 
 <SmolFM version="2" name="fm-metallic-pad-V2">
   <Nodes>
-    <Node id="note0" x="519" y="13"/>
-    <Node id="osc0" x="1521" y="178" waveform="0.0"/>
-    <Node id="osc1" x="537" y="272" waveform="0.0"/>
-    <Node id="osc2" x="956" y="551" waveform="0.0"/>
-    <Node id="fm0" x="860" y="140" amount="3.0"/>
-    <Node id="fm1" x="1221" y="194" amount="2.200000047683716"/>
-    <Node id="adsr0" x="1789" y="187" attack="0.4000000059604645" decay="1.50000011920929"
+    <Node id="note0" x="60" y="60"/>
+    <Node id="osc0" x="1020" y="60" waveform="0.0"/>
+    <Node id="osc1" x="1020" y="380" waveform="0.0"/>
+    <Node id="osc2" x="1020" y="700" waveform="0.0"/>
+    <Node id="fm0" x="700" y="60" amount="3.0"/>
+    <Node id="fm1" x="700" y="380" amount="2.200000047683716"/>
+    <Node id="adsr0" x="1340" y="60" attack="0.4000000059604645" decay="1.50000011920929"
           sustain="0.699999988079071" release="2.5">
       <Pin id="in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-    <Node id="note1" x="24" y="381"/>
-    <Node id="note2" x="66" y="731"/>
-    <Node id="fscale0" x="274" y="278" factor="1.179999589920044"/>
-    <Node id="fscale1" x="538" y="659" factor="7.070499420166016"/>
-      <Node id="output" x="2500" y="80" level="0.8"/>
+    <Node id="note1" x="60" y="380"/>
+    <Node id="note2" x="60" y="700"/>
+    <Node id="fscale0" x="380" y="60" factor="1.179999589920044"/>
+    <Node id="fscale1" x="380" y="380" factor="7.070499420166016"/>
+      <Node id="output" x="1660" y="60" level="0.8"/>
   </Nodes>
   <Connections>
     <Wire from="note0" fromPort="out" to="fm0" toPort="freq_in"/>

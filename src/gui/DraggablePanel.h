@@ -6,7 +6,7 @@
         - Click an output pin and drag to an input pin to create a wire.
         - Click an input pin that already has a wire to remove it.
         - Wires are drawn as cubic curves, colour-coded by port type.
-        - Layout AND wiring are persisted via juce::PropertiesFile.
+        - Layout and wiring live exclusively in the loaded .smolfm file.
 
     The panel never touches the audio thread itself.  Wire changes are
     broadcast via `onConnectionPatchChanged` (std::function) so the
@@ -63,7 +63,8 @@ public:
     /** Current bounds of one box (empty rect when the id is unknown). */
     juce::Rectangle<int> getBoxBounds (const juce::String& boxId) const;
 
-    /** Move a box to a new top-left position (clamped into the panel). */
+    /** Move a box to a new top-left position (only clamped to >= 0).  The
+        editor sizes the window to fit right after a patch load. */
     void setBoxPosition (const juce::String& boxId, juce::Point<int> pos);
 
     /** Toolbar helpers: how many boxes of this base type ("osc"/"fm") exist. */
@@ -97,6 +98,12 @@ public:
     /** Replace the wiring entirely (e.g. from a saved patch). */
     void applyPatch (const smolfm::ConnectionPatch& patch);
 
+    /**
+        Bounding box of all boxes plus padding — the size the panel needs to
+        show the current layout without clipping.
+    */
+    juce::Rectangle<int> getContentBounds() const noexcept;
+
     /** Insert a single wire if types are compatible. */
     bool tryConnect (const smolfm::ConnectionPatch::Endpoint& from,
                      const smolfm::ConnectionPatch::Endpoint& to);
@@ -127,7 +134,6 @@ public:
     void resized() override;
 
 private:
-    juce::PropertiesFile& getPropertiesFile();
     void layoutBoxes();
 
     /** Returns true when the two endpoint types match. */
@@ -135,7 +141,6 @@ private:
                             const smolfm::ConnectionPatch::Endpoint& to);
 
     juce::OwnedArray<DraggableComponent> boxes;
-    std::unique_ptr<juce::PropertiesFile> propertiesFile;
 
     smolfm::ConnectionPatch currentPatch;
 

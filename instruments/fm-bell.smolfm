@@ -13,40 +13,40 @@
 -->
 <SmolFM version="2">
   <Nodes>
-    <Node id="note0" x="60" y="300">
+    <Node id="note0" x="60" y="60">
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
-    <Node id="osc0" x="940" y="180" waveform="0">
+    <Node id="osc0" x="1020" y="60" waveform="0">
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-    <Node id="osc1" x="60" y="540" waveform="0">
+    <Node id="osc1" x="1020" y="380" waveform="0">
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-    <Node id="osc2" x="360" y="580" waveform="0">
+    <Node id="osc2" x="1020" y="700" waveform="0">
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-    <Node id="fm0" x="360" y="220" amount="2.5">
+    <Node id="fm0" x="700" y="60" amount="2.5">
       <Pin id="freq_in" direction="in" type="frequency"/>
       <Pin id="modulator_in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
-    <Node id="fm1" x="660" y="260" amount="1.2">
+    <Node id="fm1" x="700" y="380" amount="1.2">
       <Pin id="freq_in" direction="in" type="frequency"/>
       <Pin id="modulator_in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
-    <Node id="adsr0" x="1220" y="280" attack="0.001" decay="1.8" sustain="0.0" release="1.5">
+    <Node id="adsr0" x="1340" y="60" attack="0.001" decay="1.8" sustain="0.0" release="1.5">
       <Pin id="in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-    <Node id="note1" x="60" y="420"/>
-    <Node id="note2" x="60" y="660"/>
-    <Node id="fscale0" x="160" y="480" factor="3.5545"/>
-    <Node id="fscale1" x="360" y="700" factor="1.1886"/>
-      <Node id="output" x="2500" y="80" level="0.8"/>
+    <Node id="note1" x="60" y="380"/>
+    <Node id="note2" x="60" y="700"/>
+    <Node id="fscale0" x="380" y="60" factor="3.5545"/>
+    <Node id="fscale1" x="380" y="380" factor="1.1886"/>
+      <Node id="output" x="1660" y="60" level="0.8"/>
   </Nodes>
   <Connections>
     <Wire from="note0" fromPort="out" to="fm0" toPort="freq_in"/>

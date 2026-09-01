@@ -54,6 +54,9 @@ private:
     void addNodeFromToolbar (const juce::String& baseId);
     void refreshToolbarBadges();
 
+    /** Grow the window after loading a patch so the layout fits on screen. */
+    void fitWindowToContent();
+
     // The output node's content needs the processor for the meter provider.
     std::unique_ptr<juce::Component> makeOutputContent (const juce::String& instanceId,
                                                         juce::AudioProcessorValueTreeState& apvts);

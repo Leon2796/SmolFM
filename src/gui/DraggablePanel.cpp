@@ -1,50 +1,15 @@
 /*
     DraggablePanel implementation.
+
+    Layout and wiring live exclusively in the loaded .smolfm file.  Nothing is
+    persisted to local properties anymore — the file is the single source of
+    truth.
 */
 
 #include "DraggablePanel.h"
 
 namespace gui
 {
-
-namespace
-{
-    juce::String makeDefaultPositionKey (const juce::String& boxId)
-    {
-        return "pos_" + boxId;   // e.g. pos_carrier, pos_modulator, ...
-    }
-
-    void writeBoxPosition (juce::PropertiesFile& props,
-                           const DraggableComponent& box)
-    {
-        const juce::Rectangle<int> r = box.getBounds();
-        // Compact storage: one string per box, no XML noise.
-        props.setValue (makeDefaultPositionKey (box.getBoxId()),
-                        juce::String (r.getX()) + "," + juce::String (r.getY()));
-    }
-
-    juce::String makeWiringKey()
-    {
-        return "connections_json";
-    }
-
-    bool readBoxPosition (juce::PropertiesFile& props,
-                          const juce::String& boxId,
-                          juce::Point<int>& outPosition)
-    {
-        const juce::String s = props.getValue (makeDefaultPositionKey (boxId));
-        if (s.isEmpty())
-            return false;
-
-        const int comma = s.indexOfChar (',');
-        if (comma < 0)
-            return false;
-
-        outPosition = { s.substring (0, comma).getIntValue(),
-                        s.substring (comma + 1).getIntValue() };
-        return true;
-    }
-}
 
 //==============================================================================
 DraggablePanel::DraggablePanel()
@@ -55,7 +20,6 @@ DraggablePanel::DraggablePanel()
 
 DraggablePanel::~DraggablePanel()
 {
-    saveLayout();
 }
 
 DraggableComponent& DraggablePanel::addComponent (std::unique_ptr<DraggableComponent> box)
@@ -188,9 +152,11 @@ void DraggablePanel::setBoxPosition (const juce::String& boxId, juce::Point<int>
 {
     if (auto* box = findBox (boxId))
     {
-        pos.x = juce::jlimit (0, juce::jmax (0, getWidth()  - box->getWidth()),  pos.x);
-        pos.y = juce::jlimit (0, juce::jmax (0, getHeight() - box->getHeight()), pos.y);
-        box->setTopLeftPosition (pos);
+                // Do NOT clamp against the panel size: the saved layout may extend
+        // past the current (still small) canvas.  The editor grows the window
+        // to fit right after loading.  Negative coordinates are still
+        // nonsense, so only those are clamped away.
+        box->setTopLeftPosition ({ juce::jmax (0, pos.x), juce::jmax (0, pos.y) });
         repaint();
     }
 }
@@ -311,6 +277,15 @@ void DraggablePanel::applyPatch (const smolfm::ConnectionPatch& patch)
         onConnectionPatchChanged (currentPatch);
 
     repaint();
+}
+
+juce::Rectangle<int> DraggablePanel::getContentBounds() const noexcept
+{
+    juce::Rectangle<int> content;
+    for (const auto* b : boxes)
+        content = content.getUnion (b->getBounds());
+
+    return content.expanded (16);   // padding so nothing hugs the edge
 }
 
 //==============================================================================
@@ -478,52 +453,14 @@ void DraggablePanel::resized()
 }
 
 //==============================================================================
-juce::PropertiesFile& DraggablePanel::getPropertiesFile()
-{
-    if (propertiesFile == nullptr)
-    {
-        juce::PropertiesFile::Options options;
-        options.applicationName     = "SmolFM";
-        options.folderName          = "SmolFM";
-        options.filenameSuffix      = ".layout";
-        options.osxLibrarySubFolder = "Application Support";
-        options.commonToAllUsers    = false;
-        options.ignoreCaseOfKeyNames = false;
-
-        propertiesFile = std::make_unique<juce::PropertiesFile> (options);
-    }
-
-    return *propertiesFile;
-}
-
 void DraggablePanel::saveLayout()
 {
-    auto& props = getPropertiesFile();
-
-    for (const DraggableComponent* box : boxes)
-        writeBoxPosition (props, *box);
-
-    props.setValue (makeWiringKey(), smolfm::ConnectionPatchIO::serializeToJson (currentPatch));
-    props.saveIfNeeded();
+    // No-op: layout and wiring are owned by the .smolfm file.
 }
 
 void DraggablePanel::loadLayout()
 {
-    auto& props = getPropertiesFile();
-
-    // Only restore box positions.  The wiring comes exclusively from the
-    // loaded .smolfm patch — restoring a stale wiring from the properties
-    // would clobber the file's graph every time resized() runs after load.
-    for (DraggableComponent* box : boxes)
-    {
-        juce::Point<int> pos;
-        if (readBoxPosition (props, box->getBoxId(), pos))
-        {
-            pos.x = juce::jlimit (0, juce::jmax (0, getWidth()  - box->getWidth()),  pos.x);
-            pos.y = juce::jlimit (0, juce::jmax (0, getHeight() - box->getHeight()), pos.y);
-            box->setTopLeftPosition (pos);
-        }
-    }
+    // No-op: positions and wiring come from SmolFmFile::load only.
 }
 
 } // namespace gui

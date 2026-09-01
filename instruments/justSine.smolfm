@@ -6,24 +6,24 @@
 -->
 <SmolFM version="2">
   <Nodes>
-    <Node id="note0" x="272" y="403">
+    <Node id="note0" x="60" y="60">
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
-    <Node id="osc0" x="734" y="69" waveform="0.0">
+    <Node id="osc0" x="1020" y="60" waveform="0.0">
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-    <Node id="fm0" x="1324" y="707" amount="1.080000281333923">
+    <Node id="fm0" x="700" y="60" amount="1.080000281333923">
       <Pin id="freq_in" direction="in" type="frequency"/>
       <Pin id="modulator_in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
-    <Node id="adsr0" x="1699" y="271" attack="0.001000000047497451" decay="0.5390000343322754"
+    <Node id="adsr0" x="1340" y="60" attack="0.001000000047497451" decay="0.5390000343322754"
           sustain="0.335999995470047" release="1.445000171661377">
       <Pin id="in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-      <Node id="output" x="2500" y="80" level="0.8"/>
+      <Node id="output" x="1660" y="60" level="0.8"/>
   </Nodes>
   <Connections>
     <Wire from="note0" fromPort="out" to="osc0" toPort="note_in"/>
