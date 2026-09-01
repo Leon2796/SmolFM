@@ -36,6 +36,7 @@ target_sources(${PROJECT_NAME}
         gui/components/FrequencyScaleComponent.cpp
         gui/components/AdsrPanel.cpp
         gui/components/NoteNodeComponent.cpp
+        gui/components/PatchBrowser.cpp
         gui/DraggableComponent.cpp
         gui/PinComponent.cpp
         gui/DraggablePanel.cpp

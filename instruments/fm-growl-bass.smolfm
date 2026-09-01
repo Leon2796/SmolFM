@@ -3,10 +3,11 @@
 <!--
   Demo 3: Growl-Bass  (doppelte FM: fm0 -> fm1 -> osc0)
 
-  Klangidee: Saw-Carrier + FM eine Oktave tiefer (Mod1 = 220 Hz, 0.5:1)
+  Klangidee: Saw-Carrier + FM eine Oktave tiefer (fscale0 = 0.5)
   verdichtet das Spektrum nach unten. Mod2 ist minimal verstimmt
-  (442 Hz statt 440 Hz): Durch die Verkettung schwebt die zweite Stufe
-  gegen die erste - das langsame Beating ist der "Growl".
+  (fscale1 = 1.0045): Durch die Verkettung schwebt die zweite Stufe
+  gegen die erste - das langsame Beating ist der "Growl". Beide
+  Verhaeltnisse folgen der gespielten Taste.
 
   Tipp: Tief spielen (A1-A3), dort wirkt die 0.5:1-Stufe am staerksten.
 -->
@@ -41,6 +42,10 @@
       <Pin id="in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
+    <Node id="note1" x="60" y="420"/>
+    <Node id="note2" x="60" y="660"/>
+    <Node id="fscale0" x="160" y="480" factor="0.5"/>
+    <Node id="fscale1" x="360" y="700" factor="1.0045"/>
   </Nodes>
   <Connections>
     <Wire from="note0" fromPort="out" to="fm0" toPort="freq_in"/>
@@ -49,5 +54,9 @@
     <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in"/>
     <Wire from="fm1" fromPort="out" to="osc0" toPort="note_in"/>
     <Wire from="osc0" fromPort="out" to="adsr" toPort="in"/>
+    <Wire from="note1" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in"/>
+    <Wire from="note2" fromPort="out" to="fscale1" toPort="freq_in"/>
+    <Wire from="fscale1" fromPort="out" to="osc2" toPort="note_in"/>
   </Connections>
 </SmolFM>

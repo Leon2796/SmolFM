@@ -3,10 +3,11 @@
 <!--
   Demo 4: Metallische Flaeche / Metallic Pad  (doppelte FM: fm0 -> fm1 -> osc0)
 
-  Klangidee: Zwei irrationale Verhaeltnisse hintereinander: Mod1 = 622 Hz
-  (~sqrt(2):1), Mod2 = 3111 Hz (~7.07:1). Die multiplikative Kette
-  verschachtelt die inharmonischen Seitenbaender zu einem dichten,
-  metallischen Spektrum. Langes Attack/Release macht die Flaeche.
+  Klangidee: Zwei irrationale Verhaeltnisse hintereinander: Mod1 ~sqrt(2):1
+  (fscale0 = 1.4136), Mod2 ~7.07:1 (fscale1 = 7.0705). Die multiplikative
+  Kette verschachtelt die inharmonischen Seitenbaender zu einem dichten,
+  metallischen Spektrum, das der gespielten Taste folgt. Langes
+  Attack/Release macht die Flaeche.
 
   Durch die hohen Amounts fahren beide Stufen teils Through-Zero
   (negative Momentanfrequenz) - das ist der sirrende Charakter.
@@ -42,6 +43,10 @@
       <Pin id="in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
+    <Node id="note1" x="60" y="420"/>
+    <Node id="note2" x="60" y="660"/>
+    <Node id="fscale0" x="160" y="480" factor="1.4136"/>
+    <Node id="fscale1" x="360" y="700" factor="7.0705"/>
   </Nodes>
   <Connections>
     <Wire from="note0" fromPort="out" to="fm0" toPort="freq_in"/>
@@ -50,5 +55,9 @@
     <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in"/>
     <Wire from="fm1" fromPort="out" to="osc0" toPort="note_in"/>
     <Wire from="osc0" fromPort="out" to="adsr" toPort="in"/>
+    <Wire from="note1" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in"/>
+    <Wire from="note2" fromPort="out" to="fscale1" toPort="freq_in"/>
+    <Wire from="fscale1" fromPort="out" to="osc2" toPort="note_in"/>
   </Connections>
 </SmolFM>

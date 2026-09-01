@@ -18,6 +18,7 @@
 #include "gui/DraggablePanel.h"
 #include "gui/DraggableComponent.h"
 #include "gui/PaletteButton.h"
+#include "gui/components/PatchBrowser.h"
 
 //==============================================================================
 class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor
@@ -44,6 +45,7 @@ private:
     gui::PaletteButton noteButton;
 
     gui::DraggablePanel graphPanel;
+    gui::PatchBrowser patchBrowser;
     std::unique_ptr<juce::FileChooser> fileChooser;
 
     void exportPatch();

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Klassischer FM-Patch, migriert auf Instanz-IDs und den Frequenz-Flow:
-  note -> fm0 (Hz biegen) -> osc0 (Carrier rendert) -> adsr.
-  Modulator osc1 = 50 Hz (langsame, deutlich hoerbare Bewegung).
+  Klassischer FM-Patch im Frequenz-Flow:
+  note0 -> fm0 (Hz biegen) -> osc0 (Carrier rendert) -> adsr.
+  Modulator osc1 wird ueber note1 -> fscale0 (Faktor 0.1136, ~50 Hz bei A4)
+  mit einer langsamen, deutlich hoerbaren Rate gespeist.
 -->
 <SmolFM version="2">
   <Nodes>
@@ -23,6 +24,8 @@
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
+    <Node id="note1" x="272" y="620"/>
+    <Node id="fscale0" x="420" y="600" factor="0.1136"/>
     <Node id="adsr" x="1699" y="271" attack="0.02800000086426735" decay="1.310000061988831"
           sustain="0.4480000138282776" release="0.5">
       <Pin id="in" direction="in" type="signal"/>
@@ -34,5 +37,7 @@
     <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in"/>
     <Wire from="fm0" fromPort="out" to="osc0" toPort="note_in"/>
     <Wire from="osc0" fromPort="out" to="adsr" toPort="in"/>
+    <Wire from="note1" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in"/>
   </Connections>
 </SmolFM>

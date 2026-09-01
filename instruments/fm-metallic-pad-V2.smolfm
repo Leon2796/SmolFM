@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<SmolFM version="2" name="fm-metallic-pad-V2">
+  <Nodes>
+    <Node id="note0" x="519" y="13"/>
+    <Node id="osc0" x="1521" y="178" waveform="0.0"/>
+    <Node id="osc1" x="537" y="272" waveform="0.0"/>
+    <Node id="osc2" x="956" y="551" waveform="0.0"/>
+    <Node id="fm0" x="860" y="140" amount="3.0"/>
+    <Node id="fm1" x="1221" y="194" amount="2.200000047683716"/>
+    <Node id="adsr" x="1789" y="187" attack="0.4000000059604645" decay="1.50000011920929"
+          sustain="0.699999988079071" release="2.5">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="note1" x="24" y="381"/>
+    <Node id="note2" x="66" y="731"/>
+    <Node id="fscale0" x="274" y="278" factor="1.179999589920044"/>
+    <Node id="fscale1" x="538" y="659" factor="7.070499420166016"/>
+  </Nodes>
+  <Connections>
+    <Wire from="note0" fromPort="out" to="fm0" toPort="freq_in"/>
+    <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in"/>
+    <Wire from="fm0" fromPort="out" to="fm1" toPort="freq_in"/>
+    <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in"/>
+    <Wire from="fm1" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="osc0" fromPort="out" to="adsr" toPort="in"/>
+    <Wire from="note1" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in"/>
+    <Wire from="note2" fromPort="out" to="fscale1" toPort="freq_in"/>
+    <Wire from="fscale1" fromPort="out" to="osc2" toPort="note_in"/>
+  </Connections>
+</SmolFM>

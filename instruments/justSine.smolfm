@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Reiner Sinus ohne FM, migriert auf Instanz-IDs:
-  note -> osc0 -> adsr.  fm0 und osc1 liegen unverdrahtet auf dem Canvas
-  und haben keinen Einfluss auf den Klang.
+  Reiner Sinus ohne FM: note0 -> osc0 -> adsr.
+  fm0 liegt unverdrahtet auf dem Canvas und hat keinen Einfluss auf den Klang.
 -->
 <SmolFM version="2">
   <Nodes>
@@ -18,10 +17,6 @@
       <Pin id="freq_in" direction="in" type="frequency"/>
       <Pin id="modulator_in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="frequency"/>
-    </Node>
-    <Node id="osc1" x="738" y="544" waveform="0.0">
-      <Pin id="note_in" direction="in" type="frequency"/>
-      <Pin id="out" direction="out" type="signal"/>
     </Node>
     <Node id="adsr" x="1699" y="271" attack="0.001000000047497451" decay="0.5390000343322754"
           sustain="0.335999995470047" release="1.445000171661377">

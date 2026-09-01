@@ -66,11 +66,26 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
     addAndMakeVisible (titleLabel);
     addAndMakeVisible (graphPanel);
+    addAndMakeVisible (patchBrowser);
     addAndMakeVisible (exportButton);
     addAndMakeVisible (importButton);
 
     exportButton.onClick = [this] { exportPatch(); };
     importButton.onClick = [this] { importPatch(); };
+
+    // Patch browser: directory lives in the processor state; selection loads
+    // the chosen patch into the graph panel.
+    patchBrowser.onDirectoryChosen = [this] (const juce::File& dir)
+    {
+        processorRef.setPatchDirectory (dir);
+        patchBrowser.setDirectory (dir);
+    };
+    patchBrowser.onPatchSelected = [this] (const juce::File& file)
+    {
+        if (smolfm::SmolFmFile::load (graphPanel, processorRef.getParameters(), file))
+            patchBrowser.setInstrumentName (smolfm::SmolFmFile::readInstrumentName (file));
+    };
+    patchBrowser.setDirectory (processorRef.getPatchDirectory());
 
     boundsConstrainer->setMinimumSize (700, 500);
     boundsConstrainer->setMaximumSize (2400, 1600);
@@ -222,6 +237,10 @@ void AudioPluginAudioProcessorEditor::resized()
 
     bounds.removeFromTop (8);
 
+    // Patch browser: directory row + navigation above the graph canvas.
+    patchBrowser.setBounds (bounds.removeFromTop (64));
+    bounds.removeFromTop (4);
+
     graphPanel.setBounds (bounds);
 
     // Park the resize handle in the bottom-right corner.
@@ -269,6 +288,8 @@ void AudioPluginAudioProcessorEditor::importPatch()
                 return;
 
             smolfm::SmolFmFile::load (graphPanel, processorRef.getParameters(), source);
+            patchBrowser.setInstrumentName (smolfm::SmolFmFile::readInstrumentName (source));
+            patchBrowser.selectPatch (source);
         });
 }
 

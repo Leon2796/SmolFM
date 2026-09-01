@@ -205,10 +205,9 @@ juce::AudioProcessorEditor* AudioPluginAudioProcessor::createEditor()
 //==============================================================================
 void AudioPluginAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // Save the entire APVTS state as XML.  This includes all slider values,
-    // waveform choices and ADSR settings, which is everything the host needs
-    // to restore the plugin later.
+    // Save the entire APVTS state as XML, plus the patch browser directory.
     auto state = parameters.copyState();
+    state.setProperty ("patchDirectory", patchDirectory.getFullPathName(), nullptr);
     std::unique_ptr<juce::XmlElement> xml (state.createXml());
     copyXmlToBinary (*xml, destData);
 }
@@ -221,7 +220,10 @@ void AudioPluginAudioProcessor::setStateInformation (const void* data, int sizeI
 
     if (xmlState != nullptr)
         if (xmlState->hasTagName (parameters.state.getType()))
+        {
             parameters.replaceState (juce::ValueTree::fromXml (*xmlState));
+            patchDirectory = juce::File (xmlState->getStringAttribute ("patchDirectory"));
+        }
 }
 
 //==============================================================================
@@ -235,6 +237,16 @@ void AudioPluginAudioProcessor::applyConnectionPatch (const smolfm::ConnectionPa
     for (int i = 0; i < synth.getNumVoices(); ++i)
         if (auto* voice = dynamic_cast<smolfm::SynthVoice*> (synth.getVoice (i)))
             voice->applyConnectionPatch (patch);
+}
+
+juce::File AudioPluginAudioProcessor::getPatchDirectory() const
+{
+    return patchDirectory;
+}
+
+void AudioPluginAudioProcessor::setPatchDirectory (const juce::File& dir)
+{
+    patchDirectory = dir.isDirectory() ? dir : juce::File();
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameterLayout()

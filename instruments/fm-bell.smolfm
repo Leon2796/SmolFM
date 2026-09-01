@@ -4,12 +4,12 @@
   Demo 1: Glocke / Bell  (doppelte FM: fm0 -> fm1 -> osc0)
 
   Klangidee: Inharmonische Modulator-Verhaeltnisse erzeugen den typischen
-  Glocken-Teiltonaufbau. Mod1 liegt bei ~3.55:1 (1564 Hz), Mod2 bei
-  ~1.19:1 (523 Hz) - beide bezogen auf A4 = 440 Hz. Durch die
-  multiplikative Kette entstehen Cluster-Seitenbaender.
+  Glocken-Teiltonaufbau. Mod1 liegt bei ~3.55:1, Mod2 bei ~1.19:1 - die
+  Modulatoren folgen ueber note1/note2 -> fscale der gespielten Taste, so
+  bleibt das Verhaeltnis auf jeder Note stabil. Durch die multiplikative
+  Kette entstehen Cluster-Seitenbaender.
 
-  Spielbereich: klingt am besten um A3-A5, weil die Modulatoren feste Hz
-  haben und der Carrier der Taste folgt.
+  Spielbereich: klingt am besten um A3-A5.
 -->
 <SmolFM version="2">
   <Nodes>
@@ -42,6 +42,10 @@
       <Pin id="in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
+    <Node id="note1" x="60" y="420"/>
+    <Node id="note2" x="60" y="660"/>
+    <Node id="fscale0" x="160" y="480" factor="3.5545"/>
+    <Node id="fscale1" x="360" y="700" factor="1.1886"/>
   </Nodes>
   <Connections>
     <Wire from="note0" fromPort="out" to="fm0" toPort="freq_in"/>
@@ -50,5 +54,9 @@
     <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in"/>
     <Wire from="fm1" fromPort="out" to="osc0" toPort="note_in"/>
     <Wire from="osc0" fromPort="out" to="adsr" toPort="in"/>
+    <Wire from="note1" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in"/>
+    <Wire from="note2" fromPort="out" to="fscale1" toPort="freq_in"/>
+    <Wire from="fscale1" fromPort="out" to="osc2" toPort="note_in"/>
   </Connections>
 </SmolFM>

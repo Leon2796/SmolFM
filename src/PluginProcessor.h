@@ -71,6 +71,13 @@ public:
     */
     void applyConnectionPatch (const smolfm::ConnectionPatch& patch);
 
+    /**
+        Working directory for the patch browser (UI state, persisted with the
+        plugin state so the host restores it per session/preset).
+    */
+    juce::File getPatchDirectory() const;
+    void setPatchDirectory (const juce::File& dir);
+
 private:
     //==============================================================================
     /**
@@ -80,6 +87,10 @@ private:
 
     juce::AudioProcessorValueTreeState parameters;
     juce::Synthesiser synth;
+
+    // Working directory of the patch browser.  Not an APVTS parameter —
+    // stored as an attribute on the state value tree instead.
+    juce::File patchDirectory;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)

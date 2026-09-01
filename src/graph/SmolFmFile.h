@@ -51,6 +51,20 @@ public:
     static bool load (gui::DraggablePanel& panel,
                       juce::AudioProcessorValueTreeState& apvts,
                       const juce::File& file);
+
+    /**
+        Read only the instrument name of a .smolfm file.
+
+        Falls back to the file name without extension when the file has no
+        name attribute.  Cheap: parses just the XML root element.
+    */
+    static juce::String readInstrumentName (const juce::File& file);
+
+    /**
+        Write the instrument name into a .smolfm file without touching the
+        rest of the document.  Safe to call after save().
+    */
+    static bool writeInstrumentName (const juce::File& file, const juce::String& name);
 };
 
 } // namespace smolfm

@@ -100,6 +100,7 @@ bool SmolFmFile::save (gui::DraggablePanel& panel,
 {
     juce::XmlElement root ("SmolFM");
     root.setAttribute ("version", 2);
+    root.setAttribute ("name", file.getFileNameWithoutExtension());
 
     auto* nodes = root.createNewChildElement ("Nodes");
 
@@ -229,6 +230,31 @@ bool SmolFmFile::load (gui::DraggablePanel& panel,
     }
 
     return appliedAnything;
+}
+
+juce::String SmolFmFile::readInstrumentName (const juce::File& file)
+{
+    const std::unique_ptr<juce::XmlElement> root (juce::XmlDocument::parse (file));
+
+    if (root != nullptr && root->hasTagName ("SmolFM"))
+    {
+        const juce::String name = root->getStringAttribute ("name");
+        if (name.isNotEmpty())
+            return name;
+    }
+
+    return file.getFileNameWithoutExtension();
+}
+
+bool SmolFmFile::writeInstrumentName (const juce::File& file, const juce::String& name)
+{
+    std::unique_ptr<juce::XmlElement> root (juce::XmlDocument::parse (file));
+
+    if (root == nullptr || ! root->hasTagName ("SmolFM"))
+        return false;
+
+    root->setAttribute ("name", name);
+    return root->writeTo (file);
 }
 
 } // namespace smolfm
