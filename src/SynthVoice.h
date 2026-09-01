@@ -30,6 +30,7 @@
 #include "processors/NoteProcessor.h"
 #include "processors/AdsrProcessor.h"
 #include "processors/MasterOutputProcessor.h"
+#include "processors/RingModulatorProcessor.h"
 #include "graph/GraphNodes.h"
 
 namespace smolfm
@@ -105,6 +106,7 @@ private:
     std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts> fmProcessors {};
     std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales> frequencyScalers {};
     std::array<AdsrProcessor*, GraphNodeRegistry::maxAdsr> adsrProcessors {};
+    std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators> ringModulators {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynthVoice)
 };

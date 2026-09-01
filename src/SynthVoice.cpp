@@ -29,8 +29,9 @@ namespace
                                      std::array<AdsrProcessor*, GraphNodeRegistry::maxAdsr>& adsrProcessors,
                                      MasterOutputProcessor* masterOutput,
                                      std::array<OscillatorProcessor*, GraphNodeRegistry::maxOscillators>& oscillators,
-                                     std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts>& fmProcessors,
-                                     std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales>& frequencyScalers)
+                                                                          std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts>& fmProcessors,
+                                     std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales>& frequencyScalers,
+                                     std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators>& ringModulators)
     {
         juce::ignoreUnused (params, noteSources);
 
@@ -76,6 +77,15 @@ namespace
          && portId == "in")
             return &adsrProcessors[static_cast<size_t> (index)]->getInput();
 
+                if (type == NodeType::ringModulator
+         && index >= 0 && index < GraphNodeRegistry::maxRingModulators
+         && ringModulators[static_cast<size_t> (index)] != nullptr)
+        {
+            if (portId == "in1") return &ringModulators[static_cast<size_t> (index)]->getInput1();
+            if (portId == "in2") return &ringModulators[static_cast<size_t> (index)]->getInput2();
+            return nullptr;
+        }
+
         if (type == NodeType::masterOutput && masterOutput != nullptr)
         {
             if (portId.startsWith ("in"))
@@ -96,8 +106,9 @@ namespace
                                        std::array<AdsrProcessor*, GraphNodeRegistry::maxAdsr>& adsrProcessors,
                                        MasterOutputProcessor* masterOutput,
                                        std::array<OscillatorProcessor*, GraphNodeRegistry::maxOscillators>& oscillators,
-                                       std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts>& fmProcessors,
-                                       std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales>& frequencyScalers)
+                                                                              std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts>& fmProcessors,
+                                       std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales>& frequencyScalers,
+                                       std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators>& ringModulators)
     {
         if (portId != "out")
             return nullptr;
@@ -125,10 +136,15 @@ namespace
          && frequencyScalers[static_cast<size_t> (index)] != nullptr)
             return &frequencyScalers[static_cast<size_t> (index)]->getOutput();
 
-        if (type == NodeType::adsr
+                if (type == NodeType::adsr
          && index >= 0 && index < GraphNodeRegistry::maxAdsr
          && adsrProcessors[static_cast<size_t> (index)] != nullptr)
             return &adsrProcessors[static_cast<size_t> (index)]->getOutput();
+
+        if (type == NodeType::ringModulator
+         && index >= 0 && index < GraphNodeRegistry::maxRingModulators
+         && ringModulators[static_cast<size_t> (index)] != nullptr)
+            return &ringModulators[static_cast<size_t> (index)]->getOutput();
 
         return nullptr;
     }
@@ -188,6 +204,14 @@ void SynthVoice::buildGraph()
                                                      parameters.adsrRelease[static_cast<size_t> (i)]);
         adsrProcessors[static_cast<size_t> (i)] = adsr.get();
         graph.addProcessor (std::move (adsr));
+    }
+
+        // Ring modulator pool — pure signal multipliers, no parameters.
+    for (int i = 0; i < GraphNodeRegistry::maxRingModulators; ++i)
+    {
+        auto ring = std::make_unique<RingModulatorProcessor>();
+        ringModulators[static_cast<size_t> (i)] = ring.get();
+        graph.addProcessor (std::move (ring));
     }
 
     // Master output (singleton).
@@ -317,8 +341,15 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
     for (auto* fscale : frequencyScalers)
         if (fscale != nullptr)  fscale->getFreqInput().disconnect();
 
-    for (auto* adsr : adsrProcessors)
+        for (auto* adsr : adsrProcessors)
         if (adsr != nullptr)  adsr->getInput().disconnect();
+
+    for (auto* ring : ringModulators)
+        if (ring != nullptr)
+        {
+            ring->getInput1().disconnect();
+            ring->getInput2().disconnect();
+        }
 
     for (int i = 0; i < MasterOutputProcessor::numInputs; ++i)
         masterOutput->getInput (i).disconnect();
@@ -329,13 +360,13 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
     // -- 2. Rewire according to the patch ------------------------------------
     for (const auto& conn : patch.connections)
     {
-        OutputPort* out = resolveOutput (conn.from.nodeId, conn.from.portId,
+                OutputPort* out = resolveOutput (conn.from.nodeId, conn.from.portId,
                                          noteSources, adsrProcessors, masterOutput,
-                                         oscillators, fmProcessors, frequencyScalers);
+                                         oscillators, fmProcessors, frequencyScalers, ringModulators);
         InputPort*  in  = resolveInput  (conn.to.nodeId,   conn.to.portId,
                                          const_cast<SynthVoiceParameters&> (parameters),
                                          noteSources, adsrProcessors, masterOutput,
-                                         oscillators, fmProcessors, frequencyScalers);
+                                         oscillators, fmProcessors, frequencyScalers, ringModulators);
 
         if (out == nullptr || in == nullptr)
             continue;

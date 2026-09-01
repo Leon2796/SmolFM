@@ -14,6 +14,7 @@
 #include "gui/components/AdsrPanel.h"
 #include "gui/components/NoteNodeComponent.h"
 #include "gui/components/MasterOutputComponent.h"
+#include "gui/components/RingModulatorComponent.h"
 
 namespace
 {
@@ -53,10 +54,16 @@ namespace
             smolfm::GraphNodeRegistry::adsrParameterIdFor (instanceId, "Release"));
     }
 
-    std::unique_ptr<juce::Component> makeNoteContent (const juce::String&,
+        std::unique_ptr<juce::Component> makeNoteContent (const juce::String&,
                                                       juce::AudioProcessorValueTreeState&)
     {
         return std::make_unique<gui::NoteNodeComponent>();
+    }
+
+    std::unique_ptr<juce::Component> makeRingModulatorContent (const juce::String&,
+                                                               juce::AudioProcessorValueTreeState&)
+    {
+        return std::make_unique<gui::RingModulatorComponent>();
     }
 }
 
@@ -146,7 +153,15 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                            {   juce::Path p; p.addRectangle (r.reduced (2.0f)); return p; },
                            smolfm::GraphNodeRegistry::maxMasterOutputs);
 
-    for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &noteButton, &outputButton })
+    ringButton .configure ("ring", "Ring",  [] (const juce::Rectangle<float>& r)
+                           {   juce::Path p; p.addEllipse (r.reduced (1.0f));
+                               const float cx = r.getCentreX(), cy = r.getCentreY();
+                               p.startNewSubPath (cx - 5, cy - 5); p.lineTo (cx + 5, cy + 5);
+                               p.startNewSubPath (cx + 5, cy - 5); p.lineTo (cx - 5, cy + 5);
+                               return p; },
+                           smolfm::GraphNodeRegistry::maxRingModulators);
+
+    for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &noteButton, &ringButton, &outputButton })
     {
         addAndMakeVisible (*b);
         b->onAddRequested = [this] (const juce::String& baseId) { addNodeFromToolbar (baseId); };
@@ -179,8 +194,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             return graphPanel.addNodeOfType ("fscale", processorRef.getParameters(), makeFrequencyScaleContent);
         if (baseId == "adsr")
             return graphPanel.addNodeOfType ("adsr", processorRef.getParameters(), makeAdsrContent);
-        if (baseId == "note")
+                if (baseId == "note")
             return graphPanel.addNodeOfType ("note", processorRef.getParameters(), makeNoteContent);
+        if (baseId == "ring")
+            return graphPanel.addNodeOfType ("ring", processorRef.getParameters(), makeRingModulatorContent);
         if (baseId == "output")
             return graphPanel.addNodeOfType ("output", processorRef.getParameters(),
                                              [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
@@ -208,8 +225,9 @@ void AudioPluginAudioProcessorEditor::addNodeFromToolbar (const juce::String& ba
         { "note",   makeNoteContent    },
         { "osc",    makeOscillatorContent },
         { "fm",     makeFmContent      },
-        { "fscale", makeFrequencyScaleContent },
-        { "adsr",   makeAdsrContent    }
+                { "fscale", makeFrequencyScaleContent },
+        { "adsr",   makeAdsrContent    },
+        { "ring",   makeRingModulatorContent }
     };
 
     if (baseId == "output")
@@ -234,6 +252,7 @@ void AudioPluginAudioProcessorEditor::refreshToolbarBadges()
     scaleButton.setRemaining (smolfm::GraphNodeRegistry::maxFrequencyScales - graphPanel.countBoxesOfType ("fscale"));
     adsrButton  .setRemaining (smolfm::GraphNodeRegistry::maxAdsr            - graphPanel.countBoxesOfType ("adsr"));
     noteButton  .setRemaining (smolfm::GraphNodeRegistry::maxNotes           - graphPanel.countBoxesOfType ("note"));
+    ringButton  .setRemaining (smolfm::GraphNodeRegistry::maxRingModulators   - graphPanel.countBoxesOfType ("ring"));
     outputButton.setRemaining (smolfm::GraphNodeRegistry::maxMasterOutputs   - graphPanel.countBoxesOfType ("output"));
 }
 
@@ -267,7 +286,8 @@ void AudioPluginAudioProcessorEditor::resized()
     fmButton    .setBounds (palette.removeFromLeft (tileWidth));
     scaleButton .setBounds (palette.removeFromLeft (tileWidth));
     adsrButton  .setBounds (palette.removeFromLeft (tileWidth));
-    noteButton  .setBounds (palette.removeFromLeft (tileWidth));
+        noteButton .setBounds (palette.removeFromLeft (tileWidth));
+    ringButton .setBounds (palette.removeFromLeft (tileWidth));
     outputButton.setBounds (palette.removeFromLeft (tileWidth));
 
     bounds.removeFromTop (8);
@@ -295,30 +315,27 @@ void AudioPluginAudioProcessorEditor::fitWindowToContent()
 
     // Fixed chrome: margins (24 each side) + toolbar (34) + gaps (8+4) +
     // patch browser (64).  The canvas sits below all of that.
-    const int chromeLeft   = 24;
     const int chromeTop    = 24 + 34 + 8 + 64 + 4;
     const int chromeRight  = 24;
     const int chromeBottom = 24;
 
-    // content.getRight()/getBottom() are panel-local coordinates.  The panel
-    // itself starts at (24, chromeTop) inside the editor, so the window needs
-    // that offset plus the panel-local far edge, plus the far-side margin.
-    const int neededW = chromeLeft + content.getRight()  + chromeRight;
-    const int neededH = chromeTop  + content.getBottom() + chromeBottom;
+    // content.getRight() is the panel-local right edge of the layout; the
+    // window needs that plus the chrome around the canvas.
+    const int neededW = content.getRight()  + chromeRight;
+    const int neededH = content.getBottom() + chromeTop + chromeBottom;
 
-    // Never grow past the usable screen area; respect our own constrainer.
+    if (neededW <= getWidth() && neededH <= getHeight())
+        return;   // everything already fits
+
+    // Grow towards the needed size, but never past the usable screen area.
     const auto screen = juce::Desktop::getInstance().getDisplays()
                             .getPrimaryDisplay()->userArea;
 
-    const int newW = juce::jlimit (boundsConstrainer->getMinimumWidth(),
-                                   juce::jmin (boundsConstrainer->getMaximumWidth(),  screen.getWidth()),
-                                   neededW);
-    const int newH = juce::jlimit (boundsConstrainer->getMinimumHeight(),
-                                   juce::jmin (boundsConstrainer->getMaximumHeight(), screen.getHeight()),
-                                   neededH);
+    const int newW = juce::jmin (neededW, screen.getWidth());
+    const int newH = juce::jmin (neededH, screen.getHeight());
 
-    if (newW != getWidth() || newH != getHeight())
-        setSize (newW, newH);
+    setSize (juce::jmax (getWidth(),  newW),
+             juce::jmax (getHeight(), newH));
 }
 
 //==============================================================================

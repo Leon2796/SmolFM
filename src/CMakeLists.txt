@@ -42,6 +42,8 @@ target_sources(${PROJECT_NAME}
         gui/DraggableComponent.cpp
         gui/PinComponent.cpp
         gui/DraggablePanel.cpp
+        processors/RingModulatorProcessor.cpp
+        gui/components/RingModulatorComponent.cpp
         # JUMAKE_SOURCES_END
 )
 
@@ -75,4 +77,3 @@ add_executable(SmolFM_GraphTests
 
 target_include_directories(SmolFM_GraphTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
 target_link_libraries(SmolFM_GraphTests PRIVATE juce::juce_audio_basics juce::juce_core juce::juce_graphics)
-

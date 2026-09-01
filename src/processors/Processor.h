@@ -44,6 +44,7 @@ enum class ProcessorRole
     frequencyScale,
     adsr,
     masterOutput,
+    ringModulator,
     generic
 };
 

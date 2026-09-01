@@ -6,7 +6,7 @@
 
         Node id scheme
             note0 .. note3  up to 4 MIDI note sources (all emit the played note)
-            osc0 .. osc7  up to 8 oscillators (carrier or modulator — same thing)
+            osc0 .. osc7  up to 8 oscillators (carrier or modulator â€” same thing)
             fm0 .. fm3    up to 4 FM amount stages
             adsr          exactly one (final envelope)
 
@@ -41,7 +41,7 @@ namespace smolfm
 //==============================================================================
 /**
     Coarse node kind.  Oscillator nodes are identical whether they act as
-    carrier or modulator — the wiring decides that role.
+    carrier or modulator â€” the wiring decides that role.
 */
 enum class NodeType
 {
@@ -49,6 +49,7 @@ enum class NodeType
     oscillator,
     fmAmount,
     frequencyScale,
+    ringModulator,
     adsr,
     masterOutput,
     unknown
@@ -130,6 +131,7 @@ public:
     static constexpr int maxOscillators = 8;
     static constexpr int maxFmAmounts   = 4;
     static constexpr int maxFrequencyScales = 4;
+    static constexpr int maxRingModulators  = 4;
     static constexpr int maxNotes       = 4;
     static constexpr int maxAdsr        = 4;
     static constexpr int maxMasterOutputs = 1;

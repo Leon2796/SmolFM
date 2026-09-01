@@ -43,6 +43,7 @@ private:
     gui::PaletteButton scaleButton;
     gui::PaletteButton adsrButton;
     gui::PaletteButton noteButton;
+    gui::PaletteButton ringButton;
     gui::PaletteButton outputButton;
 
     gui::DraggablePanel graphPanel;
