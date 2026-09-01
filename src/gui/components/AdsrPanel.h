@@ -15,7 +15,11 @@ namespace gui
 class AdsrPanel final : public juce::Component
 {
 public:
-    AdsrPanel (juce::AudioProcessorValueTreeState& apvts);
+    AdsrPanel (juce::AudioProcessorValueTreeState& apvts,
+               const juce::String& attackParameterID,
+               const juce::String& decayParameterID,
+               const juce::String& sustainParameterID,
+               const juce::String& releaseParameterID);
 
     ~AdsrPanel() override;
 

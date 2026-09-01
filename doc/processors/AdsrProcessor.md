@@ -1,24 +1,28 @@
 # AdsrProcessor
 > Template: [../processor-template.md](../processor-template.md) — Struktur nicht ändern.
 
-ADSR-Hüllkurve als letzter Knoten der Kette. Multipliziert das eingehende
-Audiosignal mit dem Hüllkurvenwert. Wrappt `juce::ADSR`; Parameter werden bei
-Note-On gelesen (JUCE-Empfehlung) und wirken daher auf die nächste Note.
+ADSR-Hüllkurve als reiner Filter im Signalfluss. Multipliziert das eingehende
+Audiosignal mit dem Hüllkurvenwert und leitet das Ergebnis weiter — die
+Weiterleitung ans Master-Ausgangssignal übernimmt der `MasterOutputProcessor`.
+Wrappt `juce::ADSR`; Parameter werden bei Note-On gelesen (JUCE-Empfehlung) und
+wirken daher auf die nächste Note.
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
-| Max. Instanzen | 1 | `GraphNodeRegistry::maxAdsr` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
+| Max. Instanzen | 4 | `GraphNodeRegistry::maxAdsr` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
 | Input-Ports | `in` (`PortType::signal`) | `InputPort input` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
 | Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
 
 | Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
 |---|---|---|---|---|
-| Attack | `attack` | Float, 0.001–5 s | `std::atomic<float>* attack` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
-| Decay | `decay` | Float, 0.001–5 s | `std::atomic<float>* decay` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
-| Sustain | `sustain` | Float, 0–1 | `std::atomic<float>* sustain` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
-| Release | `release` | Float, 0.001–10 s | `std::atomic<float>* release` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
+| Attack | `adsr<N>Attack` | Float, 0.001–5 s | `std::atomic<float>* attack` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
+| Decay | `adsr<N>Decay` | Float, 0.001–5 s | `std::atomic<float>* decay` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
+| Sustain | `adsr<N>Sustain` | Float, 0–1 | `std::atomic<float>* sustain` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
+| Release | `adsr<N>Release` | Float, 0.001–10 s | `std::atomic<float>* release` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
+
+`<N>` = Instanzindex 0–3.
 
 ## Abschnitt 2 — UI-Konfiguration
 

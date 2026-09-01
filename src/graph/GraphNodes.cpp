@@ -69,8 +69,19 @@ namespace
             adsr.outputType = PortType::signal;
             adsr.inputPortIds = { "in" };
             adsr.inputTypes = { PortType::signal };
-            adsr.adsrParameterIds = { "attack", "decay", "sustain", "release" };
+            adsr.adsrParameterTemplate = "adsr%";
             specs.push_back (adsr);
+        }
+        {
+            NodeSpec out;
+            out.id = "output";
+            out.title = "Output";
+            out.outputPortId = "";
+            out.outputType = PortType::signal;
+            out.inputPortIds = { "in1", "in2", "in3", "in4", "in5", "in6", "in7", "in8" };
+            out.inputTypes = std::vector<PortType> (8, PortType::signal);
+            out.levelParameterTemplate = "masterLevel";
+            specs.push_back (out);
         }
 
         return specs;
@@ -106,6 +117,7 @@ NodeType GraphNodeRegistry::typeOf (const juce::String& nodeId)
     if (base == "fm")     return NodeType::fmAmount;
     if (base == "fscale") return NodeType::frequencyScale;
     if (base == "adsr")   return NodeType::adsr;
+    if (base == "output") return NodeType::masterOutput;
     return NodeType::unknown;
 }
 
@@ -136,7 +148,7 @@ juce::String GraphNodeRegistry::makeInstanceId (const juce::String& baseId, int 
     const int max = maxInstancesOf (typeOf (baseId));
 
     if (max == 1)
-        return baseId;              // "adsr" needs no index
+        return baseId;              // "adsr", "output" need no index
 
     return baseId + juce::String (index);
 }
@@ -150,6 +162,7 @@ int GraphNodeRegistry::maxInstancesOf (NodeType type)
         case NodeType::fmAmount:       return maxFmAmounts;
         case NodeType::frequencyScale: return maxFrequencyScales;
         case NodeType::adsr:           return maxAdsr;
+        case NodeType::masterOutput:   return maxMasterOutputs;
         case NodeType::unknown:        break;
     }
     return 0;
@@ -180,6 +193,24 @@ juce::String GraphNodeRegistry::amountParameterIdFor (const juce::String& nodeId
         return {};
 
     return withIndex (spec->amountParameterTemplate, indexOf (nodeId));
+}
+
+juce::String GraphNodeRegistry::adsrParameterIdFor (const juce::String& nodeId, const juce::String& which)
+{
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->adsrParameterTemplate.isEmpty())
+        return {};
+
+    return withIndex (spec->adsrParameterTemplate, indexOf (nodeId)) + which;
+}
+
+juce::String GraphNodeRegistry::levelParameterIdFor (const juce::String& nodeId)
+{
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->levelParameterTemplate.isEmpty())
+        return {};
+
+    return withIndex (spec->levelParameterTemplate, indexOf (nodeId));
 }
 
 std::pair<bool, PortType> GraphNodeRegistry::findPortInfo (const juce::String& nodeId,

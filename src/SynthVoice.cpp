@@ -26,7 +26,8 @@ namespace
                                      const juce::String& portId,
                                      SynthVoiceParameters& params,
                                      std::array<NoteProcessor*, GraphNodeRegistry::maxNotes>& noteSources,
-                                     AdsrProcessor* adsr,
+                                     std::array<AdsrProcessor*, GraphNodeRegistry::maxAdsr>& adsrProcessors,
+                                     MasterOutputProcessor* masterOutput,
                                      std::array<OscillatorProcessor*, GraphNodeRegistry::maxOscillators>& oscillators,
                                      std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts>& fmProcessors,
                                      std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales>& frequencyScalers)
@@ -69,8 +70,22 @@ namespace
             return nullptr;
         }
 
-        if (type == NodeType::adsr && adsr != nullptr && portId == "in")
-            return &adsr->getInput();
+        if (type == NodeType::adsr
+         && index >= 0 && index < GraphNodeRegistry::maxAdsr
+         && adsrProcessors[static_cast<size_t> (index)] != nullptr
+         && portId == "in")
+            return &adsrProcessors[static_cast<size_t> (index)]->getInput();
+
+        if (type == NodeType::masterOutput && masterOutput != nullptr)
+        {
+            if (portId.startsWith ("in"))
+            {
+                const int inIndex = portId.substring (2).getIntValue() - 1;
+                if (inIndex >= 0 && inIndex < MasterOutputProcessor::numInputs)
+                    return &masterOutput->getInput (inIndex);
+            }
+            return nullptr;
+        }
 
         return nullptr;
     }
@@ -78,7 +93,8 @@ namespace
     smolfm::OutputPort* resolveOutput (const juce::String& nodeId,
                                        const juce::String& portId,
                                        std::array<NoteProcessor*, GraphNodeRegistry::maxNotes>& noteSources,
-                                       AdsrProcessor* adsr,
+                                       std::array<AdsrProcessor*, GraphNodeRegistry::maxAdsr>& adsrProcessors,
+                                       MasterOutputProcessor* masterOutput,
                                        std::array<OscillatorProcessor*, GraphNodeRegistry::maxOscillators>& oscillators,
                                        std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts>& fmProcessors,
                                        std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales>& frequencyScalers)
@@ -109,8 +125,10 @@ namespace
          && frequencyScalers[static_cast<size_t> (index)] != nullptr)
             return &frequencyScalers[static_cast<size_t> (index)]->getOutput();
 
-        if (type == NodeType::adsr && adsr != nullptr)
-            return &adsr->getOutput();
+        if (type == NodeType::adsr
+         && index >= 0 && index < GraphNodeRegistry::maxAdsr
+         && adsrProcessors[static_cast<size_t> (index)] != nullptr)
+            return &adsrProcessors[static_cast<size_t> (index)]->getOutput();
 
         return nullptr;
     }
@@ -160,13 +178,22 @@ void SynthVoice::buildGraph()
         graph.addProcessor (std::move (fscale));
     }
 
-    // ADSR (singleton).
-    auto adsr = std::make_unique<AdsrProcessor> (parameters.attack,
-                                                 parameters.decay,
-                                                 parameters.sustain,
-                                                 parameters.release);
-    adsrProcessor = adsr.get();
-    graph.addProcessor (std::move (adsr));
+    // ADSR pool — pure envelope filters; the master output is the end of
+    // the chain, not an ADSR.
+    for (int i = 0; i < GraphNodeRegistry::maxAdsr; ++i)
+    {
+        auto adsr = std::make_unique<AdsrProcessor> (parameters.adsrAttack [static_cast<size_t> (i)],
+                                                     parameters.adsrDecay  [static_cast<size_t> (i)],
+                                                     parameters.adsrSustain[static_cast<size_t> (i)],
+                                                     parameters.adsrRelease[static_cast<size_t> (i)]);
+        adsrProcessors[static_cast<size_t> (i)] = adsr.get();
+        graph.addProcessor (std::move (adsr));
+    }
+
+    // Master output (singleton).
+    auto master = std::make_unique<MasterOutputProcessor> (parameters.masterLevel);
+    masterOutput = master.get();
+    graph.addProcessor (std::move (master));
 }
 
 void SynthVoice::prepare (double newSampleRate)
@@ -193,8 +220,9 @@ void SynthVoice::stopNote (float /*velocity*/, bool allowTailOff)
 {
     if (allowTailOff)
     {
-        if (adsrProcessor != nullptr)
-            adsrProcessor->noteOff();
+        for (auto* adsr : adsrProcessors)
+            if (adsr != nullptr)
+                adsr->noteOff();
     }
     else
     {
@@ -214,7 +242,27 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
                                   int startSample,
                                   int numSamples)
 {
-    if (adsrProcessor != nullptr && ! adsrProcessor->isActive())
+    if (masterOutput == nullptr)
+    {
+        clearCurrentNote();
+        return;
+    }
+
+    // The voice ends when every wired envelope has finished its release.
+    bool anyActive = false;
+    for (auto* adsr : adsrProcessors)
+        if (adsr != nullptr && adsr->getInput().isConnected() && adsr->isActive())
+            anyActive = true;
+
+    const bool hadEnvelope = [&]
+    {
+        for (auto* adsr : adsrProcessors)
+            if (adsr != nullptr && adsr->getInput().isConnected())
+                return true;
+        return false;
+    }();
+
+    if (hadEnvelope && ! anyActive)
     {
         clearCurrentNote();
         return;
@@ -222,7 +270,9 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
 
     for (int sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex)
     {
-        float outputSample = graph.processSample() * currentVelocity;
+        // graph.processSample() runs the whole chain; the master output is
+        // added last, so its return value is the final sample.
+        const float outputSample = graph.processSample() * currentVelocity;
 
         for (int channel = 0; channel < outputBuffer.getNumChannels(); ++channel)
         {
@@ -231,13 +281,26 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
         }
     }
 
-    if (adsrProcessor != nullptr && ! adsrProcessor->isActive())
-        clearCurrentNote();
+    if (hadEnvelope)
+    {
+        bool stillActive = false;
+        for (auto* adsr : adsrProcessors)
+            if (adsr != nullptr && adsr->getInput().isConnected() && adsr->isActive())
+                stillActive = true;
+
+        if (! stillActive)
+            clearCurrentNote();
+    }
+}
+
+float SynthVoice::getMasterPeakLevel() const noexcept
+{
+    return masterOutput != nullptr ? masterOutput->getPeakLevel() : 0.0f;
 }
 
 void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
 {
-    if (adsrProcessor == nullptr)
+    if (masterOutput == nullptr)
         return;
 
     // -- 1. Disconnect everything -------------------------------------------
@@ -254,7 +317,11 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
     for (auto* fscale : frequencyScalers)
         if (fscale != nullptr)  fscale->getFreqInput().disconnect();
 
-    adsrProcessor->getInput().disconnect();
+    for (auto* adsr : adsrProcessors)
+        if (adsr != nullptr)  adsr->getInput().disconnect();
+
+    for (int i = 0; i < MasterOutputProcessor::numInputs; ++i)
+        masterOutput->getInput (i).disconnect();
 
     for (auto* note : noteSources)
         if (note != nullptr)  note->setEnabled (false);
@@ -263,11 +330,11 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
     for (const auto& conn : patch.connections)
     {
         OutputPort* out = resolveOutput (conn.from.nodeId, conn.from.portId,
-                                         noteSources, adsrProcessor,
+                                         noteSources, adsrProcessors, masterOutput,
                                          oscillators, fmProcessors, frequencyScalers);
         InputPort*  in  = resolveInput  (conn.to.nodeId,   conn.to.portId,
                                          const_cast<SynthVoiceParameters&> (parameters),
-                                         noteSources, adsrProcessor,
+                                         noteSources, adsrProcessors, masterOutput,
                                          oscillators, fmProcessors, frequencyScalers);
 
         if (out == nullptr || in == nullptr)

@@ -511,6 +511,9 @@ void DraggablePanel::loadLayout()
 {
     auto& props = getPropertiesFile();
 
+    // Only restore box positions.  The wiring comes exclusively from the
+    // loaded .smolfm patch — restoring a stale wiring from the properties
+    // would clobber the file's graph every time resized() runs after load.
     for (DraggableComponent* box : boxes)
     {
         juce::Point<int> pos;
@@ -520,17 +523,6 @@ void DraggablePanel::loadLayout()
             pos.y = juce::jlimit (0, juce::jmax (0, getHeight() - box->getHeight()), pos.y);
             box->setTopLeftPosition (pos);
         }
-    }
-
-    smolfm::ConnectionPatch loadedPatch;
-    if (smolfm::ConnectionPatchIO::parseFromJson (props.getValue (makeWiringKey()), loadedPatch))
-    {
-        // Replace silently — the host applies the patch once at startup via
-        // prepareToPlay / startNote.
-        currentPatch = std::move (loadedPatch);
-        if (onConnectionPatchChanged)
-            onConnectionPatchChanged (currentPatch);
-        repaint();
     }
 }
 

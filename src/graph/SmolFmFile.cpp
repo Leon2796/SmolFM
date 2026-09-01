@@ -71,10 +71,16 @@ namespace
         }
         else if (baseId == "adsr")
         {
-            specs.add ({ "attack",  "attack" });
-            specs.add ({ "decay",   "decay" });
-            specs.add ({ "sustain", "sustain" });
-            specs.add ({ "release", "release" });
+            for (const char* which : { "Attack", "Decay", "Sustain", "Release" })
+            {
+                const auto id = GraphNodeRegistry::adsrParameterIdFor (nodeId, which);
+                if (id.isNotEmpty()) specs.add ({ juce::String (which).toLowerCase(), id });
+            }
+        }
+        else if (baseId == "output")
+        {
+            const auto lvlId = GraphNodeRegistry::levelParameterIdFor (nodeId);
+            if (lvlId.isNotEmpty()) specs.add ({ "level", lvlId });
         }
 
         return specs;

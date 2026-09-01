@@ -43,6 +43,7 @@ private:
     gui::PaletteButton scaleButton;
     gui::PaletteButton adsrButton;
     gui::PaletteButton noteButton;
+    gui::PaletteButton outputButton;
 
     gui::DraggablePanel graphPanel;
     gui::PatchBrowser patchBrowser;
@@ -52,6 +53,10 @@ private:
     void importPatch();
     void addNodeFromToolbar (const juce::String& baseId);
     void refreshToolbarBadges();
+
+    // The output node's content needs the processor for the meter provider.
+    std::unique_ptr<juce::Component> makeOutputContent (const juce::String& instanceId,
+                                                        juce::AudioProcessorValueTreeState& apvts);
 
     std::unique_ptr<juce::ComponentBoundsConstrainer> boundsConstrainer;
     juce::ResizableCornerComponent resizer;

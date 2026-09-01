@@ -78,6 +78,9 @@ public:
     juce::File getPatchDirectory() const;
     void setPatchDirectory (const juce::File& dir);
 
+    /** Highest peak level across all voices, for the UI meter. */
+    float getMasterPeakLevel() const;
+
 private:
     //==============================================================================
     /**

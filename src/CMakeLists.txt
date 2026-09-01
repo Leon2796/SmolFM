@@ -29,6 +29,7 @@ target_sources(${PROJECT_NAME}
         processors/FMModulationProcessor.cpp
         processors/FrequencyScaleProcessor.cpp
         processors/AdsrProcessor.cpp
+        processors/MasterOutputProcessor.cpp
         graph/GraphNodes.cpp
         graph/SmolFmFile.cpp
         gui/components/OscillatorPanel.cpp
@@ -37,6 +38,7 @@ target_sources(${PROJECT_NAME}
         gui/components/AdsrPanel.cpp
         gui/components/NoteNodeComponent.cpp
         gui/components/PatchBrowser.cpp
+        gui/components/MasterOutputComponent.cpp
         gui/DraggableComponent.cpp
         gui/PinComponent.cpp
         gui/DraggablePanel.cpp

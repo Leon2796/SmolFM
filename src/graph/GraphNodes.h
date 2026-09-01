@@ -50,6 +50,7 @@ enum class NodeType
     fmAmount,
     frequencyScale,
     adsr,
+    masterOutput,
     unknown
 };
 
@@ -74,7 +75,8 @@ struct NodeSpec
     juce::String frequencyParameterTemplate;
     juce::String waveformParameterTemplate;
     juce::String amountParameterTemplate;
-    juce::StringArray adsrParameterIds;  // attack/decay/sustain/release, only on adsr
+    juce::String adsrParameterTemplate;  // "adsr%Attack" style prefix, only on adsr
+    juce::String levelParameterTemplate; // master volume, only on output
 };
 
 //==============================================================================
@@ -129,7 +131,8 @@ public:
     static constexpr int maxFmAmounts   = 4;
     static constexpr int maxFrequencyScales = 4;
     static constexpr int maxNotes       = 4;
-    static constexpr int maxAdsr        = 1;
+    static constexpr int maxAdsr        = 4;
+    static constexpr int maxMasterOutputs = 1;
 
     static const std::vector<NodeSpec>& getAllSpecs();
 
@@ -152,6 +155,8 @@ public:
     static juce::String frequencyParameterIdFor (const juce::String& nodeId);
     static juce::String waveformParameterIdFor  (const juce::String& nodeId);
     static juce::String amountParameterIdFor    (const juce::String& nodeId);
+    static juce::String adsrParameterIdFor      (const juce::String& nodeId, const juce::String& which);
+    static juce::String levelParameterIdFor     (const juce::String& nodeId);
 
     // -- Port info -----------------------------------------------------------
 

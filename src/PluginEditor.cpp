@@ -13,6 +13,7 @@
 #include "gui/components/FrequencyScaleComponent.h"
 #include "gui/components/AdsrPanel.h"
 #include "gui/components/NoteNodeComponent.h"
+#include "gui/components/MasterOutputComponent.h"
 
 namespace
 {
@@ -41,10 +42,15 @@ namespace
             apvts, smolfm::GraphNodeRegistry::amountParameterIdFor (instanceId));
     }
 
-    std::unique_ptr<juce::Component> makeAdsrContent (const juce::String&,
+    std::unique_ptr<juce::Component> makeAdsrContent (const juce::String& instanceId,
                                                       juce::AudioProcessorValueTreeState& apvts)
     {
-        return std::make_unique<gui::AdsrPanel> (apvts);
+        return std::make_unique<gui::AdsrPanel> (
+            apvts,
+            smolfm::GraphNodeRegistry::adsrParameterIdFor (instanceId, "Attack"),
+            smolfm::GraphNodeRegistry::adsrParameterIdFor (instanceId, "Decay"),
+            smolfm::GraphNodeRegistry::adsrParameterIdFor (instanceId, "Sustain"),
+            smolfm::GraphNodeRegistry::adsrParameterIdFor (instanceId, "Release"));
     }
 
     std::unique_ptr<juce::Component> makeNoteContent (const juce::String&,
@@ -52,6 +58,15 @@ namespace
     {
         return std::make_unique<gui::NoteNodeComponent>();
     }
+}
+
+std::unique_ptr<juce::Component> AudioPluginAudioProcessorEditor::makeOutputContent (const juce::String& instanceId,
+                                                                                     juce::AudioProcessorValueTreeState& apvts)
+{
+    return std::make_unique<gui::MasterOutputComponent> (
+        apvts,
+        smolfm::GraphNodeRegistry::levelParameterIdFor (instanceId),
+        [this] { return processorRef.getMasterPeakLevel(); });
 }
 
 //==============================================================================
@@ -124,8 +139,11 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                                p.startNewSubPath (cx - 4, cy); p.addEllipse (cx - 8, cy - 6, 10, 8);
                                return p; },
                            smolfm::GraphNodeRegistry::maxNotes);
+    outputButton.configure ("output", "Out", [] (const juce::Rectangle<float>& r)
+                           {   juce::Path p; p.addRectangle (r.reduced (2.0f)); return p; },
+                           smolfm::GraphNodeRegistry::maxMasterOutputs);
 
-    for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &noteButton })
+    for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &noteButton, &outputButton })
     {
         addAndMakeVisible (*b);
         b->onAddRequested = [this] (const juce::String& baseId) { addNodeFromToolbar (baseId); };
@@ -160,6 +178,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             return graphPanel.addNodeOfType ("adsr", processorRef.getParameters(), makeAdsrContent);
         if (baseId == "note")
             return graphPanel.addNodeOfType ("note", processorRef.getParameters(), makeNoteContent);
+        if (baseId == "output")
+            return graphPanel.addNodeOfType ("output", processorRef.getParameters(),
+                                             [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
+                                             { return makeOutputContent (id, a); });
 
         return nullptr;
     };
@@ -187,6 +209,14 @@ void AudioPluginAudioProcessorEditor::addNodeFromToolbar (const juce::String& ba
         { "adsr",   makeAdsrContent    }
     };
 
+    if (baseId == "output")
+    {
+        graphPanel.addNodeOfType (baseId, processorRef.getParameters(),
+                                  [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
+                                  { return makeOutputContent (id, a); });
+        return;
+    }
+
     const auto it = factories.find (baseId);
     if (it == factories.end())
         return;
@@ -199,8 +229,9 @@ void AudioPluginAudioProcessorEditor::refreshToolbarBadges()
     oscButton  .setRemaining (smolfm::GraphNodeRegistry::maxOscillators     - graphPanel.countBoxesOfType ("osc"));
     fmButton   .setRemaining (smolfm::GraphNodeRegistry::maxFmAmounts       - graphPanel.countBoxesOfType ("fm"));
     scaleButton.setRemaining (smolfm::GraphNodeRegistry::maxFrequencyScales - graphPanel.countBoxesOfType ("fscale"));
-    adsrButton .setRemaining (smolfm::GraphNodeRegistry::maxAdsr            - graphPanel.countBoxesOfType ("adsr"));
-    noteButton .setRemaining (smolfm::GraphNodeRegistry::maxNotes           - graphPanel.countBoxesOfType ("note"));
+    adsrButton  .setRemaining (smolfm::GraphNodeRegistry::maxAdsr            - graphPanel.countBoxesOfType ("adsr"));
+    noteButton  .setRemaining (smolfm::GraphNodeRegistry::maxNotes           - graphPanel.countBoxesOfType ("note"));
+    outputButton.setRemaining (smolfm::GraphNodeRegistry::maxMasterOutputs   - graphPanel.countBoxesOfType ("output"));
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -226,14 +257,15 @@ void AudioPluginAudioProcessorEditor::resized()
     importButton.setBounds (buttonsArea.removeFromRight (84).reduced (2));
     exportButton.setBounds (buttonsArea.removeFromRight (84).reduced (2));
 
-    // Palette tiles, 5 × 62 px each.
+    // Palette tiles, 6 × 62 px each.
     auto palette = toolbar.reduced (4, 2);
     const int tileWidth = 62;
-    oscButton  .setBounds (palette.removeFromLeft (tileWidth));
-    fmButton   .setBounds (palette.removeFromLeft (tileWidth));
-    scaleButton.setBounds (palette.removeFromLeft (tileWidth));
-    adsrButton .setBounds (palette.removeFromLeft (tileWidth));
-    noteButton .setBounds (palette.removeFromLeft (tileWidth));
+    oscButton   .setBounds (palette.removeFromLeft (tileWidth));
+    fmButton    .setBounds (palette.removeFromLeft (tileWidth));
+    scaleButton .setBounds (palette.removeFromLeft (tileWidth));
+    adsrButton  .setBounds (palette.removeFromLeft (tileWidth));
+    noteButton  .setBounds (palette.removeFromLeft (tileWidth));
+    outputButton.setBounds (palette.removeFromLeft (tileWidth));
 
     bounds.removeFromTop (8);
 

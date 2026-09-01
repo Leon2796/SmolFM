@@ -193,6 +193,11 @@ namespace
         auto adsr = std::make_unique<smolfm::AdsrProcessor> (&attack, &decay, &sustain, &release);
         smolfm::AdsrProcessor* adsrPtr = adsr.get();
 
+        // The modulator needs a frequency source too — without a note trace
+        // the oscillator is silent (0 Hz) since the fallback was removed.
+        if (! modulatorPtr->getNoteInput().connect (notePtr->getOutput()))
+            return { false, "Failed to connect note to modulator note_in" };
+
         if (! fmAPtr->getFreqInput().connect (notePtr->getOutput()))
             return { false, "Failed to connect note to fmA freq_in" };
 

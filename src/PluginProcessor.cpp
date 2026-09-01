@@ -52,10 +52,16 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
         voiceParameters.freqScaleFactor[static_cast<size_t> (i)] = parameters.getRawParameterValue ("fscale" + num + "Factor");
     }
 
-    voiceParameters.attack  = parameters.getRawParameterValue ("attack");
-    voiceParameters.decay   = parameters.getRawParameterValue ("decay");
-    voiceParameters.sustain = parameters.getRawParameterValue ("sustain");
-    voiceParameters.release = parameters.getRawParameterValue ("release");
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxAdsr; ++i)
+    {
+        const juce::String num (i);
+        voiceParameters.adsrAttack [static_cast<size_t> (i)] = parameters.getRawParameterValue ("adsr" + num + "Attack");
+        voiceParameters.adsrDecay  [static_cast<size_t> (i)] = parameters.getRawParameterValue ("adsr" + num + "Decay");
+        voiceParameters.adsrSustain[static_cast<size_t> (i)] = parameters.getRawParameterValue ("adsr" + num + "Sustain");
+        voiceParameters.adsrRelease[static_cast<size_t> (i)] = parameters.getRawParameterValue ("adsr" + num + "Release");
+    }
+
+    voiceParameters.masterLevel = parameters.getRawParameterValue ("masterLevel");
 
     for (int i = 0; i < numberOfVoices; ++i)
         synth.addVoice (new smolfm::SynthVoice (voiceParameters));
@@ -249,6 +255,15 @@ void AudioPluginAudioProcessor::setPatchDirectory (const juce::File& dir)
     patchDirectory = dir.isDirectory() ? dir : juce::File();
 }
 
+float AudioPluginAudioProcessor::getMasterPeakLevel() const
+{
+    float peak = 0.0f;
+    for (int i = 0; i < synth.getNumVoices(); ++i)
+        if (auto* voice = dynamic_cast<smolfm::SynthVoice*> (synth.getVoice (i)))
+            peak = juce::jmax (peak, voice->getMasterPeakLevel());
+    return peak;
+}
+
 juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameterLayout()
 {
     // Parameter IDs must stay stable forever.  They identify parameters to the
@@ -290,22 +305,32 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
             juce::NormalisableRange<float> (0.0f, 10.0f), 1.0f));
     }
 
-    // -- ADSR (single) ------------------------------------------------------
-    layout.add (std::make_unique<juce::AudioParameterFloat> (
-        "attack", "Attack",
-        juce::NormalisableRange<float> (0.001f, 5.0f, 0.001f, 0.5f), 0.01f));
+    // -- ADSR pool ----------------------------------------------------------
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxAdsr; ++i)
+    {
+        const juce::String num (i);
 
-    layout.add (std::make_unique<juce::AudioParameterFloat> (
-        "decay", "Decay",
-        juce::NormalisableRange<float> (0.001f, 5.0f, 0.001f, 0.5f), 0.2f));
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "adsr" + num + "Attack", "ADSR " + num + " Attack",
+            juce::NormalisableRange<float> (0.001f, 5.0f, 0.001f, 0.5f), 0.01f));
 
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "adsr" + num + "Decay", "ADSR " + num + " Decay",
+            juce::NormalisableRange<float> (0.001f, 5.0f, 0.001f, 0.5f), 0.2f));
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "adsr" + num + "Sustain", "ADSR " + num + " Sustain",
+            juce::NormalisableRange<float> (0.0f, 1.0f), 0.8f));
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "adsr" + num + "Release", "ADSR " + num + " Release",
+            juce::NormalisableRange<float> (0.001f, 10.0f, 0.001f, 0.5f), 0.5f));
+    }
+
+    // -- Master output --------------------------------------------------------
     layout.add (std::make_unique<juce::AudioParameterFloat> (
-        "sustain", "Sustain",
+        "masterLevel", "Master Level",
         juce::NormalisableRange<float> (0.0f, 1.0f), 0.8f));
-
-    layout.add (std::make_unique<juce::AudioParameterFloat> (
-        "release", "Release",
-        juce::NormalisableRange<float> (0.001f, 10.0f, 0.001f, 0.5f), 0.5f));
 
     return layout;
 }

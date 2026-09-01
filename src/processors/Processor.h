@@ -43,6 +43,7 @@ enum class ProcessorRole
     fmModulator,
     frequencyScale,
     adsr,
+    masterOutput,
     generic
 };
 

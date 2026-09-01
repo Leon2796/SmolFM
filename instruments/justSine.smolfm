@@ -18,14 +18,16 @@
       <Pin id="modulator_in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
-    <Node id="adsr" x="1699" y="271" attack="0.001000000047497451" decay="0.5390000343322754"
+    <Node id="adsr0" x="1699" y="271" attack="0.001000000047497451" decay="0.5390000343322754"
           sustain="0.335999995470047" release="1.445000171661377">
       <Pin id="in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
+      <Node id="output" x="2500" y="80" level="0.8"/>
   </Nodes>
   <Connections>
     <Wire from="note0" fromPort="out" to="osc0" toPort="note_in"/>
-    <Wire from="osc0" fromPort="out" to="adsr" toPort="in"/>
+    <Wire from="osc0" fromPort="out" to="adsr0" toPort="in"/>
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
   </Connections>
 </SmolFM>

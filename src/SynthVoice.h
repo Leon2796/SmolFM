@@ -29,6 +29,7 @@
 #include "processors/FrequencyScaleProcessor.h"
 #include "processors/NoteProcessor.h"
 #include "processors/AdsrProcessor.h"
+#include "processors/MasterOutputProcessor.h"
 #include "graph/GraphNodes.h"
 
 namespace smolfm
@@ -47,12 +48,13 @@ struct SynthVoiceParameters
     std::array<std::atomic<float>*, GraphNodeRegistry::maxOscillators> oscWaveform;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFmAmounts>   fmAmount;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFrequencyScales> freqScaleFactor;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrAttack;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrDecay;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrSustain;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrRelease;
 
-    // ADSR is a singleton.
-    std::atomic<float>* attack;
-    std::atomic<float>* decay;
-    std::atomic<float>* sustain;
-    std::atomic<float>* release;
+    // Master output is a singleton.
+    std::atomic<float>* masterLevel;
 };
 
 class SynthVoice final : public juce::SynthesiserVoice
@@ -81,6 +83,9 @@ public:
     */
     void applyConnectionPatch (const ConnectionPatch& patch);
 
+    /** Peak of this voice's master output, for the UI meter. */
+    float getMasterPeakLevel() const noexcept;
+
 private:
     SynthVoiceParameters parameters;
 
@@ -90,7 +95,7 @@ private:
     SignalGraph graph;
 
     // Single nodes.
-    AdsrProcessor* adsrProcessor = nullptr;
+    MasterOutputProcessor* masterOutput = nullptr;
 
     // Processor pools, indexed by instance index parsed from the node id.
     // Every note source mirrors the currently played MIDI note; each wired
@@ -99,6 +104,7 @@ private:
     std::array<OscillatorProcessor*, GraphNodeRegistry::maxOscillators> oscillators {};
     std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts> fmProcessors {};
     std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales> frequencyScalers {};
+    std::array<AdsrProcessor*, GraphNodeRegistry::maxAdsr> adsrProcessors {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynthVoice)
 };

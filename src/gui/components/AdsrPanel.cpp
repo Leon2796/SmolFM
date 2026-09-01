@@ -8,7 +8,11 @@
 namespace gui
 {
 
-AdsrPanel::AdsrPanel (juce::AudioProcessorValueTreeState& apvts)
+AdsrPanel::AdsrPanel (juce::AudioProcessorValueTreeState& apvts,
+                      const juce::String& attackParameterID,
+                      const juce::String& decayParameterID,
+                      const juce::String& sustainParameterID,
+                      const juce::String& releaseParameterID)
 {
     titleLabel.setText ("ADSR", juce::dontSendNotification);
     titleLabel.setJustificationType (juce::Justification::centred);
@@ -24,10 +28,10 @@ AdsrPanel::AdsrPanel (juce::AudioProcessorValueTreeState& apvts)
     addAndMakeVisible (sustainSlider);
     addAndMakeVisible (releaseSlider);
 
-    attackAttachment.reset  (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts, "attack",  attackSlider));
-    decayAttachment.reset   (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts, "decay",   decaySlider));
-    sustainAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts, "sustain", sustainSlider));
-    releaseAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts, "release", releaseSlider));
+    attackAttachment.reset  (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts, attackParameterID,  attackSlider));
+    decayAttachment.reset   (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts, decayParameterID,   decaySlider));
+    sustainAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts, sustainParameterID, sustainSlider));
+    releaseAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts, releaseParameterID, releaseSlider));
 }
 
 AdsrPanel::~AdsrPanel()
