@@ -12,7 +12,7 @@ FMModulationProcessor::FMModulationProcessor (std::atomic<float>* amount)
       fmAmount (amount)
 {
     // A disconnected frequency input means 0 Hz; the oscillator at the end
-    // of the chain maps that to its 440 Hz guard frequency.
+    // of the chain stays silent then (0 Hz, no fallback frequency).
     freqInput.setDefaultValue (0.0f);
 
     // A disconnected modulator must contribute no deviation, not DC.

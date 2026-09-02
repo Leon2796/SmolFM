@@ -86,6 +86,15 @@ sein Phasen-Increment und integriert sie über die Zeit. Das ist
 Frequenzmodulation in diesem Signalfluss, nicht ein direkter Eingriff dieser
 Stufe in die Phase.
 
+**Stabilität bei nicht-sinusförmigen Wellenformen**: Der Oszillator begrenzt
+die Momentanfrequenz auf den Bereich [0, Nyquist] (siehe
+[OscillatorProcessor.md](OscillatorProcessor.md)).  Bei Sinus-Carriern sind
+auch extreme FM-Deviations unkritisch, da die Sinusfunktion stetig ist.  Bei
+Saw/Square/Tri-Carriern führen große negative Frequenzausschläge oder sehr
+hohe Momentanfrequenzen zu Diskontinuitäten im Wellenverlauf, die als harsch
+klingendes Rauschen hörbar werden.  Für saubere Ergebnisse mit nicht-sinusförmigen
+Carriern sollten FM-Amounts moderat gewählt werden (typisch < 1.5 bei Saw).
+
 Zur Veranschaulichung einer Kette: Wenn mehrere FM-Stufen nacheinander mit
 eigenen Modulatoren verbunden sind, übernimmt jede Stufe den Ausgang der
 vorherigen als ihre Eingangsfrequenz. Dadurch multiplizieren sich ihre Faktoren:

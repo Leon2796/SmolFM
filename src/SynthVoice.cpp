@@ -15,7 +15,7 @@ namespace
 {
     // Resolve a (nodeId, portId) pair to the matching port in this voice.
     // Node ids carry the instance index ("osc3", "fm1"), so this is a pure
-    // lookup — no allocations, safe for the message thread while audio runs.
+    // lookup â€” no allocations, safe for the message thread while audio runs.
 
     smolfm::OutputPort* findOutputPort (const juce::String& nodeId,
                                         const juce::String& portId,
@@ -39,13 +39,22 @@ namespace
         const int index = GraphNodeRegistry::indexOf (nodeId);
 
         if (type == NodeType::oscillator
-         && index >= 0 && index < GraphNodeRegistry::maxOscillators
-         && oscillators[static_cast<size_t> (index)] != nullptr)
-        {
-            if (portId == "note_in")
-                return &oscillators[static_cast<size_t> (index)]->getNoteInput();
+                 && index >= 0 && index < GraphNodeRegistry::maxOscillators
+                 && oscillators[static_cast<size_t> (index)] != nullptr)
+                {
+                    if (portId == "note_in")
+                        return &oscillators[static_cast<size_t> (index)]->getNoteInput();
 
-            return nullptr;
+                    return nullptr;
+                }
+
+                if (type == NodeType::ringModulator
+                 && index >= 0 && index < GraphNodeRegistry::maxRingModulators
+                 && ringModulators[static_cast<size_t> (index)] != nullptr)
+                {
+                    if (portId == "in1") return &ringModulators[static_cast<size_t> (index)]->getInput1();
+                    if (portId == "in2") return &ringModulators[static_cast<size_t> (index)]->getInput2();
+                    return nullptr;
         }
 
         if (type == NodeType::fmAmount
@@ -159,7 +168,7 @@ SynthVoice::SynthVoice (SynthVoiceParameters params)
 
 void SynthVoice::buildGraph()
 {
-    // Note source pool — every instance mirrors the same played MIDI note
+    // Note source pool â€” every instance mirrors the same played MIDI note
     // on its own output, so several "note" boxes can feed different chains.
     for (int i = 0; i < GraphNodeRegistry::maxNotes; ++i)
     {
@@ -168,7 +177,7 @@ void SynthVoice::buildGraph()
         graph.addProcessor (std::move (note));
     }
 
-    // Oscillator pool — all created up front, all fed by their own parameter
+    // Oscillator pool â€” all created up front, all fed by their own parameter
     // pair.  An osc box that is never wired just renders (harmlessly, it's
     // cheap) and its output is never read by anyone.
     for (int i = 0; i < GraphNodeRegistry::maxOscillators; ++i)
@@ -194,7 +203,7 @@ void SynthVoice::buildGraph()
         graph.addProcessor (std::move (fscale));
     }
 
-    // ADSR pool — pure envelope filters; the master output is the end of
+    // ADSR pool â€” pure envelope filters; the master output is the end of
     // the chain, not an ADSR.
     for (int i = 0; i < GraphNodeRegistry::maxAdsr; ++i)
     {
@@ -206,7 +215,7 @@ void SynthVoice::buildGraph()
         graph.addProcessor (std::move (adsr));
     }
 
-        // Ring modulator pool — pure signal multipliers, no parameters.
+        // Ring modulator pool â€” pure signal multipliers, no parameters.
     for (int i = 0; i < GraphNodeRegistry::maxRingModulators; ++i)
     {
         auto ring = std::make_unique<RingModulatorProcessor>();

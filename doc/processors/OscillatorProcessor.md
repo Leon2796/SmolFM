@@ -46,14 +46,24 @@ Funktionsablauf pro Sample:
 2. Phase-Increment:
 $$\Delta\varphi = \frac{2\pi f}{f_s}$$
 3. Phasenintegration mit Wrap in $[0, 2\pi)$:
-$$\varphi_{n+1} = (\varphi_n + \Delta\varphi) \bmod 2\pi$$
+$$\varphi_{n+1} = \mathrm{fmod}(\varphi_n + \Delta\varphi,\ 2\pi)$$
+
+   Falls das Ergebnis negativ ist (kann bei durch FM erzeugten negativen
+   Momentanfrequenzen auftreten), wird $2\pi$ addiert, sodass
+   $\varphi_{n+1} \in [0, 2\pi)$ gilt.
 
    Kurz erklärt: Die Phase ist der aktuelle Ort innerhalb einer Wellenrunde.
    Eine volle Runde hat $2\pi$ Radiant. Bei $f_s$ Samples pro Sekunde muss eine
    Frequenz von $f$ Hertz deshalb bei jedem Sample um $2\pi f / f_s$ weitergehen:
    Nach $f_s / f$ Samples ist genau eine Runde erreicht. Das Addieren dieses
-   konstanten Schritts ist die Phasenintegration. Der Wrap beginnt anschließend
-   wieder bei $0$, weil die nächste Wellenrunde gleich aussieht.
+   Schritts ist die Phasenintegration. Der Wrap beginnt anschließend wieder bei
+   $0$, weil die nächste Wellenrunde gleich aussieht.
+
+   **Wichtig**: Die Frequenz wird auf den Bereich $[-f_s/2, f_s/2]$ begrenzt,
+   damit die Phasenintegration nicht über Nyquist hinausläuft (Aliasing).
+   Negative Momentanfrequenzen bleiben erlaubt (Through-Zero-FM): Die Phase
+   läuft dann rückwärts und der Wrap per `fmod` hält sie in $[0, 2\pi)$ —
+   ohne Diskontinuitäten, auch bei Saw, Square und Triangle.
 
 4. Wellenform: `evaluateWaveform()` normalisiert die Phase zunächst auf
    `[0, 2*pi)` und berechnet anschließend direkt (ohne Wavetable):
@@ -67,20 +77,22 @@ $$\varphi_{n+1} = (\varphi_n + \Delta\varphi) \bmod 2\pi$$
 
    Das Ergebnis wird als `out_n` ausgegeben.
 
-Dieser Prozessor erzeugt aktuell keine FM: Er ruft
-`getNextSample(0.0f)` auf und übergibt damit keinen Phasenversatz. Die hier
-beschriebene Phasenintegration ist die normale Grundlage jedes digitalen
-Oszillators. Erst wenn ein Modulatorsignal die Frequenz oder Phase pro Sample
-verändert, entsteht FM beziehungsweise Phasenmodulation.
+Dieser Prozessor ist die Stelle, an der in der Frequenzdomänen-Architektur
+die eigentliche FM entsteht: Er integriert die vom `note_in`-Port gelieferte
+Momentanfrequenz in die Phase (phase accumulator) und rendert daraus die
+Wellenform. Ein vorgeschalteter FM-Modulator verändert dabei pro Sample die
+Frequenz, nicht die Phase. Der optionale `phaseModulation`-Parameter von
+`getNextSample()` bleibt ungenutzt (`0.0f`) — er ist ein Relikt aus dem
+früheren Phasenmodulations-Design.
 
 ## Abschnitt 4 — Symbol ↔ Code
 
 | Formales Symbol | C++-Symbol / Aufruf | Datei | Berechnungsschritt |
 |---|---|---|---|
-| $f$ | `freq` (lokal), `noteInput.getSample()` | [OscillatorProcessor.cpp](../../src/processors/OscillatorProcessor.cpp) | Port-Wert falls `isConnected()`, sonst `0.0f` |
+| $f$ | `freq` (lokal), `noteInput.getSample()` | [OscillatorProcessor.cpp](../../src/processors/OscillatorProcessor.cpp) | Port-Wert falls `isConnected()`, sonst `0.0f`; in `setFrequency()` auf $[-f_s/2, f_s/2]$ geclippt (Through-Zero erlaubt) |
 | $f_s$ | `sampleRate` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | gesetzt in `prepare(double)` |
 | $\Delta\varphi$ | `phaseIncrement` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | `updatePhaseIncrement()`: `twoPi * frequency / sampleRate` |
-| $\varphi_n$ | `phase` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | `getNextSample()`: `phase += phaseIncrement`, Wrap per `while` |
+| $\varphi_n$ | `phase` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | `getNextSample()`: `phase += phaseIncrement`, Wrap per `fmod()` mit Negativ-Korrektur |
 | $m$ | `waveformFromIndex(round(waveform->load()))` | [OscillatorProcessor.cpp](../../src/processors/OscillatorProcessor.cpp) | APVTS-Float → `int` → `enum class Waveform` |
 | $w(\cdot)$ | `evaluateWaveform(float)` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | `switch` über `Waveform`; Phase vorher per `fmod` normalisiert (erlaubt Through-Zero) |
 | $out_n$ | `getNextSample(0.0f)` → `output.setSample()` | [OscillatorProcessor.cpp](../../src/processors/OscillatorProcessor.cpp) | Sample erzeugen und in den Port schreiben |

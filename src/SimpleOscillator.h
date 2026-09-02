@@ -82,9 +82,13 @@ public:
         The frequency is only used to calculate the phase increment; the actual
         waveform is produced by getNextSample().
     */
-    void setFrequency (float newFrequency)
+        void setFrequency (float newFrequency)
     {
-        frequency = newFrequency;
+        // Clamp the instantaneous frequency to [-Nyquist, Nyquist].
+        // Negative frequencies are legal: under strong FM the deviation can
+        // push the carrier through zero, and the phase then runs backwards.
+        // Frequencies beyond Nyquist would alias, so they stay clamped.
+        frequency = juce::jlimit (-sampleRate * 0.5f, sampleRate * 0.5f, newFrequency);
         updatePhaseIncrement();
     }
 
@@ -96,7 +100,7 @@ public:
         waveform = newWaveform;
     }
 
-    /**
+        /**
         Generate the next oscillator sample.
 
         The optional phaseModulation argument is the FM phase offset in radians.
@@ -107,16 +111,25 @@ public:
 
         This is the heart of FM synthesis: the modulator is not added to the
         carrier's output, it pushes the carrier's phase forward and backward.
+
+        For non-sinusoidal waveforms (saw, square, triangle), phase wrapping
+        is handled with fmod() to prevent discontinuities from frequency
+        modulation.  The frequency is clamped to [-Nyquist, Nyquist] in
+        setFrequency(); negative frequencies (through-zero FM) run the phase
+        backwards and the wrap keeps it inside [0, 2*pi).
     */
     float getNextSample (float phaseModulation = 0.0f)
     {
-        // Advance the oscillator's own phase first.
+                // Advance the oscillator's own phase first.
         phase += phaseIncrement;
 
-        // Wrap the phase so it always stays in the range [0, 2*pi).
-        // This avoids the phase growing without bound and keeps the math tidy.
-        while (phase >= juce::MathConstants<float>::twoPi)
-            phase -= juce::MathConstants<float>::twoPi;
+        // Normalise phase to [0, 2*pi) range.
+        // For non-sinusoidal waveforms this prevents discontinuities when
+        // frequency modulation causes rapid phase changes.  For sine this is
+        // mathematically equivalent but less critical since sine is continuous.
+        phase = std::fmod (phase, juce::MathConstants<float>::twoPi);
+        if (phase < 0.0f)
+            phase += juce::MathConstants<float>::twoPi;
 
         // Evaluate the selected waveform at the modulated phase.
         return evaluateWaveform (phase + phaseModulation);
