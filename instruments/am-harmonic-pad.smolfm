@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Audio-rate AM at a perfect fifth ratio producing glued sidebands, carrier dominant -->
+<SmolFM version="2" name="Harmonic AM Pad">
+  <description>Sine carrier amplitude-modulated by a sine at 1.5x pitch with long envelope — warm pad whose sidebands track the played note.</description>
+  <Nodes>
+    <Node id="note0" x="80" y="100">
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+
+    <Node id="osc0" x="260" y="100" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+
+    <Node id="fscale0" x="260" y="280" factor="1.5">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+
+    <Node id="osc1" x="440" y="280" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+
+    <Node id="am0" x="620" y="190" amount="0.45">
+      <Pin id="carrier_in" direction="in" type="signal"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+
+    <Node id="adsr0" x="800" y="190" attack="0.4" decay="0.3" sustain="0.7" release="1.2">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+
+    <Node id="output" x="980" y="190" level="0.7">
+      <Pin id="in1" direction="in" type="signal"/>
+    </Node>
+  </Nodes>
+
+  <Connections>
+    <Wire from="note0" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="note0" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in"/>
+    <Wire from="osc0" fromPort="out" to="am0" toPort="carrier_in"/>
+    <Wire from="osc1" fromPort="out" to="am0" toPort="modulator_in"/>
+    <Wire from="am0" fromPort="out" to="adsr0" toPort="in"/>
+    <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
+  </Connections>
+</SmolFM>

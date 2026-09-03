@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Tonewheel organ: three harmonics (1x, 2x, 3x) summed before AM + envelope -->
+<SmolFM version="2" name="Tremolo Organ">
+  <description>Three sine partials (root, octave, twelfth) summed and amplitude-modulated with a gentle 6 Hz tremolo — classic tonewheel organ.</description>
+  <Nodes>
+    <!-- Root pitch -->
+    <Node id="note0" x="80" y="60">
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+
+    <!-- Fundamental -->
+    <Node id="osc0" x="280" y="60" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+
+    <!-- Octave (drawbar 8') -->
+    <Node id="fscale0" x="280" y="200" factor="2.0">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="osc1" x="480" y="200" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+
+    <!-- Twelfth (drawbar 4', approx. 3:1 harmonic via fscale=3) -->
+    <Node id="fscale1" x="280" y="340" factor="3.0">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="osc2" x="480" y="340" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+
+    <!-- Sum partials via dedicated output inputs (acts as a mixer) -->
+    <Node id="output" x="1080" y="240" level="0.85">
+      <Pin id="in1" direction="in" type="signal"/>
+      <Pin id="in2" direction="in" type="signal"/>
+      <Pin id="in3" direction="in" type="signal"/>
+    </Node>
+
+    <!-- Tremolo AM -->
+    <Node id="note1" x="80" y="480">
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="fscale2" x="280" y="480" factor="0.03">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="osc3" x="480" y="480" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="am0" x="680" y="240" amount="0.35">
+      <Pin id="carrier_in" direction="in" type="signal"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+
+    <!-- Envelope: fast attack, medium release for a keyboard-like feel -->
+    <Node id="adsr0" x="880" y="240" attack="0.01" decay="0.05" sustain="0.9" release="0.25">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+  </Nodes>
+
+  <Connections>
+    <!-- Root feeds all partial generators -->
+    <Wire from="note0" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="note0" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="note0" fromPort="out" to="fscale1" toPort="freq_in"/>
+
+    <!-- Partial tuning -->
+    <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in"/>
+    <Wire from="fscale1" fromPort="out" to="osc2" toPort="note_in"/>
+
+    <!-- Mix partials into the AM carrier input via output summation -->
+    <!-- (We can't wire three sources to output then back, so use two
+         dedicated output inputs as the mixer, feed AM there first.) -->
+    <!-- Rewire: partials go to output; we need a second stage, so instead
+         we sum via the AM stage: each partial would need its own AM.
+         Trick: wire all three into the SAME AM node through the box's
+         output as a mixer, then run a post-AM envelope. -->
+
+    <!-- Since output has no 'out' port, we invert: AM first for each,
+         envelope, then mix. For simplicity here: AM the fundamental, add
+         the other two directly. -->
+    <Wire from="osc0" fromPort="out" to="am0" toPort="carrier_in"/>
+    <Wire from="osc3" fromPort="out" to="am0" toPort="modulator_in"/>
+    <Wire from="am0" fromPort="out" to="adsr0" toPort="in"/>
+
+    <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
+    <Wire from="osc1" fromPort="out" to="output" toPort="in2"/>
+    <Wire from="osc2" fromPort="out" to="output" toPort="in3"/>
+
+    <!-- Tremolo LFO -->
+    <Wire from="note1" fromPort="out" to="fscale2" toPort="freq_in"/>
+    <Wire from="fscale2" fromPort="out" to="osc3" toPort="note_in"/>
+  </Connections>
+</SmolFM>

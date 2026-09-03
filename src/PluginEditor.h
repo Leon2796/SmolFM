@@ -44,6 +44,7 @@ private:
     gui::PaletteButton adsrButton;
     gui::PaletteButton noteButton;
     gui::PaletteButton ringButton;
+    gui::PaletteButton amButton;
     gui::PaletteButton outputButton;
 
     juce::Viewport graphViewport;  ///< Scrollable container for the graph canvas

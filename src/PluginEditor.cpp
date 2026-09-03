@@ -15,6 +15,7 @@
 #include "gui/components/NoteNodeComponent.h"
 #include "gui/components/MasterOutputComponent.h"
 #include "gui/components/RingModulatorComponent.h"
+#include "gui/components/AmComponent.h"
 
 namespace
 {
@@ -60,10 +61,17 @@ namespace
         return std::make_unique<gui::NoteNodeComponent>();
     }
 
-    std::unique_ptr<juce::Component> makeRingModulatorContent (const juce::String&,
+        std::unique_ptr<juce::Component> makeRingModulatorContent (const juce::String&,
                                                                juce::AudioProcessorValueTreeState&)
     {
         return std::make_unique<gui::RingModulatorComponent>();
+    }
+
+    std::unique_ptr<juce::Component> makeAmContent (const juce::String& instanceId,
+                                                    juce::AudioProcessorValueTreeState& apvts)
+    {
+        return std::make_unique<gui::AmComponent> (
+            apvts, smolfm::GraphNodeRegistry::amountParameterIdFor (instanceId));
     }
 }
 
@@ -160,7 +168,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                            {   juce::Path p; p.addRectangle (r.reduced (2.0f)); return p; },
                            smolfm::GraphNodeRegistry::maxMasterOutputs);
 
-    ringButton .configure ("ring", "Ring",  [] (const juce::Rectangle<float>& r)
+        ringButton .configure ("ring", "Ring",  [] (const juce::Rectangle<float>& r)
                            {   juce::Path p; p.addEllipse (r.reduced (1.0f));
                                const float cx = r.getCentreX(), cy = r.getCentreY();
                                p.startNewSubPath (cx - 5, cy - 5); p.lineTo (cx + 5, cy + 5);
@@ -168,7 +176,18 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                                return p; },
                            smolfm::GraphNodeRegistry::maxRingModulators);
 
-    for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &noteButton, &ringButton, &outputButton })
+    amButton   .configure ("am",   "AM",    [] (const juce::Rectangle<float>& r)
+                           {   juce::Path p;
+                               // Modulated sine icon: a wave whose amplitude tapers
+                               const float cx = r.getCentreX();
+                               const float cy = r.getCentreY();
+                               p.startNewSubPath (r.getX(), cy);
+                               p.quadraticTo (cx - r.getWidth() * 0.15f, r.getY() + 2.0f, cx, cy);
+                               p.quadraticTo (cx + r.getWidth() * 0.15f, r.getBottom() - 2.0f, r.getRight(), cy);
+                               return p; },
+                           smolfm::GraphNodeRegistry::maxAmModulators);
+
+    for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &noteButton, &ringButton, &amButton, &outputButton })
     {
         addAndMakeVisible (*b);
         b->onAddRequested = [this] (const juce::String& baseId) { addNodeFromToolbar (baseId); };
@@ -206,8 +225,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             return graphPanel.addNodeOfType ("adsr", processorRef.getParameters(), makeAdsrContent, nodeStartsHidden);
         if (baseId == "note")
             return graphPanel.addNodeOfType ("note", processorRef.getParameters(), makeNoteContent, nodeStartsHidden);
-        if (baseId == "ring")
+                if (baseId == "ring")
             return graphPanel.addNodeOfType ("ring", processorRef.getParameters(), makeRingModulatorContent, nodeStartsHidden);
+        if (baseId == "am")
+            return graphPanel.addNodeOfType ("am", processorRef.getParameters(), makeAmContent, nodeStartsHidden);
         if (baseId == "output")
             return graphPanel.addNodeOfType ("output", processorRef.getParameters(),
                                              [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
@@ -236,9 +257,10 @@ void AudioPluginAudioProcessorEditor::addNodeFromToolbar (const juce::String& ba
         { "note",   makeNoteContent    },
         { "osc",    makeOscillatorContent },
         { "fm",     makeFmContent      },
-                { "fscale", makeFrequencyScaleContent },
+                        { "fscale", makeFrequencyScaleContent },
         { "adsr",   makeAdsrContent    },
-        { "ring",   makeRingModulatorContent }
+        { "ring",   makeRingModulatorContent },
+        { "am",     makeAmContent        }
     };
 
     if (baseId == "output")
@@ -264,6 +286,7 @@ void AudioPluginAudioProcessorEditor::refreshToolbarBadges()
     adsrButton  .setRemaining (smolfm::GraphNodeRegistry::maxAdsr            - graphPanel.countBoxesOfType ("adsr"));
     noteButton  .setRemaining (smolfm::GraphNodeRegistry::maxNotes           - graphPanel.countBoxesOfType ("note"));
     ringButton  .setRemaining (smolfm::GraphNodeRegistry::maxRingModulators   - graphPanel.countBoxesOfType ("ring"));
+    amButton    .setRemaining (smolfm::GraphNodeRegistry::maxAmModulators      - graphPanel.countBoxesOfType ("am"));
     outputButton.setRemaining (smolfm::GraphNodeRegistry::maxMasterOutputs   - graphPanel.countBoxesOfType ("output"));
 }
 
@@ -297,8 +320,9 @@ void AudioPluginAudioProcessorEditor::resized()
     fmButton    .setBounds (palette.removeFromLeft (tileWidth));
     scaleButton .setBounds (palette.removeFromLeft (tileWidth));
     adsrButton  .setBounds (palette.removeFromLeft (tileWidth));
-        noteButton .setBounds (palette.removeFromLeft (tileWidth));
+            noteButton .setBounds (palette.removeFromLeft (tileWidth));
     ringButton .setBounds (palette.removeFromLeft (tileWidth));
+    amButton   .setBounds (palette.removeFromLeft (tileWidth));
     outputButton.setBounds (palette.removeFromLeft (tileWidth));
 
     bounds.removeFromTop (8);

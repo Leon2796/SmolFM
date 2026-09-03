@@ -44,6 +44,8 @@ target_sources(${PROJECT_NAME}
         gui/DraggablePanel.cpp
         processors/RingModulatorProcessor.cpp
         gui/components/RingModulatorComponent.cpp
+        processors/AmProcessor.cpp
+        gui/components/AmComponent.cpp
         # JUMAKE_SOURCES_END
 )
 

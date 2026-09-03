@@ -52,13 +52,24 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
         voiceParameters.freqScaleFactor[static_cast<size_t> (i)] = parameters.getRawParameterValue ("fscale" + num + "Factor");
     }
 
-    for (int i = 0; i < smolfm::GraphNodeRegistry::maxAdsr; ++i)
+        for (int i = 0; i < smolfm::GraphNodeRegistry::maxAdsr; ++i)
     {
         const juce::String num (i);
-        voiceParameters.adsrAttack [static_cast<size_t> (i)] = parameters.getRawParameterValue ("adsr" + num + "Attack");
-        voiceParameters.adsrDecay  [static_cast<size_t> (i)] = parameters.getRawParameterValue ("adsr" + num + "Decay");
-        voiceParameters.adsrSustain[static_cast<size_t> (i)] = parameters.getRawParameterValue ("adsr" + num + "Sustain");
-        voiceParameters.adsrRelease[static_cast<size_t> (i)] = parameters.getRawParameterValue ("adsr" + num + "Release");
+
+        voiceParameters.adsrAttack [static_cast<size_t> (i)] = parameters.getRawParameterValue ("adsr" + num + 
+"Attack");
+        voiceParameters.adsrDecay  [static_cast<size_t> (i)] = parameters.getRawParameterValue ("adsr" + num + 
+"Decay");
+        voiceParameters.adsrSustain[static_cast<size_t> (i)] = parameters.getRawParameterValue ("adsr" + num + 
+"Sustain");
+        voiceParameters.adsrRelease[static_cast<size_t> (i)] = parameters.getRawParameterValue ("adsr" + num + 
+"Release");
+    }
+
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxAmModulators; ++i)
+    {
+        const juce::String num (i);
+        voiceParameters.amAmount[static_cast<size_t> (i)] = parameters.getRawParameterValue ("am" + num + "Amount");
     }
 
     voiceParameters.masterLevel = parameters.getRawParameterValue ("masterLevel");
@@ -325,6 +336,18 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "adsr" + num + "Release", "ADSR " + num + " Release",
             juce::NormalisableRange<float> (0.001f, 10.0f, 0.001f, 0.5f), 0.5f));
+    }
+
+        // -- AM modulator pool ------------------------------------------------------
+    // Depth 0 = dry passthrough, 1 = full modulation (bipolar modulator spans
+    // gain 0..2).
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxAmModulators; ++i)
+    {
+        const juce::String num (i);
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "am" + num + "Amount", "AM " + num + " Amount",
+            juce::NormalisableRange<float> (0.0f, 1.0f), 0.0f));
     }
 
     // -- Master output --------------------------------------------------------

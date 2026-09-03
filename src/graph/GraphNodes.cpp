@@ -124,8 +124,7 @@ namespace
 
         }
 
-        {
-
+                {
             NodeSpec ring;
             ring.id = "ring";
             ring.title = "Ring Mod";
@@ -134,6 +133,17 @@ namespace
             ring.inputPortIds = { "in1", "in2" };
             ring.inputTypes = { PortType::signal, PortType::signal };
             specs.push_back (ring);
+        }
+        {
+            NodeSpec am;
+            am.id = "am";
+            am.title = "AM";
+            am.outputPortId = "out";
+            am.outputType = PortType::signal;
+            am.inputPortIds = { "carrier_in", "modulator_in" };
+            am.inputTypes = { PortType::signal, PortType::signal };
+            am.amountParameterTemplate = "am%Amount";
+            specs.push_back (am);
         }
         {
             NodeSpec adsr;
@@ -245,6 +255,7 @@ NodeType GraphNodeRegistry::typeOf (const juce::String& nodeId)
     if (base == "fscale") return NodeType::frequencyScale;
 
         if (base == "ring")    return NodeType::ringModulator;
+    if (base == "am")      return NodeType::amModulator;
     if (base == "adsr")   return NodeType::adsr;
 
     if (base == "output") return NodeType::masterOutput;
@@ -336,6 +347,7 @@ int GraphNodeRegistry::maxInstancesOf (NodeType type)
         case NodeType::frequencyScale: return maxFrequencyScales;
 
         case NodeType::ringModulator:  return maxRingModulators;
+        case NodeType::amModulator:    return maxAmModulators;
         case NodeType::adsr:           return maxAdsr;
 
         case NodeType::masterOutput:   return maxMasterOutputs;

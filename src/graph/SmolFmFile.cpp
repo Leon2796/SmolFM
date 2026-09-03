@@ -59,7 +59,7 @@ namespace
 
             if (wfmId.isNotEmpty())  specs.add ({ "waveform",  wfmId });
         }
-        else if (baseId == "fm")
+                else if (baseId == "fm" || baseId == "am")
         {
             const auto amtId = GraphNodeRegistry::amountParameterIdFor (nodeId);
             if (amtId.isNotEmpty()) specs.add ({ "amount", amtId });

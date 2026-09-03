@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- A saw carrier with a slow sine modulator producing classic tremolo -->
+<SmolFM version="2" name="Vintage Tremolo">
+  <description>Sawtooth carrier through AM with a slow sine LFO, depth 0.5 — classic tremolo with audible carrier.</description>
+  <Nodes>
+    <Node id="note0" x="80" y="100">
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+
+    <Node id="osc0" x="260" y="100" waveform="1">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+
+    <Node id="note1" x="80" y="280">
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+
+    <Node id="fscale0" x="260" y="280" factor="0.05">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+
+    <Node id="osc1" x="440" y="280" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+
+    <Node id="am0" x="620" y="190" amount="0.5">
+      <Pin id="carrier_in" direction="in" type="signal"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+
+    <Node id="adsr0" x="800" y="190" attack="0.01" decay="0.1" sustain="0.8" release="0.3">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+
+    <Node id="output" x="980" y="190" level="0.8">
+      <Pin id="in1" direction="in" type="signal"/>
+    </Node>
+  </Nodes>
+
+  <Connections>
+    <Wire from="note0" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="note1" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in"/>
+    <Wire from="osc0" fromPort="out" to="am0" toPort="carrier_in"/>
+    <Wire from="osc1" fromPort="out" to="am0" toPort="modulator_in"/>
+    <Wire from="am0" fromPort="out" to="adsr0" toPort="in"/>
+    <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
+  </Connections>
+</SmolFM>

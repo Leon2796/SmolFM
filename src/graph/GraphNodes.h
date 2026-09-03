@@ -50,6 +50,7 @@ enum class NodeType
     fmAmount,
     frequencyScale,
     ringModulator,
+    amModulator,
     adsr,
     masterOutput,
     unknown
@@ -132,6 +133,7 @@ public:
     static constexpr int maxFmAmounts   = 4;
     static constexpr int maxFrequencyScales = 4;
     static constexpr int maxRingModulators  = 4;
+    static constexpr int maxAmModulators    = 4;
     static constexpr int maxNotes       = 4;
     static constexpr int maxAdsr        = 4;
     static constexpr int maxMasterOutputs = 1;
