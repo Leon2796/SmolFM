@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Demo 24: Distorted Bass / Fuzz-Bass  (doppelte FM: fm0 -> fm1 -> osc0)
+
+  Klangidee: Saw-Carrier mit extremer FM für aggressiven, verzerrten Bass.
+  Mod1 bei 0.5:1 (unterer Oberton) mit sehr hohem Amount, Mod2 bei 0.75:1
+  ebenfalls extrem: Beide FM-Stufen modulieren so stark, dass der Klang sich
+  fast verzerrt anhört (Fuzz-Charakteristik). Kurze Attack, kräftiger Sustain.
+
+  Spielbereich: tief spielen (A0-A2), klingt wie ein aggressiver Distortion-Bass
+  oder durch einen analogen Verzerrer geschickter Synthesizer.
+-->
+<SmolFM version="2">
+  <Nodes>
+    <Node id="note0" x="60" y="60">
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="osc0" x="1020" y="60" waveform="1">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="osc1" x="1020" y="380" waveform="1">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="osc2" x="1020" y="700" waveform="1">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="fm0" x="700" y="60" amount="4.5">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="fm1" x="700" y="380" amount="3.8">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="adsr0" x="1340" y="60" attack="0.005" decay="0.2" sustain="0.75" release="0.25">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="note1" x="60" y="380"/>
+    <Node id="note2" x="60" y="700"/>
+    <Node id="fscale0" x="380" y="60" factor="0.5"/>
+    <Node id="fscale1" x="380" y="380" factor="0.75"/>
+      <Node id="output" x="1660" y="60" level="0.95"/>
+  </Nodes>
+  <Connections>
+    <Wire from="note0" fromPort="out" to="fm0" toPort="freq_in"/>
+    <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in"/>
+    <Wire from="fm0" fromPort="out" to="fm1" toPort="freq_in"/>
+    <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in"/>
+    <Wire from="fm1" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="osc0" fromPort="out" to="adsr0" toPort="in"/>
+    <Wire from="note1" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in"/>
+    <Wire from="note2" fromPort="out" to="fscale1" toPort="freq_in"/>
+    <Wire from="fscale1" fromPort="out" to="osc2" toPort="note_in"/>
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
+  </Connections>
+</SmolFM>

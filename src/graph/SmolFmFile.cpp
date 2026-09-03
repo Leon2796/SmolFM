@@ -232,6 +232,11 @@ bool SmolFmFile::load (gui::DraggablePanel& panel,
         }
 
         panel.applyPatch (patch);
+
+        // Show only nodes that are actively wired; everything else stays
+        // hidden to keep the canvas uncluttered.
+        panel.updateVisibilityFromConnections();
+
         appliedAnything = true;
     }
 

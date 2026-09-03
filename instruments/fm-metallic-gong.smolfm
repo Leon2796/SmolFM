@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Advanced: Metallic Gong (FM + Ring Mod Hybrid) -->
+<SmolFM version="2" name="Metallic Gong">
+  <description>FM carrier ring-modulated by inharmonic ratio for dense metallic texture</description>
+  <Nodes>
+    <Node id="note0" x="100" y="100"/>
+    <Node id="note1" x="100" y="300"/>
+    <Node id="note2" x="100" y="500"/>
+    
+    <Node id="fscale0" x="300" y="300" factor="2.5"/>
+    <Node id="fscale1" x="300" y="500" factor="3.14159"/>
+    
+    <Node id="fm0" x="500" y="100" amount="1.8"/>
+    
+    <Node id="osc0" x="700" y="100" waveform="0"/>
+    <Node id="osc1" x="500" y="300" waveform="0"/>
+    <Node id="osc2" x="500" y="500" waveform="1"/>
+    
+    <Node id="ring0" x="900" y="100"/>
+    
+    <Node id="adsr0" x="1100" y="100" attack="0.002" decay="2.5" sustain="0.0" release="2.0"/>
+    
+    <Node id="output" x="1300" y="100" level="0.7"/>
+  </Nodes>
+  <Connections>
+    <Wire from="note0" fromPort="out" to="fm0" toPort="freq_in"/>
+    <Wire from="note1" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in"/>
+    <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in"/>
+    <Wire from="fm0" fromPort="out" to="osc0" toPort="note_in"/>
+    
+    <Wire from="osc0" fromPort="out" to="ring0" toPort="in1"/>
+    <Wire from="note2" fromPort="out" to="fscale1" toPort="freq_in"/>
+    <Wire from="fscale1" fromPort="out" to="osc2" toPort="note_in"/>
+    <Wire from="osc2" fromPort="out" to="ring0" toPort="in2"/>
+    
+    <Wire from="ring0" fromPort="out" to="adsr0" toPort="in"/>
+    <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
+  </Connections>
+</SmolFM>

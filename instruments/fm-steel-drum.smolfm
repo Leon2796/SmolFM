@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Demo 22: Steel Drum / Gamelan  (doppelte FM: fm0 -> fm1 -> osc0)
+
+  Klangidee: Sinus-Carrier für warmen, kupfernen Grundton. Mod1 bei 1.45:1
+  (inharmonisch, nahe √2) für den charakteristischen Steel-Drum-Obertonaufbau.
+  Mod2 bei 2.72:1 (nahe e) für inharmonische Höhen mit "Metallklirren".
+  Mittellanges ADSR mit langem Release = sich ausbreitender, exotischer Klang.
+
+  Spielbereich: A2-E5, klingt wie Steel-Drums, Gamelan oder metallene Gongs.
+-->
+<SmolFM version="2">
+  <Nodes>
+    <Node id="note0" x="60" y="60">
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="osc0" x="1020" y="60" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="osc1" x="1020" y="380" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="osc2" x="1020" y="700" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="fm0" x="700" y="60" amount="2.5">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="fm1" x="700" y="380" amount="1.9">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="adsr0" x="1340" y="60" attack="0.05" decay="1.5" sustain="0.4" release="2.0">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="note1" x="60" y="380"/>
+    <Node id="note2" x="60" y="700"/>
+    <Node id="fscale0" x="380" y="60" factor="1.45"/>
+    <Node id="fscale1" x="380" y="380" factor="2.72"/>
+      <Node id="output" x="1660" y="60" level="0.75"/>
+  </Nodes>
+  <Connections>
+    <Wire from="note0" fromPort="out" to="fm0" toPort="freq_in"/>
+    <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in"/>
+    <Wire from="fm0" fromPort="out" to="fm1" toPort="freq_in"/>
+    <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in"/>
+    <Wire from="fm1" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="osc0" fromPort="out" to="adsr0" toPort="in"/>
+    <Wire from="note1" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in"/>
+    <Wire from="note2" fromPort="out" to="fscale1" toPort="freq_in"/>
+    <Wire from="fscale1" fromPort="out" to="osc2" toPort="note_in"/>
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
+  </Connections>
+</SmolFM>

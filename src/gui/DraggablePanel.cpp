@@ -8,6 +8,8 @@
 
 #include "DraggablePanel.h"
 
+#include <set>
+
 namespace gui
 {
 
@@ -27,7 +29,10 @@ DraggableComponent& DraggablePanel::addComponent (std::unique_ptr<DraggableCompo
     jassert (box != nullptr);
     auto* raw = box.get();
     boxes.add (std::move (box));
-    addAndMakeVisible (*raw);
+
+    // Components start invisible by default.  Callers (toolbar or patch
+    // loader) decide which ones should be shown.
+    addChildComponent (*raw);
 
     raw->onCloseRequested = [this] (DraggableComponent& b) { removeNode (b); };
     return *raw;
@@ -37,7 +42,8 @@ DraggableComponent& DraggablePanel::addComponent (std::unique_ptr<DraggableCompo
 DraggableComponent* DraggablePanel::addNodeOfType (const juce::String& baseId,
                                                    juce::AudioProcessorValueTreeState& apvts,
                                                    std::function<std::unique_ptr<juce::Component> (const juce::String& instanceId,
-                                                                                                   juce::AudioProcessorValueTreeState&)> makeContent)
+                                                                                                   juce::AudioProcessorValueTreeState&)> makeContent,
+                                                   bool makeVisible)
 {
     // Find the lowest free instance index for this type (or the only allowed
     // id for single-instance types like note/adsr).
@@ -84,8 +90,12 @@ DraggableComponent* DraggablePanel::addNodeOfType (const juce::String& baseId,
     if (max > 1)
         title += " " + juce::String (index + 1);
 
-    auto box = std::make_unique<DraggableComponent> (instanceId, title, std::move (content));
+        auto box = std::make_unique<DraggableComponent> (instanceId, title, std::move (content));
     auto* raw = &addComponent (std::move (box));
+
+    // Toolbar additions are immediately visible; patch-loaded nodes stay
+    // hidden until updateVisibilityFromConnections() proves they're needed.
+    raw->setVisible (makeVisible);
 
     // Attach the pins declared by this node's spec.
     for (int i = 0; i < spec->inputPortIds.size(); ++i)
@@ -275,6 +285,23 @@ void DraggablePanel::applyPatch (const smolfm::ConnectionPatch& patch)
 
     if (onConnectionPatchChanged)
         onConnectionPatchChanged (currentPatch);
+
+    repaint();
+}
+
+void DraggablePanel::updateVisibilityFromConnections()
+{
+    // Collect the node ids that appear in at least one wire.
+    std::set<juce::String> connectedNodeIds;
+    for (const auto& c : currentPatch.connections)
+    {
+        connectedNodeIds.insert (c.from.nodeId);
+        connectedNodeIds.insert (c.to.nodeId);
+    }
+
+    // Show only boxes that are part of the current wiring; hide the rest.
+    for (auto* b : boxes)
+        b->setVisible (connectedNodeIds.count (b->getBoxId()) > 0);
 
     repaint();
 }

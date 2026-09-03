@@ -46,6 +46,7 @@ private:
     gui::PaletteButton ringButton;
     gui::PaletteButton outputButton;
 
+    juce::Viewport graphViewport;  ///< Scrollable container for the graph canvas
     gui::DraggablePanel graphPanel;
     gui::PatchBrowser patchBrowser;
     std::unique_ptr<juce::FileChooser> fileChooser;

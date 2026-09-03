@@ -47,10 +47,11 @@ public:
 
         Returns nullptr when the budget for this type is exhausted.
     */
-    DraggableComponent* addNodeOfType (const juce::String& baseId,
+        DraggableComponent* addNodeOfType (const juce::String& baseId,
                                        juce::AudioProcessorValueTreeState& apvts,
                                        std::function<std::unique_ptr<juce::Component> (const juce::String& instanceId,
-                                                                                       juce::AudioProcessorValueTreeState&)> makeContent);
+                                                                                       juce::AudioProcessorValueTreeState&)> makeContent,
+                                       bool makeVisible = true);
 
     /** Remove a box (and all its wires) from the canvas. */
     void removeNode (DraggableComponent& box);
@@ -95,8 +96,12 @@ public:
     /** Read the current wiring. */
     const smolfm::ConnectionPatch& getCurrentPatch() const noexcept { return currentPatch; }
 
-    /** Replace the wiring entirely (e.g. from a saved patch). */
+        /** Replace the wiring entirely (e.g. from a saved patch). */
     void applyPatch (const smolfm::ConnectionPatch& patch);
+
+    /** Hide every box that is not part of the current wiring; show the ones
+        that are connected.  Call this after a patch load. */
+    void updateVisibilityFromConnections();
 
     /**
         Bounding box of all boxes plus padding — the size the panel needs to

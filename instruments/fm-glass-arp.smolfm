@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Advanced: Glass Arp (Light FM with Detuned Layer) -->
+<SmolFM version="2" name="Glass Arp">
+  <description>Two subtle FM voices with triangle carriers for glassy arpeggios</description>
+  <Nodes>
+    <Node id="note0" x="100" y="100"/>
+    <Node id="note1" x="100" y="300"/>
+    
+    <Node id="fscale0" x="300" y="200" factor="2.5"/>
+    <Node id="fscale1" x="300" y="300" factor="1.003"/>
+    
+    <Node id="fm0" x="500" y="100" amount="0.9"/>
+    <Node id="fm1" x="500" y="300" amount="0.85"/>
+    
+    <Node id="osc0" x="700" y="100" waveform="2"/>
+    <Node id="osc1" x="700" y="200" waveform="0"/>
+    <Node id="osc2" x="700" y="300" waveform="2"/>
+    
+    <Node id="adsr0" x="900" y="100" attack="0.005" decay="0.4" sustain="0.5" release="0.3"/>
+    <Node id="adsr1" x="900" y="300" attack="0.006" decay="0.42" sustain="0.48" release="0.32"/>
+    
+    <Node id="output" x="1100" y="200" level="0.5"/>
+  </Nodes>
+  <Connections>
+    <Wire from="note0" fromPort="out" to="fm0" toPort="freq_in"/>
+    <Wire from="note0" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in"/>
+    <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in"/>
+    <Wire from="fm0" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="osc0" fromPort="out" to="adsr0" toPort="in"/>
+    <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
+    
+    <Wire from="note1" fromPort="out" to="fscale1" toPort="freq_in"/>
+    <Wire from="fscale1" fromPort="out" to="fm1" toPort="freq_in"/>
+    <Wire from="osc1" fromPort="out" to="fm1" toPort="modulator_in"/>
+    <Wire from="fm1" fromPort="out" to="osc2" toPort="note_in"/>
+    <Wire from="osc2" fromPort="out" to="adsr1" toPort="in"/>
+    <Wire from="adsr1" fromPort="out" to="output" toPort="in2"/>
+  </Connections>
+</SmolFM>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Advanced: Crystal Bell (3-Stage FM Cascade) -->
+<SmolFM version="2" name="Crystal Bell">
+  <description>Three-stage FM cascade with irrational ratios for complex bell spectrum</description>
+  <Nodes>
+    <Node id="note0" x="60" y="60"/>
+    <Node id="note1" x="60" y="320"/>
+    <Node id="note2" x="60" y="580"/>
+    <Node id="note3" x="60" y="840"/>
+    
+    <Node id="fscale0" x="380" y="320" factor="1.618"/>
+    <Node id="fscale1" x="380" y="580" factor="3.14159"/>
+    <Node id="fscale2" x="380" y="840" factor="0.618"/>
+    
+    <Node id="fm0" x="700" y="60" amount="2.2"/>
+    <Node id="fm1" x="700" y="320" amount="1.8"/>
+    <Node id="fm2" x="700" y="580" amount="1.5"/>
+    
+    <Node id="osc0" x="1340" y="60" waveform="0"/>
+    <Node id="osc1" x="1020" y="320" waveform="0"/>
+    <Node id="osc2" x="1020" y="580" waveform="0"/>
+    <Node id="osc3" x="1020" y="840" waveform="0"/>
+    
+    <Node id="adsr0" x="1660" y="60" attack="0.001" decay="1.8" sustain="0.0" release="1.5"/>
+    
+    <Node id="output" x="1980" y="60" level="0.65"/>
+  </Nodes>
+  <Connections>
+    <Wire from="note0" fromPort="out" to="fm0" toPort="freq_in"/>
+    <Wire from="note1" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in"/>
+    <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in"/>
+    
+    <Wire from="fm0" fromPort="out" to="fm1" toPort="freq_in"/>
+    <Wire from="note2" fromPort="out" to="fscale1" toPort="freq_in"/>
+    <Wire from="fscale1" fromPort="out" to="osc2" toPort="note_in"/>
+    <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in"/>
+    
+    <Wire from="fm1" fromPort="out" to="fm2" toPort="freq_in"/>
+    <Wire from="note3" fromPort="out" to="fscale2" toPort="freq_in"/>
+    <Wire from="fscale2" fromPort="out" to="osc3" toPort="note_in"/>
+    <Wire from="osc3" fromPort="out" to="fm2" toPort="modulator_in"/>
+    
+    <Wire from="fm2" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="osc0" fromPort="out" to="adsr0" toPort="in"/>
+    <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
+  </Connections>
+</SmolFM>

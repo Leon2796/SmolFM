@@ -86,8 +86,15 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     titleLabel.setText ("SmolFM", juce::dontSendNotification);
     titleLabel.setJustificationType (juce::Justification::centred);
 
-    addAndMakeVisible (titleLabel);
-    addAndMakeVisible (graphPanel);
+        addAndMakeVisible (titleLabel);
+    
+    // Wrap the graph panel in a scrollable viewport so large patches
+    // can be navigated even when they exceed the window size.
+    graphViewport.setScrollBarsShown (true, true);  // vertical + horizontal
+    graphViewport.setScrollBarThickness (12);
+    graphViewport.setViewedComponent (&graphPanel, false);  // false = don't delete
+    addAndMakeVisible (graphViewport);
+    
     addAndMakeVisible (patchBrowser);
     addAndMakeVisible (exportButton);
     addAndMakeVisible (importButton);
@@ -185,23 +192,27 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     {
         const juce::String baseId = smolfm::GraphNodeRegistry::baseIdOf (instanceId);
 
-        // Reuse the same factories the toolbar uses.
+                // Reuse the same factories the toolbar uses.  Patch-loaded nodes
+        // stay invisible until updateVisibilityFromConnections() shows
+        // only the ones that are actively wired.
+        constexpr bool nodeStartsHidden = false;   // makeVisible parameter
         if (baseId == "osc")
-            return graphPanel.addNodeOfType ("osc",  processorRef.getParameters(), makeOscillatorContent);
+            return graphPanel.addNodeOfType ("osc",  processorRef.getParameters(), makeOscillatorContent, nodeStartsHidden);
         if (baseId == "fm")
-            return graphPanel.addNodeOfType ("fm",   processorRef.getParameters(), makeFmContent);
+            return graphPanel.addNodeOfType ("fm",   processorRef.getParameters(), makeFmContent, nodeStartsHidden);
         if (baseId == "fscale")
-            return graphPanel.addNodeOfType ("fscale", processorRef.getParameters(), makeFrequencyScaleContent);
+            return graphPanel.addNodeOfType ("fscale", processorRef.getParameters(), makeFrequencyScaleContent, nodeStartsHidden);
         if (baseId == "adsr")
-            return graphPanel.addNodeOfType ("adsr", processorRef.getParameters(), makeAdsrContent);
-                if (baseId == "note")
-            return graphPanel.addNodeOfType ("note", processorRef.getParameters(), makeNoteContent);
+            return graphPanel.addNodeOfType ("adsr", processorRef.getParameters(), makeAdsrContent, nodeStartsHidden);
+        if (baseId == "note")
+            return graphPanel.addNodeOfType ("note", processorRef.getParameters(), makeNoteContent, nodeStartsHidden);
         if (baseId == "ring")
-            return graphPanel.addNodeOfType ("ring", processorRef.getParameters(), makeRingModulatorContent);
+            return graphPanel.addNodeOfType ("ring", processorRef.getParameters(), makeRingModulatorContent, nodeStartsHidden);
         if (baseId == "output")
             return graphPanel.addNodeOfType ("output", processorRef.getParameters(),
                                              [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
-                                             { return makeOutputContent (id, a); });
+                                             { return makeOutputContent (id, a); },
+                                             nodeStartsHidden);
 
         return nullptr;
     };
@@ -294,9 +305,18 @@ void AudioPluginAudioProcessorEditor::resized()
 
     // Patch browser: directory row + navigation above the graph canvas.
     patchBrowser.setBounds (bounds.removeFromTop (64));
-    bounds.removeFromTop (4);
+        bounds.removeFromTop (4);
 
-    graphPanel.setBounds (bounds);
+    // The viewport gets the remaining space; the panel sizes itself to content.
+    graphViewport.setBounds (bounds);
+    
+    // Tell the panel its ideal size based on content (it will be scrollable if larger).
+    const auto content = graphPanel.getContentBounds();
+    if (!content.isEmpty())
+        graphPanel.setSize (juce::jmax (content.getRight(), bounds.getWidth()),
+                            juce::jmax (content.getBottom(), bounds.getHeight()));
+    else
+        graphPanel.setSize (bounds.getWidth(), bounds.getHeight());
 
     // Park the resize handle in the bottom-right corner.
     resizer.setBounds (getWidth() - 24, getHeight() - 24, 24, 24);
@@ -324,15 +344,22 @@ void AudioPluginAudioProcessorEditor::fitWindowToContent()
     const int neededW = content.getRight()  + chromeRight;
     const int neededH = content.getBottom() + chromeTop + chromeBottom;
 
-    if (neededW <= getWidth() && neededH <= getHeight())
+        if (neededW <= getWidth() && neededH <= getHeight())
         return;   // everything already fits
 
-    // Grow towards the needed size, but never past the usable screen area.
+    // Grow towards the needed size, but cap at a reasonable maximum.
+    // The viewport inside will provide scrolling for larger layouts.
     const auto screen = juce::Desktop::getInstance().getDisplays()
                             .getPrimaryDisplay()->userArea;
 
-    const int newW = juce::jmin (neededW, screen.getWidth());
-    const int newH = juce::jmin (neededH, screen.getHeight());
+    // Cap window growth to 90% of screen or current size + 400px, whichever is smaller.
+    // This prevents the window from becoming unmanageably large while the
+    // viewport handles scrolling for the remaining content.
+    const int maxW = juce::jmin (screen.getWidth() * 9 / 10, getWidth() + 400);
+    const int maxH = juce::jmin (screen.getHeight() * 9 / 10, getHeight() + 300);
+
+    const int newW = juce::jmin (neededW, maxW);
+    const int newH = juce::jmin (neededH, maxH);
 
     setSize (juce::jmax (getWidth(),  newW),
              juce::jmax (getHeight(), newH));
