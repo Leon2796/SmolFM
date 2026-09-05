@@ -63,25 +63,22 @@ DelayComponent::DelayComponent (juce::AudioProcessorValueTreeState& apvts,
     // Listen for sync changes to disable the time slider.
     syncButton.onClick = [this] { updateTimeEnabled(); };
     updateTimeEnabled();
-
-    setSize (260, 130);
 }
 
 void DelayComponent::resized()
 {
-    auto r = getLocalBounds().reduced (6);
-    auto topRow = r.removeFromTop (r.getHeight() / 2);
-    auto bottomRow = r;
+    auto r = getLocalBounds().reduced (8);
 
-    auto half1 = topRow.removeFromLeft (topRow.getWidth() / 2);
-    auto half2 = topRow;
+    // Bottom strip: sync toggle + division combo.
+    auto bottom = r.removeFromBottom (28);
+    syncButton.setBounds (bottom.removeFromLeft (bottom.getWidth() / 2).reduced (2));
+    divisionBox.setBounds (bottom.reduced (2));
 
-    timeSlider.setBounds (half1.reduced (4).withTrimmedTop (10));
-    feedbackSlider.setBounds (half2.reduced (4).withTrimmedTop (10));
-
-    syncButton.setBounds (bottomRow.removeFromLeft (90).reduced (4).withTrimmedTop (10));
-    divisionBox.setBounds (bottomRow.removeFromLeft (70).reduced (4).withTrimmedTop (10));
-    mixSlider.setBounds (bottomRow.reduced (4).withTrimmedTop (10));
+    // Three rotary controls share the remaining space.
+    const int w = r.getWidth() / 3;
+    timeSlider.setBounds     (r.removeFromLeft (w).reduced (4).withTrimmedTop (14));
+    feedbackSlider.setBounds (r.removeFromLeft (w).reduced (4).withTrimmedTop (14));
+    mixSlider.setBounds      (r.reduced (4).withTrimmedTop (14));
 }
 
 void DelayComponent::updateTimeEnabled()

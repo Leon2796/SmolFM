@@ -28,7 +28,9 @@ wirken daher auf die nächste Note.
 
 | UI-Funktion | Bedeutung | UI-Symbol | Datei |
 |---|---|---|---|
-| *(noch keine)* | vier Rotary-Slider (A/D/S/R) | `AdsrPanel::attackSlider` u. a. | [src/gui/components/AdsrPanel.h](../../src/gui/components/AdsrPanel.h) |
+| Envelope-Vorschau | Zeichnet die ADSR-Kurve aus den vier Slider-Werten; die vier Phasen teilen sich die Breite anteilig nach Dauer (linearer Attack, exponentieller Decay/Release via `quadraticTo`); Repaint bei jedem Slider-Drag | `AdsrPanel::CurveDisplay::paint` | [src/gui/components/AdsrPanel.cpp](../../src/gui/components/AdsrPanel.cpp) |
+| Kurven-Refresh | `Slider::Listener` des Panels löst `curveDisplay.repaint()` bei Wertänderung aus | `AdsrPanel::sliderValueChanged` | [src/gui/components/AdsrPanel.cpp](../../src/gui/components/AdsrPanel.cpp) |
+| *(Rest wie gehabt)* | vier Rotary-Slider (A/D/S/R) | `AdsrPanel::attackSlider` u. a. | [src/gui/components/AdsrPanel.h](../../src/gui/components/AdsrPanel.h) |
 
 ## Abschnitt 3 — Mathematische Beschreibung
 

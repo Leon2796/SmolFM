@@ -12,7 +12,8 @@
 namespace gui
 {
 
-class AdsrPanel final : public juce::Component
+class AdsrPanel final : public juce::Component,
+                        private juce::Slider::Listener
 {
 public:
     AdsrPanel (juce::AudioProcessorValueTreeState& apvts,
@@ -26,12 +27,23 @@ public:
     void resized() override;
 
 private:
+    /** Draws the current ADSR shape from the four slider values. */
+    class CurveDisplay final : public juce::Component
+    {
+    public:
+        void paint (juce::Graphics& g) override;
+    };
+
+    void sliderValueChanged (juce::Slider*) override;
+
     juce::Label titleLabel;
 
     juce::Slider attackSlider;
     juce::Slider decaySlider;
     juce::Slider sustainSlider;
     juce::Slider releaseSlider;
+
+    CurveDisplay curveDisplay;
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attackAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> decayAttachment;
