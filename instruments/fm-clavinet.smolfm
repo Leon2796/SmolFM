@@ -3,9 +3,11 @@
 <!--
   Demo 14: Clavinet  (doppelte FM: fm0 -> fm1 -> osc0)
 
-  Klangidee: Saw-Carrier mit perkussiven FM-Anklang. Mod1 bei 1.5:1
-  gibt metallischen Anschlag (tine-artig), Mod2 bei 2.007:1 leicht
-  verstimmt -> Oberton-Fülle mit leichtem Rauschen. Sehr kurze
+  Klangidee: Saw-Carrier mit perkussivem FM-Anschlag. Beide Modulatoren
+  sind Sinus-Oszillatoren (Saw-Modulatoren erzeugen dichte Seitenbänder
+  und klingen rauschig): Mod1 bei 1.5:1 gibt den tine-artigen Anschlag,
+  Mod2 bei 2.007:1 leichte Verstimmung fuer Oberton-Fuelle. Moderate
+  FM-Amounts (0.6/0.4) halten die Momentanfrequenz positiv. Sehr kurze
   Attack/Decay = perkussiv, spitz.
 
   Spielbereich: G3-E6, klingt wie Clavinet oder elektrisches Cembalo.
@@ -19,20 +21,20 @@
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-    <Node id="osc1" x="1020" y="380" waveform="1">
+    <Node id="osc1" x="1020" y="380" waveform="0">
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-    <Node id="osc2" x="1020" y="700" waveform="1">
+    <Node id="osc2" x="1020" y="700" waveform="0">
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-    <Node id="fm0" x="700" y="60" amount="2.8">
+    <Node id="fm0" x="700" y="60" amount="0.6">
       <Pin id="freq_in" direction="in" type="frequency"/>
       <Pin id="modulator_in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
-    <Node id="fm1" x="700" y="380" amount="1.9">
+    <Node id="fm1" x="700" y="380" amount="0.4">
       <Pin id="freq_in" direction="in" type="frequency"/>
       <Pin id="modulator_in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="frequency"/>

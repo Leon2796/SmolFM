@@ -60,10 +60,23 @@ namespace
             if (wfmId.isNotEmpty())  specs.add ({ "waveform",  wfmId });
         }
                 else if (baseId == "fm" || baseId == "am")
-        {
-            const auto amtId = GraphNodeRegistry::amountParameterIdFor (nodeId);
-            if (amtId.isNotEmpty()) specs.add ({ "amount", amtId });
-        }
+                {
+                    const auto amtId = GraphNodeRegistry::amountParameterIdFor (nodeId);
+                    if (amtId.isNotEmpty()) specs.add ({ "amount", amtId });
+                }
+                else if (baseId == "delay")
+                {
+                    const auto timeId = GraphNodeRegistry::delayTimeParameterIdFor (nodeId);
+                    const auto fbId   = GraphNodeRegistry::delayFeedbackParameterIdFor (nodeId);
+                    const auto mixId  = GraphNodeRegistry::delayMixParameterIdFor (nodeId);
+                    const auto syncId = GraphNodeRegistry::delaySyncParameterIdFor (nodeId);
+                    const auto divId  = GraphNodeRegistry::delayDivisionParameterIdFor (nodeId);
+                    if (timeId.isNotEmpty()) specs.add ({ "time",      timeId });
+                    if (fbId  .isNotEmpty()) specs.add ({ "feedback",  fbId });
+                    if (mixId .isNotEmpty()) specs.add ({ "mix",       mixId });
+                    if (syncId.isNotEmpty()) specs.add ({ "sync",      syncId });
+                    if (divId .isNotEmpty()) specs.add ({ "division",  divId });
+                }
         else if (baseId == "fscale")
         {
             const auto factorId = GraphNodeRegistry::amountParameterIdFor (nodeId);

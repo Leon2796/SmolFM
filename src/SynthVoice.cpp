@@ -32,7 +32,8 @@ namespace
                                                                           std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts>& fmProcessors,
                                      std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales>& frequencyScalers,
                                                                           std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators>& ringModulators,
-                                     std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators>& amModulators)
+                                                                          std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators>& amModulators,
+                                                                          std::array<DelayProcessor*, GraphNodeRegistry::maxDelays>& delays)
     {
         juce::ignoreUnused (params, noteSources);
 
@@ -64,6 +65,15 @@ namespace
                 {
                     if (portId == "carrier_in")   return &amModulators[static_cast<size_t> (index)]->getCarrierInput();
                     if (portId == "modulator_in") return &amModulators[static_cast<size_t> (index)]->getModulatorInput();
+                    return nullptr;
+                }
+
+                if (type == NodeType::delay
+                 && index >= 0 && index < GraphNodeRegistry::maxDelays
+                 && delays[static_cast<size_t> (index)] != nullptr)
+                {
+                    if (portId == "in")
+                        return &delays[static_cast<size_t> (index)]->getInput();
                     return nullptr;
                 }
 
@@ -128,7 +138,8 @@ namespace
                                                                               std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts>& fmProcessors,
                                        std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales>& frequencyScalers,
                                                                               std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators>& ringModulators,
-                                       std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators>& amModulators)
+                                                                              std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators>& amModulators,
+                                                                              std::array<DelayProcessor*, GraphNodeRegistry::maxDelays>& delays)
     {
         if (portId != "out")
             return nullptr;
@@ -166,10 +177,15 @@ namespace
          && ringModulators[static_cast<size_t> (index)] != nullptr)
             return &ringModulators[static_cast<size_t> (index)]->getOutput();
 
-        if (type == NodeType::amModulator
+                if (type == NodeType::amModulator
          && index >= 0 && index < GraphNodeRegistry::maxAmModulators
          && amModulators[static_cast<size_t> (index)] != nullptr)
             return &amModulators[static_cast<size_t> (index)]->getOutput();
+
+        if (type == NodeType::delay
+         && index >= 0 && index < GraphNodeRegistry::maxDelays
+         && delays[static_cast<size_t> (index)] != nullptr)
+            return &delays[static_cast<size_t> (index)]->getOutput();
 
         return nullptr;
     }
@@ -240,14 +256,26 @@ void SynthVoice::buildGraph()
     }
 
         // AM modulator pool — depth-controlled amplitude modulators.
-    for (int i = 0; i < GraphNodeRegistry::maxAmModulators; ++i)
-    {
-        auto am = std::make_unique<AmProcessor> (parameters.amAmount[static_cast<size_t> (i)]);
-        amModulators[static_cast<size_t> (i)] = am.get();
-        graph.addProcessor (std::move (am));
-    }
+        for (int i = 0; i < GraphNodeRegistry::maxAmModulators; ++i)
+        {
+            auto am = std::make_unique<AmProcessor> (parameters.amAmount[static_cast<size_t> (i)]);
+            amModulators[static_cast<size_t> (i)] = am.get();
+            graph.addProcessor (std::move (am));
+        }
 
-    // Master output (singleton).
+        // Delay pool — tempo-sync or free-running with feedback.
+        for (int i = 0; i < GraphNodeRegistry::maxDelays; ++i)
+        {
+            auto delay = std::make_unique<DelayProcessor> (parameters.delayTimeMs  [static_cast<size_t> (i)],
+                                                           parameters.delayFeedback[static_cast<size_t> (i)],
+                                                           parameters.delayMix     [static_cast<size_t> (i)],
+                                                           parameters.delaySync    [static_cast<size_t> (i)],
+                                                           parameters.delayDivision[static_cast<size_t> (i)]);
+            delays[static_cast<size_t> (i)] = delay.get();
+            graph.addProcessor (std::move (delay));
+        }
+
+        // Master output (singleton).
     auto master = std::make_unique<MasterOutputProcessor> (parameters.masterLevel);
     masterOutput = master.get();
     graph.addProcessor (std::move (master));
@@ -265,6 +293,7 @@ void SynthVoice::startNote (int midiNoteNumber,
                             int /*currentPitchWheelPosition*/)
 {
     currentVelocity = velocity;
+    keyHeld = true;
 
     for (auto* note : noteSources)
         if (note != nullptr)
@@ -276,7 +305,7 @@ void SynthVoice::startNote (int midiNoteNumber,
 void SynthVoice::stopNote (float /*velocity*/, bool allowTailOff)
 {
     if (allowTailOff)
-    {
+        {
         for (auto* adsr : adsrProcessors)
             if (adsr != nullptr)
                 adsr->noteOff();
@@ -285,6 +314,11 @@ void SynthVoice::stopNote (float /*velocity*/, bool allowTailOff)
     {
         clearCurrentNote();
     }
+
+    // Key is up either way.  With allowTailOff the envelopes (and any delay
+    // tail) decide when the voice is done; without it the voice is silenced
+    // immediately by clearCurrentNote.
+    keyHeld = false;
 }
 
 void SynthVoice::pitchWheelMoved (int) {}
@@ -305,22 +339,31 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
         return;
     }
 
-    // The voice ends when every wired envelope has finished its release.
-    bool anyActive = false;
-    for (auto* adsr : adsrProcessors)
-        if (adsr != nullptr && adsr->getInput().isConnected() && adsr->isActive())
-            anyActive = true;
+        // Idle voices (no note assigned) must output nothing — JUCE calls
+    // renderNextBlock on every voice every block, active or not.
+    if (! isVoiceActive())
+        return;
 
-    const bool hadEnvelope = [&]
+    // Voice lifetime policy: render only while the key is held, an envelope
+    // is sounding, or a delay tail is still ringing.  Fixes two bugs:
+    //   1. A patch with no wired envelope used to drone forever (note sources
+    //      keep emitting the last note frequency).
+    //   2. Delay tails used to be chopped the moment the last envelope
+    //      finished; now the voice stays alive while the tail rings out.
+    if (! hasReasonToLive())
     {
-        for (auto* adsr : adsrProcessors)
-            if (adsr != nullptr && adsr->getInput().isConnected())
-                return true;
-        return false;
-    }();
+        // Last gasp: fade this whole block to zero so stopping mid-signal
+        // does not click, then free the voice.
+        for (int sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex)
+        {
+            const float fade = 1.0f - static_cast<float> (sampleIndex)
+                                    / static_cast<float> (numSamples);
+            const float outputSample = graph.processSample() * currentVelocity * fade;
 
-    if (hadEnvelope && ! anyActive)
-    {
+            for (int channel = 0; channel < outputBuffer.getNumChannels(); ++channel)
+                outputBuffer.getWritePointer (channel)[startSample + sampleIndex] += outputSample;
+        }
+
         clearCurrentNote();
         return;
     }
@@ -337,22 +380,34 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
             channelData[startSample + sampleIndex] += outputSample;
         }
     }
-
-    if (hadEnvelope)
-    {
-        bool stillActive = false;
-        for (auto* adsr : adsrProcessors)
-            if (adsr != nullptr && adsr->getInput().isConnected() && adsr->isActive())
-                stillActive = true;
-
-        if (! stillActive)
-            clearCurrentNote();
-    }
 }
 
 float SynthVoice::getMasterPeakLevel() const noexcept
 {
     return masterOutput != nullptr ? masterOutput->getPeakLevel() : 0.0f;
+}
+
+void SynthVoice::setHostTempo (double bpm) noexcept
+{
+    for (auto* d : delays)
+        if (d != nullptr)
+            d->setHostTempo (bpm);
+}
+
+bool SynthVoice::hasReasonToLive() const noexcept
+{
+    if (keyHeld)
+        return true;
+
+    for (auto* adsr : adsrProcessors)
+        if (adsr != nullptr && adsr->getInput().isConnected() && adsr->isActive())
+            return true;
+
+    for (auto* d : delays)
+        if (d != nullptr && d->getInput().isConnected() && d->hasEnergy())
+            return true;
+
+    return false;
 }
 
 void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
@@ -384,11 +439,20 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
             ring->getInput2().disconnect();
         }
 
-    for (auto* am : amModulators)
+        for (auto* am : amModulators)
         if (am != nullptr)
         {
             am->getCarrierInput().disconnect();
             am->getModulatorInput().disconnect();
+        }
+
+        for (auto* d : delays)
+        if (d != nullptr)
+        {
+            d->getInput().disconnect();
+            // A new patch must not inherit the previous patch's delay tail:
+            // clear the line so no stale signal survives an instrument change.
+            d->reset();
         }
 
     for (int i = 0; i < MasterOutputProcessor::numInputs; ++i)
@@ -402,11 +466,11 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
     {
                 OutputPort* out = resolveOutput (conn.from.nodeId, conn.from.portId,
                                                    noteSources, adsrProcessors, masterOutput,
-                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators);
+                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays);
                 InputPort*  in  = resolveInput  (conn.to.nodeId,   conn.to.portId,
                                                    const_cast<SynthVoiceParameters&> (parameters),
                                                    noteSources, adsrProcessors, masterOutput,
-                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators);
+                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays);
 
         if (out == nullptr || in == nullptr)
             continue;

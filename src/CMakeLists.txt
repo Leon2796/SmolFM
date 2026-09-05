@@ -46,6 +46,8 @@ target_sources(${PROJECT_NAME}
         gui/components/RingModulatorComponent.cpp
         processors/AmProcessor.cpp
         gui/components/AmComponent.cpp
+        processors/DelayProcessor.cpp
+        gui/components/DelayComponent.cpp
         # JUMAKE_SOURCES_END
 )
 

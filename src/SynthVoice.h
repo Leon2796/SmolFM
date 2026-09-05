@@ -32,6 +32,7 @@
 #include "processors/MasterOutputProcessor.h"
 #include "processors/RingModulatorProcessor.h"
 #include "processors/AmProcessor.h"
+#include "processors/DelayProcessor.h"
 #include "graph/GraphNodes.h"
 
 namespace smolfm
@@ -54,7 +55,14 @@ struct SynthVoiceParameters
     std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrDecay;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrSustain;
         std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrRelease;
-    std::array<std::atomic<float>*, GraphNodeRegistry::maxAmModulators> amAmount;
+        std::array<std::atomic<float>*, GraphNodeRegistry::maxAmModulators> amAmount;
+
+    // Delay parameters per instance (5 parameters per delay node).
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delayTimeMs;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delayFeedback;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delayMix;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delaySync;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delayDivision;
 
     // Master output is a singleton.
     std::atomic<float>* masterLevel;
@@ -86,10 +94,31 @@ public:
     */
     void applyConnectionPatch (const ConnectionPatch& patch);
 
-    /** Peak of this voice's master output, for the UI meter. */
-    float getMasterPeakLevel() const noexcept;
+        /** Peak of this voice's master output, for the UI meter. */
+        float getMasterPeakLevel() const noexcept;
+
+    /** Called from the processor thread when the host playhead BPM changes.
+        Forwards the tempo to every tempo-sync-aware processor (delays). */
+    void setHostTempo (double bpm) noexcept;
 
 private:
+    /**
+        Voice lifetime policy.
+
+        A voice keeps rendering only while it has a reason to live:
+          - the key is still held, OR
+          - a connected ADSR is still sounding (attack..release), OR
+          - a connected delay still carries tail energy.
+
+        Without the last two rules a voice with no wired envelope would drone
+        forever (note sources keep emitting the last note frequency), and
+        delay tails would be chopped the moment the last envelope finished.
+    */
+    bool hasReasonToLive() const noexcept;
+
+    /// True from startNote() until the voice's lifetime policy ends it.
+    bool keyHeld = false;
+
     SynthVoiceParameters parameters;
 
     double sampleRate = 44100.0;
@@ -109,7 +138,8 @@ private:
     std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales> frequencyScalers {};
     std::array<AdsrProcessor*, GraphNodeRegistry::maxAdsr> adsrProcessors {};
         std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators> ringModulators {};
-    std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators> amModulators {};
+        std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators> amModulators {};
+    std::array<DelayProcessor*, GraphNodeRegistry::maxDelays> delays {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynthVoice)
 };

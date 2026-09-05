@@ -45,6 +45,7 @@ private:
     gui::PaletteButton noteButton;
     gui::PaletteButton ringButton;
     gui::PaletteButton amButton;
+    gui::PaletteButton delayButton;
     gui::PaletteButton outputButton;
 
     juce::Viewport graphViewport;  ///< Scrollable container for the graph canvas

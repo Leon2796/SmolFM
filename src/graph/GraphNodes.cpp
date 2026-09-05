@@ -134,7 +134,7 @@ namespace
             ring.inputTypes = { PortType::signal, PortType::signal };
             specs.push_back (ring);
         }
-        {
+                {
             NodeSpec am;
             am.id = "am";
             am.title = "AM";
@@ -144,6 +144,21 @@ namespace
             am.inputTypes = { PortType::signal, PortType::signal };
             am.amountParameterTemplate = "am%Amount";
             specs.push_back (am);
+        }
+        {
+            NodeSpec delay;
+            delay.id = "delay";
+            delay.title = "Delay";
+            delay.outputPortId = "out";
+            delay.outputType = PortType::signal;
+            delay.inputPortIds = { "in" };
+            delay.inputTypes = { PortType::signal };
+            delay.timeParameterTemplate     = "delay%TimeMs";
+            delay.feedbackParameterTemplate = "delay%Feedback";
+            delay.mixParameterTemplate      = "delay%Mix";
+            delay.syncParameterTemplate     = "delay%SyncMode";
+            delay.divisionParameterTemplate = "delay%Division";
+            specs.push_back (delay);
         }
         {
             NodeSpec adsr;
@@ -256,6 +271,7 @@ NodeType GraphNodeRegistry::typeOf (const juce::String& nodeId)
 
         if (base == "ring")    return NodeType::ringModulator;
     if (base == "am")      return NodeType::amModulator;
+    if (base == "delay")   return NodeType::delay;
     if (base == "adsr")   return NodeType::adsr;
 
     if (base == "output") return NodeType::masterOutput;
@@ -348,6 +364,7 @@ int GraphNodeRegistry::maxInstancesOf (NodeType type)
 
         case NodeType::ringModulator:  return maxRingModulators;
         case NodeType::amModulator:    return maxAmModulators;
+        case NodeType::delay:          return maxDelays;
         case NodeType::adsr:           return maxAdsr;
 
         case NodeType::masterOutput:   return maxMasterOutputs;
@@ -435,19 +452,52 @@ juce::String GraphNodeRegistry::adsrParameterIdFor (const juce::String& nodeId, 
 
 
 juce::String GraphNodeRegistry::levelParameterIdFor (const juce::String& nodeId)
-
 {
-
     const NodeSpec* spec = findSpec (baseIdOf (nodeId));
-
     if (spec == nullptr || spec->levelParameterTemplate.isEmpty())
-
         return {};
 
-
-
     return withIndex (spec->levelParameterTemplate, indexOf (nodeId));
+}
 
+juce::String GraphNodeRegistry::delayTimeParameterIdFor (const juce::String& nodeId)
+{
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->timeParameterTemplate.isEmpty())
+        return {};
+    return withIndex (spec->timeParameterTemplate, indexOf (nodeId));
+}
+
+juce::String GraphNodeRegistry::delayFeedbackParameterIdFor (const juce::String& nodeId)
+{
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->feedbackParameterTemplate.isEmpty())
+        return {};
+    return withIndex (spec->feedbackParameterTemplate, indexOf (nodeId));
+}
+
+juce::String GraphNodeRegistry::delayMixParameterIdFor (const juce::String& nodeId)
+{
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->mixParameterTemplate.isEmpty())
+        return {};
+    return withIndex (spec->mixParameterTemplate, indexOf (nodeId));
+}
+
+juce::String GraphNodeRegistry::delaySyncParameterIdFor (const juce::String& nodeId)
+{
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->syncParameterTemplate.isEmpty())
+        return {};
+    return withIndex (spec->syncParameterTemplate, indexOf (nodeId));
+}
+
+juce::String GraphNodeRegistry::delayDivisionParameterIdFor (const juce::String& nodeId)
+{
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->divisionParameterTemplate.isEmpty())
+        return {};
+    return withIndex (spec->divisionParameterTemplate, indexOf (nodeId));
 }
 
 

@@ -66,10 +66,20 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 "Release");
     }
 
-    for (int i = 0; i < smolfm::GraphNodeRegistry::maxAmModulators; ++i)
+        for (int i = 0; i < smolfm::GraphNodeRegistry::maxAmModulators; ++i)
     {
         const juce::String num (i);
         voiceParameters.amAmount[static_cast<size_t> (i)] = parameters.getRawParameterValue ("am" + num + "Amount");
+    }
+
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxDelays; ++i)
+    {
+        const juce::String num (i);
+        voiceParameters.delayTimeMs  [static_cast<size_t> (i)] = parameters.getRawParameterValue ("delay" + num + "TimeMs");
+        voiceParameters.delayFeedback[static_cast<size_t> (i)] = parameters.getRawParameterValue ("delay" + num + "Feedback");
+        voiceParameters.delayMix     [static_cast<size_t> (i)] = parameters.getRawParameterValue ("delay" + num + "Mix");
+        voiceParameters.delaySync    [static_cast<size_t> (i)] = parameters.getRawParameterValue ("delay" + num + "SyncMode");
+        voiceParameters.delayDivision[static_cast<size_t> (i)] = parameters.getRawParameterValue ("delay" + num + "Division");
     }
 
     voiceParameters.masterLevel = parameters.getRawParameterValue ("masterLevel");
@@ -196,15 +206,30 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layou
 }
 
 void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
-                                              juce::MidiBuffer& midiMessages)
+                                                juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
+
+    // Read host tempo for tempo-synced processors; fall back to 120 BPM.
+    double bpm = 120.0;
+    if (auto* playhead = getPlayHead())
+    {
+        if (const auto position = playhead->getPosition())
+        {
+            if (const auto tempo = position->getBpm())
+                bpm = *tempo;
+        }
+    }
+
+    // Push the tempo into every voice so delay processors can read it per sample.
+    for (int i = 0; i < synth.getNumVoices(); ++i)
+        if (auto* voice = dynamic_cast<smolfm::SynthVoice*> (synth.getVoice (i)))
+            voice->setHostTempo (bpm);
 
     // A synthesizer has no audio input, so start with a clean output buffer.
     buffer.clear();
 
     // Let JUCE handle incoming MIDI events and render all active voices.
-    // Voices add their samples into the buffer, which is why we cleared it first.
     synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
 }
 
@@ -348,6 +373,32 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "am" + num + "Amount", "AM " + num + " Amount",
             juce::NormalisableRange<float> (0.0f, 1.0f), 0.0f));
+    }
+
+        // -- Delay pool ------------------------------------------------------------
+    // Sync = choice index 0..4 (free, 1/2, 1/4, 1/8, 1/16).
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxDelays; ++i)
+    {
+        const juce::String num (i);
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "delay" + num + "TimeMs", "Delay " + num + " Time",
+            juce::NormalisableRange<float> (1.0f, 2000.0f, 0.1f, 0.5f), 250.0f));
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "delay" + num + "Feedback", "Delay " + num + " Feedback",
+            juce::NormalisableRange<float> (0.0f, 0.95f), 0.3f));
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "delay" + num + "Mix", "Delay " + num + " Mix",
+            juce::NormalisableRange<float> (0.0f, 1.0f), 0.3f));
+
+        layout.add (std::make_unique<juce::AudioParameterBool> (
+            "delay" + num + "SyncMode", "Delay " + num + " Sync", false));
+
+        layout.add (std::make_unique<juce::AudioParameterChoice> (
+            "delay" + num + "Division", "Delay " + num + " Division",
+            juce::StringArray { "1/2", "1/4", "1/8", "1/16" }, 1));
     }
 
     // -- Master output --------------------------------------------------------

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Four detuned saw voices with one AM-modulated layer, all summed for ensemble width -->
+<SmolFM version="2" name="Aurora Strings">
+  <description>Two saw pairs detuned ±1.003 and ±0.997 creating natural beating; layer 1 runs through slow AM for phasing shimmer — string synth ensemble.</description>
+  <Nodes>
+    <Node id="note0" x="80" y="140">
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+
+    <!-- Pair 1: detuned saws -->
+    <Node id="fscale0" x="280" y="60" factor="1.003">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="osc0" x="460" y="60" waveform="1">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="fscale1" x="280" y="180" factor="0.997">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="osc1" x="460" y="180" waveform="1">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+
+    <!-- Pair 2: second detune offset, this one routed through AM -->
+    <Node id="fscale2" x="280" y="300" factor="1.007">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="osc2" x="460" y="300" waveform="1">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+
+    <!-- Slow LFO for AM -->
+    <Node id="note1" x="80" y="480">
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="fscale3" x="280" y="480" factor="0.05">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="osc3" x="460" y="480" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="am0" x="680" y="300" amount="0.4">
+      <Pin id="carrier_in" direction="in" type="signal"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+
+    <!-- Long lush attack/release -->
+    <Node id="adsr0" x="860" y="240" attack="0.6" decay="0.4" sustain="0.8" release="1.5">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+
+    <Node id="output" x="1060" y="240" level="0.6">
+      <Pin id="in1" direction="in" type="signal"/>
+      <Pin id="in2" direction="in" type="signal"/>
+      <Pin id="in3" direction="in" type="signal"/>
+    </Node>
+  </Nodes>
+
+  <Connections>
+    <!-- Pair 1 dry, straight to output -->
+    <Wire from="note0" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="fscale0" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="note0" fromPort="out" to="fscale1" toPort="freq_in"/>
+    <Wire from="fscale1" fromPort="out" to="osc1" toPort="note_in"/>
+
+    <!-- Pair 2 through AM shimmer -->
+    <Wire from="note0" fromPort="out" to="fscale2" toPort="freq_in"/>
+    <Wire from="fscale2" fromPort="out" to="osc2" toPort="note_in"/>
+    <Wire from="note1" fromPort="out" to="fscale3" toPort="freq_in"/>
+    <Wire from="fscale3" fromPort="out" to="osc3" toPort="note_in"/>
+    <Wire from="osc2" fromPort="out" to="am0" toPort="carrier_in"/>
+    <Wire from="osc3" fromPort="out" to="am0" toPort="modulator_in"/>
+
+    <!-- Mix: all three layers into envelope then output -->
+    <Wire from="osc0" fromPort="out" to="adsr0" toPort="in"/>
+    <Wire from="osc1" fromPort="out" to="adsr0" toPort="in"/>
+    <Wire from="am0" fromPort="out" to="adsr0" toPort="in"/>
+    <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
+    <Wire from="osc0" fromPort="out" to="output" toPort="in2"/>
+    <Wire from="osc1" fromPort="out" to="output" toPort="in3"/>
+  </Connections>
+</SmolFM>

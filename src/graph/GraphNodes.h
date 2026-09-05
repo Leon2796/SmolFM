@@ -49,8 +49,9 @@ enum class NodeType
     oscillator,
     fmAmount,
     frequencyScale,
-    ringModulator,
+        ringModulator,
     amModulator,
+    delay,
     adsr,
     masterOutput,
     unknown
@@ -72,13 +73,20 @@ struct NodeSpec
     PortType outputType = PortType::signal;
     std::vector<PortType> inputTypes;
 
-    // APVTS parameter ids (unindexed templates: "%" gets the instance index,
+        // APVTS parameter ids (unindexed templates: "%" gets the instance index,
     // e.g. "osc%Frequency" -> "osc3Frequency").  Empty for note.
     juce::String frequencyParameterTemplate;
     juce::String waveformParameterTemplate;
     juce::String amountParameterTemplate;
     juce::String adsrParameterTemplate;  // "adsr%Attack" style prefix, only on adsr
     juce::String levelParameterTemplate; // master volume, only on output
+
+    // Extra templates for the delay node.
+    juce::String timeParameterTemplate;
+    juce::String feedbackParameterTemplate;
+    juce::String mixParameterTemplate;
+    juce::String syncParameterTemplate;
+    juce::String divisionParameterTemplate;
 };
 
 //==============================================================================
@@ -134,6 +142,7 @@ public:
     static constexpr int maxFrequencyScales = 4;
     static constexpr int maxRingModulators  = 4;
     static constexpr int maxAmModulators    = 4;
+    static constexpr int maxDelays          = 2;
     static constexpr int maxNotes       = 4;
     static constexpr int maxAdsr        = 4;
     static constexpr int maxMasterOutputs = 1;
@@ -161,6 +170,13 @@ public:
     static juce::String amountParameterIdFor    (const juce::String& nodeId);
     static juce::String adsrParameterIdFor      (const juce::String& nodeId, const juce::String& which);
     static juce::String levelParameterIdFor     (const juce::String& nodeId);
+
+    // Delay-specific parameter ids
+    static juce::String delayTimeParameterIdFor      (const juce::String& nodeId);
+    static juce::String delayFeedbackParameterIdFor  (const juce::String& nodeId);
+    static juce::String delayMixParameterIdFor       (const juce::String& nodeId);
+    static juce::String delaySyncParameterIdFor      (const juce::String& nodeId);
+    static juce::String delayDivisionParameterIdFor  (const juce::String& nodeId);
 
     // -- Port info -----------------------------------------------------------
 
