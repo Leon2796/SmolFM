@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"-->
+
+<SmolFM version="2" name="fadsr-chaos-bell-cascade">
+  <description>Cascade bell: two F-ADSR envelopes with different strike ratios feed two chained FM stages — voice A (up 2.718) drives the master FM whose output rings through fadsr-driven FM2 on a second carrier — three output inputs stack the dry bell, its fifth-above ghost and a long 1/2-note delay tail.</description>
+  <Nodes>
+    <Node id="note0" x="60" y="60">
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="note1" x="60" y="700">
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="fadsr0" x="360" y="60" attack="0.001" decay="0.6" sustain="0.0" release="0.8" up="2.0" down="1.0">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="fadsr1" x="360" y="700" attack="0.001" decay="1.1" sustain="0.0" release="1.2" up="0.5" down="1.0">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="osc0" x="680" y="60" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="osc1" x="680" y="380" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="fm0" x="1000" y="60" amount="2.8">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="fm1" x="1000" y="380" amount="1.6">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="fscale0" x="60" y="940" factor="1.5"/>
+    <Node id="osc2" x="360" y="940" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="adsr0" x="1340" y="60" attack="0.001" decay="2.2" sustain="0.0" release="1.8">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="adsr1" x="1340" y="380" attack="0.001" decay="3.0" sustain="0.0" release="2.0">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="delay0" x="1340" y="700" time="500" feedback="0.5" mix="0.85" sync="1" division="0">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="output" x="1660" y="60" level="0.7"/>
+  </Nodes>
+  <Connections>
+    <Wire from="note0" fromPort="out" to="fadsr0" toPort="freq_in"/>
+    <Wire from="note0" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in"/>
+    <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in"/>
+    <Wire from="note1" fromPort="out" to="fadsr1" toPort="freq_in"/>
+    <Wire from="fadsr1" fromPort="out" to="osc2" toPort="note_in"/>
+    <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in"/>
+    <Wire from="fadsr0" fromPort="out" to="fm0" toPort="freq_in"/>
+    <Wire from="fm0" fromPort="out" to="fm1" toPort="freq_in"/>
+    <Wire from="fm1" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="osc0" fromPort="out" to="adsr0" toPort="in"/>
+    <Wire from="adsr0" fromPort="out" to="delay0" toPort="in"/>
+    <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
+    <Wire from="delay0" fromPort="out" to="output" toPort="in2"/>
+  </Connections>
+</SmolFM>

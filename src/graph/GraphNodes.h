@@ -144,7 +144,7 @@ public:
     static constexpr int maxFrequencyScales = 4;
     static constexpr int maxRingModulators  = 4;
     static constexpr int maxAmModulators    = 4;
-    static constexpr int maxDelays          = 2;
+    static constexpr int maxDelays          = 8;
     static constexpr int maxNotes       = 4;
     static constexpr int maxAdsr        = 4;
     static constexpr int maxFAdsr       = 4;

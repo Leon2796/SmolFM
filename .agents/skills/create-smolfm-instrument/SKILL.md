@@ -226,7 +226,7 @@ Use this skill whenever:
 | **FrequencyScaleProcessor** | `fscale` | 4 | `freq_in` (frequency) | `out` (frequency) | Multiplies frequency by constant factor; useful for transposition and harmonic series |
 | **RingModulatorProcessor** | `ring` | 4 | `in1` (signal), `in2` (signal) | `out` (signal) | Multiplies two signals sample-wise; creates sum/difference sidebands for metallic timbres |
 | **AmProcessor** | `am` | 4 | `carrier_in` (signal), `modulator_in` (signal) | `out` (signal) | Amplitude modulation with depth control; biased modulator keeps carrier audible |
-| **DelayProcessor** | `delay` | 2 | `in` (signal) | `out` (signal) | Digital delay with feedback and mix; free ms or tempo-synced to host BPM by note division |
+| **DelayProcessor** | `delay` | 8 | `in` (signal) | `out` (signal) | Digital delay with feedback and mix; free ms or tempo-synced to host BPM by note division |
 | **AdsrProcessor** | `adsr` | 4 | `in` (signal) | `out` (signal) | Applies ADSR envelope to signal; multiplies input by envelope value and velocity |
 | **FAdsrProcessor** | `fadsr` | 4 | `freq_in` (frequency) | `out` (frequency) | Pitch envelope in the frequency domain: scales input frequency between down/up factors along an ADSR envelope; classic pitch-envelope for kick/808/drops or evolving FM sweeps |
 | **MasterOutputProcessor** | `output` | 1 | `in1`-`in8` (signal, 8 inputs) | _(none, final output)_ | Sums up to 8 signal inputs with master level control and peak metering |
@@ -307,7 +307,8 @@ Use this skill whenever:
   - Falls back to 120 BPM if the host reports no tempo
 - **Use when**: You want echoed repeats, rhythmic doubling, ping-pong-style
   tails, or tempo-locked delays that follow the host transport
-- **Limit**: max 2 instances are budgeted to avoid buffer memory bloat
+- **Limit**: 8 instances (~380 KB buffer each at 48 kHz; parallel delays for
+  stereo spread and rhythmic subdivision patterns are affordable now)
 
 #### AdsrProcessor
 - **Purpose**: Envelope shaping
@@ -423,7 +424,7 @@ Each `<Node>` element defines one processor instance:
 | `fscale` | `fscale0` through `fscale3` | 0-3 |
 | `ring` | `ring0` through `ring3` | 0-3 |
 | `am` | `am0` through `am3` | 0-3 |
-| `delay` | `delay0`, `delay1` | 0-1 |
+| `delay` | `delay0` through `delay7` | 0-7 |
 | `adsr` | `adsr0` through `adsr3` | 0-3 |
 | `fadsr` | `fadsr0` through `fadsr3` | 0-3 |
 | `output` | `output` (no index) | 0 only |
