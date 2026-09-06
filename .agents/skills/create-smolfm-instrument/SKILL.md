@@ -229,6 +229,7 @@ Use this skill whenever:
 | **DelayProcessor** | `delay` | 8 | `in` (signal) | `out` (signal) | Digital delay with feedback and mix; free ms or tempo-synced to host BPM by note division |
 | **AdsrProcessor** | `adsr` | 8 | `in` (signal) | `out` (signal) | Applies ADSR envelope to signal; multiplies input by envelope value and velocity |
 | **GainProcessor** | `gain` | 8 | `in` (signal) | `out` (signal) | Stateless boost/attenuate: multiplies input by constant factor (0-10, 1.0 = transparent, negative inverts phase); use for layer balancing, pre-envelope drive, or per-voice level trims |
+| **WaveshaperProcessor** | `shape` | 8 | `in` (signal) | `out` (signal) | Distortion via three transfer functions (Soft/Hard/Fold) with drive control; use for saturation warmth, grit, or metallic foldback textures |
 | **FAdsrProcessor** | `fadsr` | 4 | `freq_in` (frequency) | `out` (frequency) | Pitch envelope in the frequency domain: scales input frequency between down/up factors along an ADSR envelope; classic pitch-envelope for kick/808/drops or evolving FM sweeps |
 | **MasterOutputProcessor** | `output` | 1 | `in1`-`in8` (signal, 8 inputs) | _(none, final output)_ | Sums up to 8 signal inputs with master level control and peak metering |
 
@@ -241,14 +242,23 @@ Use this skill whenever:
 - **Parameters**: None (controlled by MIDI input)
 
 #### OscillatorProcessor
-- **Purpose**: Waveform generation
-- **Inputs**: `note_in` (frequency) - frequency source (0 Hz if unconnected = silent)
+- **Purpose**: Waveform generation (carrier, modulator, or LFO)
+- **Inputs**: `note_in` (frequency) - frequency source (0 Hz if unconnected = silent; ignored in LFO mode)
 - **Outputs**: `out` (signal) - raw oscillator sample
 - **Parameters**:
   - `osc%Waveform` - waveform selector (sine, saw, square, triangle, noise)
     - noise = white noise, uniform [-1, 1] per sample; frequency-invariant
     - great for snare/cymbal textures and breathy layers
-  - Instance index replaces `%` (e.g., `osc0Waveform`, `osc3Waveform`)
+  - `osc%LfoMode` - bool (default false): false = Pitch mode (note_in driven),
+    true = LFO mode (fixed rate, note-triggered re-sync)
+  - `osc%LfoRate` - LFO rate in Hz 0.01-50 (default 1.0; only used in LFO mode)
+- **LFO mode behaviour**: the oscillator runs at the fixed rate instead of the
+  played pitch; note-on resets the phase so every note starts its modulation
+  from the same point.  This turns any oscillator into a note-triggered
+  modulation source: wire its `out` into ANY processor parameter path
+  (`fm.modulator_in`, `am.modulator_in`, `fadsr.freq_in` for vibrato) or use
+  it as a slow tremolo/pulse source.  Noise waveform in LFO mode = sampled
+  noise pulses per note.
 
 #### FMModulationProcessor
 - **Purpose**: True frequency modulation (not phase modulation!)
@@ -331,6 +341,27 @@ Use this skill whenever:
   - `gain%Factor` - gain factor 0-10 (default 1.0 = transparent; negative not exposed via UI but valid)
 - **Behavior**: stateless, no envelope, no per-note state; unwired input reads silence
 - **Use cases**: layer balancing before output stacking, drive boost into FM amount, per-voice level trims, attenuating noisy layers
+
+#### WaveshaperProcessor
+- **Purpose**: Distortion via selectable transfer function
+- **Inputs**: `in` (signal)
+- **Outputs**: `out` (signal) = `f(x * (1 + k*drive))`, k = 9 (Soft/Hard), 19 (Fold)
+- **Parameters**:
+  - `shape%Drive` - drive amount 0-1 (default 0.0; scales input into the curve)
+  - `shape%Shape` - function selector (0 = Soft, 1 = Hard, 2 = Fold)
+- **Behavior**: stateless; `drive = 0` with Soft is near-transparent (identity at small amplitudes)
+  - **Soft** (`x / (1 + |x|)` after drive): smooth tube-like saturation; keeps
+    original dynamics. Best for: warm e-piano/bass saturation, taming bright
+    FM patches, adding body without harshness. Low drive = subtle glue.
+  - **Hard** (brick-wall clamp after drive): aggressive digital distortion;
+    dense harmonic buildup, fast decay of harmonics. Best for: acid bass,
+    aggressive leads, lo-fi grit, drum-machine-style snarl.
+  - **Fold** (foldback around ±1): reflects the waveform instead of clamping;
+    inharmonic, metallic sidebands. Best for: metallic percussion, gongs,
+    chaotic textures, dub-siren screech. High drive (0.6+) gets wild —
+    attenuate afterwards with a `gain` node.
+- **Pairing tip**: put a `gain` node *before* the shaper to push more level
+  into the curve, and one *after* to tame the output.
 
 #### FAdsrProcessor
 - **Purpose**: Pitch envelope in the frequency domain (F-ADSR)
@@ -415,10 +446,11 @@ Each `<Node>` element defines one processor instance:
   - Single-instance nodes omit index: `output` (not `output0`)
 - `x`, `y` (required): Canvas position integers (visual layout)
 - **Processor-specific parameter attributes** (as many as needed):
-  - Oscillator: `waveform` (integer index)
+  - Oscillator: `waveform` (integer index), `lfomode` (bool), `lforate` (float Hz)
   - FM: `amount` (float)
   - FrequencyScale: `factor` (float)
   - Gain: `factor` (float)
+  - Waveshaper: `drive` (float), `shape` (int: 0=Soft, 1=Hard, 2=Fold)
   - ADSR: `attack`, `decay`, `sustain`, `release` (floats)
   - MasterOutput: `level` (float)
 
@@ -441,6 +473,7 @@ Each `<Node>` element defines one processor instance:
 | `delay` | `delay0` through `delay7` | 0-7 |
 | `adsr` | `adsr0` through `adsr7` | 0-7 |
 | `gain` | `gain0` through `gain7` | 0-7 |
+| `shape` | `shape0` through `shape7` | 0-7 |
 | `fadsr` | `fadsr0` through `fadsr3` | 0-3 |
 | `output` | `output` (no index) | 0 only |
 
@@ -671,6 +704,130 @@ Example settings:
 - `fadsr0.up = 2.5`, `fadsr0.down = 1.0`
 - `fadsr0.attack = 0.4`, `fadsr0.decay = 1.5`, `fadsr0.sustain = 0.0`
 - `fscale0.factor = 2.0`
+
+#### Waveshaper as Warm Saturation (E-Piano / Bass Body)
+Soft shape with low drive adds tube-style warmth and glues a patch together
+without changing its identity. Great as the last stage before the output.
+
+Use for: E-piano, bass body, taming bright FM, analogue glue.
+
+```
+note.out → fm0.freq_in
+note.out → fscale0.freq_in      (modulator tracks keyboard)
+fscale0.out → osc1.note_in
+osc1.out → fm0.modulator_in
+fm0.out → osc0.note_in
+osc0.out → shape0.in            (saturation after the oscillator)
+shape0.out → adsr0.in
+adsr0.out → output.in1
+```
+Example settings:
+- `shape0.shape = 0` (Soft)
+- `shape0.drive = 0.15` (subtle glue; raise to 0.35 for more bite)
+
+#### Waveshaper as Acid Grit (Bass / Lead)
+Hard shape with high drive turns a plain saw into an aggressive acid/digital
+snarl. Put the shaper *before* the amplitude envelope so the envelope still
+shapes the distorted timbre.
+
+Use for: acid bass, aggressive leads, lo-fi grit.
+
+```
+note.out → fm0.freq_in
+note.out → fscale0.freq_in
+fscale0.out → osc1.note_in
+osc1.out → fm0.modulator_in
+fm0.out → osc0.note_in
+osc0.out → shape0.in            (distort first)
+shape0.out → adsr0.in           (envelope shapes the grit)
+adsr0.out → output.in1
+```
+Example settings:
+- `shape0.shape = 1` (Hard)
+- `shape0.drive = 0.7` (dense harmonics)
+- `fm0.amount = 0.9` (growl under the distortion)
+
+#### Waveshaper Foldback Percussion (Gong / Metallic)
+Fold shape at extreme drive creates inharmonic sidebands — the raw material
+for metallic percussion. A gain node after the shaper tames the level.
+
+Use for: gongs, metallic hits, chaotic dub textures.
+
+```
+note.out → osc0.note_in
+osc0.out → shape0.in
+shape0.out → gain0.in           (tame the wild foldback output)
+gain0.out → adsr0.in
+adsr0.out → output.in1
+```
+Example settings:
+- `shape0.shape = 2` (Fold)
+- `shape0.drive = 0.8` (extreme folding)
+- `gain0.factor = 0.4` (compensate the hot output)
+- `adsr0.attack = 0.001`, `adsr0.decay = 2.5` (long metallic tail)
+
+#### LFO Oscillator: Vibrato on FM Pitch
+An LFO-mode oscillator sweeps the carrier frequency slowly. Note-triggered:
+every note restarts the vibrato cycle, so the wobble lands identically on
+each key. Wire the LFO output into an fscale stage to scale the deviation
+with the keyboard.
+
+Use for: vibrato leads, singing pads, siren effects.
+
+```
+note.out → fm0.freq_in          (carrier frequency)
+note.out → fscale0.freq_in      (scales LFO deviation with the keyboard)
+fscale0.out → osc1.note_in      (LFO source; osc1 in LFO mode)
+osc1.out → fm0.modulator_in     (LFO signal bends the FM pitch)
+fm0.out → osc0.note_in
+osc0.out → adsr0.in
+adsr0.out → output.in1
+```
+Example settings:
+- `osc1.lfomode = 1`, `osc1.lforate = 5.5` (singing vibrato ~5 Hz)
+- `osc1.waveform = 0` (sine — smooth pitch wobble)
+- `fm0.amount = 0.4` (vibrato depth)
+- `fscale0.factor = 1.0` (constant deviation; lower = less wobble on low notes)
+
+#### LFO Oscillator: Rhythmic Tremolo Gate
+An LFO-mode oscillator drives an AM modulator input at audio-below rate —
+periodic volume pulsing that restarts on every note. Noise waveform gives a
+scratchy texture instead of smooth pulsing.
+
+Use for: trance gates, dub chops, pulsing pads.
+
+```
+note.out → osc0.note_in         (melody carrier)
+osc0.out → am0.carrier_in
+osc1 (LFO mode, square, ~8 Hz).out → am0.modulator_in
+am0.out → adsr0.in
+adsr0.out → output.in1
+```
+Example settings:
+- `osc1.lfomode = 1`, `osc1.lforate = 8.0` (gate rate)
+- `osc1.waveform = 2` (square — hard on/off gating)
+- `am0.amount = 1.0` (full depth; drops to silence at LFO troughs)
+- `adsr0.sustain = 1.0` (let the LFO do the dynamics)
+
+#### LFO Oscillator: Noise-Triggered Texture Bursts
+Noise waveform in LFO mode emits a fresh noise burst on every note — breathy
+texture layers, percussion fills, or chaotic modulation sources.
+
+Use for: breath layers on pads, percussion fills, riser noise.
+
+```
+note.out → osc2.note_in         (wired only to trigger the note re-sync;
+                                 note_in ignored in LFO mode)
+osc2 (LFO mode, noise).out → fm0.modulator_in   (noise modulates FM timbre)
+...or: osc2.out → am0.modulator_in              (noise texture on amplitude)
+osc0.out → adsr0.in
+adsr0.out → output.in1
+```
+Example settings:
+- `osc2.lfomode = 1`, `osc2.lforate = 7.0` (burst rate)
+- `osc2.waveform = 4` (noise)
+- `fm0.amount = 1.5` (chaotic timbre modulation from noise)
+- Pair with a slow attack adsr for "breath" pads
 
 ### Type Safety
 

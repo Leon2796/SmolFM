@@ -38,6 +38,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     {
         const juce::String num (i);
         voiceParameters.oscWaveform [static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "Waveform");
+        voiceParameters.oscLfoMode  [static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "LfoMode");
+        voiceParameters.oscLfoRate  [static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "LfoRate");
     }
 
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxFmAmounts; ++i)
@@ -76,6 +78,19 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
         voiceParameters.fAdsrRelease[static_cast<size_t> (i)] = parameters.getRawParameterValue ("fadsr" + num + "Release");
         voiceParameters.fAdsrUp     [static_cast<size_t> (i)] = parameters.getRawParameterValue ("fadsr" + num + "Up");
         voiceParameters.fAdsrDown   [static_cast<size_t> (i)] = parameters.getRawParameterValue ("fadsr" + num + "Down");
+    }
+
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxGains; ++i)
+    {
+        const juce::String num (i);
+        voiceParameters.gainFactor[static_cast<size_t> (i)] = parameters.getRawParameterValue ("gain" + num + "Factor");
+    }
+
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxWaveshapers; ++i)
+    {
+        const juce::String num (i);
+        voiceParameters.shaperDrive[static_cast<size_t> (i)] = parameters.getRawParameterValue ("shape" + num + "Drive");
+        voiceParameters.shaperShape[static_cast<size_t> (i)] = parameters.getRawParameterValue ("shape" + num + "Shape");
     }
 
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxGains; ++i)
@@ -336,6 +351,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
             "osc" + num + "Waveform", "Oscillator " + num + " Waveform",
             juce::StringArray { "Sine", "Saw", "Square", "Triangle", "Noise" },
             static_cast<int> (smolfm::Waveform::sine)));
+
+        layout.add (std::make_unique<juce::AudioParameterBool> (
+            "osc" + num + "LfoMode", "Oscillator " + num + " LFO Mode", false));
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "osc" + num + "LfoRate", "Oscillator " + num + " LFO Rate",
+            juce::NormalisableRange<float> (0.01f, 50.0f, 0.01f, 0.35f), 1.0f));
     }
 
     // -- FM pool ------------------------------------------------------------
@@ -424,6 +446,22 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "gain" + num + "Factor", "Gain " + num + " Factor",
             juce::NormalisableRange<float> (0.0f, 10.0f), 1.0f));
+    }
+
+    // -- Waveshaper pool ----------------------------------------------------
+    // Two parameters per instance: drive (0-1) and shape (choice: soft, hard,
+    // fold).  drive=0 with soft shape is near-transparent.
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxWaveshapers; ++i)
+    {
+        const juce::String num (i);
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "shape" + num + "Drive", "Waveshaper " + num + " Drive",
+            juce::NormalisableRange<float> (0.0f, 1.0f), 0.0f));
+
+        layout.add (std::make_unique<juce::AudioParameterChoice> (
+            "shape" + num + "Shape", "Waveshaper " + num + " Shape",
+            juce::StringArray { "Soft", "Hard", "Fold" }, 0));
     }
 
         // -- AM modulator pool ------------------------------------------------------

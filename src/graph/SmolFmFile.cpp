@@ -56,8 +56,12 @@ namespace
         if (baseId == "osc")
         {
             const auto wfmId  = GraphNodeRegistry::waveformParameterIdFor  (nodeId);
+            const auto modeId = GraphNodeRegistry::oscLfoModeParameterIdFor (nodeId);
+            const auto rateId = GraphNodeRegistry::oscLfoRateParameterIdFor (nodeId);
 
             if (wfmId.isNotEmpty())  specs.add ({ "waveform",  wfmId });
+            if (modeId.isNotEmpty()) specs.add ({ "lfomode",  modeId });
+            if (rateId.isNotEmpty()) specs.add ({ "lforate",  rateId });
         }
                 else if (baseId == "fm" || baseId == "am")
                 {
@@ -102,6 +106,13 @@ namespace
         {
             const auto factorId = GraphNodeRegistry::gainParameterIdFor (nodeId);
             if (factorId.isNotEmpty()) specs.add ({ "factor", factorId });
+        }
+        else if (baseId == "shape")
+        {
+            const auto driveId = GraphNodeRegistry::driveParameterIdFor (nodeId);
+            const auto shapeId = GraphNodeRegistry::shapeParameterIdFor (nodeId);
+            if (driveId.isNotEmpty()) specs.add ({ "drive", driveId });
+            if (shapeId.isNotEmpty()) specs.add ({ "shape", shapeId });
         }
         else if (baseId == "output")
         {

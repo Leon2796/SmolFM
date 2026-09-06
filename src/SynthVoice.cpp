@@ -35,7 +35,8 @@ namespace
                                                                           std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators>& ringModulators,
                                                                           std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators>& amModulators,
                                                                           std::array<DelayProcessor*, GraphNodeRegistry::maxDelays>& delays,
-                                                                          std::array<GainProcessor*, GraphNodeRegistry::maxGains>& gainProcessors)
+                                                                          std::array<GainProcessor*, GraphNodeRegistry::maxGains>& gainProcessors,
+                                                                          std::array<WaveshaperProcessor*, GraphNodeRegistry::maxWaveshapers>& waveshapers)
     {
         juce::ignoreUnused (params, noteSources);
 
@@ -120,6 +121,12 @@ namespace
          && portId == "in")
             return &gainProcessors[static_cast<size_t> (index)]->getInput();
 
+        if (type == NodeType::waveshaper
+         && index >= 0 && index < GraphNodeRegistry::maxWaveshapers
+         && waveshapers[static_cast<size_t> (index)] != nullptr
+         && portId == "in")
+            return &waveshapers[static_cast<size_t> (index)]->getInput();
+
                 if (type == NodeType::ringModulator
          && index >= 0 && index < GraphNodeRegistry::maxRingModulators
          && ringModulators[static_cast<size_t> (index)] != nullptr)
@@ -155,7 +162,8 @@ namespace
                                                                               std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators>& ringModulators,
                                                                               std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators>& amModulators,
                                                                               std::array<DelayProcessor*, GraphNodeRegistry::maxDelays>& delays,
-                                                                              std::array<GainProcessor*, GraphNodeRegistry::maxGains>& gainProcessors)
+                                                                              std::array<GainProcessor*, GraphNodeRegistry::maxGains>& gainProcessors,
+                                                                              std::array<WaveshaperProcessor*, GraphNodeRegistry::maxWaveshapers>& waveshapers)
     {
         if (portId != "out")
             return nullptr;
@@ -213,6 +221,11 @@ namespace
          && gainProcessors[static_cast<size_t> (index)] != nullptr)
             return &gainProcessors[static_cast<size_t> (index)]->getOutput();
 
+        if (type == NodeType::waveshaper
+         && index >= 0 && index < GraphNodeRegistry::maxWaveshapers
+         && waveshapers[static_cast<size_t> (index)] != nullptr)
+            return &waveshapers[static_cast<size_t> (index)]->getOutput();
+
         return nullptr;
     }
 }
@@ -240,7 +253,9 @@ void SynthVoice::buildGraph()
     // cheap) and its output is never read by anyone.
     for (int i = 0; i < GraphNodeRegistry::maxOscillators; ++i)
     {
-        auto osc = std::make_unique<OscillatorProcessor> (parameters.oscWaveform [static_cast<size_t> (i)]);
+        auto osc = std::make_unique<OscillatorProcessor> (parameters.oscWaveform [static_cast<size_t> (i)],
+                                                          parameters.oscLfoMode [static_cast<size_t> (i)],
+                                                          parameters.oscLfoRate [static_cast<size_t> (i)]);
         oscillators[static_cast<size_t> (i)] = osc.get();
         graph.addProcessor (std::move (osc));
     }
@@ -321,6 +336,15 @@ void SynthVoice::buildGraph()
             auto g = std::make_unique<GainProcessor> (parameters.gainFactor[static_cast<size_t> (i)]);
             gainProcessors[static_cast<size_t> (i)] = g.get();
             graph.addProcessor (std::move (g));
+        }
+
+        // Waveshaper pool — three transfer functions with drive.
+        for (int i = 0; i < GraphNodeRegistry::maxWaveshapers; ++i)
+        {
+            auto ws = std::make_unique<WaveshaperProcessor> (parameters.shaperDrive [static_cast<size_t> (i)],
+                                                             parameters.shaperShape[static_cast<size_t> (i)]);
+            waveshapers[static_cast<size_t> (i)] = ws.get();
+            graph.addProcessor (std::move (ws));
         }
 
         // Master output (singleton).
@@ -519,6 +543,9 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
         for (auto* g : gainProcessors)
         if (g != nullptr)  g->getInput().disconnect();
 
+        for (auto* ws : waveshapers)
+        if (ws != nullptr)  ws->getInput().disconnect();
+
     for (int i = 0; i < MasterOutputProcessor::numInputs; ++i)
         masterOutput->getInput (i).disconnect();
 
@@ -530,11 +557,11 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
     {
                 OutputPort* out = resolveOutput (conn.from.nodeId, conn.from.portId,
                                                    noteSources, adsrProcessors, fAdsrProcessors, masterOutput,
-                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors);
+                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors, waveshapers);
                 InputPort*  in  = resolveInput  (conn.to.nodeId,   conn.to.portId,
                                                    const_cast<SynthVoiceParameters&> (parameters),
                                                    noteSources, adsrProcessors, fAdsrProcessors, masterOutput,
-                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors);
+                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors, waveshapers);
 
         if (out == nullptr || in == nullptr)
             continue;

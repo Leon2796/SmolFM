@@ -16,16 +16,27 @@ Momentanfrequenz in die Phase — das ist die Stelle, an der echte FM entsteht.
 
 | Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
 |---|---|---|---|---|
-| Wellenform | `osc<N>Waveform` | Choice: Sine/Saw/Square/Triangle | `std::atomic<float>* waveform` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
+| Wellenform | `osc<N>Waveform` | Choice: Sine/Saw/Square/Triangle/Noise | `std::atomic<float>* waveform` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
+| LFO-Modus | `osc<N>LfoMode` | Bool, Default false | `std::atomic<float>* lfoMode` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
+| LFO-Rate | `osc<N>LfoRate` | Float, 0.01–50 Hz, Default 1 | `std::atomic<float>* lfoRate` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
 
-`<N>` = Instanzindex 0–7. Die Frequenz kommt ausschließlich über `note_in`;
-ohne Verbindung liefert der Oszillator 0 Hz (Stille).
+`<N>` = Instanzindex 0–7.
+
+Frequenzquellen:
+- **Pitch-Modus** (`LfoMode = false`): Die Frequenz kommt ausschließlich über
+  `note_in`; ohne Verbindung liefert der Oszillator 0 Hz (Stille).
+- **LFO-Modus** (`LfoMode = true`): Die Frequenz ist der feste `LfoRate`-Wert
+  (0.01–50 Hz). `note_in` wird ignoriert. Bei Note-On wird die Phase
+  zurückgesetzt, sodass jede Notemit der gleichen LFO-Phase startet —
+  die Rate selbst bleibt konstant.
 
 ## Abschnitt 2 — UI-Konfiguration
 
 | UI-Funktion | Bedeutung | UI-Symbol | Datei |
 |---|---|---|---|
-| *(noch keine)* | ComboBox (Wellenform) | `OscillatorPanel::waveformBox` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
+| LFO-Modus-Umschalter | Wählt zwischen Pitch (note_in getrieben) und LFO (feste Rate) | `OscillatorPanel::lfoModeBox` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
+| LFO-Rate-Regler | Feste LFO-Frequenz, 0.01–50 Hz; nur im LFO-Modus sichtbar | `OscillatorPanel::lfoRateSlider` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
+| *(Basis)* | ComboBox (Wellenform) | `OscillatorPanel::waveformBox` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
 
 ## Abschnitt 3 — Mathematische Beschreibung
 
@@ -41,8 +52,10 @@ ohne Verbindung liefert der Oszillator 0 Hz (Stille).
 
 Funktionsablauf pro Sample:
 
-1. Frequenzwahl: $f = f_{note\_in}$ falls verbunden, sonst $0$ (kein Ton);
-   es gibt keinen Slider-Fallback.
+1. Frequenzwahl: Im Pitch-Modus $f = f_{note\_in}$ falls verbunden, sonst $0$
+   (kein Ton, kein Slider-Fallback). Im LFO-Modus
+   $f = \mathrm{clamp}(f_{\text{rate}}, 0.01, 50)$ unabhängig von `note_in`;
+   Note-On resettet die Phase.
 2. Phase-Increment:
 $$\Delta\varphi = \frac{2\pi f}{f_s}$$
 3. Phasenintegration mit Wrap in $[0, 2\pi)$:
@@ -89,7 +102,7 @@ früheren Phasenmodulations-Design.
 
 | Formales Symbol | C++-Symbol / Aufruf | Datei | Berechnungsschritt |
 |---|---|---|---|
-| $f$ | `freq` (lokal), `noteInput.getSample()` | [OscillatorProcessor.cpp](../../src/processors/OscillatorProcessor.cpp) | Port-Wert falls `isConnected()`, sonst `0.0f`; in `setFrequency()` auf $[-f_s/2, f_s/2]$ geclippt (Through-Zero erlaubt) |
+| $f$ | `freq` (lokal), `noteInput.getSample()` oder `lfoRate->load()` | [OscillatorProcessor.cpp](../../src/processors/OscillatorProcessor.cpp) | Pitch-Modus: Port-Wert falls `isConnected()`, sonst `0.0f`; LFO-Modus: Rate geclampt auf $[0.01, 50]$; danach `setFrequency()` auf $[-f_s/2, f_s/2]$ geclippt (Through-Zero erlaubt) |
 | $f_s$ | `sampleRate` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | gesetzt in `prepare(double)` |
 | $\Delta\varphi$ | `phaseIncrement` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | `updatePhaseIncrement()`: `twoPi * frequency / sampleRate` |
 | $\varphi_n$ | `phase` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | `getNextSample()`: `phase += phaseIncrement`, Wrap per `fmod()` mit Negativ-Korrektur |

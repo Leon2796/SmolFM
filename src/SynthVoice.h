@@ -31,6 +31,7 @@
 #include "processors/AdsrProcessor.h"
 #include "processors/FAdsrProcessor.h"
 #include "processors/GainProcessor.h"
+#include "processors/WaveshaperProcessor.h"
 #include "processors/MasterOutputProcessor.h"
 #include "processors/RingModulatorProcessor.h"
 #include "processors/AmProcessor.h"
@@ -51,6 +52,8 @@ struct SynthVoiceParameters
 {
     // Index into these arrays is the instance index of the node.
     std::array<std::atomic<float>*, GraphNodeRegistry::maxOscillators> oscWaveform;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxOscillators> oscLfoMode;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxOscillators> oscLfoRate;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFmAmounts>   fmAmount;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFrequencyScales> freqScaleFactor;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrAttack;
@@ -69,6 +72,10 @@ struct SynthVoiceParameters
 
     // Gain parameters per instance (1 parameter per node).
     std::array<std::atomic<float>*, GraphNodeRegistry::maxGains> gainFactor;
+
+    // Waveshaper parameters per instance (2 parameters per node).
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxWaveshapers> shaperDrive;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxWaveshapers> shaperShape;
 
     // Delay parameters per instance (5 parameters per delay node).
     std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delayTimeMs;
@@ -153,7 +160,8 @@ private:
     std::array<FAdsrProcessor*, GraphNodeRegistry::maxFAdsr> fAdsrProcessors {};
     std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators> ringModulators {};
     std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators> amModulators {};
-    std::array<DelayProcessor*, GraphNodeRegistry::maxDelays> delays {};    std::array<GainProcessor*, GraphNodeRegistry::maxGains> gainProcessors {};    std::array<GainProcessor*, GraphNodeRegistry::maxGains> gains {};
+    std::array<DelayProcessor*, GraphNodeRegistry::maxDelays> delays {};    std::array<GainProcessor*, GraphNodeRegistry::maxGains> gainProcessors {};
+    std::array<WaveshaperProcessor*, GraphNodeRegistry::maxWaveshapers> waveshapers {};    std::array<GainProcessor*, GraphNodeRegistry::maxGains> gains {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynthVoice)
 };

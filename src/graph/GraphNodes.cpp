@@ -224,6 +224,27 @@ namespace
         }
 
         {
+            NodeSpec shaper;
+
+            shaper.id = "shape";
+
+            shaper.title = "Waveshaper";
+
+            shaper.outputPortId = "out";
+
+            shaper.outputType = PortType::signal;
+
+            shaper.inputPortIds = { "in" };
+
+            shaper.inputTypes = { PortType::signal };
+
+            shaper.driveParameterTemplate = "shape%";
+
+            specs.push_back (shaper);
+
+        }
+
+        {
 
             NodeSpec out;
 
@@ -320,6 +341,8 @@ NodeType GraphNodeRegistry::typeOf (const juce::String& nodeId)
 
     if (base == "gain")  return NodeType::gain;
 
+    if (base == "shape") return NodeType::waveshaper;
+
     if (base == "output") return NodeType::masterOutput;
 
     return NodeType::unknown;
@@ -414,6 +437,7 @@ int GraphNodeRegistry::maxInstancesOf (NodeType type)
         case NodeType::adsr:           return maxAdsr;
         case NodeType::fAdsr:          return maxFAdsr;
         case NodeType::gain:           return maxGains;
+        case NodeType::waveshaper:     return maxWaveshapers;
 
         case NodeType::masterOutput:   return maxMasterOutputs;
 
@@ -458,6 +482,42 @@ juce::String GraphNodeRegistry::waveformParameterIdFor (const juce::String& node
 
 
     return withIndex (spec->waveformParameterTemplate, indexOf (nodeId));
+
+}
+
+
+
+juce::String GraphNodeRegistry::oscLfoModeParameterIdFor (const juce::String& nodeId)
+
+{
+
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+
+    if (spec == nullptr || spec->waveformParameterTemplate.isEmpty())
+
+        return {};
+
+
+
+    return withIndex (spec->waveformParameterTemplate, indexOf (nodeId)).replace ("Waveform", "LfoMode");
+
+}
+
+
+
+juce::String GraphNodeRegistry::oscLfoRateParameterIdFor (const juce::String& nodeId)
+
+{
+
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+
+    if (spec == nullptr || spec->waveformParameterTemplate.isEmpty())
+
+        return {};
+
+
+
+    return withIndex (spec->waveformParameterTemplate, indexOf (nodeId)).replace ("Waveform", "LfoRate");
 
 }
 
@@ -530,6 +590,42 @@ juce::String GraphNodeRegistry::gainParameterIdFor (const juce::String& nodeId)
 
 
     return withIndex (spec->gainParameterTemplate, indexOf (nodeId));
+
+}
+
+
+
+juce::String GraphNodeRegistry::driveParameterIdFor (const juce::String& nodeId)
+
+{
+
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+
+    if (spec == nullptr || spec->driveParameterTemplate.isEmpty())
+
+        return {};
+
+
+
+    return withIndex (spec->driveParameterTemplate, indexOf (nodeId)) + "Drive";
+
+}
+
+
+
+juce::String GraphNodeRegistry::shapeParameterIdFor (const juce::String& nodeId)
+
+{
+
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+
+    if (spec == nullptr || spec->driveParameterTemplate.isEmpty())
+
+        return {};
+
+
+
+    return withIndex (spec->driveParameterTemplate, indexOf (nodeId)) + "Shape";
 
 }
 

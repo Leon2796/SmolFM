@@ -7,15 +7,19 @@
 namespace smolfm
 {
 
-OscillatorProcessor::OscillatorProcessor (std::atomic<float>* waveformParameter)
+OscillatorProcessor::OscillatorProcessor (std::atomic<float>* waveformParameter,
+                                          std::atomic<float>* lfoModeParameter,
+                                          std::atomic<float>* lfoRateParameter)
     : Processor (ProcessorRole::oscillator),
       waveform (waveformParameter),
+      lfoMode (lfoModeParameter),
+      lfoRate (lfoRateParameter),
       noteInput (PortType::frequency),
       output (PortType::signal, *this)
 {
-    // No default: an unconnected note_in means 0 Hz.  The oscillator stays
-    // silent until a NoteProcessor (or a frequency chain ending in one) is
-    // wired — MIDI can only reach the carrier through an explicit trace.
+    // No default: an unconnected note_in means 0 Hz in pitch mode.  The
+    // oscillator stays silent until a NoteProcessor (or a frequency chain
+    // ending in one) is wired — or until LFO mode is switched on.
 }
 
 void OscillatorProcessor::prepare (double newSampleRate)
@@ -25,15 +29,20 @@ void OscillatorProcessor::prepare (double newSampleRate)
 
 void OscillatorProcessor::startNote()
 {
+    // LFO mode re-syncs the phase on every note: the modulation starts from
+    // the same point each time a key is played.  Pitch mode also resets so
+    // carriers keep their per-note phase behaviour.
     oscillator.resetPhase();
 }
 
 float OscillatorProcessor::processSample()
 {
-    // Only a connected note_in supplies a frequency.  Without that trace the
-    // oscillator produces 0 Hz — no hidden slider fallback, no phantom notes.
-    const float freq = noteInput.isConnected() ? noteInput.getSample()
-                                               : 0.0f;
+    // Two frequency sources, chosen by the mode parameter:
+    //   pitch mode: only a connected note_in supplies Hz (no hidden fallback).
+    //   LFO mode:   the fixed rate parameter; note_in is ignored entirely.
+    const float freq = lfoMode != nullptr && lfoMode->load() >= 0.5f
+        ? juce::jlimit (0.01f, 50.0f, lfoRate != nullptr ? lfoRate->load() : 1.0f)
+        : (noteInput.isConnected() ? noteInput.getSample() : 0.0f);
 
     oscillator.setFrequency (freq);
     oscillator.setWaveform (waveformFromIndex (static_cast<int> (std::round (waveform->load()))));

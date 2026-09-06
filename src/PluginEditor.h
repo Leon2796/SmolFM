@@ -44,6 +44,7 @@ private:
     gui::PaletteButton adsrButton;
     gui::PaletteButton fAdsrButton;
     gui::PaletteButton gainButton;
+    gui::PaletteButton shapeButton;
     gui::PaletteButton noteButton;
     gui::PaletteButton ringButton;
     gui::PaletteButton amButton;

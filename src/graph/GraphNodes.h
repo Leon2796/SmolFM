@@ -55,6 +55,7 @@ enum class NodeType
     adsr,
     fAdsr,
     gain,
+    waveshaper,
     masterOutput,
     unknown
 };
@@ -83,6 +84,7 @@ struct NodeSpec
     juce::String adsrParameterTemplate;  // "adsr%Attack" style prefix, only on adsr
     juce::String fAdsrParameterTemplate; // "fadsr%Attack" style prefix, only on fadsr
     juce::String gainParameterTemplate;  // "gain%Factor" style prefix, only on gain
+    juce::String driveParameterTemplate; // "shape%Drive" style prefix, only on waveshaper
     juce::String levelParameterTemplate; // master volume, only on output
 
     // Extra templates for the delay node.
@@ -151,6 +153,7 @@ public:
     static constexpr int maxAdsr        = 8;
     static constexpr int maxFAdsr       = 4;
     static constexpr int maxGains       = 8;
+    static constexpr int maxWaveshapers = 8;
     static constexpr int maxMasterOutputs = 1;
 
     static const std::vector<NodeSpec>& getAllSpecs();
@@ -173,10 +176,14 @@ public:
     /** Concrete APVTS ids for one instance ("osc3Frequency", "fm1Amount", ...). */
     static juce::String frequencyParameterIdFor (const juce::String& nodeId);
     static juce::String waveformParameterIdFor  (const juce::String& nodeId);
+    static juce::String oscLfoModeParameterIdFor (const juce::String& nodeId);
+    static juce::String oscLfoRateParameterIdFor (const juce::String& nodeId);
     static juce::String amountParameterIdFor    (const juce::String& nodeId);
     static juce::String adsrParameterIdFor      (const juce::String& nodeId, const juce::String& which);
     static juce::String fAdsrParameterIdFor     (const juce::String& nodeId, const juce::String& which);
     static juce::String gainParameterIdFor      (const juce::String& nodeId);
+    static juce::String driveParameterIdFor     (const juce::String& nodeId);
+    static juce::String shapeParameterIdFor     (const juce::String& nodeId);
     static juce::String levelParameterIdFor     (const juce::String& nodeId);
 
     // Delay-specific parameter ids

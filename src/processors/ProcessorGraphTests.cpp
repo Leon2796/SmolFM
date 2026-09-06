@@ -47,11 +47,11 @@ namespace
         smolfm::NoteProcessor* notePtr = note.get();
 
         auto carrier = std::make_unique<smolfm::OscillatorProcessor> (
-            &params.carrierWaveform);
+            &params.carrierWaveform, nullptr, nullptr);
         smolfm::OscillatorProcessor* carrierPtr = carrier.get();
 
         auto modulator = std::make_unique<smolfm::OscillatorProcessor> (
-            &params.modulatorWaveform);
+            &params.modulatorWaveform, nullptr, nullptr);
         smolfm::OscillatorProcessor* modulatorPtr = modulator.get();
 
         auto fm = std::make_unique<smolfm::FMModulationProcessor> (&params.fmAmount);
@@ -114,11 +114,11 @@ namespace
         smolfm::SignalGraph graph;
 
         auto carrier = std::make_unique<smolfm::OscillatorProcessor> (
-            &params.carrierWaveform);
+            &params.carrierWaveform, nullptr, nullptr);
         smolfm::OscillatorProcessor* carrierPtr = carrier.get();
 
         auto modulator = std::make_unique<smolfm::OscillatorProcessor> (
-            &params.modulatorWaveform);
+            &params.modulatorWaveform, nullptr, nullptr);
         smolfm::OscillatorProcessor* modulatorPtr = modulator.get();
 
         auto fm = std::make_unique<smolfm::FMModulationProcessor> (&params.fmAmount);
@@ -178,10 +178,11 @@ namespace
         auto note = std::make_unique<smolfm::NoteProcessor>();
         smolfm::NoteProcessor* notePtr = note.get();
 
-        auto carrier = std::make_unique<smolfm::OscillatorProcessor> (&carrierWaveform);
+        auto carrier = std::make_unique<smolfm::OscillatorProcessor> (
+            &carrierWaveform, nullptr, nullptr);
         smolfm::OscillatorProcessor* carrierPtr = carrier.get();
 
-        auto modulator = std::make_unique<smolfm::OscillatorProcessor> (&modWaveform);
+        auto modulator = std::make_unique<smolfm::OscillatorProcessor> (&modWaveform, nullptr, nullptr);
         smolfm::OscillatorProcessor* modulatorPtr = modulator.get();
 
         auto fmA = std::make_unique<smolfm::FMModulationProcessor> (&amountA);
