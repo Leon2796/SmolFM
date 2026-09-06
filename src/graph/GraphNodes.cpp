@@ -487,7 +487,7 @@ juce::String GraphNodeRegistry::waveformParameterIdFor (const juce::String& node
 
 
 
-juce::String GraphNodeRegistry::oscLfoModeParameterIdFor (const juce::String& nodeId)
+juce::String GraphNodeRegistry::oscModeParameterIdFor (const juce::String& nodeId)
 
 {
 
@@ -499,7 +499,25 @@ juce::String GraphNodeRegistry::oscLfoModeParameterIdFor (const juce::String& no
 
 
 
-    return withIndex (spec->waveformParameterTemplate, indexOf (nodeId)).replace ("Waveform", "LfoMode");
+    return withIndex (spec->waveformParameterTemplate, indexOf (nodeId)).replace ("Waveform", "Mode");
+
+}
+
+
+
+juce::String GraphNodeRegistry::oscStaticFreqParameterIdFor (const juce::String& nodeId)
+
+{
+
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+
+    if (spec == nullptr || spec->waveformParameterTemplate.isEmpty())
+
+        return {};
+
+
+
+    return withIndex (spec->waveformParameterTemplate, indexOf (nodeId)).replace ("Waveform", "StaticFreq");
 
 }
 

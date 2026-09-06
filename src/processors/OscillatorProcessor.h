@@ -6,11 +6,14 @@
     frequency are read from atomic parameter pointers every sample so that UI
     changes are reflected live.
 
-    LFO mode: when the mode parameter is active, the oscillator runs at a fixed
-    rate (the rate parameter, 0.01-50 Hz) instead of following the note_in
-    port.  Note-on re-syncs the phase so every note starts its modulation from
-    the same point; the rate itself stays constant.  This turns any oscillator
-    into a note-triggered modulation source for the graph.
+    LFO mode: when the mode parameter selects LFO, the oscillator runs at a
+    fixed rate (the rate parameter, 0.01-50 Hz) instead of following the
+    note_in port.  Note-on re-syncs the phase so every note starts its
+    modulation from the same point; the rate itself stays constant.  Static
+    mode likewise runs at a fixed audio-range frequency (20-20000 Hz) set in
+    the UI — a note hit only re-syncs the phase and keeps the voice alive.
+    This turns any oscillator into a note-triggered modulation/drone source
+    for the graph.
 */
 
 #pragma once
@@ -32,16 +35,20 @@ public:
     /**
         Create an oscillator node.
 
-        @param waveformParameter  atomic pointer to the waveform index
-        @param lfoModeParameter   atomic pointer to the LFO-mode flag (0/1)
-        @param lfoRateParameter   atomic pointer to the LFO rate in Hz (0.01-50)
+        @param waveformParameter   atomic pointer to the waveform index
+        @param modeParameter       atomic pointer to the mode index
+                                   (0 = Pitch, 1 = Static, 2 = LFO)
+        @param staticFreqParameter atomic pointer to the static frequency in
+                                   Hz (20-20000, only used in Static mode)
+        @param lfoRateParameter    atomic pointer to the LFO rate in Hz
+                                   (0.01-50, only used in LFO mode)
 
-        The frequency comes exclusively from the note_in port in pitch mode;
-        without a connection the oscillator stays silent (0 Hz).  In LFO mode
-        the rate parameter drives the frequency instead.
+        The frequency comes exclusively from the note_in port in Pitch mode;
+        without a connection the oscillator stays silent (0 Hz).
     */
     OscillatorProcessor (std::atomic<float>* waveformParameter,
-                         std::atomic<float>* lfoModeParameter,
+                         std::atomic<float>* modeParameter,
+                         std::atomic<float>* staticFreqParameter,
                          std::atomic<float>* lfoRateParameter);
 
     void prepare (double newSampleRate) override;
@@ -71,7 +78,8 @@ private:
     SimpleOscillator oscillator;
 
     std::atomic<float>* waveform;
-    std::atomic<float>* lfoMode;
+    std::atomic<float>* mode;
+    std::atomic<float>* staticFreq;
     std::atomic<float>* lfoRate;
 
     InputPort noteInput;

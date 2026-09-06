@@ -31,9 +31,10 @@ namespace
     {
         return std::make_unique<gui::OscillatorPanel> (
             apvts, "Oscillator",
-            smolfm::GraphNodeRegistry::waveformParameterIdFor  (instanceId),
-            smolfm::GraphNodeRegistry::oscLfoModeParameterIdFor (instanceId),
-            smolfm::GraphNodeRegistry::oscLfoRateParameterIdFor (instanceId));
+            smolfm::GraphNodeRegistry::waveformParameterIdFor    (instanceId),
+            smolfm::GraphNodeRegistry::oscModeParameterIdFor     (instanceId),
+            smolfm::GraphNodeRegistry::oscStaticFreqParameterIdFor (instanceId),
+            smolfm::GraphNodeRegistry::oscLfoRateParameterIdFor  (instanceId));
     }
 
     std::unique_ptr<juce::Component> makeFmContent (const juce::String& instanceId,

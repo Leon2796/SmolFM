@@ -176,8 +176,9 @@ public:
     /** Concrete APVTS ids for one instance ("osc3Frequency", "fm1Amount", ...). */
     static juce::String frequencyParameterIdFor (const juce::String& nodeId);
     static juce::String waveformParameterIdFor  (const juce::String& nodeId);
-    static juce::String oscLfoModeParameterIdFor (const juce::String& nodeId);
-    static juce::String oscLfoRateParameterIdFor (const juce::String& nodeId);
+    static juce::String oscModeParameterIdFor      (const juce::String& nodeId);
+    static juce::String oscStaticFreqParameterIdFor (const juce::String& nodeId);
+    static juce::String oscLfoRateParameterIdFor    (const juce::String& nodeId);
     static juce::String amountParameterIdFor    (const juce::String& nodeId);
     static juce::String adsrParameterIdFor      (const juce::String& nodeId, const juce::String& which);
     static juce::String fAdsrParameterIdFor     (const juce::String& nodeId, const juce::String& which);

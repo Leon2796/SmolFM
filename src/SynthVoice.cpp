@@ -254,8 +254,9 @@ void SynthVoice::buildGraph()
     for (int i = 0; i < GraphNodeRegistry::maxOscillators; ++i)
     {
         auto osc = std::make_unique<OscillatorProcessor> (parameters.oscWaveform [static_cast<size_t> (i)],
-                                                          parameters.oscLfoMode [static_cast<size_t> (i)],
-                                                          parameters.oscLfoRate [static_cast<size_t> (i)]);
+                                                          parameters.oscMode       [static_cast<size_t> (i)],
+                                                          parameters.oscStaticFreq [static_cast<size_t> (i)],
+                                                          parameters.oscLfoRate    [static_cast<size_t> (i)]);
         oscillators[static_cast<size_t> (i)] = osc.get();
         graph.addProcessor (std::move (osc));
     }

@@ -1,4 +1,4 @@
-/*
+﻿/*
     ProcessorGraphTests contains a small JUCE-free test harness for the
     processor graph.  It builds the same signal chain as SynthVoice, drives it
     with a MIDI note, and verifies that non-zero samples come out of the graph.
@@ -47,11 +47,11 @@ namespace
         smolfm::NoteProcessor* notePtr = note.get();
 
         auto carrier = std::make_unique<smolfm::OscillatorProcessor> (
-            &params.carrierWaveform, nullptr, nullptr);
+            &params.carrierWaveform, nullptr, nullptr, nullptr);
         smolfm::OscillatorProcessor* carrierPtr = carrier.get();
 
         auto modulator = std::make_unique<smolfm::OscillatorProcessor> (
-            &params.modulatorWaveform, nullptr, nullptr);
+            &params.modulatorWaveform, nullptr, nullptr, nullptr);
         smolfm::OscillatorProcessor* modulatorPtr = modulator.get();
 
         auto fm = std::make_unique<smolfm::FMModulationProcessor> (&params.fmAmount);
@@ -107,18 +107,18 @@ namespace
     }
 
     // Without any note wiring the carrier's note_in stays unconnected and the
-    // oscillator must produce silence — there is no frequency fallback.
+    // oscillator must produce silence â€” there is no frequency fallback.
     TestResult runHzOnlyGraphTest()
     {
         TestParameters params;
         smolfm::SignalGraph graph;
 
         auto carrier = std::make_unique<smolfm::OscillatorProcessor> (
-            &params.carrierWaveform, nullptr, nullptr);
+            &params.carrierWaveform, nullptr, nullptr, nullptr);
         smolfm::OscillatorProcessor* carrierPtr = carrier.get();
 
         auto modulator = std::make_unique<smolfm::OscillatorProcessor> (
-            &params.modulatorWaveform, nullptr, nullptr);
+            &params.modulatorWaveform, nullptr, nullptr, nullptr);
         smolfm::OscillatorProcessor* modulatorPtr = modulator.get();
 
         auto fm = std::make_unique<smolfm::FMModulationProcessor> (&params.fmAmount);
@@ -179,10 +179,10 @@ namespace
         smolfm::NoteProcessor* notePtr = note.get();
 
         auto carrier = std::make_unique<smolfm::OscillatorProcessor> (
-            &carrierWaveform, nullptr, nullptr);
+            &carrierWaveform, nullptr, nullptr, nullptr);
         smolfm::OscillatorProcessor* carrierPtr = carrier.get();
 
-        auto modulator = std::make_unique<smolfm::OscillatorProcessor> (&modWaveform, nullptr, nullptr);
+        auto modulator = std::make_unique<smolfm::OscillatorProcessor> (&modWaveform, nullptr, nullptr, nullptr);
         smolfm::OscillatorProcessor* modulatorPtr = modulator.get();
 
         auto fmA = std::make_unique<smolfm::FMModulationProcessor> (&amountA);
@@ -194,7 +194,7 @@ namespace
         auto adsr = std::make_unique<smolfm::AdsrProcessor> (&attack, &decay, &sustain, &release);
         smolfm::AdsrProcessor* adsrPtr = adsr.get();
 
-        // The modulator needs a frequency source too — without a note trace
+        // The modulator needs a frequency source too â€” without a note trace
         // the oscillator is silent (0 Hz) since the fallback was removed.
         if (! modulatorPtr->getNoteInput().connect (notePtr->getOutput()))
             return { false, "Failed to connect note to modulator note_in" };

@@ -249,16 +249,20 @@ Use this skill whenever:
   - `osc%Waveform` - waveform selector (sine, saw, square, triangle, noise)
     - noise = white noise, uniform [-1, 1] per sample; frequency-invariant
     - great for snare/cymbal textures and breathy layers
-  - `osc%LfoMode` - bool (default false): false = Pitch mode (note_in driven),
-    true = LFO mode (fixed rate, note-triggered re-sync)
-  - `osc%LfoRate` - LFO rate in Hz 0.01-50 (default 1.0; only used in LFO mode)
-- **LFO mode behaviour**: the oscillator runs at the fixed rate instead of the
-  played pitch; note-on resets the phase so every note starts its modulation
-  from the same point.  This turns any oscillator into a note-triggered
-  modulation source: wire its `out` into ANY processor parameter path
-  (`fm.modulator_in`, `am.modulator_in`, `fadsr.freq_in` for vibrato) or use
-  it as a slow tremolo/pulse source.  Noise waveform in LFO mode = sampled
-  noise pulses per note.
+  - `osc%Mode` - frequency mode selector (0 = Pitch, 1 = Static, 2 = LFO)
+    - Pitch (default): frequency follows the note_in port
+    - Static: fixed audio-range frequency from `osc%StaticFreq` (20-20000 Hz);
+      note-on only re-syncs the phase and keeps the voice alive — the
+      oscillator does NOT follow the keyboard
+    - LFO: fixed low rate from `osc%LfoRate` (0.01-50 Hz); note-on re-syncs
+      the phase so every note starts its modulation from the same point
+  - `osc%StaticFreq` - static frequency in Hz 20-20000 (default 440; Static mode)
+  - `osc%LfoRate` - LFO rate in Hz 0.01-50 (default 1.0; LFO mode)
+- **Mode behaviour**: Static and LFO ignore note_in entirely — the oscillator
+  becomes a fixed-frequency source wired into ANY processor path
+  (`fm.modulator_in`, `am.modulator_in`, etc.).  Note-on re-syncs the phase
+  so per-note modulation starts consistently.  Noise waveform in Static/LFO
+  mode = per-sample random values (a fixed-frequency noise bed).
 
 #### FMModulationProcessor
 - **Purpose**: True frequency modulation (not phase modulation!)
@@ -446,7 +450,7 @@ Each `<Node>` element defines one processor instance:
   - Single-instance nodes omit index: `output` (not `output0`)
 - `x`, `y` (required): Canvas position integers (visual layout)
 - **Processor-specific parameter attributes** (as many as needed):
-  - Oscillator: `waveform` (integer index), `lfomode` (bool), `lforate` (float Hz)
+  - Oscillator: `waveform` (integer index), `mode` (int: 0=Pitch, 1=Static, 2=LFO), `staticfreq` (float Hz), `lforate` (float Hz)
   - FM: `amount` (float)
   - FrequencyScale: `factor` (float)
   - Gain: `factor` (float)
@@ -784,7 +788,7 @@ osc0.out → adsr0.in
 adsr0.out → output.in1
 ```
 Example settings:
-- `osc1.lfomode = 1`, `osc1.lforate = 5.5` (singing vibrato ~5 Hz)
+- `osc1.mode = 2` (LFO), `osc1.lforate = 5.5` (singing vibrato ~5 Hz)
 - `osc1.waveform = 0` (sine — smooth pitch wobble)
 - `fm0.amount = 0.4` (vibrato depth)
 - `fscale0.factor = 1.0` (constant deviation; lower = less wobble on low notes)
@@ -804,7 +808,7 @@ am0.out → adsr0.in
 adsr0.out → output.in1
 ```
 Example settings:
-- `osc1.lfomode = 1`, `osc1.lforate = 8.0` (gate rate)
+- `osc1.mode = 2` (LFO), `osc1.lforate = 8.0` (gate rate)
 - `osc1.waveform = 2` (square — hard on/off gating)
 - `am0.amount = 1.0` (full depth; drops to silence at LFO troughs)
 - `adsr0.sustain = 1.0` (let the LFO do the dynamics)
@@ -824,7 +828,7 @@ osc0.out → adsr0.in
 adsr0.out → output.in1
 ```
 Example settings:
-- `osc2.lfomode = 1`, `osc2.lforate = 7.0` (burst rate)
+- `osc2.mode = 2` (LFO), `osc2.lforate = 7.0` (burst rate)
 - `osc2.waveform = 4` (noise)
 - `fm0.amount = 1.5` (chaotic timbre modulation from noise)
 - Pair with a slow attack adsr for "breath" pads

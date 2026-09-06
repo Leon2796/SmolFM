@@ -37,9 +37,10 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxOscillators; ++i)
     {
         const juce::String num (i);
-        voiceParameters.oscWaveform [static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "Waveform");
-        voiceParameters.oscLfoMode  [static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "LfoMode");
-        voiceParameters.oscLfoRate  [static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "LfoRate");
+        voiceParameters.oscWaveform  [static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "Waveform");
+        voiceParameters.oscMode      [static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "Mode");
+        voiceParameters.oscStaticFreq[static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "StaticFreq");
+        voiceParameters.oscLfoRate   [static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "LfoRate");
     }
 
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxFmAmounts; ++i)
@@ -352,8 +353,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
             juce::StringArray { "Sine", "Saw", "Square", "Triangle", "Noise" },
             static_cast<int> (smolfm::Waveform::sine)));
 
-        layout.add (std::make_unique<juce::AudioParameterBool> (
-            "osc" + num + "LfoMode", "Oscillator " + num + " LFO Mode", false));
+        layout.add (std::make_unique<juce::AudioParameterChoice> (
+            "osc" + num + "Mode", "Oscillator " + num + " Mode",
+            juce::StringArray { "Pitch", "Static", "LFO" }, 0));
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "osc" + num + "StaticFreq", "Oscillator " + num + " Static Freq",
+            juce::NormalisableRange<float> (20.0f, 20000.0f, 0.1f, 0.3f), 440.0f));
 
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "osc" + num + "LfoRate", "Oscillator " + num + " LFO Rate",

@@ -17,24 +17,29 @@ Momentanfrequenz in die Phase — das ist die Stelle, an der echte FM entsteht.
 | Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
 |---|---|---|---|---|
 | Wellenform | `osc<N>Waveform` | Choice: Sine/Saw/Square/Triangle/Noise | `std::atomic<float>* waveform` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
-| LFO-Modus | `osc<N>LfoMode` | Bool, Default false | `std::atomic<float>* lfoMode` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
+| Modus | `osc<N>Mode` | Choice: Pitch/Static/LFO, Default Pitch | `std::atomic<float>* mode` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
+| Statische Frequenz | `osc<N>StaticFreq` | Float, 20–20000 Hz, Default 440 | `std::atomic<float>* staticFreq` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
 | LFO-Rate | `osc<N>LfoRate` | Float, 0.01–50 Hz, Default 1 | `std::atomic<float>* lfoRate` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
 
 `<N>` = Instanzindex 0–7.
 
 Frequenzquellen:
-- **Pitch-Modus** (`LfoMode = false`): Die Frequenz kommt ausschließlich über
+- **Pitch-Modus** (`Mode = Pitch`): Die Frequenz kommt ausschließlich über
   `note_in`; ohne Verbindung liefert der Oszillator 0 Hz (Stille).
-- **LFO-Modus** (`LfoMode = true`): Die Frequenz ist der feste `LfoRate`-Wert
+- **Static-Modus** (`Mode = Static`): Die Frequenz ist der feste
+  `StaticFreq`-Wert (20–20000 Hz). `note_in` wird ignoriert. Note-On resettet
+  die Phase und hält die Voice am Leben.
+- **LFO-Modus** (`Mode = LFO`): Die Frequenz ist der feste `LfoRate`-Wert
   (0.01–50 Hz). `note_in` wird ignoriert. Bei Note-On wird die Phase
-  zurückgesetzt, sodass jede Notemit der gleichen LFO-Phase startet —
+  zurückgesetzt, sodass jede Note mit der gleichen LFO-Phase startet —
   die Rate selbst bleibt konstant.
 
 ## Abschnitt 2 — UI-Konfiguration
 
 | UI-Funktion | Bedeutung | UI-Symbol | Datei |
 |---|---|---|---|
-| LFO-Modus-Umschalter | Wählt zwischen Pitch (note_in getrieben) und LFO (feste Rate) | `OscillatorPanel::lfoModeBox` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
+| Frequenz-Modus-Umschalter | Wählt zwischen Pitch (note_in getrieben), Static (feste Audio-Frequenz) und LFO (feste Niedrigfrequenz) | `OscillatorPanel::modeBox` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
+| Static-Freq-Regler | Feste Frequenz im Audiorange, 20–20000 Hz; nur im Static-Modus sichtbar | `OscillatorPanel::staticFreqSlider` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
 | LFO-Rate-Regler | Feste LFO-Frequenz, 0.01–50 Hz; nur im LFO-Modus sichtbar | `OscillatorPanel::lfoRateSlider` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
 | *(Basis)* | ComboBox (Wellenform) | `OscillatorPanel::waveformBox` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
 
@@ -53,9 +58,10 @@ Frequenzquellen:
 Funktionsablauf pro Sample:
 
 1. Frequenzwahl: Im Pitch-Modus $f = f_{note\_in}$ falls verbunden, sonst $0$
-   (kein Ton, kein Slider-Fallback). Im LFO-Modus
-   $f = \mathrm{clamp}(f_{\text{rate}}, 0.01, 50)$ unabhängig von `note_in`;
-   Note-On resettet die Phase.
+   (kein Ton, kein Slider-Fallback). Im Static-Modus
+   $f = \mathrm{clamp}(f_{\text{static}}, 20, 20000)$; im LFO-Modus
+   $f = \mathrm{clamp}(f_{\text{rate}}, 0.01, 50)$ — jeweils unabhängig von
+   `note_in`; Note-On resettet die Phase.
 2. Phase-Increment:
 $$\Delta\varphi = \frac{2\pi f}{f_s}$$
 3. Phasenintegration mit Wrap in $[0, 2\pi)$:
@@ -102,7 +108,7 @@ früheren Phasenmodulations-Design.
 
 | Formales Symbol | C++-Symbol / Aufruf | Datei | Berechnungsschritt |
 |---|---|---|---|
-| $f$ | `freq` (lokal), `noteInput.getSample()` oder `lfoRate->load()` | [OscillatorProcessor.cpp](../../src/processors/OscillatorProcessor.cpp) | Pitch-Modus: Port-Wert falls `isConnected()`, sonst `0.0f`; LFO-Modus: Rate geclampt auf $[0.01, 50]$; danach `setFrequency()` auf $[-f_s/2, f_s/2]$ geclippt (Through-Zero erlaubt) |
+| $f$ | `freq` (lokal), `noteInput.getSample()` / `staticFreq->load()` / `lfoRate->load()` | [OscillatorProcessor.cpp](../../src/processors/OscillatorProcessor.cpp) | Pitch: Port-Wert falls `isConnected()`, sonst `0.0f`; Static: geclampt auf $[20, 20000]$; LFO: geclampt auf $[0.01, 50]$; danach `setFrequency()` auf $[-f_s/2, f_s/2]$ geclippt (Through-Zero erlaubt) |
 | $f_s$ | `sampleRate` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | gesetzt in `prepare(double)` |
 | $\Delta\varphi$ | `phaseIncrement` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | `updatePhaseIncrement()`: `twoPi * frequency / sampleRate` |
 | $\varphi_n$ | `phase` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | `getNextSample()`: `phase += phaseIncrement`, Wrap per `fmod()` mit Negativ-Korrektur |

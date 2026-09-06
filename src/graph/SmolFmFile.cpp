@@ -55,13 +55,15 @@ namespace
 
         if (baseId == "osc")
         {
-            const auto wfmId  = GraphNodeRegistry::waveformParameterIdFor  (nodeId);
-            const auto modeId = GraphNodeRegistry::oscLfoModeParameterIdFor (nodeId);
-            const auto rateId = GraphNodeRegistry::oscLfoRateParameterIdFor (nodeId);
+            const auto wfmId   = GraphNodeRegistry::waveformParameterIdFor   (nodeId);
+            const auto modeId  = GraphNodeRegistry::oscModeParameterIdFor    (nodeId);
+            const auto statId  = GraphNodeRegistry::oscStaticFreqParameterIdFor (nodeId);
+            const auto rateId  = GraphNodeRegistry::oscLfoRateParameterIdFor  (nodeId);
 
             if (wfmId.isNotEmpty())  specs.add ({ "waveform",  wfmId });
-            if (modeId.isNotEmpty()) specs.add ({ "lfomode",  modeId });
-            if (rateId.isNotEmpty()) specs.add ({ "lforate",  rateId });
+            if (modeId.isNotEmpty()) specs.add ({ "mode",      modeId });
+            if (statId.isNotEmpty()) specs.add ({ "staticfreq", statId });
+            if (rateId.isNotEmpty()) specs.add ({ "lforate",   rateId });
         }
                 else if (baseId == "fm" || baseId == "am")
                 {

@@ -11,7 +11,8 @@ namespace gui
 OscillatorPanel::OscillatorPanel (juce::AudioProcessorValueTreeState& apvts,
                                   const juce::String& title,
                                   const juce::String& waveformParameterID,
-                                  const juce::String& lfoModeParameterID,
+                                  const juce::String& modeParameterID,
+                                  const juce::String& staticFreqParameterID,
                                   const juce::String& lfoRateParameterID)
 {
     titleLabel.setText (title, juce::dontSendNotification);
@@ -23,38 +24,52 @@ OscillatorPanel::OscillatorPanel (juce::AudioProcessorValueTreeState& apvts,
     // ComboBoxAttachment maps them to the choice index.
     waveformBox.addItemList ({ "Sine", "Saw", "Square", "Triangle", "Noise" }, 1);
 
-    // LFO controls.  Mode combo order must match the APVTS choice
-    // ("Pitch", "LFO"); the rate slider is only meaningful in LFO mode.
-    lfoModeBox.addItemList ({ "Pitch", "LFO" }, 1);
-    lfoModeBox.addListener (this);
+    // Frequency-mode controls.  Mode combo order must match the APVTS choice
+    // ("Pitch", "Static", "LFO"); each frequency row is only visible in its
+    // own mode.  Both frequency controls are small rotary knobs.
+    modeBox.addItemList ({ "Pitch", "Static", "LFO" }, 1);
+    modeBox.addListener (this);
 
-    lfoRateSlider.setSliderStyle (juce::Slider::LinearHorizontal);
-    lfoRateSlider.setTextBoxStyle (juce::Slider::TextBoxRight, false, 64, 20);
+    staticFreqSlider.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+    staticFreqSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 70, 18);
+    staticFreqSlider.setTextValueSuffix (" Hz");
+    staticFreqSlider.setColour (juce::Slider::rotarySliderFillColourId, juce::Colours::lightblue);
+
+    lfoRateSlider.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+    lfoRateSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 70, 18);
     lfoRateSlider.setTextValueSuffix (" Hz");
+    lfoRateSlider.setColour (juce::Slider::rotarySliderFillColourId, juce::Colours::lightgreen);
 
-    lfoModeLabel.setText ("Mode", juce::dontSendNotification);
-    lfoModeLabel.setJustificationType (juce::Justification::centred);
+    modeLabel.setText ("Mode", juce::dontSendNotification);
+    modeLabel.setJustificationType (juce::Justification::centred);
+    staticFreqLabel.setText ("Freq", juce::dontSendNotification);
+    staticFreqLabel.setJustificationType (juce::Justification::centred);
     lfoRateLabel.setText ("Rate", juce::dontSendNotification);
     lfoRateLabel.setJustificationType (juce::Justification::centred);
 
     addAndMakeVisible (titleLabel);
     addAndMakeVisible (waveformBox);
-    addAndMakeVisible (lfoModeLabel);
-    addAndMakeVisible (lfoModeBox);
+    addAndMakeVisible (modeLabel);
+    addAndMakeVisible (modeBox);
+    addAndMakeVisible (staticFreqLabel);
+    addAndMakeVisible (staticFreqSlider);
     addAndMakeVisible (lfoRateLabel);
     addAndMakeVisible (lfoRateSlider);
 
     waveformAttachment.reset (new juce::AudioProcessorValueTreeState::ComboBoxAttachment (apvts,
                                                                                           waveformParameterID,
                                                                                           waveformBox));
-    lfoModeAttachment.reset (new juce::AudioProcessorValueTreeState::ComboBoxAttachment (apvts,
-                                                                                         lfoModeParameterID,
-                                                                                         lfoModeBox));
+    modeAttachment.reset (new juce::AudioProcessorValueTreeState::ComboBoxAttachment (apvts,
+                                                                                      modeParameterID,
+                                                                                      modeBox));
+    staticFreqAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts,
+                                                                                         staticFreqParameterID,
+                                                                                         staticFreqSlider));
     lfoRateAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts,
                                                                                        lfoRateParameterID,
                                                                                        lfoRateSlider));
 
-    updateLfoVisibility();
+    updateFrequencyRows();
 }
 
 OscillatorPanel::~OscillatorPanel()
@@ -63,16 +78,18 @@ OscillatorPanel::~OscillatorPanel()
 
 void OscillatorPanel::comboBoxChanged (juce::ComboBox*)
 {
-    updateLfoVisibility();
+    updateFrequencyRows();
 }
 
-void OscillatorPanel::updateLfoVisibility()
+void OscillatorPanel::updateFrequencyRows()
 {
-    // LFO mode is item id 2 in the mode combo; hide the rate slider in pitch
-    // mode so the small box does not grow controls it cannot use.
-    const bool lfoActive = lfoModeBox.getSelectedId() == 2;
-    lfoRateLabel.setVisible (lfoActive);
-    lfoRateSlider.setVisible (lfoActive);
+    // Mode combo ids: 1 = Pitch (no extra row), 2 = Static (freq row),
+    // 3 = LFO (rate row).
+    const int mode = modeBox.getSelectedId();
+    staticFreqLabel.setVisible (mode == 2);
+    staticFreqSlider.setVisible (mode == 2);
+    lfoRateLabel.setVisible (mode == 3);
+    lfoRateSlider.setVisible (mode == 3);
 }
 
 void OscillatorPanel::resized()
@@ -85,17 +102,21 @@ void OscillatorPanel::resized()
     waveformBox.setBounds (bounds.removeFromTop (26).withSizeKeepingCentre (200, 26));
     bounds.removeFromTop (4);
 
-    // Mode row always visible; rate row only shown in LFO mode.
+    // Mode row always visible; the frequency row matching the selected mode
+    // shows a small rotary knob below it.
     auto modeRow = bounds.removeFromTop (22);
-    lfoModeLabel.setBounds (modeRow.removeFromLeft (44));
-    lfoModeBox.setBounds (modeRow);
+    modeLabel.setBounds (modeRow.removeFromLeft (44));
+    modeBox.setBounds (modeRow);
 
-    if (lfoRateSlider.isVisible())
+    const bool showStatic = staticFreqSlider.isVisible();
+    if (showStatic || lfoRateSlider.isVisible())
     {
         bounds.removeFromTop (2);
-        auto rateRow = bounds.removeFromTop (24);
-        lfoRateLabel.setBounds (rateRow.removeFromLeft (44));
-        lfoRateSlider.setBounds (rateRow);
+        auto& slider = showStatic ? staticFreqSlider : lfoRateSlider;
+        auto& label  = showStatic ? staticFreqLabel  : lfoRateLabel;
+
+        label.setVisible (false);   // knob textbox carries the value
+        slider.setBounds (bounds.removeFromTop (58).withSizeKeepingCentre (58, 58));
     }
 }
 

@@ -52,7 +52,8 @@ struct SynthVoiceParameters
 {
     // Index into these arrays is the instance index of the node.
     std::array<std::atomic<float>*, GraphNodeRegistry::maxOscillators> oscWaveform;
-    std::array<std::atomic<float>*, GraphNodeRegistry::maxOscillators> oscLfoMode;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxOscillators> oscMode;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxOscillators> oscStaticFreq;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxOscillators> oscLfoRate;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFmAmounts>   fmAmount;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFrequencyScales> freqScaleFactor;
