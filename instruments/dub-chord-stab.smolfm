@@ -4,7 +4,7 @@
 <SmolFM version="2" name="Dub Chord Stab">
   <description>Sine modulated by FM (ratio 4.0) with a hard gate envelope, sent to a 1/8-note tempo-synced delay with 55 percent feedback — each stab produces a rhythmic echo train tied to the host bpm.</description>
   <Nodes>
-    <Node id="note0" x="80" y="100">
+    <Node id="note" x="80" y="100">
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
 
@@ -45,9 +45,9 @@
   </Nodes>
 
   <Connections>
-    <Wire from="note0" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in"/>
     <Wire from="fscale0" fromPort="out" to="osc0" toPort="note_in"/>
-    <Wire from="note0" fromPort="out" to="fm0" toPort="freq_in"/>
+    <Wire from="note" fromPort="out" to="fm0" toPort="freq_in"/>
     <Wire from="osc0" fromPort="out" to="fm0" toPort="modulator_in"/>
     <Wire from="fm0" fromPort="out" to="osc1" toPort="note_in"/>
 

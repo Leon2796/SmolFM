@@ -3,7 +3,7 @@
 <SmolFM version="2" name="fadsr-dual-voice-detune-drone">
   <description>Dual-voice drone: two F-ADSR envelopes shape two voices differently — voice A swells up 1.5x through a shimmering FM (modulator a fifth above), voice B dips to 0.5x and back — stacked into two output inputs for slow detune beating.</description>
   <Nodes>
-    <Node id="note0" x="60" y="60">
+    <Node id="note" x="60" y="60">
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
     <Node id="fadsr0" x="360" y="60" attack="1.8" decay="2.0" sustain="0.0" release="2.5" up="1.5" down="1.0">
@@ -27,9 +27,6 @@
       <Pin id="modulator_in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
-    <Node id="note1" x="60" y="700">
-      <Pin id="out" direction="out" type="frequency"/>
-    </Node>
     <Node id="fscale0" x="60" y="940" factor="3.0"/>
     <Node id="osc2" x="360" y="940" waveform="0">
       <Pin id="note_in" direction="in" type="frequency"/>
@@ -50,9 +47,9 @@
     <Node id="output" x="1320" y="60" level="0.7"/>
   </Nodes>
   <Connections>
-    <Wire from="note0" fromPort="out" to="fadsr0" toPort="freq_in"/>
-    <Wire from="note0" fromPort="out" to="fadsr1" toPort="freq_in"/>
-    <Wire from="note1" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="note" fromPort="out" to="fadsr0" toPort="freq_in"/>
+    <Wire from="note" fromPort="out" to="fadsr1" toPort="freq_in"/>
+    <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in"/>
     <Wire from="fscale0" fromPort="out" to="osc2" toPort="note_in"/>
     <Wire from="osc2" fromPort="out" to="fm0" toPort="modulator_in"/>
     <Wire from="fadsr0" fromPort="out" to="fm0" toPort="freq_in"/>

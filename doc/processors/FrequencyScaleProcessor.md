@@ -10,7 +10,7 @@ Kette.
 
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
-| Max. Instanzen | 4 | `GraphNodeRegistry::maxFrequencyScales` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
+| Max. Instanzen | 8 | `GraphNodeRegistry::maxFrequencyScales` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
 | Input-Ports | `freq_in` (`PortType::frequency`) | `InputPort freqInput` | [src/processors/FrequencyScaleProcessor.h](../../src/processors/FrequencyScaleProcessor.h) |
 | Output-Ports | `out` (`PortType::frequency`) | `OutputPort output` | [src/processors/FrequencyScaleProcessor.h](../../src/processors/FrequencyScaleProcessor.h) |
 

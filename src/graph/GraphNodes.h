@@ -54,6 +54,7 @@ enum class NodeType
     delay,
     adsr,
     fAdsr,
+    gain,
     masterOutput,
     unknown
 };
@@ -81,6 +82,7 @@ struct NodeSpec
     juce::String amountParameterTemplate;
     juce::String adsrParameterTemplate;  // "adsr%Attack" style prefix, only on adsr
     juce::String fAdsrParameterTemplate; // "fadsr%Attack" style prefix, only on fadsr
+    juce::String gainParameterTemplate;  // "gain%Factor" style prefix, only on gain
     juce::String levelParameterTemplate; // master volume, only on output
 
     // Extra templates for the delay node.
@@ -141,13 +143,14 @@ class GraphNodeRegistry
 public:
     static constexpr int maxOscillators = 8;
     static constexpr int maxFmAmounts   = 4;
-    static constexpr int maxFrequencyScales = 4;
+    static constexpr int maxFrequencyScales = 8;
     static constexpr int maxRingModulators  = 4;
     static constexpr int maxAmModulators    = 4;
     static constexpr int maxDelays          = 8;
-    static constexpr int maxNotes       = 4;
-    static constexpr int maxAdsr        = 4;
+    static constexpr int maxNotes       = 1;
+    static constexpr int maxAdsr        = 8;
     static constexpr int maxFAdsr       = 4;
+    static constexpr int maxGains       = 8;
     static constexpr int maxMasterOutputs = 1;
 
     static const std::vector<NodeSpec>& getAllSpecs();
@@ -173,6 +176,7 @@ public:
     static juce::String amountParameterIdFor    (const juce::String& nodeId);
     static juce::String adsrParameterIdFor      (const juce::String& nodeId, const juce::String& which);
     static juce::String fAdsrParameterIdFor     (const juce::String& nodeId, const juce::String& which);
+    static juce::String gainParameterIdFor      (const juce::String& nodeId);
     static juce::String levelParameterIdFor     (const juce::String& nodeId);
 
     // Delay-specific parameter ids

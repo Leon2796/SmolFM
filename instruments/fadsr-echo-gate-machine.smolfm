@@ -3,7 +3,7 @@
 <SmolFM version="2" name="fadsr-echo-gate-machine">
   <description>Rhythmic echo machine: one F-ADSR pitch-blip carrier feeds four parallel delays at different tempo divisions (1/4, 1/8, 1/16 dotted feel via different ms values), each with its own feedback, stacked into four output inputs; a slow fscale-derived AM gate chops the mixed tail.</description>
   <Nodes>
-    <Node id="note0" x="60" y="60">
+    <Node id="note" x="60" y="60">
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
     <Node id="fadsr0" x="360" y="60" attack="0.001" decay="0.08" sustain="0.0" release="0.05" up="1.5" down="0.98">
@@ -37,7 +37,7 @@
     <Node id="output" x="1340" y="60" level="0.75"/>
   </Nodes>
   <Connections>
-    <Wire from="note0" fromPort="out" to="fadsr0" toPort="freq_in"/>
+    <Wire from="note" fromPort="out" to="fadsr0" toPort="freq_in"/>
     <Wire from="fadsr0" fromPort="out" to="osc0" toPort="note_in"/>
     <Wire from="osc0" fromPort="out" to="adsr0" toPort="in"/>
     <Wire from="adsr0" fromPort="out" to="delay0" toPort="in"/>

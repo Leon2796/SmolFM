@@ -78,6 +78,13 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
         voiceParameters.fAdsrDown   [static_cast<size_t> (i)] = parameters.getRawParameterValue ("fadsr" + num + "Down");
     }
 
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxGains; ++i)
+    {
+        const juce::String num (i);
+
+        voiceParameters.gainFactor[static_cast<size_t> (i)] = parameters.getRawParameterValue ("gain" + num + "Factor");
+    }
+
         for (int i = 0; i < smolfm::GraphNodeRegistry::maxAmModulators; ++i)
     {
         const juce::String num (i);
@@ -327,7 +334,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 
         layout.add (std::make_unique<juce::AudioParameterChoice> (
             "osc" + num + "Waveform", "Oscillator " + num + " Waveform",
-            juce::StringArray { "Sine", "Saw", "Square", "Triangle" },
+            juce::StringArray { "Sine", "Saw", "Square", "Triangle", "Noise" },
             static_cast<int> (smolfm::Waveform::sine)));
     }
 
@@ -405,6 +412,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "fadsr" + num + "Down", "F-ADSR " + num + " Down Factor",
+            juce::NormalisableRange<float> (0.0f, 10.0f), 1.0f));
+    }
+
+    // -- Gain pool ----------------------------------------------------------
+    // One transparent-by-default gain factor per instance (0-10, 1.0 = unity).
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxGains; ++i)
+    {
+        const juce::String num (i);
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "gain" + num + "Factor", "Gain " + num + " Factor",
             juce::NormalisableRange<float> (0.0f, 10.0f), 1.0f));
     }
 

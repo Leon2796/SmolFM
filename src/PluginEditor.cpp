@@ -13,6 +13,7 @@
 #include "gui/components/FrequencyScaleComponent.h"
 #include "gui/components/AdsrPanel.h"
 #include "gui/components/FAdsrComponent.h"
+#include "gui/components/GainComponent.h"
 #include "gui/components/NoteNodeComponent.h"
 #include "gui/components/MasterOutputComponent.h"
 #include "gui/components/RingModulatorComponent.h"
@@ -68,6 +69,13 @@ namespace
             smolfm::GraphNodeRegistry::fAdsrParameterIdFor (instanceId, "Release"),
             smolfm::GraphNodeRegistry::fAdsrParameterIdFor (instanceId, "Up"),
             smolfm::GraphNodeRegistry::fAdsrParameterIdFor (instanceId, "Down"));
+    }
+
+    std::unique_ptr<juce::Component> makeGainContent (const juce::String& instanceId,
+                                                      juce::AudioProcessorValueTreeState& apvts)
+    {
+        return std::make_unique<gui::GainComponent> (
+            apvts, smolfm::GraphNodeRegistry::gainParameterIdFor (instanceId));
     }
 
         std::unique_ptr<juce::Component> makeNoteContent (const juce::String&,
@@ -238,7 +246,21 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                                return p; },
                            smolfm::GraphNodeRegistry::maxDelays);
 
-    for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &fAdsrButton, &noteButton, &ringButton, &amButton, &delayButton, &outputButton })
+    gainButton  .configure ("gain", "Gain", [] (const juce::Rectangle<float>& r)
+                            {   juce::Path p;
+                                // Arrow pointing up-right: signal boosted
+                                const float cx = r.getCentreX(), cy = r.getCentreY();
+                                p.startNewSubPath (r.getX() + 2.0f, r.getBottom() - 2.0f);
+                                p.lineTo (r.getRight() - 4.0f, r.getY() + 4.0f);
+                                p.startNewSubPath (r.getRight() - 4.0f, r.getY() + 4.0f);
+                                p.lineTo (r.getRight() - 10.0f, r.getY() + 6.0f);
+                                p.startNewSubPath (r.getRight() - 4.0f, r.getY() + 4.0f);
+                                p.lineTo (r.getRight() - 6.0f, r.getY() + 10.0f);
+                                juce::ignoreUnused (cx, cy);
+                                return p; },
+                            smolfm::GraphNodeRegistry::maxGains);
+
+    for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &fAdsrButton, &gainButton, &noteButton, &ringButton, &amButton, &delayButton, &outputButton })
     {
         addAndMakeVisible (*b);
         b->onAddRequested = [this] (const juce::String& baseId) { addNodeFromToolbar (baseId); };
@@ -276,6 +298,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             return graphPanel.addNodeOfType ("adsr", processorRef.getParameters(), makeAdsrContent, nodeStartsHidden);
         if (baseId == "fadsr")
             return graphPanel.addNodeOfType ("fadsr", processorRef.getParameters(), makeFAdsrContent, nodeStartsHidden);
+        if (baseId == "gain")
+            return graphPanel.addNodeOfType ("gain", processorRef.getParameters(), makeGainContent, nodeStartsHidden);
                 if (baseId == "note")
             return graphPanel.addNodeOfType ("note", processorRef.getParameters(), makeNoteContent, nodeStartsHidden);
                 if (baseId == "ring")
@@ -299,6 +323,14 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     // -----------------------------------------------------------------
     refreshToolbarBadges();
 
+    // First launch: the patch browser shows patch #1's name without loading
+    // anything (rescan does not fire onPatchSelected).  Load the selected
+    // patch once so the canvas matches the name label at startup.  Placed
+    // here so onConnectionPatchChanged/onNodeSetChanged are already wired.
+    const juce::File initialPatch = patchBrowser.getSelectedPatch();
+    if (initialPatch.existsAsFile())
+        smolfm::SmolFmFile::load (graphPanel, processorRef.getParameters(), initialPatch);
+
     setSize (1200, 800);
 }
 
@@ -315,6 +347,7 @@ void AudioPluginAudioProcessorEditor::addNodeFromToolbar (const juce::String& ba
                         { "fscale", makeFrequencyScaleContent },
         { "adsr",   makeAdsrContent    },
         { "fadsr",  makeFAdsrContent   },
+        { "gain",   makeGainContent    },
         { "ring",   makeRingModulatorContent },
                 { "am",     makeAmContent        },
         { "delay",  makeDelayContent     }
@@ -342,6 +375,7 @@ void AudioPluginAudioProcessorEditor::refreshToolbarBadges()
     scaleButton.setRemaining (smolfm::GraphNodeRegistry::maxFrequencyScales - graphPanel.countBoxesOfType ("fscale"));
     adsrButton  .setRemaining (smolfm::GraphNodeRegistry::maxAdsr            - graphPanel.countBoxesOfType ("adsr"));
     fAdsrButton .setRemaining (smolfm::GraphNodeRegistry::maxFAdsr            - graphPanel.countBoxesOfType ("fadsr"));
+    gainButton  .setRemaining (smolfm::GraphNodeRegistry::maxGains             - graphPanel.countBoxesOfType ("gain"));
     noteButton  .setRemaining (smolfm::GraphNodeRegistry::maxNotes           - graphPanel.countBoxesOfType ("note"));
     ringButton  .setRemaining (smolfm::GraphNodeRegistry::maxRingModulators   - graphPanel.countBoxesOfType ("ring"));
     amButton    .setRemaining (smolfm::GraphNodeRegistry::maxAmModulators      - graphPanel.countBoxesOfType ("am"));
@@ -380,6 +414,7 @@ void AudioPluginAudioProcessorEditor::resized()
     scaleButton .setBounds (palette.removeFromLeft (tileWidth));
     adsrButton  .setBounds (palette.removeFromLeft (tileWidth));
     fAdsrButton .setBounds (palette.removeFromLeft (tileWidth));
+    gainButton  .setBounds (palette.removeFromLeft (tileWidth));
             noteButton .setBounds (palette.removeFromLeft (tileWidth));
     ringButton .setBounds (palette.removeFromLeft (tileWidth));
     amButton   .setBounds (palette.removeFromLeft (tileWidth));

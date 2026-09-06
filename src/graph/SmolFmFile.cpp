@@ -98,6 +98,11 @@ namespace
                 if (id.isNotEmpty()) specs.add ({ juce::String (which).toLowerCase(), id });
             }
         }
+        else if (baseId == "gain")
+        {
+            const auto factorId = GraphNodeRegistry::gainParameterIdFor (nodeId);
+            if (factorId.isNotEmpty()) specs.add ({ "factor", factorId });
+        }
         else if (baseId == "output")
         {
             const auto lvlId = GraphNodeRegistry::levelParameterIdFor (nodeId);

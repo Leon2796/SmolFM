@@ -30,6 +30,7 @@
 #include "processors/NoteProcessor.h"
 #include "processors/AdsrProcessor.h"
 #include "processors/FAdsrProcessor.h"
+#include "processors/GainProcessor.h"
 #include "processors/MasterOutputProcessor.h"
 #include "processors/RingModulatorProcessor.h"
 #include "processors/AmProcessor.h"
@@ -65,6 +66,9 @@ struct SynthVoiceParameters
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFAdsr> fAdsrRelease;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFAdsr> fAdsrUp;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFAdsr> fAdsrDown;
+
+    // Gain parameters per instance (1 parameter per node).
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxGains> gainFactor;
 
     // Delay parameters per instance (5 parameters per delay node).
     std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delayTimeMs;
@@ -149,7 +153,7 @@ private:
     std::array<FAdsrProcessor*, GraphNodeRegistry::maxFAdsr> fAdsrProcessors {};
     std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators> ringModulators {};
     std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators> amModulators {};
-    std::array<DelayProcessor*, GraphNodeRegistry::maxDelays> delays {};
+    std::array<DelayProcessor*, GraphNodeRegistry::maxDelays> delays {};    std::array<GainProcessor*, GraphNodeRegistry::maxGains> gainProcessors {};    std::array<GainProcessor*, GraphNodeRegistry::maxGains> gains {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynthVoice)
 };

@@ -30,6 +30,7 @@ target_sources(${PROJECT_NAME}
         processors/FrequencyScaleProcessor.cpp
         processors/AdsrProcessor.cpp
         processors/FAdsrProcessor.cpp
+        processors/GainProcessor.cpp
         processors/MasterOutputProcessor.cpp
         graph/GraphNodes.cpp
         graph/SmolFmFile.cpp
@@ -38,6 +39,7 @@ target_sources(${PROJECT_NAME}
         gui/components/FrequencyScaleComponent.cpp
         gui/components/AdsrPanel.cpp
         gui/components/FAdsrComponent.cpp
+        gui/components/GainComponent.cpp
         gui/components/NoteNodeComponent.cpp
         gui/components/PatchBrowser.cpp
         gui/components/MasterOutputComponent.cpp

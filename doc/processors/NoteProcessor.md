@@ -2,14 +2,15 @@
 > Template: [../processor-template.md](../processor-template.md) — Struktur nicht ändern.
 
 Wandelt die zuletzt gespielte MIDI-Note in eine Frequenz in Hertz um und stellt
-sie als `frequency`-Quelle im Graph bereit. Alle Instanzen liefern dieselbe
-gespielte Note; mehrere Boxen können so verschiedene Ketten speisen.
+sie als `frequency`-Quelle im Graph bereit. Es gibt genau eine Instanz; ihr
+Output kann mehrere Konsumenten speisen (ein Output port teilt sich an viele
+Inputs).
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
-| Max. Instanzen | 4 | `GraphNodeRegistry::maxNotes` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
+| Max. Instanzen | 1 | `GraphNodeRegistry::maxNotes` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
 | Input-Ports | *(keine)* | — | — |
 | Output-Ports | `out` (`PortType::frequency`) | `OutputPort output` | [src/processors/NoteProcessor.h](../../src/processors/NoteProcessor.h) |
 

@@ -34,7 +34,8 @@ namespace
                                      std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales>& frequencyScalers,
                                                                           std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators>& ringModulators,
                                                                           std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators>& amModulators,
-                                                                          std::array<DelayProcessor*, GraphNodeRegistry::maxDelays>& delays)
+                                                                          std::array<DelayProcessor*, GraphNodeRegistry::maxDelays>& delays,
+                                                                          std::array<GainProcessor*, GraphNodeRegistry::maxGains>& gainProcessors)
     {
         juce::ignoreUnused (params, noteSources);
 
@@ -113,6 +114,12 @@ namespace
          && portId == "freq_in")
             return &fAdsrProcessors[static_cast<size_t> (index)]->getFreqInput();
 
+        if (type == NodeType::gain
+         && index >= 0 && index < GraphNodeRegistry::maxGains
+         && gainProcessors[static_cast<size_t> (index)] != nullptr
+         && portId == "in")
+            return &gainProcessors[static_cast<size_t> (index)]->getInput();
+
                 if (type == NodeType::ringModulator
          && index >= 0 && index < GraphNodeRegistry::maxRingModulators
          && ringModulators[static_cast<size_t> (index)] != nullptr)
@@ -147,7 +154,8 @@ namespace
                                        std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales>& frequencyScalers,
                                                                               std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators>& ringModulators,
                                                                               std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators>& amModulators,
-                                                                              std::array<DelayProcessor*, GraphNodeRegistry::maxDelays>& delays)
+                                                                              std::array<DelayProcessor*, GraphNodeRegistry::maxDelays>& delays,
+                                                                              std::array<GainProcessor*, GraphNodeRegistry::maxGains>& gainProcessors)
     {
         if (portId != "out")
             return nullptr;
@@ -199,6 +207,11 @@ namespace
          && index >= 0 && index < GraphNodeRegistry::maxDelays
          && delays[static_cast<size_t> (index)] != nullptr)
             return &delays[static_cast<size_t> (index)]->getOutput();
+
+        if (type == NodeType::gain
+         && index >= 0 && index < GraphNodeRegistry::maxGains
+         && gainProcessors[static_cast<size_t> (index)] != nullptr)
+            return &gainProcessors[static_cast<size_t> (index)]->getOutput();
 
         return nullptr;
     }
@@ -300,6 +313,14 @@ void SynthVoice::buildGraph()
                                                            parameters.delayDivision[static_cast<size_t> (i)]);
             delays[static_cast<size_t> (i)] = delay.get();
             graph.addProcessor (std::move (delay));
+        }
+
+        // Gain pool — stateless boost/attenuate stages.
+        for (int i = 0; i < GraphNodeRegistry::maxGains; ++i)
+        {
+            auto g = std::make_unique<GainProcessor> (parameters.gainFactor[static_cast<size_t> (i)]);
+            gainProcessors[static_cast<size_t> (i)] = g.get();
+            graph.addProcessor (std::move (g));
         }
 
         // Master output (singleton).
@@ -495,6 +516,9 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
             d->reset();
         }
 
+        for (auto* g : gainProcessors)
+        if (g != nullptr)  g->getInput().disconnect();
+
     for (int i = 0; i < MasterOutputProcessor::numInputs; ++i)
         masterOutput->getInput (i).disconnect();
 
@@ -506,11 +530,11 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
     {
                 OutputPort* out = resolveOutput (conn.from.nodeId, conn.from.portId,
                                                    noteSources, adsrProcessors, fAdsrProcessors, masterOutput,
-                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays);
+                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors);
                 InputPort*  in  = resolveInput  (conn.to.nodeId,   conn.to.portId,
                                                    const_cast<SynthVoiceParameters&> (parameters),
                                                    noteSources, adsrProcessors, fAdsrProcessors, masterOutput,
-                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays);
+                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors);
 
         if (out == nullptr || in == nullptr)
             continue;

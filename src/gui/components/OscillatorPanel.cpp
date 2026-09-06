@@ -16,9 +16,10 @@ OscillatorPanel::OscillatorPanel (juce::AudioProcessorValueTreeState& apvts,
     titleLabel.setJustificationType (juce::Justification::centred);
 
     // Item order must match the choices declared in
-    // PluginProcessor::createParameterLayout() ("Sine", "Saw", "Square", "Triangle").
-    // ComboBox item IDs start at 1; ComboBoxAttachment maps them to the choice index.
-    waveformBox.addItemList ({ "Sine", "Saw", "Square", "Triangle" }, 1);
+    // PluginProcessor::createParameterLayout() ("Sine", "Saw", "Square",
+    // "Triangle", "Noise").  ComboBox item IDs start at 1;
+    // ComboBoxAttachment maps them to the choice index.
+    waveformBox.addItemList ({ "Sine", "Saw", "Square", "Triangle", "Noise" }, 1);
 
     addAndMakeVisible (titleLabel);
     addAndMakeVisible (waveformBox);

@@ -11,7 +11,7 @@ wirken daher auf die nächste Note.
 
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
-| Max. Instanzen | 4 | `GraphNodeRegistry::maxAdsr` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
+| Max. Instanzen | 8 | `GraphNodeRegistry::maxAdsr` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
 | Input-Ports | `in` (`PortType::signal`) | `InputPort input` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
 | Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
 

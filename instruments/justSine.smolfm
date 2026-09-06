@@ -6,7 +6,7 @@
 -->
 <SmolFM version="2">
   <Nodes>
-    <Node id="note0" x="60" y="60">
+    <Node id="note" x="60" y="60">
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
     <Node id="osc0" x="1020" y="60" waveform="0.0">
@@ -26,7 +26,7 @@
       <Node id="output" x="1660" y="60" level="0.8"/>
   </Nodes>
   <Connections>
-    <Wire from="note0" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="note" fromPort="out" to="osc0" toPort="note_in"/>
     <Wire from="osc0" fromPort="out" to="adsr0" toPort="in"/>
       <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
   </Connections>

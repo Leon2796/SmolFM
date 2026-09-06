@@ -5,7 +5,7 @@
   <description>Three sine partials (root, octave, twelfth) summed and amplitude-modulated with a gentle 6 Hz tremolo — classic tonewheel organ.</description>
   <Nodes>
     <!-- Root pitch -->
-    <Node id="note0" x="80" y="60">
+    <Node id="note" x="80" y="60">
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
 
@@ -43,9 +43,7 @@
     </Node>
 
     <!-- Tremolo AM -->
-    <Node id="note1" x="80" y="480">
-      <Pin id="out" direction="out" type="frequency"/>
-    </Node>
+
     <Node id="fscale2" x="280" y="480" factor="0.03">
       <Pin id="freq_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="frequency"/>
@@ -69,9 +67,9 @@
 
   <Connections>
     <!-- Root feeds all partial generators -->
-    <Wire from="note0" fromPort="out" to="osc0" toPort="note_in"/>
-    <Wire from="note0" fromPort="out" to="fscale0" toPort="freq_in"/>
-    <Wire from="note0" fromPort="out" to="fscale1" toPort="freq_in"/>
+    <Wire from="note" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="note" fromPort="out" to="fscale1" toPort="freq_in"/>
 
     <!-- Partial tuning -->
     <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in"/>
@@ -97,7 +95,7 @@
     <Wire from="osc2" fromPort="out" to="output" toPort="in3"/>
 
     <!-- Tremolo LFO -->
-    <Wire from="note1" fromPort="out" to="fscale2" toPort="freq_in"/>
+    <Wire from="note" fromPort="out" to="fscale2" toPort="freq_in"/>
     <Wire from="fscale2" fromPort="out" to="osc3" toPort="note_in"/>
   </Connections>
 </SmolFM>

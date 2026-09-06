@@ -220,14 +220,15 @@ Use this skill whenever:
 
 | Processor | Base ID | Max Instances | Inputs | Outputs | Function |
 |-----------|---------|---------------|--------|---------|----------|
-| **NoteProcessor** | `note` | 4 | _(none)_ | `out` (frequency) | Converts MIDI note number to frequency in Hz using equal temperament |
-| **OscillatorProcessor** | `osc` | 8 | `note_in` (frequency) | `out` (signal) | Generates waveform at frequency from note_in port; supports multiple waveforms |
+| **NoteProcessor** | `note` | 1 | _(none)_ | `out` (frequency) | Converts MIDI note number to frequency in Hz using equal temperament; single source — one `note` node can feed many consumers |
+| **OscillatorProcessor** | `osc` | 8 | `note_in` (frequency) | `out` (signal) | Generates waveform at frequency from note_in port; supports sine, saw, square, triangle and white noise |
 | **FMModulationProcessor** | `fm` | 4 | `freq_in` (frequency), `modulator_in` (signal) | `out` (frequency) | True FM: scales carrier frequency by modulator signal; chainable in Hertz domain |
-| **FrequencyScaleProcessor** | `fscale` | 4 | `freq_in` (frequency) | `out` (frequency) | Multiplies frequency by constant factor; useful for transposition and harmonic series |
+| **FrequencyScaleProcessor** | `fscale` | 8 | `freq_in` (frequency) | `out` (frequency) | Multiplies frequency by constant factor; useful for transposition and harmonic series |
 | **RingModulatorProcessor** | `ring` | 4 | `in1` (signal), `in2` (signal) | `out` (signal) | Multiplies two signals sample-wise; creates sum/difference sidebands for metallic timbres |
 | **AmProcessor** | `am` | 4 | `carrier_in` (signal), `modulator_in` (signal) | `out` (signal) | Amplitude modulation with depth control; biased modulator keeps carrier audible |
 | **DelayProcessor** | `delay` | 8 | `in` (signal) | `out` (signal) | Digital delay with feedback and mix; free ms or tempo-synced to host BPM by note division |
-| **AdsrProcessor** | `adsr` | 4 | `in` (signal) | `out` (signal) | Applies ADSR envelope to signal; multiplies input by envelope value and velocity |
+| **AdsrProcessor** | `adsr` | 8 | `in` (signal) | `out` (signal) | Applies ADSR envelope to signal; multiplies input by envelope value and velocity |
+| **GainProcessor** | `gain` | 8 | `in` (signal) | `out` (signal) | Stateless boost/attenuate: multiplies input by constant factor (0-10, 1.0 = transparent, negative inverts phase); use for layer balancing, pre-envelope drive, or per-voice level trims |
 | **FAdsrProcessor** | `fadsr` | 4 | `freq_in` (frequency) | `out` (frequency) | Pitch envelope in the frequency domain: scales input frequency between down/up factors along an ADSR envelope; classic pitch-envelope for kick/808/drops or evolving FM sweeps |
 | **MasterOutputProcessor** | `output` | 1 | `in1`-`in8` (signal, 8 inputs) | _(none, final output)_ | Sums up to 8 signal inputs with master level control and peak metering |
 
@@ -244,7 +245,9 @@ Use this skill whenever:
 - **Inputs**: `note_in` (frequency) - frequency source (0 Hz if unconnected = silent)
 - **Outputs**: `out` (signal) - raw oscillator sample
 - **Parameters**:
-  - `osc%Waveform` - waveform selector (sine, saw, square, triangle, wavetables)
+  - `osc%Waveform` - waveform selector (sine, saw, square, triangle, noise)
+    - noise = white noise, uniform [-1, 1] per sample; frequency-invariant
+    - great for snare/cymbal textures and breathy layers
   - Instance index replaces `%` (e.g., `osc0Waveform`, `osc3Waveform`)
 
 #### FMModulationProcessor
@@ -319,6 +322,15 @@ Use this skill whenever:
   - `adsr%Decay` - decay time (seconds)
   - `adsr%Sustain` - sustain level (0-1)
   - `adsr%Release` - release time (seconds)
+
+#### GainProcessor
+- **Purpose**: Constant gain stage (boost or attenuate)
+- **Inputs**: `in` (signal)
+- **Outputs**: `out` (signal) = `in * gain`
+- **Parameters**:
+  - `gain%Factor` - gain factor 0-10 (default 1.0 = transparent; negative not exposed via UI but valid)
+- **Behavior**: stateless, no envelope, no per-note state; unwired input reads silence
+- **Use cases**: layer balancing before output stacking, drive boost into FM amount, per-voice level trims, attenuating noisy layers
 
 #### FAdsrProcessor
 - **Purpose**: Pitch envelope in the frequency domain (F-ADSR)
@@ -398,13 +410,15 @@ Each `<Node>` element defines one processor instance:
 
 **Attributes:**
 - `id` (required): Instance identifier following pattern `baseId + index`
-  - Examples: `note0`, `osc0`, `osc1`, `fm0`, `fscale0`, `adsr0`, `output`
+  - Examples: `note`, `osc0`, `osc1`, `fm0`, `fscale0`, `adsr0`, `gain0`, `output`
+  - Single-instance nodes omit index: `note`, `output` (not `note`)
   - Single-instance nodes omit index: `output` (not `output0`)
 - `x`, `y` (required): Canvas position integers (visual layout)
 - **Processor-specific parameter attributes** (as many as needed):
   - Oscillator: `waveform` (integer index)
   - FM: `amount` (float)
   - FrequencyScale: `factor` (float)
+  - Gain: `factor` (float)
   - ADSR: `attack`, `decay`, `sustain`, `release` (floats)
   - MasterOutput: `level` (float)
 
@@ -418,14 +432,15 @@ Each `<Node>` element defines one processor instance:
 
 | Base ID | Instance IDs | Count |
 |---------|--------------|-------|
-| `note` | `note0`, `note1`, `note2`, `note3` | 0-3 |
+| `note` | `note` (no index) | 0 only |
 | `osc` | `osc0` through `osc7` | 0-7 |
 | `fm` | `fm0` through `fm3` | 0-3 |
-| `fscale` | `fscale0` through `fscale3` | 0-3 |
+| `fscale` | `fscale0` through `fscale7` | 0-7 |
 | `ring` | `ring0` through `ring3` | 0-3 |
 | `am` | `am0` through `am3` | 0-3 |
 | `delay` | `delay0` through `delay7` | 0-7 |
-| `adsr` | `adsr0` through `adsr3` | 0-3 |
+| `adsr` | `adsr0` through `adsr7` | 0-7 |
+| `gain` | `gain0` through `gain7` | 0-7 |
 | `fadsr` | `fadsr0` through `fadsr3` | 0-3 |
 | `output` | `output` (no index) | 0 only |
 
@@ -451,14 +466,14 @@ Each `<Wire>` element connects one output port to one input port:
 
 #### Basic Oscillator Chain
 ```
-note0.out → osc0.note_in
+note.out → osc0.note_in
 osc0.out → adsr0.in
 adsr0.out → output.in1
 ```
 
 #### Single FM Stage
 ```
-note0.out → fm0.freq_in          (carrier frequency)
+note.out → fm0.freq_in          (carrier frequency)
 osc1.out → fm0.modulator_in      (modulator signal)
 fm0.out → osc0.note_in           (modulated frequency to carrier)
 osc0.out → adsr0.in
@@ -467,7 +482,7 @@ adsr0.out → output.in1
 
 #### Chained FM Stages (Multiple Modulators)
 ```
-note0.out → fm0.freq_in
+note.out → fm0.freq_in
 osc1.out → fm0.modulator_in      (first modulator)
 fm0.out → fm1.freq_in            (FM chain in Hertz domain)
 osc2.out → fm1.modulator_in      (second modulator)
@@ -478,8 +493,8 @@ adsr0.out → output.in1
 
 #### FM with Modulator Tracking (Scales with Keyboard)
 ```
-note0.out → fm0.freq_in          (carrier frequency)
-note1.out → fscale0.freq_in      (modulator tracks keyboard)
+note.out → fm0.freq_in          (carrier frequency)
+note.out → fscale0.freq_in      (modulator tracks keyboard)
 fscale0.factor = 3.5             (modulator/carrier ratio 3.5:1)
 fscale0.out → osc1.note_in       (scaled frequency to modulator)
 osc1.out → fm0.modulator_in      (modulator signal)
@@ -490,8 +505,8 @@ adsr0.out → output.in1
 
 #### Ring Modulation
 ```
-note0.out → osc0.note_in         (carrier)
-note1.out → fscale0.freq_in      (modulator tuning)
+note.out → osc0.note_in         (carrier)
+note.out → fscale0.freq_in      (modulator tuning)
 fscale0.out → osc1.note_in
 osc0.out → ring0.in1             (carrier to ring mod)
 osc1.out → ring0.in2             (modulator to ring mod)
@@ -504,8 +519,8 @@ Classic AM with an LFO-style slow modulator. The amount knob sets how much the v
 Use for: Rhythmic tremolo, vintage vibrato, slow swells.
 
 ```
-note0.out  -> osc0.note_in         (carrier at played pitch)
-note1.out  -> fscale0.freq_in      (LFO rate; tracks keyboard down several octaves)
+note.out  -> osc0.note_in         (carrier at played pitch)
+note.out  -> fscale0.freq_in      (LFO rate; tracks keyboard down several octaves)
 fscale0.out -> osc1.note_in
 osc0.out    -> am0.carrier_in
 osc1.out    -> am0.modulator_in
@@ -522,8 +537,8 @@ Modulate at a pitch derived from the played note so the sidebands stay glued to 
 Use for: Thicker pads, animated leads, bell tones that keep their fundamental.
 
 ```
-note0.out  -> osc0.note_in         (carrier)
-note0.out  -> fscale0.freq_in      (modulator tuned to a ratio like 1.5 or 2.03)
+note.out  -> osc0.note_in         (carrier)
+note.out  -> fscale0.freq_in      (modulator tuned to a ratio like 1.5 or 2.03)
 fscale0.out -> osc1.note_in
 osc0.out    -> am0.carrier_in
 osc1.out    -> am0.modulator_in
@@ -538,8 +553,8 @@ Example settings:
 Use a slow oscillator as a periodic ducking source for a carrier. This is the synth equivalent of a sidechain compressor keyed by an LFO.
 
 ```
-note0.out  -> osc0.note_in         (melody carrier)
-note1.out  -> fscale0.freq_in      (slow LFO: fscale factor 0.02-0.1)
+note.out  -> osc0.note_in         (melody carrier)
+note.out  -> fscale0.freq_in      (slow LFO: fscale factor 0.02-0.1)
 fscale0.out -> osc1.note_in
 osc1.out    -> am0.modulator_in
 osc0.out    -> am0.carrier_in
@@ -552,7 +567,7 @@ Set `am0.amount` near 1.0 and the LFO swings between 0 and 2x gain - the carrier
 Any voice routed through a delay creates classic echo repeats. Good default for pads, leads, ambient plucks.
 
 ```
-note0.out  -> osc0.note_in
+note.out  -> osc0.note_in
 osc0.out    -> adsr0.in
 adsr0.out   -> delay0.in
 delay0.out  -> output.in1
@@ -567,7 +582,7 @@ Example settings:
 Sync mode locks the delay to note divisions of the host tempo, so repeats land on the beat. Use for rhythmic patterns tied to the track.
 
 ```
-note0.out  -> osc0.note_in
+note.out  -> osc0.note_in
 osc0.out    -> adsr0.in
 adsr0.out   -> delay0.in
 delay0.out  -> output.in1
@@ -582,7 +597,7 @@ Example settings:
 Route the same source into two delays with different times/divisions and send them to two different output inputs. The result is a wide, staggered tail.
 
 ```
-note0.out  -> osc0.note_in
+note.out  -> osc0.note_in
 osc0.out    -> adsr0.in
 adsr0.out   -> delay0.in
 adsr0.out   -> delay1.in
@@ -595,8 +610,8 @@ Example settings:
 
 #### Parallel Voices (Multiple Carriers)
 ```
-note0.out → osc0.note_in         (voice 1)
-note0.out → osc1.note_in         (voice 2, same pitch)
+note.out → osc0.note_in         (voice 1)
+note.out → osc1.note_in         (voice 2, same pitch)
 osc0.out → adsr0.in
 osc1.out → adsr1.in
 adsr0.out → output.in1           (mix into output)
@@ -609,7 +624,7 @@ played pitch over the attack time. Sustain 0 keeps the pitch stable at the
 envelope's decay end.
 
 ```
-note0.out → fadsr0.freq_in       (pitch source into the envelope)
+note.out → fadsr0.freq_in       (pitch source into the envelope)
 fadsr0.out → osc0.note_in        (pitch-enveloped frequency to carrier)
 osc0.out → adsr0.in
 adsr0.out → output.in1
@@ -625,7 +640,7 @@ Tone strikes above (or below) the played pitch and decays back to it. The
 played pitch stays the musical reference; the transient is a timbral accent.
 
 ```
-note0.out → fadsr0.freq_in
+note.out → fadsr0.freq_in
 fadsr0.out → osc0.note_in
 osc0.out → adsr0.in
 adsr0.out → output.in1
@@ -643,8 +658,8 @@ input — an InputPort holds exactly one source (last wire wins, the other is
 silently ignored). Modulator still tracks the keyboard via fscale.
 
 ```
-note0.out → fm0.freq_in          (carrier frequency)
-note1.out → fscale0.freq_in      (modulator tracks keyboard)
+note.out → fm0.freq_in          (carrier frequency)
+note.out → fscale0.freq_in      (modulator tracks keyboard)
 fscale0.out → osc1.note_in
 osc1.out → fm0.modulator_in
 fm0.out → fadsr0.freq_in         (envelope AFTER the FM stage, not parallel)
@@ -686,7 +701,7 @@ Connections are only valid when port types match:
 <!-- FM Bell: cascaded FM with irrational ratios -->
 <description>Double FM chain (fm0→fm1) with inharmonic modulator ratios (3.55:1 and 1.19:1) creates bell-like partials; modulators track keyboard via fscale for pitch stability.</description>
 <Nodes>
-  <Node id="note0" x="60" y="60">
+  <Node id="note" x="60" y="60">
     <Pin id="out" direction="out" type="frequency"/>
   </Node>
   <Node id="osc0" x="1020" y="60" waveform="0">
@@ -715,10 +730,10 @@ Connections are only valid when port types match:
     <Pin id="in" direction="in" type="signal"/>
     <Pin id="out" direction="out" type="signal"/>
   </Node>
-  <Node id="note1" x="60" y="380">
+  <Node id="note" x="60" y="380">
     <Pin id="out" direction="out" type="frequency"/>
   </Node>
-  <Node id="note2" x="60" y="700">
+  <Node id="note" x="60" y="700">
     <Pin id="out" direction="out" type="frequency"/>
   </Node>
   <Node id="fscale0" x="380" y="60" factor="3.5545"/>
@@ -726,15 +741,15 @@ Connections are only valid when port types match:
   <Node id="output" x="1660" y="60" level="0.8"/>
 </Nodes>
 <Connections>
-  <Wire from="note0" fromPort="out" to="fm0" toPort="freq_in"/>
+  <Wire from="note" fromPort="out" to="fm0" toPort="freq_in"/>
   <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in"/>
   <Wire from="fm0" fromPort="out" to="fm1" toPort="freq_in"/>
   <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in"/>
   <Wire from="fm1" fromPort="out" to="osc0" toPort="note_in"/>
   <Wire from="osc0" fromPort="out" to="adsr0" toPort="in"/>
-  <Wire from="note1" fromPort="out" to="fscale0" toPort="freq_in"/>
+  <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in"/>
   <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in"/>
-  <Wire from="note2" fromPort="out" to="fscale1" toPort="freq_in"/>
+  <Wire from="note" fromPort="out" to="fscale1" toPort="freq_in"/>
   <Wire from="fscale1" fromPort="out" to="osc2" toPort="note_in"/>
   <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
 </Connections>
@@ -756,8 +771,8 @@ Connections are only valid when port types match:
 
 **Wiring pattern:**
 ```
-note0 → fm0.freq_in
-note1 → fscale0 → osc1.note_in  (modulator with ratio)
+note → fm0.freq_in
+note → fscale0 → osc1.note_in  (modulator with ratio)
 osc1.out → fm0.modulator_in
 fm0.out → osc0.note_in  (carrier)
 osc0.out → adsr0 → output.in1
@@ -775,7 +790,7 @@ osc0.out → adsr0 → output.in1
 
 **Advanced variant**: Add ADSR envelope on the modulator for \"swell\" effect:
 ```
-note1 → fscale0 → osc1 (modulator) → adsr1 (slow attack) → fm0.modulator_in
+note → fscale0 → osc1 (modulator) → adsr1 (slow attack) → fm0.modulator_in
 ```
 This creates an evolving brass sound where FM intensity builds up gradually.
 
@@ -801,7 +816,7 @@ This creates an evolving brass sound where FM intensity builds up gradually.
 
 **Wiring pattern (FM-based):**
 ```
-note0 (fixed pitch ~200Hz) → fm0.freq_in
+note (fixed pitch ~200Hz) → fm0.freq_in
 fm0.amount = 5.0 (high)
 osc1 (not tracking, or ratio like 3.7:1) → fm0.modulator_in
 fm0.out → osc0.note_in
@@ -828,14 +843,14 @@ ring0.out → adsr0 (very short envelope) → output.in1
 
 **Simple version:**
 ```
-note0 (fixed ~MIDI note 36-40) → osc0.note_in (sine)
+note (fixed ~MIDI note 36-40) → osc0.note_in (sine)
 osc0.out → adsr0 (attack=0.001, decay=0.3, sustain=0, release=0.1) → output.in1
 ```
 
 **With click:**
 ```
-note0 → fm0.freq_in
-note1 → fscale0 (factor=5.0) → osc1 (modulator)
+note → fm0.freq_in
+note → fscale0 (factor=5.0) → osc1 (modulator)
 osc1.out → fm0.modulator_in
 fm0.amount = 0.3 (subtle)
 fm0.out → osc0.note_in
@@ -854,13 +869,13 @@ osc0.out → adsr0 → output.in1
 
 **Clean bass:**
 ```
-note0 → osc0 (saw) → adsr0 (attack=0.005, decay=0.2, sustain=0.8, release=0.15) → output.in1
+note → osc0 (saw) → adsr0 (attack=0.005, decay=0.2, sustain=0.8, release=0.15) → output.in1
 ```
 
 **Growl bass:**
 ```
-note0 → fm0.freq_in
-note1 → fscale0 (factor=2.0) → osc1 (saw modulator)
+note → fm0.freq_in
+note → fscale0 (factor=2.0) → osc1 (saw modulator)
 osc1.out → fm0.modulator_in
 fm0.amount = 0.7
 fm0.out → osc0 (saw carrier)
@@ -879,7 +894,7 @@ osc0.out → adsr0 → output.in1
 
 **Wiring:**
 ```
-note0 → osc0 (sine) → adsr0 (attack=0.005, decay=0.1, sustain=0.95, release=0.3) → output.in1
+note → osc0 (sine) → adsr0 (attack=0.005, decay=0.1, sustain=0.95, release=0.3) → output.in1
 ```
 
 ### 808 Bass
@@ -894,12 +909,12 @@ note0 → osc0 (sine) → adsr0 (attack=0.005, decay=0.1, sustain=0.95, release=
 
 **Wiring:**
 ```
-note0 → osc0 (sine) → adsr0 (attack=0.001, decay=1.0, sustain=0.6, release=0.4) → output.in1
+note → osc0 (sine) → adsr0 (attack=0.001, decay=1.0, sustain=0.6, release=0.4) → output.in1
 ```
 
 **Advanced 808 with FM tail:**
 ```
-note0 → fm0.freq_in
+note → fm0.freq_in
 osc1 (subtle modulator, ratio 1:1, sine) → fm0.modulator_in
 fm0.amount = 0.15 (very subtle)
 fm0.out → osc0.note_in
@@ -920,7 +935,7 @@ osc0.out → adsr0 (attack=0.001, decay=1.2, sustain=0.5, release=0.5) → outpu
 **Example (3-osc pad):**
 ```xml
 <Nodes>
-  <Node id=\"note0\"/>
+  <Node id=\"note\"/>
   <Node id=\"osc0\" waveform=\"1\"/>  <!-- saw -->
   <Node id=\"osc1\" waveform=\"1\"/>
   <Node id=\"osc2\" waveform=\"2\"/>  <!-- triangle -->
@@ -930,9 +945,9 @@ osc0.out → adsr0 (attack=0.001, decay=1.2, sustain=0.5, release=0.5) → outpu
   <Node id=\"output\" level=\"0.3\"/>
 </Nodes>
 <Connections>
-  <Wire from=\"note0\" to=\"osc0\"/>
-  <Wire from=\"note0\" to=\"fscale0\" to=\"osc1\"/>  <!-- detuned + -->
-  <Wire from=\"note0\" to=\"fscale1\" to=\"osc2\"/>  <!-- detuned - -->
+  <Wire from=\"note\" to=\"osc0\"/>
+  <Wire from=\"note\" to=\"fscale0\" to=\"osc1\"/>  <!-- detuned + -->
+  <Wire from=\"note\" to=\"fscale1\" to=\"osc2\"/>  <!-- detuned - -->
   <Wire from=\"osc0\" to=\"adsr0\"/>
   <Wire from=\"osc1.out\" to=\"output.in2\"/>
   <Wire from=\"osc2.out\" to=\"output.in3\"/>
@@ -942,7 +957,7 @@ osc0.out → adsr0 (attack=0.001, decay=1.2, sustain=0.5, release=0.5) → outpu
 
 **With FM for movement:**
 ```
-note0 → fm0.freq_in
+note → fm0.freq_in
 fm0.amount = 0.2 (subtle)
 osc3 (LFO-like, ratio 0.5:1 using fscale) → fm0.modulator_in
 fm0.out → osc0.note_in (main pad osc)
@@ -968,8 +983,8 @@ Für komplexere Instrumente siehe [SKILL-ADVANCED.md](SKILL-ADVANCED.md):
 - Erzeugt \"blooming\" Effekt über Zeit
 
 **Split Keyboard** (Bass + Lead):
-- Bass: note0 → fscale (0.5) → osc (low octave)
-- Lead: note1 → fm → osc (melody)
+- Bass: note → fscale (0.5) → osc (low octave)
+- Lead: note → fm → osc (melody)
 - Verschiedene MIDI-Noten → verschiedene Rollen
 
 ### Additional Instrument Ideas
@@ -1030,9 +1045,9 @@ The MasterOutputProcessor has **8 inputs** for mixing multiple independent synth
 
 **Detuned Unison (Chorus/Ensemble)**
 ```
-Chain 1: note0 → osc0 → output.in1
-Chain 2: note1 → fscale0 (1.005) → osc1 → output.in2  
-Chain 3: note2 → fscale1 (0.995) → osc2 → output.in3
+Chain 1: note → osc0 → output.in1
+Chain 2: note → fscale0 (1.005) → osc1 → output.in2  
+Chain 3: note → fscale1 (0.995) → osc2 → output.in3
 ```
 ±0.5% detune = subtle chorus; ±2% = wide ensemble.
 
@@ -1040,8 +1055,8 @@ Chain 3: note2 → fscale1 (0.995) → osc2 → output.in3
 
 **Split-Spectrum (Bass + Lead)**
 ```
-Bass: note0 → fscale0 (0.5) → osc0 (low octave) → output.in1
-Lead: note1 → fm0 → osc1 (melody) → output.in2
+Bass: note → fscale0 (0.5) → osc0 (low octave) → output.in1
+Lead: note → fm0 → osc1 (melody) → output.in2
 ```
 
 ### Hybrid FM + Ring Modulation
@@ -1050,17 +1065,17 @@ Combine FM and ring modulation for metallic textures:
 
 **FM into Ring Mod**:
 ```
-note0 → fm0 → osc0 (FM carrier) → ring0.in1
-note1 → fscale0 (3.14:1 inharmonic) → osc1 → ring0.in2
+note → fm0 → osc0 (FM carrier) → ring0.in1
+note → fscale0 (3.14:1 inharmonic) → osc1 → ring0.in2
 ring0.out → adsr0 → output
 ```
 FM provides base spectrum; ring mod adds sum/difference sidebands.
 
 **Parallel FM + Ring Mod**:
 ```
-FM path:   note0 → fm0 → osc0 → output.in1
-Ring path: note1 → osc1 ─┬─ ring0 → output.in2
-           note2 → osc2 ─┘
+FM path:   note → fm0 → osc0 → output.in1
+Ring path: note → osc1 ─┬─ ring0 → output.in2
+           note → osc2 ─┘
 ```
 Mix tonal FM with metallic ring mod for hybrid acoustic/electronic sounds.
 
@@ -1199,14 +1214,14 @@ not just at the end. This creates different timbral effects:
 
 ### Pattern 1: Post-Carrier Envelope (Standard)
 \`\`\`
-note0 → fm0 → osc0 (carrier) → adsr0 → output.in1
+note → fm0 → osc0 (carrier) → adsr0 → output.in1
 \`\`\`
 Classic approach. Envelope shapes the final amplitude.
 
 ### Pattern 2: Pre-FM Modulator Envelope (Timbre Morphing)
 \`\`\`
-note1 → osc1 (modulator) → adsr1 → fm0.modulator_in
-note0 → fm0 → osc0 (carrier) → adsr0 → output.in1
+note → osc1 (modulator) → adsr1 → fm0.modulator_in
+note → fm0 → osc0 (carrier) → adsr0 → output.in1
 \`\`\`
 **Effect**: FM intensity varies over time.
 - Fast attack on adsr1 → percussive FM \"burst\" at note start
@@ -1223,9 +1238,9 @@ note0 → fm0 → osc0 (carrier) → adsr0 → output.in1
 
 ### Pattern 3: Dual Envelope (Independent Carrier/Modulator Envelopes)
 \`\`\`
-Modulator chain: note1 → osc1 → adsr1 ─┐
+Modulator chain: note → osc1 → adsr1 ─┐
                                        ├→ fm0.modulator_in
-Carrier chain:   note0 → fm0 → osc0 → adsr0 → output.in1
+Carrier chain:   note → fm0 → osc0 → adsr0 → output.in1
 \`\`\`
 **Effect**: Carrier and modulator have independent dynamics.
 - Long modulator decay + short carrier decay = FM tail after note ends
@@ -1249,9 +1264,9 @@ from independent synthesis chains.
 
 ### Pattern 5: Layered FM Voices (Detuned Unison)
 \`\`\`
-Chain 1: note0 → fm0 → osc0 → adsr0 → output.in1
-Chain 2: note1 → fscale0 (1.005) → fm1 → osc1 → adsr1 → output.in2
-Chain 3: note2 → fscale1 (0.995) → fm2 → osc2 → adsr2 → output.in3
+Chain 1: note → fm0 → osc0 → adsr0 → output.in1
+Chain 2: note → fscale0 (1.005) → fm1 → osc1 → adsr1 → output.in2
+Chain 3: note → fscale1 (0.995) → fm2 → osc2 → adsr2 → output.in3
 \`\`\`
 **Effect**: Chorus-like thickness from slight detuning.
 - fscale factors: 1.0, 1.005, 0.995 (±0.5% detune) for subtle chorus
@@ -1263,9 +1278,9 @@ Chain 3: note2 → fscale1 (0.995) → fm2 → osc2 → adsr2 → output.in3
 <!-- Three parallel saw chains, ±0.5% detune -->
 <Node id=\"fscale0\" factor=\"1.005\"/>
 <Node id=\"fscale1\" factor=\"0.995\"/>
-<Wire from=\"note0\" to=\"osc0\"/>  <!-- center -->
-<Wire from=\"note1\" to=\"fscale0\" to=\"osc1\"/>  <!-- sharp -->
-<Wire from=\"note2\" to=\"fscale1\" to=\"osc2\"/>  <!-- flat -->
+<Wire from=\"note\" to=\"osc0\"/>  <!-- center -->
+<Wire from=\"note\" to=\"fscale0\" to=\"osc1\"/>  <!-- sharp -->
+<Wire from=\"note\" to=\"fscale1\" to=\"osc2\"/>  <!-- flat -->
 <Wire from=\"osc0\" to=\"output.in1\"/>
 <Wire from=\"osc1\" to=\"output.in2\"/>
 <Wire from=\"osc2\" to=\"output.in3\"/>
@@ -1274,8 +1289,8 @@ Chain 3: note2 → fscale1 (0.995) → fm2 → osc2 → adsr2 → output.in3
 
 ### Pattern 6: Split-Spectrum Layering (Bass + Lead)
 \`\`\`
-Bass:   note0 → fscale0 (0.5) → osc0 (saw, low octave) → adsr0 → output.in1
-Lead:   note1 → fm0 → osc1 (sine + FM) → adsr1 → output.in2
+Bass:   note → fscale0 (0.5) → osc0 (saw, low octave) → adsr0 → output.in1
+Lead:   note → fm0 → osc1 (sine + FM) → adsr1 → output.in2
 \`\`\`
 **Effect**: Independent bass and melody lines from one keyboard.
 - Different fscale ratios on same note = octave splits
@@ -1283,8 +1298,8 @@ Lead:   note1 → fm0 → osc1 (sine + FM) → adsr1 → output.in2
 
 ### Pattern 7: Transient/Sustain Split
 \`\`\`
-Attack:  note0 → fm0 (high amount) → osc0 → adsr0 (fast decay) → output.in1
-Sustain: note1 → osc1 (pure sine) → adsr1 (slow attack, long sustain) → output.in2
+Attack:  note → fm0 (high amount) → osc0 → adsr0 (fast decay) → output.in1
+Sustain: note → osc1 (pure sine) → adsr1 (slow attack, long sustain) → output.in2
 \`\`\`
 **Effect**: Percussive FM \"thunk\" + sustained tonal body.
 - **Use case**: E-pianos, plucked basses, mallet instruments
@@ -1298,8 +1313,8 @@ Combining both expands the timbral palette.
 
 ### Pattern 8: FM into Ring Mod
 \`\`\`
-note0 → fm0 → osc0 (FM carrier) → ring0.in1
-note1 → fscale0 (3.14) → osc1 (ring modulator) → ring0.in2
+note → fm0 → osc0 (FM carrier) → ring0.in1
+note → fscale0 (3.14) → osc1 (ring modulator) → ring0.in2
 ring0.out → adsr0 → output.in1
 \`\`\`
 **Effect**: FM creates complex base spectrum, ring mod adds metallic sidebands.
@@ -1314,19 +1329,19 @@ ring0.out → adsr0 → output.in1
 <Node id=\"osc1\" waveform=\"1\"/>  <!-- saw ring modulator -->
 <Node id=\"fscale0\" factor=\"2.718\"/>  <!-- e:1 ratio (irrational) -->
 <Node id=\"ring0\"/>
-<Wire from=\"note0\" to=\"fm0\" to=\"osc0\"/>
+<Wire from=\"note\" to=\"fm0\" to=\"osc0\"/>
 <Wire from=\"osc0\" to=\"ring0.in1\"/>
-<Wire from=\"note1\" to=\"fscale0\" to=\"osc1\"/>
+<Wire from=\"note\" to=\"fscale0\" to=\"osc1\"/>
 <Wire from=\"osc1\" to=\"ring0.in2\"/>
 <Wire from=\"ring0\" to=\"adsr0\" to=\"output.in1\"/>
 \`\`\`
 
 ### Pattern 9: Parallel FM + Ring Mod
 \`\`\`
-FM path:   note0 → fm0 → osc0 → adsr0 → output.in1
-Ring path: note1 → osc1 ─┐
+FM path:   note → fm0 → osc0 → adsr0 → output.in1
+Ring path: note → osc1 ─┐
                          ├→ ring0 → adsr1 → output.in2
-           note2 → osc2 ─┘
+           note → osc2 ─┘
 \`\`\`
 **Effect**: Two independent timbres mixed at output.
 - FM provides tonal body, ring mod adds metallic shimmer
@@ -1367,8 +1382,8 @@ Modulator: osc1 waveform=\"1\" (saw)
 
 ### Pattern 12: Sub-Octave Reinforcement
 \`\`\`
-Main: note0 → fm0 → osc0 → output.in1
-Sub:  note1 → fscale0 (0.5) → osc1 (sine) → adsr1 → output.in2
+Main: note → fm0 → osc0 → output.in1
+Sub:  note → fscale0 (0.5) → osc1 (sine) → adsr1 → output.in2
 \`\`\`
 **Effect**: Adds sub-bass foundation.
 - fscale=0.5 = one octave down
@@ -1377,7 +1392,7 @@ Sub:  note1 → fscale0 (0.5) → osc1 (sine) → adsr1 → output.in2
 
 ### Pattern 13: Filter Emulation via FM
 \`\`\`
-note0 → fm0 (variable amount) → osc0 (saw) → output
+note → fm0 (variable amount) → osc0 (saw) → output
 \`\`\`
 **Effect**: Sweep fm0.amount over time (via DAW automation) = \"filter sweep\".
 - Low FM amount ≈ \"closed filter\" (few sidebands)
@@ -1390,14 +1405,14 @@ note0 → fm0 (variable amount) → osc0 (saw) → output
 
 ### E-Bass with Distortion (via Ring Mod)
 \`\`\`
-Clean path:  note0 → osc0 (saw) → adsr0 → output.in1
-Growl path:  note1 → fscale0 (2.0) → osc1 (square) → adsr1 (fast decay) → output.in2
+Clean path:  note → osc0 (saw) → adsr0 → output.in1
+Growl path:  note → fscale0 (2.0) → osc1 (square) → adsr1 (fast decay) → output.in2
 \`\`\`
 Mix ratio: 70% clean, 30% growl → adds harmonic complexity without losing definition.
 
 ### Evolving Pad (3-Stage FM + Swell Envelope)
 \`\`\`
-note0 → fm0 → fm1 → fm2 → osc0 → output.in1
+note → fm0 → fm1 → fm2 → osc0 → output.in1
          ↑     ↑     ↑
         osc1  osc2  osc3
          ↑
@@ -1407,8 +1422,8 @@ Envelope on modulator creates \"blooming\" effect.
 
 ### Drum Kit (Kick + Snare from one patch)
 \`\`\`
-Kick:  note0 (low MIDI note) → osc0 (sine) → adsr0 (fast decay) → output.in1
-Snare: note1 (high MIDI note) → ring0 (osc1 × osc2) → adsr1 (very fast) → output.in2
+Kick:  note (low MIDI note) → osc0 (sine) → adsr0 (fast decay) → output.in1
+Snare: note (high MIDI note) → ring0 (osc1 × osc2) → adsr1 (very fast) → output.in2
 \`\`\`
 Use MIDI note range to select drum type.
 
@@ -1452,7 +1467,7 @@ If a patch sounds harsh or \"broken\":
 ### Pattern 14: Feedback Oscillator (Experimental)
 \`\`\`
 osc0.out → fm0.modulator_in
-note0 → fm0.freq_in
+note → fm0.freq_in
 fm0.out → osc0.note_in
 \`\`\`
 **WARNING**: Creates feedback loop! May result in silence or noise depending on phase.
@@ -1461,7 +1476,7 @@ fm0.out → osc0.note_in
 
 ### Pattern 15: Audio-Rate Frequency Scaling
 \`\`\`
-note0 → osc1 (LFO, very low freq) → fscale0.freq_in
+note → osc1 (LFO, very low freq) → fscale0.freq_in
 fscale0.out → osc0.note_in
 \`\`\`
 **Effect**: Vibrato via frequency domain instead of FM.
@@ -1695,7 +1710,7 @@ The supplied advanced source contains an experimental feedback pattern:
 
 ```text
 osc0.out → fm0.modulator_in
-note0 → fm0.freq_in
+note → fm0.freq_in
 fm0.out → osc0.note_in
 ```
 

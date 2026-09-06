@@ -203,6 +203,27 @@ namespace
         }
 
         {
+            NodeSpec gain;
+
+            gain.id = "gain";
+
+            gain.title = "Gain";
+
+            gain.outputPortId = "out";
+
+            gain.outputType = PortType::signal;
+
+            gain.inputPortIds = { "in" };
+
+            gain.inputTypes = { PortType::signal };
+
+            gain.gainParameterTemplate = "gain%";
+
+            specs.push_back (gain);
+
+        }
+
+        {
 
             NodeSpec out;
 
@@ -297,6 +318,8 @@ NodeType GraphNodeRegistry::typeOf (const juce::String& nodeId)
 
     if (base == "fadsr") return NodeType::fAdsr;
 
+    if (base == "gain")  return NodeType::gain;
+
     if (base == "output") return NodeType::masterOutput;
 
     return NodeType::unknown;
@@ -390,6 +413,7 @@ int GraphNodeRegistry::maxInstancesOf (NodeType type)
         case NodeType::delay:          return maxDelays;
         case NodeType::adsr:           return maxAdsr;
         case NodeType::fAdsr:          return maxFAdsr;
+        case NodeType::gain:           return maxGains;
 
         case NodeType::masterOutput:   return maxMasterOutputs;
 
@@ -488,6 +512,24 @@ juce::String GraphNodeRegistry::fAdsrParameterIdFor (const juce::String& nodeId,
 
 
     return withIndex (spec->fAdsrParameterTemplate, indexOf (nodeId)) + which;
+
+}
+
+
+
+juce::String GraphNodeRegistry::gainParameterIdFor (const juce::String& nodeId)
+
+{
+
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+
+    if (spec == nullptr || spec->gainParameterTemplate.isEmpty())
+
+        return {};
+
+
+
+    return withIndex (spec->gainParameterTemplate, indexOf (nodeId));
 
 }
 

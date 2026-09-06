@@ -31,7 +31,8 @@ enum class Waveform
     sine,
     saw,
     square,
-    triangle
+    triangle,
+    noise
 };
 
 /**
@@ -39,7 +40,8 @@ enum class Waveform
     into the matching Waveform.  Unknown indices fall back to sine.
 
     The mapping must stay in sync with the choices listed in
-    PluginProcessor::createParameterLayout() ("Sine", "Saw", "Square", "Triangle").
+    PluginProcessor::createParameterLayout()
+    ("Sine", "Saw", "Square", "Triangle", "Noise").
 */
 inline Waveform waveformFromIndex (int index) noexcept
 {
@@ -48,6 +50,7 @@ inline Waveform waveformFromIndex (int index) noexcept
         case 1:  return Waveform::saw;
         case 2:  return Waveform::square;
         case 3:  return Waveform::triangle;
+        case 4:  return Waveform::noise;
         default: return Waveform::sine;
     }
 }
@@ -152,6 +155,8 @@ private:
     float phaseIncrement = 0.0f;
     Waveform waveform = Waveform::sine;
 
+    mutable juce::Random noiseSource { 42 };   // noise must advance in const evaluateWaveform
+
     /**
         Recalculate phaseIncrement after frequency or sample rate changes.
     */
@@ -196,6 +201,13 @@ private:
                 return (phaseAngle < juce::MathConstants<float>::pi)
                      ? 2.0f * (phaseAngle / juce::MathConstants<float>::pi) - 1.0f
                      : 3.0f - 2.0f * (phaseAngle / juce::MathConstants<float>::pi);
+
+            case Waveform::noise:
+                // White noise: uniform random value per sample, independent of
+                // phase.  juce::Random is seeded once in prepare() via its
+                // static default seeding; setSeed is NOT called so every
+                // voice differs slightly (fine for musical noise).
+                return noiseSource.nextFloat() * 2.0f - 1.0f;
         }
 
         // This line is never reached, but it keeps the compiler happy.
