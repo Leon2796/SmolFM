@@ -182,6 +182,27 @@ namespace
         }
 
         {
+            NodeSpec fadsr;
+
+            fadsr.id = "fadsr";
+
+            fadsr.title = "F-ADSR";
+
+            fadsr.outputPortId = "out";
+
+            fadsr.outputType = PortType::frequency;
+
+            fadsr.inputPortIds = { "freq_in" };
+
+            fadsr.inputTypes = { PortType::frequency };
+
+            fadsr.fAdsrParameterTemplate = "fadsr%";
+
+            specs.push_back (fadsr);
+
+        }
+
+        {
 
             NodeSpec out;
 
@@ -273,6 +294,8 @@ NodeType GraphNodeRegistry::typeOf (const juce::String& nodeId)
     if (base == "am")      return NodeType::amModulator;
     if (base == "delay")   return NodeType::delay;
     if (base == "adsr")   return NodeType::adsr;
+
+    if (base == "fadsr") return NodeType::fAdsr;
 
     if (base == "output") return NodeType::masterOutput;
 
@@ -366,6 +389,7 @@ int GraphNodeRegistry::maxInstancesOf (NodeType type)
         case NodeType::amModulator:    return maxAmModulators;
         case NodeType::delay:          return maxDelays;
         case NodeType::adsr:           return maxAdsr;
+        case NodeType::fAdsr:          return maxFAdsr;
 
         case NodeType::masterOutput:   return maxMasterOutputs;
 
@@ -446,6 +470,24 @@ juce::String GraphNodeRegistry::adsrParameterIdFor (const juce::String& nodeId, 
 
 
     return withIndex (spec->adsrParameterTemplate, indexOf (nodeId)) + which;
+
+}
+
+
+
+juce::String GraphNodeRegistry::fAdsrParameterIdFor (const juce::String& nodeId, const juce::String& which)
+
+{
+
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+
+    if (spec == nullptr || spec->fAdsrParameterTemplate.isEmpty())
+
+        return {};
+
+
+
+    return withIndex (spec->fAdsrParameterTemplate, indexOf (nodeId)) + which;
 
 }
 

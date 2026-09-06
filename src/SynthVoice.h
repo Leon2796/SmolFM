@@ -29,6 +29,7 @@
 #include "processors/FrequencyScaleProcessor.h"
 #include "processors/NoteProcessor.h"
 #include "processors/AdsrProcessor.h"
+#include "processors/FAdsrProcessor.h"
 #include "processors/MasterOutputProcessor.h"
 #include "processors/RingModulatorProcessor.h"
 #include "processors/AmProcessor.h"
@@ -56,6 +57,14 @@ struct SynthVoiceParameters
     std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrSustain;
         std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrRelease;
         std::array<std::atomic<float>*, GraphNodeRegistry::maxAmModulators> amAmount;
+
+    // F-ADSR pitch-envelope parameters per instance (6 parameters per node).
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxFAdsr> fAdsrAttack;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxFAdsr> fAdsrDecay;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxFAdsr> fAdsrSustain;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxFAdsr> fAdsrRelease;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxFAdsr> fAdsrUp;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxFAdsr> fAdsrDown;
 
     // Delay parameters per instance (5 parameters per delay node).
     std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delayTimeMs;
@@ -137,8 +146,9 @@ private:
     std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts> fmProcessors {};
     std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales> frequencyScalers {};
     std::array<AdsrProcessor*, GraphNodeRegistry::maxAdsr> adsrProcessors {};
-        std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators> ringModulators {};
-        std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators> amModulators {};
+    std::array<FAdsrProcessor*, GraphNodeRegistry::maxFAdsr> fAdsrProcessors {};
+    std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators> ringModulators {};
+    std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators> amModulators {};
     std::array<DelayProcessor*, GraphNodeRegistry::maxDelays> delays {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynthVoice)

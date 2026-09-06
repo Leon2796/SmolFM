@@ -66,6 +66,18 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 "Release");
     }
 
+        for (int i = 0; i < smolfm::GraphNodeRegistry::maxFAdsr; ++i)
+    {
+        const juce::String num (i);
+
+        voiceParameters.fAdsrAttack [static_cast<size_t> (i)] = parameters.getRawParameterValue ("fadsr" + num + "Attack");
+        voiceParameters.fAdsrDecay  [static_cast<size_t> (i)] = parameters.getRawParameterValue ("fadsr" + num + "Decay");
+        voiceParameters.fAdsrSustain[static_cast<size_t> (i)] = parameters.getRawParameterValue ("fadsr" + num + "Sustain");
+        voiceParameters.fAdsrRelease[static_cast<size_t> (i)] = parameters.getRawParameterValue ("fadsr" + num + "Release");
+        voiceParameters.fAdsrUp     [static_cast<size_t> (i)] = parameters.getRawParameterValue ("fadsr" + num + "Up");
+        voiceParameters.fAdsrDown   [static_cast<size_t> (i)] = parameters.getRawParameterValue ("fadsr" + num + "Down");
+    }
+
         for (int i = 0; i < smolfm::GraphNodeRegistry::maxAmModulators; ++i)
     {
         const juce::String num (i);
@@ -361,6 +373,39 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "adsr" + num + "Release", "ADSR " + num + " Release",
             juce::NormalisableRange<float> (0.001f, 10.0f, 0.001f, 0.5f), 0.5f));
+    }
+
+    // -- F-ADSR pitch-envelope pool ----------------------------------------
+    // Six parameters per instance: ADSR timing plus the up/down scaling
+    // factors applied to the input frequency at envelope E = 1 / E = 0.
+    // Both factors default to 1.0 (transparent pass-through).
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxFAdsr; ++i)
+    {
+        const juce::String num (i);
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "fadsr" + num + "Attack", "F-ADSR " + num + " Attack",
+            juce::NormalisableRange<float> (0.001f, 5.0f, 0.001f, 0.5f), 0.01f));
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "fadsr" + num + "Decay", "F-ADSR " + num + " Decay",
+            juce::NormalisableRange<float> (0.001f, 5.0f, 0.001f, 0.5f), 0.2f));
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "fadsr" + num + "Sustain", "F-ADSR " + num + " Sustain",
+            juce::NormalisableRange<float> (0.0f, 1.0f), 0.0f));
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "fadsr" + num + "Release", "F-ADSR " + num + " Release",
+            juce::NormalisableRange<float> (0.001f, 10.0f, 0.001f, 0.5f), 0.5f));
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "fadsr" + num + "Up", "F-ADSR " + num + " Up Factor",
+            juce::NormalisableRange<float> (0.0f, 10.0f), 1.0f));
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "fadsr" + num + "Down", "F-ADSR " + num + " Down Factor",
+            juce::NormalisableRange<float> (0.0f, 10.0f), 1.0f));
     }
 
         // -- AM modulator pool ------------------------------------------------------

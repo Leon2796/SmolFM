@@ -27,6 +27,7 @@ namespace
                                      SynthVoiceParameters& params,
                                      std::array<NoteProcessor*, GraphNodeRegistry::maxNotes>& noteSources,
                                      std::array<AdsrProcessor*, GraphNodeRegistry::maxAdsr>& adsrProcessors,
+                                     std::array<FAdsrProcessor*, GraphNodeRegistry::maxFAdsr>& fAdsrProcessors,
                                      MasterOutputProcessor* masterOutput,
                                      std::array<OscillatorProcessor*, GraphNodeRegistry::maxOscillators>& oscillators,
                                                                           std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts>& fmProcessors,
@@ -106,6 +107,12 @@ namespace
          && portId == "in")
             return &adsrProcessors[static_cast<size_t> (index)]->getInput();
 
+        if (type == NodeType::fAdsr
+         && index >= 0 && index < GraphNodeRegistry::maxFAdsr
+         && fAdsrProcessors[static_cast<size_t> (index)] != nullptr
+         && portId == "freq_in")
+            return &fAdsrProcessors[static_cast<size_t> (index)]->getFreqInput();
+
                 if (type == NodeType::ringModulator
          && index >= 0 && index < GraphNodeRegistry::maxRingModulators
          && ringModulators[static_cast<size_t> (index)] != nullptr)
@@ -133,6 +140,7 @@ namespace
                                        const juce::String& portId,
                                        std::array<NoteProcessor*, GraphNodeRegistry::maxNotes>& noteSources,
                                        std::array<AdsrProcessor*, GraphNodeRegistry::maxAdsr>& adsrProcessors,
+                                       std::array<FAdsrProcessor*, GraphNodeRegistry::maxFAdsr>& fAdsrProcessors,
                                        MasterOutputProcessor* masterOutput,
                                        std::array<OscillatorProcessor*, GraphNodeRegistry::maxOscillators>& oscillators,
                                                                               std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts>& fmProcessors,
@@ -171,6 +179,11 @@ namespace
          && index >= 0 && index < GraphNodeRegistry::maxAdsr
          && adsrProcessors[static_cast<size_t> (index)] != nullptr)
             return &adsrProcessors[static_cast<size_t> (index)]->getOutput();
+
+        if (type == NodeType::fAdsr
+         && index >= 0 && index < GraphNodeRegistry::maxFAdsr
+         && fAdsrProcessors[static_cast<size_t> (index)] != nullptr)
+            return &fAdsrProcessors[static_cast<size_t> (index)]->getOutput();
 
                 if (type == NodeType::ringModulator
          && index >= 0 && index < GraphNodeRegistry::maxRingModulators
@@ -247,6 +260,20 @@ void SynthVoice::buildGraph()
         graph.addProcessor (std::move (adsr));
     }
 
+    // F-ADSR pitch-envelope pool — frequency-domain envelopes; placed after
+    // note/fm/fscale producers and before the signal-domain stages.
+    for (int i = 0; i < GraphNodeRegistry::maxFAdsr; ++i)
+    {
+        auto fadsr = std::make_unique<FAdsrProcessor> (parameters.fAdsrAttack [static_cast<size_t> (i)],
+                                                       parameters.fAdsrDecay  [static_cast<size_t> (i)],
+                                                       parameters.fAdsrSustain[static_cast<size_t> (i)],
+                                                       parameters.fAdsrRelease[static_cast<size_t> (i)],
+                                                       parameters.fAdsrUp     [static_cast<size_t> (i)],
+                                                       parameters.fAdsrDown   [static_cast<size_t> (i)]);
+        fAdsrProcessors[static_cast<size_t> (i)] = fadsr.get();
+        graph.addProcessor (std::move (fadsr));
+    }
+
         // Ring modulator pool â€” pure signal multipliers, no parameters.
     for (int i = 0; i < GraphNodeRegistry::maxRingModulators; ++i)
     {
@@ -309,6 +336,10 @@ void SynthVoice::stopNote (float /*velocity*/, bool allowTailOff)
         for (auto* adsr : adsrProcessors)
             if (adsr != nullptr)
                 adsr->noteOff();
+
+        for (auto* fadsr : fAdsrProcessors)
+            if (fadsr != nullptr)
+                fadsr->noteOff();
     }
     else
     {
@@ -403,8 +434,8 @@ bool SynthVoice::hasReasonToLive() const noexcept
         if (adsr != nullptr && adsr->getInput().isConnected() && adsr->isActive())
             return true;
 
-    for (auto* d : delays)
-        if (d != nullptr && d->getInput().isConnected() && d->hasEnergy())
+    for (auto* fadsr : fAdsrProcessors)
+        if (fadsr != nullptr && fadsr->getFreqInput().isConnected() && fadsr->isActive())
             return true;
 
     return false;
@@ -431,6 +462,9 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
 
         for (auto* adsr : adsrProcessors)
         if (adsr != nullptr)  adsr->getInput().disconnect();
+
+        for (auto* fadsr : fAdsrProcessors)
+        if (fadsr != nullptr)  fadsr->getFreqInput().disconnect();
 
         for (auto* ring : ringModulators)
         if (ring != nullptr)
@@ -465,11 +499,11 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
     for (const auto& conn : patch.connections)
     {
                 OutputPort* out = resolveOutput (conn.from.nodeId, conn.from.portId,
-                                                   noteSources, adsrProcessors, masterOutput,
+                                                   noteSources, adsrProcessors, fAdsrProcessors, masterOutput,
                                                    oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays);
                 InputPort*  in  = resolveInput  (conn.to.nodeId,   conn.to.portId,
                                                    const_cast<SynthVoiceParameters&> (parameters),
-                                                   noteSources, adsrProcessors, masterOutput,
+                                                   noteSources, adsrProcessors, fAdsrProcessors, masterOutput,
                                                    oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays);
 
         if (out == nullptr || in == nullptr)

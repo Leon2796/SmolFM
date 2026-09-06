@@ -12,6 +12,7 @@
 #include "gui/components/FMModulationComponent.h"
 #include "gui/components/FrequencyScaleComponent.h"
 #include "gui/components/AdsrPanel.h"
+#include "gui/components/FAdsrComponent.h"
 #include "gui/components/NoteNodeComponent.h"
 #include "gui/components/MasterOutputComponent.h"
 #include "gui/components/RingModulatorComponent.h"
@@ -54,6 +55,19 @@ namespace
             smolfm::GraphNodeRegistry::adsrParameterIdFor (instanceId, "Decay"),
             smolfm::GraphNodeRegistry::adsrParameterIdFor (instanceId, "Sustain"),
             smolfm::GraphNodeRegistry::adsrParameterIdFor (instanceId, "Release"));
+    }
+
+    std::unique_ptr<juce::Component> makeFAdsrContent (const juce::String& instanceId,
+                                                       juce::AudioProcessorValueTreeState& apvts)
+    {
+        return std::make_unique<gui::FAdsrComponent> (
+            apvts,
+            smolfm::GraphNodeRegistry::fAdsrParameterIdFor (instanceId, "Attack"),
+            smolfm::GraphNodeRegistry::fAdsrParameterIdFor (instanceId, "Decay"),
+            smolfm::GraphNodeRegistry::fAdsrParameterIdFor (instanceId, "Sustain"),
+            smolfm::GraphNodeRegistry::fAdsrParameterIdFor (instanceId, "Release"),
+            smolfm::GraphNodeRegistry::fAdsrParameterIdFor (instanceId, "Up"),
+            smolfm::GraphNodeRegistry::fAdsrParameterIdFor (instanceId, "Down"));
     }
 
         std::unique_ptr<juce::Component> makeNoteContent (const juce::String&,
@@ -171,6 +185,15 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                                p.lineTo (r.getX() + r.getWidth() * 0.75f, r.getCentreY());
                                p.lineTo (r.getRight(), r.getBottom()); return p; },
                            smolfm::GraphNodeRegistry::maxAdsr);
+    fAdsrButton .configure ("fadsr", "F-ADSR", [] (const juce::Rectangle<float>& r)
+                            {   juce::Path p; p.startNewSubPath (r.getX(), r.getBottom());
+                                p.lineTo (r.getX() + r.getWidth() * 0.2f, r.getY());
+                                p.lineTo (r.getX() + r.getWidth() * 0.4f, r.getCentreY());
+                                p.lineTo (r.getX() + r.getWidth() * 0.6f, r.getCentreY());
+                                p.lineTo (r.getRight(), r.getCentreY());
+                                return p; },
+                            smolfm::GraphNodeRegistry::maxFAdsr);
+
     noteButton .configure ("note", "Note",  [] (const juce::Rectangle<float>& r)
                            {   juce::Path p; const float cx = r.getCentreX(), cy = r.getCentreY();
                                p.startNewSubPath (cx, cy); p.lineTo (cx, r.getY());
@@ -215,7 +238,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                                return p; },
                            smolfm::GraphNodeRegistry::maxDelays);
 
-    for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &noteButton, &ringButton, &amButton, &delayButton, &outputButton })
+    for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &fAdsrButton, &noteButton, &ringButton, &amButton, &delayButton, &outputButton })
     {
         addAndMakeVisible (*b);
         b->onAddRequested = [this] (const juce::String& baseId) { addNodeFromToolbar (baseId); };
@@ -251,7 +274,9 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             return graphPanel.addNodeOfType ("fscale", processorRef.getParameters(), makeFrequencyScaleContent, nodeStartsHidden);
         if (baseId == "adsr")
             return graphPanel.addNodeOfType ("adsr", processorRef.getParameters(), makeAdsrContent, nodeStartsHidden);
-        if (baseId == "note")
+        if (baseId == "fadsr")
+            return graphPanel.addNodeOfType ("fadsr", processorRef.getParameters(), makeFAdsrContent, nodeStartsHidden);
+                if (baseId == "note")
             return graphPanel.addNodeOfType ("note", processorRef.getParameters(), makeNoteContent, nodeStartsHidden);
                 if (baseId == "ring")
             return graphPanel.addNodeOfType ("ring", processorRef.getParameters(), makeRingModulatorContent, nodeStartsHidden);
@@ -289,6 +314,7 @@ void AudioPluginAudioProcessorEditor::addNodeFromToolbar (const juce::String& ba
         { "fm",     makeFmContent      },
                         { "fscale", makeFrequencyScaleContent },
         { "adsr",   makeAdsrContent    },
+        { "fadsr",  makeFAdsrContent   },
         { "ring",   makeRingModulatorContent },
                 { "am",     makeAmContent        },
         { "delay",  makeDelayContent     }
@@ -315,6 +341,7 @@ void AudioPluginAudioProcessorEditor::refreshToolbarBadges()
     fmButton   .setRemaining (smolfm::GraphNodeRegistry::maxFmAmounts       - graphPanel.countBoxesOfType ("fm"));
     scaleButton.setRemaining (smolfm::GraphNodeRegistry::maxFrequencyScales - graphPanel.countBoxesOfType ("fscale"));
     adsrButton  .setRemaining (smolfm::GraphNodeRegistry::maxAdsr            - graphPanel.countBoxesOfType ("adsr"));
+    fAdsrButton .setRemaining (smolfm::GraphNodeRegistry::maxFAdsr            - graphPanel.countBoxesOfType ("fadsr"));
     noteButton  .setRemaining (smolfm::GraphNodeRegistry::maxNotes           - graphPanel.countBoxesOfType ("note"));
     ringButton  .setRemaining (smolfm::GraphNodeRegistry::maxRingModulators   - graphPanel.countBoxesOfType ("ring"));
     amButton    .setRemaining (smolfm::GraphNodeRegistry::maxAmModulators      - graphPanel.countBoxesOfType ("am"));
@@ -352,6 +379,7 @@ void AudioPluginAudioProcessorEditor::resized()
     fmButton    .setBounds (palette.removeFromLeft (tileWidth));
     scaleButton .setBounds (palette.removeFromLeft (tileWidth));
     adsrButton  .setBounds (palette.removeFromLeft (tileWidth));
+    fAdsrButton .setBounds (palette.removeFromLeft (tileWidth));
             noteButton .setBounds (palette.removeFromLeft (tileWidth));
     ringButton .setBounds (palette.removeFromLeft (tileWidth));
     amButton   .setBounds (palette.removeFromLeft (tileWidth));

@@ -29,6 +29,7 @@ target_sources(${PROJECT_NAME}
         processors/FMModulationProcessor.cpp
         processors/FrequencyScaleProcessor.cpp
         processors/AdsrProcessor.cpp
+        processors/FAdsrProcessor.cpp
         processors/MasterOutputProcessor.cpp
         graph/GraphNodes.cpp
         graph/SmolFmFile.cpp
@@ -36,6 +37,7 @@ target_sources(${PROJECT_NAME}
         gui/components/FMModulationComponent.cpp
         gui/components/FrequencyScaleComponent.cpp
         gui/components/AdsrPanel.cpp
+        gui/components/FAdsrComponent.cpp
         gui/components/NoteNodeComponent.cpp
         gui/components/PatchBrowser.cpp
         gui/components/MasterOutputComponent.cpp

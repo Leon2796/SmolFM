@@ -90,6 +90,14 @@ namespace
                 if (id.isNotEmpty()) specs.add ({ juce::String (which).toLowerCase(), id });
             }
         }
+        else if (baseId == "fadsr")
+        {
+            for (const char* which : { "Attack", "Decay", "Sustain", "Release", "Up", "Down" })
+            {
+                const auto id = GraphNodeRegistry::fAdsrParameterIdFor (nodeId, which);
+                if (id.isNotEmpty()) specs.add ({ juce::String (which).toLowerCase(), id });
+            }
+        }
         else if (baseId == "output")
         {
             const auto lvlId = GraphNodeRegistry::levelParameterIdFor (nodeId);
@@ -242,6 +250,31 @@ bool SmolFmFile::load (gui::DraggablePanel& panel,
             if (c.from.nodeId.isNotEmpty() && c.from.portId.isNotEmpty()
              && c.to.nodeId.isNotEmpty()   && c.to.portId.isNotEmpty())
                 patch.connections.push_back (c);
+        }
+
+        // One wire per input pin: later wires in the file replace earlier
+        // ones onto the same input, mirroring tryConnect()'s rule.  Without
+        // this, a file with duplicate fan-in draws two wires while the voices
+        // only wire the last one — the earlier source looks live but is dead.
+        {
+            std::map<juce::String, std::size_t> inputToIndex;
+            std::vector<ConnectionPatch::Connection> deduped;
+
+            for (const auto& c : patch.connections)
+            {
+                const juce::String key = c.to.nodeId + ":" + c.to.portId;
+                const auto it = inputToIndex.find (key);
+
+                if (it != inputToIndex.end())
+                    deduped[it->second] = c;    // replace earlier wire
+                else
+                {
+                    inputToIndex[key] = deduped.size();
+                    deduped.push_back (c);
+                }
+            }
+
+            patch.connections = std::move (deduped);
         }
 
         panel.applyPatch (patch);
