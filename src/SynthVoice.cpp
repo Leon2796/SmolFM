@@ -438,6 +438,12 @@ bool SynthVoice::hasReasonToLive() const noexcept
         if (fadsr != nullptr && fadsr->getFreqInput().isConnected() && fadsr->isActive())
             return true;
 
+    // Delay tails ring out after note-off; the voice must stay alive while
+    // any wired delay line still holds energy.
+    for (auto* d : delays)
+        if (d != nullptr && d->getInput().isConnected() && d->hasEnergy())
+            return true;
+
     return false;
 }
 
