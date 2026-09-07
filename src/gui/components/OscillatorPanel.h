@@ -48,6 +48,12 @@ private:
     juce::Label lfoRateLabel;
     juce::Slider lfoRateSlider;
 
+    // Reacts to mode changes coming from outside the combo box (patch load
+    // writes the APVTS and ComboBoxAttachment updates the combo without
+    // notification, so a pure combo-listener misses the reload).
+    std::unique_ptr<juce::ParameterAttachment> modeSyncAttachment;
+    juce::RangedAudioParameter* modeParamValue = nullptr;   // cached for row visibility
+
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> waveformAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> modeAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment>  staticFreqAttachment;

@@ -137,6 +137,13 @@ namespace
         if (auto* param = dynamic_cast<juce::RangedAudioParameter*> (apvts.getParameter (id)))
             param->setValueNotifyingHost (param->convertTo0to1 (value));
     }
+
+    float parameterDefault (juce::AudioProcessorValueTreeState& apvts, const juce::String& id)
+    {
+        if (auto* param = dynamic_cast<juce::RangedAudioParameter*> (apvts.getParameter (id)))
+            return param->getDefaultValue();
+        return 0.0f;
+    }
 }
 
 bool SmolFmFile::save (gui::DraggablePanel& panel,
@@ -234,15 +241,19 @@ bool SmolFmFile::load (gui::DraggablePanel& panel,
                 appliedAnything = true;
             }
 
-            // Parameters (sound) live on the node itself.
+            // Parameters (sound) live on the node itself.  Attributes the
+            // file does not carry are RESET to the parameter's declared
+            // default instead of keeping the previous patch's value —
+            // without this, loading a patch that omits (e.g.) the osc mode
+            // inherits Static from an earlier drum-patch load.
             for (const auto& p : parametersForNode (id))
             {
-                if (nodeXml->hasAttribute (p.attribute))
-                {
-                    setParameter (apvts, p.parameterId,
-                                  static_cast<float> (nodeXml->getDoubleAttribute (p.attribute)));
-                    appliedAnything = true;
-                }
+                const float value = nodeXml->hasAttribute (p.attribute)
+                    ? static_cast<float> (nodeXml->getDoubleAttribute (p.attribute))
+                    : parameterDefault (apvts, p.parameterId);
+
+                setParameter (apvts, p.parameterId, value);
+                appliedAnything = true;
             }
         }
     }

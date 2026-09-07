@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"-->
+<?xml version="1.0" encoding="UTF-8"?>
 
 <SmolFM version="2" name="fadsr-chaos-bell-cascade">
   <description>Cascade bell: two F-ADSR envelopes with different strike ratios feed two chained FM stages — voice A (up 2.718) drives the master FM whose output rings through fadsr-driven FM2 on a second carrier — three output inputs stack the dry bell, its fifth-above ghost and a long 1/2-note delay tail.</description>

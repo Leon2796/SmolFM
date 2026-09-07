@@ -40,19 +40,23 @@ void OscillatorProcessor::startNote()
 float OscillatorProcessor::processSample()
 {
     // Three frequency sources, chosen by the mode parameter:
-    //   Pitch:  only a connected note_in supplies Hz (no hidden fallback).
-    //   Static: the fixed audio-range frequency parameter; note_in ignored.
-    //   LFO:    the fixed low-rate parameter; note_in ignored entirely.
+    //   Pitch:  the note_in port supplies Hz directly (no hidden fallback).
+    //   Static: note_in acts as a GATE only — the oscillator fires while a
+    //           note is connected and playing, but always swings at the fixed
+    //           staticFreq parameter instead of the port value.
+    //   LFO:    same gate behaviour at the fixed low rate.
     const int modeIndex = mode != nullptr
         ? juce::jlimit (0, 2, static_cast<int> (std::round (mode->load())))
         : 0;
 
     float freq = 0.0f;
-    if (modeIndex == 1)
+    const bool noteActive = noteInput.isConnected() && noteInput.getSample() > 0.0f;
+
+    if (modeIndex == 1 && noteActive)
         freq = juce::jlimit (20.0f, 20000.0f, staticFreq != nullptr ? staticFreq->load() : 440.0f);
-    else if (modeIndex == 2)
+    else if (modeIndex == 2 && noteActive)
         freq = juce::jlimit (0.01f, 50.0f, lfoRate != nullptr ? lfoRate->load() : 1.0f);
-    else if (noteInput.isConnected())
+    else if (modeIndex == 0 && noteInput.isConnected())
         freq = noteInput.getSample();
 
     oscillator.setFrequency (freq);

@@ -5,6 +5,8 @@
 #include "OscillatorPanel.h"
 #include "SliderUtils.h"
 
+#include <cmath>
+
 namespace gui
 {
 
@@ -15,6 +17,20 @@ OscillatorPanel::OscillatorPanel (juce::AudioProcessorValueTreeState& apvts,
                                   const juce::String& staticFreqParameterID,
                                   const juce::String& lfoRateParameterID)
 {
+    // Follow mode changes that come from outside this combo box (patch load
+    // writes the APVTS and the ComboBoxAttachment updates the combo without
+    // notification, so a pure combo-listener misses the reload).  The rows
+    // are derived from the PARAMETER value, not the combo selection — the
+    // parameter is the single source of truth and arrives first when several
+    // attachments fire for the same change.
+    if (auto* modeParam = dynamic_cast<juce::RangedAudioParameter*> (apvts.getParameter (modeParameterID)))
+    {
+        modeParamValue = modeParam;
+        modeSyncAttachment.reset (new juce::ParameterAttachment (*modeParam,
+                                                                 [this] (float) { updateFrequencyRows(); },
+                                                                 nullptr));
+        modeSyncAttachment->sendInitialUpdate();
+    }
     titleLabel.setText (title, juce::dontSendNotification);
     titleLabel.setJustificationType (juce::Justification::centred);
 
@@ -83,13 +99,20 @@ void OscillatorPanel::comboBoxChanged (juce::ComboBox*)
 
 void OscillatorPanel::updateFrequencyRows()
 {
-    // Mode combo ids: 1 = Pitch (no extra row), 2 = Static (freq row),
-    // 3 = LFO (rate row).
-    const int mode = modeBox.getSelectedId();
-    staticFreqLabel.setVisible (mode == 2);
-    staticFreqSlider.setVisible (mode == 2);
-    lfoRateLabel.setVisible (mode == 3);
-    lfoRateSlider.setVisible (mode == 3);
+    // Mode ids: 1 = Pitch (no extra row), 2 = Static (freq row), 3 = LFO
+    // (rate row).  Read from the parameter (not the combo) so a patch load
+    // that arrives through the attachments always shows the correct row.
+    int mode = 0;
+    if (modeParamValue != nullptr)
+        mode = juce::jlimit (0, 2, (int) std::round (modeParamValue->convertFrom0to1 (modeParamValue->getValue())));
+    else
+        mode = modeBox.getSelectedId() - 1;
+
+    staticFreqLabel.setVisible (mode == 1);
+    staticFreqSlider.setVisible (mode == 1);
+    lfoRateLabel.setVisible (mode == 2);
+    lfoRateSlider.setVisible (mode == 2);
+    resized();   // re-layout: the knob row only takes space when visible
 }
 
 void OscillatorPanel::resized()
@@ -103,7 +126,8 @@ void OscillatorPanel::resized()
     bounds.removeFromTop (4);
 
     // Mode row always visible; the frequency row matching the selected mode
-    // shows a small rotary knob below it.
+    // shows a small rotary knob below it.  The knob needs its height PLUS the
+    // textbox height (TextBoxBelow renders the value strip below the circle).
     auto modeRow = bounds.removeFromTop (22);
     modeLabel.setBounds (modeRow.removeFromLeft (44));
     modeBox.setBounds (modeRow);
@@ -112,11 +136,11 @@ void OscillatorPanel::resized()
     if (showStatic || lfoRateSlider.isVisible())
     {
         bounds.removeFromTop (2);
+        auto& label = showStatic ? staticFreqLabel : lfoRateLabel;
         auto& slider = showStatic ? staticFreqSlider : lfoRateSlider;
-        auto& label  = showStatic ? staticFreqLabel  : lfoRateLabel;
 
-        label.setVisible (false);   // knob textbox carries the value
-        slider.setBounds (bounds.removeFromTop (58).withSizeKeepingCentre (58, 58));
+        label.setBounds (bounds.removeFromTop (16));
+        slider.setBounds (bounds.removeFromTop (72).withSizeKeepingCentre (76, 72));
     }
 }
 

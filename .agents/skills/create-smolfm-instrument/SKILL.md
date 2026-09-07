@@ -251,11 +251,12 @@ Use this skill whenever:
     - great for snare/cymbal textures and breathy layers
   - `osc%Mode` - frequency mode selector (0 = Pitch, 1 = Static, 2 = LFO)
     - Pitch (default): frequency follows the note_in port
-    - Static: fixed audio-range frequency from `osc%StaticFreq` (20-20000 Hz);
-      note-on only re-syncs the phase and keeps the voice alive — the
-      oscillator does NOT follow the keyboard
-    - LFO: fixed low rate from `osc%LfoRate` (0.01-50 Hz); note-on re-syncs
-      the phase so every note starts its modulation from the same point
+    - Static: note_in is a GATE ONLY — the oscillator fires while a note is
+      connected AND playing, always at the fixed `osc%StaticFreq` (20-20000
+      Hz); it does NOT follow the keyboard and IGNORES any processed
+      frequency arriving on note_in (see Antipattern below)
+    - LFO: same gate behaviour at the fixed low rate from `osc%LfoRate`
+      (0.01-50 Hz)
   - `osc%StaticFreq` - static frequency in Hz 20-20000 (default 440; Static mode)
   - `osc%LfoRate` - LFO rate in Hz 0.01-50 (default 1.0; LFO mode)
 - **Mode behaviour**: Static and LFO ignore note_in entirely — the oscillator
@@ -498,6 +499,33 @@ Each `<Wire>` element connects one output port to one input port:
 - Unconnected inputs use their default value (0.0 for signal, 440.0 for frequency)
 
 ## Graph Wiring Principles
+
+### ⚠️ Antipattern: Processed Frequency into a Static/LFO Oscillator
+
+**Static and LFO mode IGNORE the frequency value arriving on `note_in`** —
+the port is only a gate (fire while a note plays). Wiring an FM/F-ADSR/
+frequency-scale chain into a Static/LFO osc **silently discards the whole
+pitch chain**: the envelope and modulation stages compute a frequency that
+never reaches the oscillator.
+
+```text
+WRONG — the fadsr/fm work is thrown away:
+  note → fadsr0 → fm0 → osc0.note_in   (osc0.mode = Static)  ✗
+
+RIGHT — pitch chain needs a Pitch-mode osc:
+  note → fadsr0 → fm0 → osc0.note_in   (osc0.mode = Pitch)   ✓
+
+RIGHT — fixed-frequency body needs no pitch chain at all:
+  note → osc0.note_in                  (osc0.mode = Static,
+                                        osc0.staticfreq = 120)  ✓
+```
+
+Rule of thumb: **a Static/LFO osc takes exactly ONE wire — `note.out →
+osc.note_in`** (the gate). Any second wire into `note_in` (from `fm.out`,
+`fadsr.out`, `fscale.out`) signals the pitch chain was meant for a Pitch
+oscillator: either switch the osc to Pitch mode, or delete the dead chain.
+Also never wire two sources into one input — an InputPort holds exactly one
+source (last wire wins, the other is silently ignored).
 
 ### Signal Flow Patterns
 
