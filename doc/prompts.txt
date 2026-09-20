@@ -1,0 +1,350 @@
+
+Feature: Draggable UI-Components
+
+I want that all components mapping to a procesor(a object with input/output pins/types) 
+becoming wrappable in a draggableComponent object/class which can be rendered on a Panel(custom if  required), 
+which can be used to display all draggableComponents regarding their containing processorComponent. Within 
+the Panels these components should render in little boxes, which can be dragged and moved with the mouse. 
+
+If possible persist the layout as periste setting, which reloaded on start.
+
+Please make a plan how to implement such components and implement them. 
+
+- Design a Panel, which can display draggableComponents
+- design an wrapping object as Connector for Processing Components 
+
+Display the parts: 
+
+as two Components: Carrier + Modulator(Oscillator)
+as one connecting Component FM-Amount/Connector
+Note processor as Component.
+
+You do not need too consider something like graphical pins, but it will be required in the future so 
+prepare it if easily possible.
+
+The current processsing does not need to be changed for now, i just need to see the draggable objects first
+
+
+-----------------------------------------------------------------------------------------------------------
+
+Please make the main window sizable by the bars and maximize button. The Draggable Panel should scale and take the 
+Place.
+
+----------------------------------------------------------------------------------------------------------
+
+Bitte visualisiere der Verbindungen des Processing-Graphen via pins/connection lines. Füge eine Componente 
+für die Visualisierung von Pins und Pin Ports für hinzu, wenn nötig. Eine Processing componente, soll Ports viasulisieren, 
+welche inputSends und outputSends der Componente beschreiben. Die Verbindungen sollen sich in der UI erstellen lassen, indem 
+man auf einen outputPort klickt und dann eine Linie in einen inputPort zieht. Die Verbindung soll angenommen werden, 
+wenn der empfangende Processor, den senden Processor vom Typ her akzeptiert. Eine Verbindung soll sich am Eingangsport 
+durch einen klick entfernen lassen. Die Änderungen in den Verbidungen sollen mit dem tatsächlichen Procesierungsgraphen 
+synchronisiert werden, sodass der sound korrekt geupdated wird. 
+
+----------------------------------------------------------------------------------------------------------
+
+Bitte serialisierte die Anordnung der Graphen in einem XMl. Aus der XML sind der intepretationsfluss/Signalfluss der 
+Der processorComponent beschrieben sein. Bündle die sound-bestimmenden und Anordnungs-bestimmende Informationen/Parameter
+von Componenten und pins, in einem XML. Bitte verwende die Dateiendung .smolfm. für die Speicerhung der XML-Bäume. 
+Bitte oben im editor in einer kleinen Toolleiste buttons für import und exportr der Dateien an. Rendere/Lade sie beim import 
+
+-----------------------------------------------------------------------------------------------------------
+
+Füge bitte über den draggable Panel eine Toolbar hinzu. Es sollen Icons für jeden Componenten Typen dargestellt werden
+(Oscillator, FM Amount, ADSR, Note-in)
+
+Wenn auf ein Icon geklickt wird, soll eine Componente dem draggable panel hinzugefügt werden. 
+
+Die Draggable components sollen oben rechts ein kleines kreuz bekommen, um den Componenten aus dem
+DraggablePanel wieder zu entfernen. 
+
+Beachte das von nun an, mehrere Componenten des gleichen Typs hinzugefügt werden können. 
+
+Lege Parameter an für : 
+
+- 8 Oscillatoren
+- 1 Note-In
+- 4 FM-Amount 
+- 1 ADSR
+
+In der Toolbar soll aus einer Zahl ersichtlicht werden, wie oft die Komponente noch hinzugefügt werden kann. 
+Wenn eine Componente geschlossen wird, wird die Zahl auch wieder erhönt. Sobald die Zahl auf Null fällt, 
+kann keine weitere Komponente hinzugefügt werden. 
+
+Gestalte das UX deisgn der Toolbar schön und modern. 
+
+Beachte dass der Export mit mehreren Komponenten des gleichen Typs zurecht kommen muss. 
+
+----------------------------------------------------------------------------------------------------------
+
+Bitte füge ein Dokument unter /doc hinzu wie die Processoren 
+
+mit ihren Ein/Ausgangen und ihren entsprechenden Typen
+tabellarisch. Definiere 
+alle ein und ausgangstypen zwischen Processoren, am anfang des Dokuments
+
+
+
+
+Einleitung: 
+
+Füge unter doc einen Ordner /processors hinzu, packe lege für jeden Prozessortypen 
+
+Beschreibe jeden Processor typen einzeln in einer eigenen markdown Datei und gebe dessen Namen an,
+am Start des Dokumentents.
+Bennene die Datei sinnvoll gemäß dem dokumentierten Prozessortyp im Code. 
+
+--- Abschnitt 1 Echte Processor Parameter(Sends/Inputs)
+
+Beschreibe tabellarisch:
+
+- wie viele instanzen verfügbar sind
+- Welche Ein und Ausgabe mit welchen typ verwendet werden.  
+- welche echten Parameter daraus folgen und dessen Bennenung.
+
+---UI-Konfiguration Abschnitt 2
+
+Beschreibe tabellarisch:
+
+- Welche zusätzlichen UI-Funktion in der Oberfläche  verfügbar sind.
+ (Es ist geplant, dass in Zukunft in der UI GUI modi verwendet werden sollen, die das styling oder 
+ Optionen im Processor anpassen sollen, wie z.B. Umschalten von LFO auf non-LFO per Checkbox 
+auswählbaren Hertz Bereich in der Oberfläche anzupassen. Diese sollen hier festgehalten werden.)
+ Wenns noch keine gibt, halte es leer, aber übernehme den Default steht, um 
+ weise den zukunftig lesenden Agent darauf hin, dass dann zu beachten, und die 
+ Tabelle zu beginne.
+ 
+Bitte in den Tabellen entsprechende zugehörige Symbolde im C++ Code aufnehmen, aber 
+es sollen keine großen Routinen dargestellt werden. Es geht nur um die Symbole von Feldern, Typen und 
+Funktionen/ Funktionenaufrufen und ihren Dateien. Möglichst kurz und prägnant aber vollständig. 
+
+Bitte in zwei weiteren Abschnitten
+
+--- Abschnitt 3
+
+Beschreibe formell:
+
+Eine mathematische Beschreibung des Processorablaufs, falls formale Formeln notwendig sind, beginne einleitend mit einer Tabelle 
+aller Formalen symbole. Erkläre dann den Funktionsablauf, wenn möglich formal mathematisch aus JUCE analoger DSP-Theorie. 
+
+-- Abschnitt 4 
+
+Beschreibe tabellarisch:
+
+Stelle in einer weiteren Tabelle, die einzelnen Symbole der Formalen mathematischen Beschreibung
+mit den Stellen Code im Zusammehang, und verdeutliche die Berechnung/den Berechnungsschritt, 
+sodass einem die formalen Symbole verdeutlicht werden. Wenn notwendig gehe
+auf C++ Eigenschaften ein, um die Berechnung im Code verstehen zu können.
+ 
+
+Füge den instructions hinzu, dass die Markdown Dokumente einheitlich
+ bei neuen Prozessoren, Änderungen an vorhandenen Prozessoren wie z.B. Updates von Typeänderung im Parameterfluss.
+geupdatet werden soll. Die Struktur darf während eines Updates nicht geändert werden. Die Dokumente 
+müssen immer mit vorhandenen Code konsistent bleiben. Halte die Struktur als eigenes Markdown dokument als Template 
+mit fest, und referenziere immer in den Markdown-files der Prozessore an das Template-File und weise den 
+Agent drauf hin, sich beim updaten an den Template files zu orientieren. 
+weiter. Sei deutlich im Template, sodass die Struktur sie zwischen den Dateien nie ändert, und das Template 
+als Referenz hat. Strukturiere das Template detailliert sinnvoll zusammehängen mit dem vorhandenem Code 
+und gebe eine fest-einzuhaltene Form vor.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Bitte füge einen frequenzy Slider als vorllständigen vertikalen slice hinzu, 
+der eine Frequenz entgegen nimmt und eine beliebige Skalierung einem Faktor durchführen 
+kann. Die UI soll den Bereich des Faktors auf 0 bis 10 begrenzen.
+Der Processor bekommt eine frequenz und gibt wieder eine Frequenz raus. 
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Bitte erhöhe die erlaubte Anzahl von Note-in Prozessor instanzen. Der Prozessor soll immer die gespielte Note liefern, aber sich mehrfach der UI als Componente hinzufügen lassen und auch mehrfach senden können.
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Ich vermute einen Fehler oder eine ungereimtheit: 
+
+Ich hab in einen FM-ModulatioProcessor ein Note-In Signal gegeben 
+und einen OSC mit vorängern FrequencyScale und einen weiteren Note-In 
+geleitet und normal an den carrier gegeben. Aber wenn  ich die scale des FrequencyScale ändere 
+scheint sich das soundbild nicht zu ändern, auch wenn eine FM-Berechnet zu werden scheint, die 
+aber unabhängig von der Skalierung zu sein scheint. Das kann nicht richtig sein. Prüfe 
+und Analysiere.
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Bitte lade keinen default graphen, falls du das tust. Bitte lasse den graphen leer und alle processoren unsichtbar und ohne pins verbunden. 
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Feature: Auswahl eines Work-Diretory + Selektion von .smolfm Dateien. 
+
+Erlaube es mit einem directory button ein directory auszuwählen. In dem 
+Directory soll das Plugin und die Standalone applikation nach .smolfm Dateien 
+suchen. Es soll eine zentriertes leicht gestyltes label in der Mitte 
+über dem draggable panel angezeigt werden, welches von Pfeilen zur Auswahl 
+der nächsten verfügbaren .smolfm Datei. Dort soll der Name der ausgewählten 
+smolfm datei dargestellt werden. Falls das smollfm noch kein Names feld für einen Instrument Namen hat, 
+füge es hinzu. Man kann vorwärts und rückwärts mit den pfeiln 
+zwischen den .smolfm Dateien, welche sich im workind directory befinden, wechseln.
+Bei einem Wechsel soll der Graph in das draggable panel geladen werden. Zeige den directory 
+pfad und directory button oberhalb der Navigationselemente und des labels an.
+
+Beschreibe das Feature und dessen Implementierung in einem markdown file. Gehe auf UI und Verarbeitung 
+von Daten ein. Lade nur soviele Dateien in den Hauptspeicher wie du musst, versuch mit einer auszukommen, 
+falls möglich.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Mache bitte 4 ADSR Instanzen verfügbar. Füge einen neuen Output processor hinzu, welcher 
+Signale als eingabe bekommt. Definiere 8-Inputpins für Signale. Der Output processor
+soll diese Signale zu einem Signal zusammenführen und dann Ausgeben. Füge dem Masterprocessor 
+einen Slider für Mastervolume und eine Pegelanzeige hinzu, um die Signalstärke zu monitoren. Der ADSR-Processor 
+soll nicht mehr mit dem endgültigen weiterleiten der Samples zu tun haben und einfach 
+seine hüllkurve auf ein eingangssignal legen und dann dass Signal weiterleiten. 
+
+Bitte füge zu allem .smolfm Dateien unter instruments den outputprocessor als endstufe hinzu.  
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Bitte füge beim Laden des Layouts beim laden einer .smolfm datei ein resizing des Windows durch. Das Window soll anwachsen, wenn 
+nicht genug Platz für die Darstellung des beschriebenen Layouts vorhanden ist. Es soll versucht soviel size zu nehmen, 
+wie noch verfügbar ist, gegeben der tatsächlichen Bildschirmgröße, aber nicht mehr als benötigt ist gegeben dem Layout. 
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Bitte erstelle einen gesonderten skill unter .agents. Füge den instructions hinzu den skill zu updatern, wenn es zu Schnittstellen oder typänderungen an den processoren kommt, den Skill zu updaten. Füge alle typen sowie eine Liste der möglichen processoren, samit ihrer input/output typen, der Funktion beschrieben in einem Satz, sowie die Anzahl der möglichen Instanzen ein. Füge außerdem eine Erklärung des .smolFM layouts, samt tabellarischer processor spalten hinzu. Ekläre wie .smolfm Dateien prinzipiell generiert werden und wie der graph verdrahtet werden kann. Mache dem Skill klar bei der Generierung eines smolFM instruments, eine Beschreibung als description element im xam anzugeben,. Die Beschreibung soll die DSP zusammenhänge der instrument idee verdeutlichen. Vergebe zudem einen Namen. Beschreibe möglichkeiten, wie man Instrumente wie bells, pianos, brasses, snares, kicks, bass, subbasses, 808 basses, ambient pads oder ähnliche instrumente mit den vorhandenen processoren generieren könnte. Der Skill soll immer verwendet werden eine instrument erstellen werden soll. Der skill soll eine Beschreibung für ein Instrument entgegeben nehmen und daraufhin im Anschluss eine oder mehrere passende instrumente generieren. 
+
+
+Feature: Auswahl eines InstrumentContext. 
+
+-----------------------------------------------------------------------------------------------------------
+
+Feature : Dynamic processing given an connected graph/tree
+
+Ich möchte, dass du mir die einzelnen ProcessorSchritte zuerst in eigene ProcessorKlassen kapselst und in einem Baum organisierst. 
+
+Ich möchte folgendene Baumsteine: 
+
+ - Oscillator(eine Klasse für Carrier und Modular, Parametrisierung durch eine Hertz zahl)
+ - FMModulationProzessor(Bekommt einen eingangsoscillator prozessor, den er ausliest, um  einen zweiten oscillator zu modulieren. Der FM-Amount soll weiterhin parametrisiert sein.)
+
+ - Ein ADSR Processor, welcher die Hüllkurve mit Parametern anwendet.
+
+ Die GUI kann zunächst unverändert bleiben. Setze einen sinnvollen traversierenbaren Baum auf, das Signal durch die gekapselten Klassen zu verarbeiten.  Bedenke wie der Graph die erlaubten eingabe und ausgabetypen für seine Knoten kennt. Verwalte sie elegant. 
+
+ Lege die neuen Klassen unter einem ordner processors an. Der PluginProcessor soll die Berechnung orchestrieren.  
+ 
+ ---
+ 
+ Bitte macht dir einen Skill, wie man im code und in der documentation korrekt einen processor anlegt. Verdeutliche UI-Zusammenhänge, Datenstrukturen wie Graphen, Input und Output Art als Pin, wie die dokumentation korrekt angepasst wird(beachte es gibt bereits ein template) und schreiben eine Anleitung für ein LLm um möglichst zügig einen vollständigen processor als vertikalen slice selbständig anzulegen, (Alle Stellen in den Dokumenten)
+ 
+ 
+ Prozessor Ideen:
+ 
+
+ 
+ [ ] Stereo signal splitter / dann auch noch panning?
+	[ ] Stereo signal splitter, aber mit panning option zum regulieren der gesplitteten Amplide gain?
+	
+ [ ] Gain-processor? signal an oder abheben(Kombinieren mit AM? Wie hängen die zusammen.)
+ 
+ [ ] Noise-processor
+ 
+ [ ] mix(processor) zusammenführen von signalen
+ 
+ [ ] Low-Cut/High-Cut Filter
+	[ ] Cut-Off/Resonance als modulierbare parameter?
+ 
+ [ ] Wave-shaper-Prozessor
+ 
+ 
+ --------------------------------------------------------------------------------
+ 
+Bitte verwende Context7, um eine Visualisierung der eingestellten ADSR Kurve zu 
+realisieren in der ADSRProcessor-Komponente. Die Box soll sich von der Größe nicht 
+ändern.
+ 
+ 
+ --------------------------------------------------------------------------------
+ 
+ Feature: GainProcessor + Pitch Enevelope Modulation
+ 
+ 
+Zweiter ADSR Processor: F-ADSR
+Generier eine ADSR-Hüllkurve mit sechs Parametern: Attack, Decay, Sustain, Release sowie Up- und Down-Scaling-Factor. Die Scaling-Factor bestimmen, mit welchem Frequenzfaktor die Eingangsfrequenz bei einem Envelope-Wert von E = 1 bzw. E = 0 multipliziert wird.
+Der processor bekommt als Eingang eine Frequenz und der Ausgang ist es ebenfalls. Verwende den Create-Smolfm-Process-Vertical-Slice Skill. mache ihn in der Breit etwas größer als die anderen processoren, 
+falls die controls vertical nicht genug platz hasen. 
+ 
+ 
+---------------------------------------------------------------------------------
+
+Anheben von Processor Parametern: 
+
+Hebe die Processor Instanzen auf 
+
+OSC 8 
+FM 4
+ADSR 8 
+scale 8
+Note 1: -> ein note in kann mehrere signale senden. Einer Reicht erstmal. Korrigiere die smolfm instrumente in ihrem layout.
+Ring 4 
+AM 4 
+Delay 8 
+Out 1 
+
+Füge dem OSC Processor, die Option hinzu einfach Noise zu senden. 
+
+Füge einen Gain Process hinzu, der ein Signal an oder abhebt, welches er empfängt und weiter leitet.
+Verwende den Skill zum erstellen von Processoren. Der Gain Processor soll 8 mal verfügbar sein. 
+
+Passe den Skill zum erstellen der Instrumente entsprechend an, bzgl. der neuen Möglichkeiten.
+ 
+---------------------------------------------------------------------------------------------------------------------------
+
+LFO-Option für Osc : 
+
+Bitte füge dem OSC Processor UI, eine LFO 
+Funktion hinzu. Sie soll durch noten getriggert werden, 
+aber in der eingestellten Frequenz schwingen. So 
+können beliebige Signale beim spielen einer Note ins 
+in den graphen eingespeist werden. Im LFO modus soll
+der auswählbare hertz bereich sinnvoll begrenzt in der UI  
+dargestellt werden, um etwas kleinere hertr zahlen auswählen zu können.
+Die Processor processierung an sich sollte sich eigentlich gar nicht großartig ändern müssen. 
+Außer einer Anpassung der Hertztzahl. Ob LFO Range oder Notepitch <-> static frequency on note hit 
+sollten zwei UI optionen sein.
+
+Füge dem Instrumenten skill informationen über diese Möglichkeit der Konfgiruation hinzu.
+und geben Beispiele wie processoren sinnvoll mit lfos moduliert werden könnten. 
+
+
+Gibt dem 
+
+ 
+-----------------------------------------------------------------------------
+
+ 
+ 
+ 
+ --------------------------------------------------------------------------------
+ 
+  [ ] Detune(Was macht detune?) 
+	FrequencyScaler als Detuner mit cents und hetzt gestalten in der UI
+ 
+ [ ] Pitch envlope realiserbar als
+	[ ] Constant 1 signal + ADSR Signal, dann fqScaler scale parameter modulieren. 
+		ABER: Wie passt der maximale faktor 1 zur einheit des fqScalers
+	[ ] Allgemein, wie Parameter modulierung realisieren? Prozessierung müssen imemr modulations parameter zwischen 0 und 1 kennen.
+	[ ] Wie wird das constant 1 sinal mit dem note.in signal synchronisiert.
+
+
+----------------------------------------------------------------------------------
+
+Warum links und rechts signale einzeln "pannen". 
+Ich denke panen is gleichzeitige anheben/abheben der Amplitde 
+in einem links/rechts split. oder wie wäre ein panning hier 
+realisiert?
+
+                    ┌→ fscale(-10ct) → osc → pan -0.8 ─┐
+note → split/fanout ┤                                   ├→ Stereo Mix
+                    └→ fscale(+10ct) → osc → pan +0.8 ─┘

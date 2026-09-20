@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<SmolFM version="2" name="house-kick-classic">
+  <description>Classic deep house kick: static 55 Hz sine gated by the note input (fires only while a note plays), tight amp envelope with 350 ms boom and soft-saturation warmth.</description>
+  <Nodes>
+    <Node id="note" x="60" y="60">
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="osc0" x="680" y="60" mode="1" staticfreq="55" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="shape0" x="680" y="380" drive="0.2" shape="0">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="adsr0" x="1000" y="60" attack="0.001" decay="0.35" sustain="0.0" release="0.12">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="output" x="1320" y="60" level="0.9"/>
+  </Nodes>
+  <Connections>
+    <Wire from="note" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="osc0" fromPort="out" to="shape0" toPort="in"/>
+    <Wire from="shape0" fromPort="out" to="adsr0" toPort="in"/>
+    <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
+  </Connections>
+</SmolFM>

@@ -1,0 +1,1 @@
+- name: Kimi K3 Cloud provider: ollama model: kimi-k3:cloud roles: - chat - edit - apply

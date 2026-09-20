@@ -94,6 +94,14 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
         voiceParameters.shaperShape[static_cast<size_t> (i)] = parameters.getRawParameterValue ("shape" + num + "Shape");
     }
 
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxFilters; ++i)
+    {
+        const juce::String num (i);
+        voiceParameters.filterCutoff   [static_cast<size_t> (i)] = parameters.getRawParameterValue ("filter" + num + "Cutoff");
+        voiceParameters.filterResonance[static_cast<size_t> (i)] = parameters.getRawParameterValue ("filter" + num + "Resonance");
+        voiceParameters.filterMode     [static_cast<size_t> (i)] = parameters.getRawParameterValue ("filter" + num + "Mode");
+    }
+
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxGains; ++i)
     {
         const juce::String num (i);
@@ -350,7 +358,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 
         layout.add (std::make_unique<juce::AudioParameterChoice> (
             "osc" + num + "Waveform", "Oscillator " + num + " Waveform",
-            juce::StringArray { "Sine", "Saw", "Square", "Triangle", "Noise" },
+            juce::StringArray { "Sine", "Saw", "Square", "Triangle", "Noise", "Perlin Noise", "Simplex Noise" },
             static_cast<int> (smolfm::Waveform::sine)));
 
         layout.add (std::make_unique<juce::AudioParameterChoice> (
@@ -468,6 +476,27 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         layout.add (std::make_unique<juce::AudioParameterChoice> (
             "shape" + num + "Shape", "Waveshaper " + num + " Shape",
             juce::StringArray { "Soft", "Hard", "Fold" }, 0));
+    }
+
+    // -- Filter pool --------------------------------------------------------
+    // Three parameters per instance: static cutoff (20-20000 Hz, log),
+    // resonance (0-1) and mode (LP, BP, HP, Notch).  cutoff_mod_in overrides
+    // the static cutoff when connected.
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxFilters; ++i)
+    {
+        const juce::String num (i);
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "filter" + num + "Cutoff", "Filter " + num + " Cutoff",
+            juce::NormalisableRange<float> (20.0f, 20000.0f, 0.1f, 0.3f), 1000.0f));
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "filter" + num + "Resonance", "Filter " + num + " Resonance",
+            juce::NormalisableRange<float> (0.0f, 1.0f), 0.0f));
+
+        layout.add (std::make_unique<juce::AudioParameterChoice> (
+            "filter" + num + "Mode", "Filter " + num + " Mode",
+            juce::StringArray { "LP", "BP", "HP", "Notch" }, 0));
     }
 
         // -- AM modulator pool ------------------------------------------------------

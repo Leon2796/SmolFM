@@ -16,7 +16,7 @@ Momentanfrequenz in die Phase — das ist die Stelle, an der echte FM entsteht.
 
 | Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
 |---|---|---|---|---|
-| Wellenform | `osc<N>Waveform` | Choice: Sine/Saw/Square/Triangle/Noise | `std::atomic<float>* waveform` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
+| Wellenform | `osc<N>Waveform` | Choice: Sine/Saw/Square/Triangle/Noise/Perlin Noise/Simplex Noise | `std::atomic<float>* waveform` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
 | Modus | `osc<N>Mode` | Choice: Pitch/Static/LFO, Default Pitch | `std::atomic<float>* mode` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
 | Statische Frequenz | `osc<N>StaticFreq` | Float, 20–20000 Hz, Default 440 | `std::atomic<float>* staticFreq` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
 | LFO-Rate | `osc<N>LfoRate` | Float, 0.01–50 Hz, Default 1 | `std::atomic<float>* lfoRate` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
@@ -41,7 +41,7 @@ Frequenzquellen:
 | Frequenz-Modus-Umschalter | Wählt zwischen Pitch (note_in getrieben), Static (feste Audio-Frequenz) und LFO (feste Niedrigfrequenz) | `OscillatorPanel::modeBox` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
 | Static-Freq-Regler | Feste Frequenz im Audiorange, 20–20000 Hz; nur im Static-Modus sichtbar | `OscillatorPanel::staticFreqSlider` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
 | LFO-Rate-Regler | Feste LFO-Frequenz, 0.01–50 Hz; nur im LFO-Modus sichtbar | `OscillatorPanel::lfoRateSlider` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
-| *(Basis)* | ComboBox (Wellenform) | `OscillatorPanel::waveformBox` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
+| *(Basis)* | ComboBox (Wellenform) mit 7 Optionen: Sine, Saw, Square, Triangle, Noise, Perlin Noise, Simplex Noise | `OscillatorPanel::waveformBox` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
 
 ## Abschnitt 3 — Mathematische Beschreibung
 
@@ -92,7 +92,10 @@ $$\varphi_{n+1} = \mathrm{fmod}(\varphi_n + \Delta\varphi,\ 2\pi)$$
    | Sine | `sin(p)` |
    | Saw | `2 * (p / (2 * pi)) - 1` |
    | Square | `1`, wenn `p < pi`; sonst `-1` |
-   | Triangle | `2 * (p / pi) - 1`, wenn `p < pi`; sonst `3 - 2 * (p / pi)` |
+      | Triangle | `2 * (p / pi) - 1`, wenn `p < pi`; sonst `3 - 2 * (p / pi)` |
+   | Noise | `random(-1, 1)` — uniformes Zufallsrauschen, phase-unabhängig |
+   | Perlin Noise | `perlin2D(x, 0)` mit $x = \frac{p}{2\pi} \cdot 32$; Oktaven-Summierung: $\sum_{i=0}^{3} \text{perlin}(x \cdot 2^i, 0) \cdot 0.5^i$ |
+   | Simplex Noise | `simplex2D(x, 0)` mit $x = \frac{p}{2\pi} \cdot 32$ — klassisches 2D-Simplex-Noise |
 
    Das Ergebnis wird als `out_n` ausgegeben.
 
@@ -112,6 +115,6 @@ früheren Phasenmodulations-Design.
 | $f_s$ | `sampleRate` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | gesetzt in `prepare(double)` |
 | $\Delta\varphi$ | `phaseIncrement` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | `updatePhaseIncrement()`: `twoPi * frequency / sampleRate` |
 | $\varphi_n$ | `phase` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | `getNextSample()`: `phase += phaseIncrement`, Wrap per `fmod()` mit Negativ-Korrektur |
-| $m$ | `waveformFromIndex(round(waveform->load()))` | [OscillatorProcessor.cpp](../../src/processors/OscillatorProcessor.cpp) | APVTS-Float → `int` → `enum class Waveform` |
+| $m$ | `waveformFromIndex(round(waveform->load()))` | [OscillatorProcessor.cpp](../../src/processors/OscillatorProcessor.cpp) | APVTS-Float (0–6) → `int` → `enum class Waveform` |
 | $w(\cdot)$ | `evaluateWaveform(float)` | [SimpleOscillator.h](../../src/SimpleOscillator.h) | `switch` über `Waveform`; Phase vorher per `fmod` normalisiert (erlaubt Through-Zero) |
 | $out_n$ | `getNextSample(0.0f)` → `output.setSample()` | [OscillatorProcessor.cpp](../../src/processors/OscillatorProcessor.cpp) | Sample erzeugen und in den Port schreiben |

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<SmolFM version="2" name="house-chord-epiano-layer">
+  <description>Chord layer e-piano: classic DX-style FM (1:1 attack + 1:14 tail via chained FM), medium decay with sustain for held chords, soft-clipped warmth.</description>
+  <Nodes>
+    <Node id="note" x="60" y="60">
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="fm0" x="360" y="60" amount="1.1">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="fm1" x="360" y="380" amount="0.45">
+      <Pin id="freq_in" direction="in" type="frequency"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="fscale0" x="60" y="680" factor="14.0"/>
+    <Node id="osc2" x="360" y="680" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="osc1" x="60" y="380" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="osc0" x="680" y="60" waveform="0">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="shape0" x="1000" y="60" drive="0.2" shape="0">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="adsr0" x="1320" y="60" attack="0.002" decay="0.7" sustain="0.3" release="0.35">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="output" x="1640" y="60" level="0.72"/>
+  </Nodes>
+  <Connections>
+    <Wire from="note" fromPort="out" to="fm0" toPort="freq_in"/>
+    <Wire from="fm0" fromPort="out" to="fm1" toPort="freq_in"/>
+    <Wire from="fm1" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in"/>
+    <Wire from="fscale0" fromPort="out" to="osc2" toPort="note_in"/>
+    <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in"/>
+    <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in"/>
+    <Wire from="osc0" fromPort="out" to="shape0" toPort="in"/>
+    <Wire from="shape0" fromPort="out" to="adsr0" toPort="in"/>
+    <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
+  </Connections>
+</SmolFM>

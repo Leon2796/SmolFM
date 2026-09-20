@@ -15,6 +15,7 @@
 #include "gui/components/FAdsrComponent.h"
 #include "gui/components/GainComponent.h"
 #include "gui/components/WaveshaperComponent.h"
+#include "gui/components/FilterComponent.h"
 #include "gui/components/NoteNodeComponent.h"
 #include "gui/components/MasterOutputComponent.h"
 #include "gui/components/RingModulatorComponent.h"
@@ -89,6 +90,16 @@ namespace
             apvts,
             smolfm::GraphNodeRegistry::driveParameterIdFor (instanceId),
             smolfm::GraphNodeRegistry::shapeParameterIdFor (instanceId));
+    }
+
+    std::unique_ptr<juce::Component> makeFilterContent (const juce::String& instanceId,
+                                                       juce::AudioProcessorValueTreeState& apvts)
+    {
+        return std::make_unique<gui::FilterComponent> (
+            apvts,
+            smolfm::GraphNodeRegistry::filterCutoffParameterIdFor    (instanceId),
+            smolfm::GraphNodeRegistry::filterResonanceParameterIdFor (instanceId),
+            smolfm::GraphNodeRegistry::filterModeParameterIdFor      (instanceId));
     }
 
         std::unique_ptr<juce::Component> makeNoteContent (const juce::String&,
@@ -285,7 +296,19 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                                 return p; },
                             smolfm::GraphNodeRegistry::maxWaveshapers);
 
-    for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &fAdsrButton, &gainButton, &shapeButton, &noteButton, &ringButton, &amButton, &delayButton, &outputButton })
+    filterButton .configure ("filter", "Filter", [] (const juce::Rectangle<float>& r)
+                             {   juce::Path p;
+                                 // Low-pass icon: signal decaying past a knee
+                                 const float cy = r.getCentreY();
+                                 p.startNewSubPath (r.getX() + 2.0f, cy);
+                                 p.lineTo (r.getX() + r.getWidth() * 0.45f, cy);
+                                 p.quadraticTo (r.getX() + r.getWidth() * 0.6f, cy,
+                                                r.getX() + r.getWidth() * 0.6f, r.getY() + 3.0f);
+                                 p.lineTo (r.getRight() - 2.0f, r.getY() + 3.0f);
+                                 return p; },
+                             smolfm::GraphNodeRegistry::maxFilters);
+
+    for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &fAdsrButton, &gainButton, &shapeButton, &filterButton, &noteButton, &ringButton, &amButton, &delayButton, &outputButton })
     {
         addAndMakeVisible (*b);
         b->onAddRequested = [this] (const juce::String& baseId) { addNodeFromToolbar (baseId); };
@@ -327,6 +350,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             return graphPanel.addNodeOfType ("gain", processorRef.getParameters(), makeGainContent, nodeStartsHidden);
         if (baseId == "shape")
             return graphPanel.addNodeOfType ("shape", processorRef.getParameters(), makeWaveshaperContent, nodeStartsHidden);
+        if (baseId == "filter")
+            return graphPanel.addNodeOfType ("filter", processorRef.getParameters(), makeFilterContent, nodeStartsHidden);
                 if (baseId == "note")
             return graphPanel.addNodeOfType ("note", processorRef.getParameters(), makeNoteContent, nodeStartsHidden);
                 if (baseId == "ring")
@@ -376,6 +401,7 @@ void AudioPluginAudioProcessorEditor::addNodeFromToolbar (const juce::String& ba
         { "fadsr",  makeFAdsrContent   },
         { "gain",   makeGainContent    },
         { "shape",  makeWaveshaperContent },
+        { "filter", makeFilterContent },
         { "ring",   makeRingModulatorContent },
                 { "am",     makeAmContent        },
         { "delay",  makeDelayContent     }
@@ -405,6 +431,7 @@ void AudioPluginAudioProcessorEditor::refreshToolbarBadges()
     fAdsrButton .setRemaining (smolfm::GraphNodeRegistry::maxFAdsr            - graphPanel.countBoxesOfType ("fadsr"));
     gainButton  .setRemaining (smolfm::GraphNodeRegistry::maxGains             - graphPanel.countBoxesOfType ("gain"));
     shapeButton .setRemaining (smolfm::GraphNodeRegistry::maxWaveshapers       - graphPanel.countBoxesOfType ("shape"));
+    filterButton .setRemaining (smolfm::GraphNodeRegistry::maxFilters          - graphPanel.countBoxesOfType ("filter"));
     noteButton  .setRemaining (smolfm::GraphNodeRegistry::maxNotes           - graphPanel.countBoxesOfType ("note"));
     ringButton  .setRemaining (smolfm::GraphNodeRegistry::maxRingModulators   - graphPanel.countBoxesOfType ("ring"));
     amButton    .setRemaining (smolfm::GraphNodeRegistry::maxAmModulators      - graphPanel.countBoxesOfType ("am"));
@@ -445,6 +472,7 @@ void AudioPluginAudioProcessorEditor::resized()
     fAdsrButton .setBounds (palette.removeFromLeft (tileWidth));
     gainButton  .setBounds (palette.removeFromLeft (tileWidth));
     shapeButton .setBounds (palette.removeFromLeft (tileWidth));
+    filterButton.setBounds (palette.removeFromLeft (tileWidth));
             noteButton .setBounds (palette.removeFromLeft (tileWidth));
     ringButton .setBounds (palette.removeFromLeft (tileWidth));
     amButton   .setBounds (palette.removeFromLeft (tileWidth));

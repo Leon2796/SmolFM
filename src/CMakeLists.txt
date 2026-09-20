@@ -32,6 +32,7 @@ target_sources(${PROJECT_NAME}
         processors/FAdsrProcessor.cpp
         processors/GainProcessor.cpp
         processors/WaveshaperProcessor.cpp
+        processors/FilterProcessor.cpp
         processors/MasterOutputProcessor.cpp
         graph/GraphNodes.cpp
         graph/SmolFmFile.cpp
@@ -42,6 +43,7 @@ target_sources(${PROJECT_NAME}
         gui/components/FAdsrComponent.cpp
         gui/components/GainComponent.cpp
         gui/components/WaveshaperComponent.cpp
+        gui/components/FilterComponent.cpp
         gui/components/NoteNodeComponent.cpp
         gui/components/PatchBrowser.cpp
         gui/components/MasterOutputComponent.cpp

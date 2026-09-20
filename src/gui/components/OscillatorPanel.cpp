@@ -34,11 +34,11 @@ OscillatorPanel::OscillatorPanel (juce::AudioProcessorValueTreeState& apvts,
     titleLabel.setText (title, juce::dontSendNotification);
     titleLabel.setJustificationType (juce::Justification::centred);
 
-    // Item order must match the choices declared in
+        // Item order must match the choices declared in
     // PluginProcessor::createParameterLayout() ("Sine", "Saw", "Square",
-    // "Triangle", "Noise").  ComboBox item IDs start at 1;
-    // ComboBoxAttachment maps them to the choice index.
-    waveformBox.addItemList ({ "Sine", "Saw", "Square", "Triangle", "Noise" }, 1);
+    // "Triangle", "Noise", "Perlin Noise", "Simplex Noise").
+    // ComboBox item IDs start at 1; ComboBoxAttachment maps them to the choice index.
+    waveformBox.addItemList ({ "Sine", "Saw", "Square", "Triangle", "Noise", "Perlin Noise", "Simplex Noise" }, 1);
 
     // Frequency-mode controls.  Mode combo order must match the APVTS choice
     // ("Pitch", "Static", "LFO"); each frequency row is only visible in its

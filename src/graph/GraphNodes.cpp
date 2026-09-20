@@ -245,6 +245,29 @@ namespace
         }
 
         {
+            NodeSpec filt;
+
+            filt.id = "filter";
+
+            filt.title = "Filter";
+
+            filt.outputPortId = "out";
+
+            filt.outputType = PortType::signal;
+
+            filt.inputPortIds = { "in", "cutoff_mod_in" };
+
+            filt.inputTypes = { PortType::signal, PortType::frequency };
+
+            filt.cutoffParameterTemplate = "filter%Cutoff";
+
+            filt.resonanceParameterTemplate = "filter%Resonance";
+
+            specs.push_back (filt);
+
+        }
+
+        {
 
             NodeSpec out;
 
@@ -343,6 +366,8 @@ NodeType GraphNodeRegistry::typeOf (const juce::String& nodeId)
 
     if (base == "shape") return NodeType::waveshaper;
 
+    if (base == "filter") return NodeType::filter;
+
     if (base == "output") return NodeType::masterOutput;
 
     return NodeType::unknown;
@@ -438,6 +463,7 @@ int GraphNodeRegistry::maxInstancesOf (NodeType type)
         case NodeType::fAdsr:          return maxFAdsr;
         case NodeType::gain:           return maxGains;
         case NodeType::waveshaper:     return maxWaveshapers;
+        case NodeType::filter:         return maxFilters;
 
         case NodeType::masterOutput:   return maxMasterOutputs;
 
@@ -656,6 +682,35 @@ juce::String GraphNodeRegistry::levelParameterIdFor (const juce::String& nodeId)
         return {};
 
     return withIndex (spec->levelParameterTemplate, indexOf (nodeId));
+}
+
+juce::String GraphNodeRegistry::filterCutoffParameterIdFor (const juce::String& nodeId)
+{
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->cutoffParameterTemplate.isEmpty())
+        return {};
+
+    return withIndex (spec->cutoffParameterTemplate, indexOf (nodeId));
+}
+
+juce::String GraphNodeRegistry::filterResonanceParameterIdFor (const juce::String& nodeId)
+{
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->resonanceParameterTemplate.isEmpty())
+        return {};
+
+    return withIndex (spec->resonanceParameterTemplate, indexOf (nodeId));
+}
+
+juce::String GraphNodeRegistry::filterModeParameterIdFor (const juce::String& nodeId)
+{
+    // Mode shares the cutoff template prefix ("filter%"), suffixed "Mode" —
+    // mirrors the waveshaper drive/shape pattern.
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->cutoffParameterTemplate.isEmpty())
+        return {};
+
+    return withIndex (spec->cutoffParameterTemplate, indexOf (nodeId)) + "Mode";
 }
 
 juce::String GraphNodeRegistry::delayTimeParameterIdFor (const juce::String& nodeId)

@@ -1,0 +1,6 @@
+﻿MSBuild-Version 18.9.1+a81b43525 f├╝r .NET Framework
+
+  Checking File Globs
+  SmolFM_rc_lib.vcxproj -> C:\Users\leon3\source\repos\SmolFM\jumake_build\src\SmolFM_rc_lib.dir\Release\SmolFM_rc_lib.lib
+  SmolFM.vcxproj -> C:\Users\leon3\source\repos\SmolFM\jumake_build\src\SmolFM_artefacts\Release\SmolFM_SharedCode.lib
+  SmolFM_Standalone.vcxproj -> C:\Users\leon3\source\repos\SmolFM\jumake_build\src\SmolFM_artefacts\Release\Standalone\SmolFM.exe

@@ -36,7 +36,8 @@ namespace
                                                                           std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators>& amModulators,
                                                                           std::array<DelayProcessor*, GraphNodeRegistry::maxDelays>& delays,
                                                                           std::array<GainProcessor*, GraphNodeRegistry::maxGains>& gainProcessors,
-                                                                          std::array<WaveshaperProcessor*, GraphNodeRegistry::maxWaveshapers>& waveshapers)
+                                     std::array<WaveshaperProcessor*, GraphNodeRegistry::maxWaveshapers>& waveshapers,
+                                     std::array<FilterProcessor*, GraphNodeRegistry::maxFilters>& filters)
     {
         juce::ignoreUnused (params, noteSources);
 
@@ -127,6 +128,15 @@ namespace
          && portId == "in")
             return &waveshapers[static_cast<size_t> (index)]->getInput();
 
+        if (type == NodeType::filter
+         && index >= 0 && index < GraphNodeRegistry::maxFilters
+         && filters[static_cast<size_t> (index)] != nullptr)
+        {
+            if (portId == "in")            return &filters[static_cast<size_t> (index)]->getInput();
+            if (portId == "cutoff_mod_in") return &filters[static_cast<size_t> (index)]->getCutoffModInput();
+            return nullptr;
+        }
+
                 if (type == NodeType::ringModulator
          && index >= 0 && index < GraphNodeRegistry::maxRingModulators
          && ringModulators[static_cast<size_t> (index)] != nullptr)
@@ -163,7 +173,8 @@ namespace
                                                                               std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators>& amModulators,
                                                                               std::array<DelayProcessor*, GraphNodeRegistry::maxDelays>& delays,
                                                                               std::array<GainProcessor*, GraphNodeRegistry::maxGains>& gainProcessors,
-                                                                              std::array<WaveshaperProcessor*, GraphNodeRegistry::maxWaveshapers>& waveshapers)
+                                                                              std::array<WaveshaperProcessor*, GraphNodeRegistry::maxWaveshapers>& waveshapers,
+                                       std::array<FilterProcessor*, GraphNodeRegistry::maxFilters>& filters)
     {
         if (portId != "out")
             return nullptr;
@@ -226,8 +237,17 @@ namespace
          && waveshapers[static_cast<size_t> (index)] != nullptr)
             return &waveshapers[static_cast<size_t> (index)]->getOutput();
 
+        if (type == NodeType::filter
+         && index >= 0 && index < GraphNodeRegistry::maxFilters
+         && filters[static_cast<size_t> (index)] != nullptr)
+            return &filters[static_cast<size_t> (index)]->getOutput();
+
         return nullptr;
     }
+
+    //==========================================================================
+    // End of the anonymous helper namespace; the smolfm namespace closes at
+    // the bottom of the file after the SynthVoice member definitions.
 }
 
 //==============================================================================
@@ -346,6 +366,17 @@ void SynthVoice::buildGraph()
                                                              parameters.shaperShape[static_cast<size_t> (i)]);
             waveshapers[static_cast<size_t> (i)] = ws.get();
             graph.addProcessor (std::move (ws));
+        }
+
+        // Filter pool — multi-mode SVF; sits with the other signal-domain
+        // stages, after every frequency producer and before envelopes/output.
+        for (int i = 0; i < GraphNodeRegistry::maxFilters; ++i)
+        {
+            auto f = std::make_unique<FilterProcessor> (parameters.filterCutoff   [static_cast<size_t> (i)],
+                                                        parameters.filterResonance[static_cast<size_t> (i)],
+                                                        parameters.filterMode     [static_cast<size_t> (i)]);
+            filters[static_cast<size_t> (i)] = f.get();
+            graph.addProcessor (std::move (f));
         }
 
         // Master output (singleton).
@@ -547,6 +578,13 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
         for (auto* ws : waveshapers)
         if (ws != nullptr)  ws->getInput().disconnect();
 
+        for (auto* f : filters)
+        if (f != nullptr)
+        {
+            f->getInput().disconnect();
+            f->getCutoffModInput().disconnect();
+        }
+
     for (int i = 0; i < MasterOutputProcessor::numInputs; ++i)
         masterOutput->getInput (i).disconnect();
 
@@ -558,11 +596,11 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
     {
                 OutputPort* out = resolveOutput (conn.from.nodeId, conn.from.portId,
                                                    noteSources, adsrProcessors, fAdsrProcessors, masterOutput,
-                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors, waveshapers);
+                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors, waveshapers, filters);
                 InputPort*  in  = resolveInput  (conn.to.nodeId,   conn.to.portId,
                                                    const_cast<SynthVoiceParameters&> (parameters),
                                                    noteSources, adsrProcessors, fAdsrProcessors, masterOutput,
-                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors, waveshapers);
+                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors, waveshapers, filters);
 
         if (out == nullptr || in == nullptr)
             continue;

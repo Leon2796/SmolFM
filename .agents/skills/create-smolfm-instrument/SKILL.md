@@ -230,6 +230,7 @@ Use this skill whenever:
 | **AdsrProcessor** | `adsr` | 8 | `in` (signal) | `out` (signal) | Applies ADSR envelope to signal; multiplies input by envelope value and velocity |
 | **GainProcessor** | `gain` | 8 | `in` (signal) | `out` (signal) | Stateless boost/attenuate: multiplies input by constant factor (0-10, 1.0 = transparent, negative inverts phase); use for layer balancing, pre-envelope drive, or per-voice level trims |
 | **WaveshaperProcessor** | `shape` | 8 | `in` (signal) | `out` (signal) | Distortion via three transfer functions (Soft/Hard/Fold) with drive control; use for saturation warmth, grit, or metallic foldback textures |
+| **FilterProcessor** | `filter` | 8 | `in` (signal), `cutoff_mod_in` (frequency, optional) | `out` (signal) | Multi-mode SVF (LP/BP/HP/Notch) with static cutoff + resonance; optional frequency input replaces the cutoff entirely (envelope sweeps, auto-wah, risers) |
 | **FAdsrProcessor** | `fadsr` | 4 | `freq_in` (frequency) | `out` (frequency) | Pitch envelope in the frequency domain: scales input frequency between down/up factors along an ADSR envelope; classic pitch-envelope for kick/808/drops or evolving FM sweeps |
 | **MasterOutputProcessor** | `output` | 1 | `in1`-`in8` (signal, 8 inputs) | _(none, final output)_ | Sums up to 8 signal inputs with master level control and peak metering |
 
@@ -368,6 +369,31 @@ Use this skill whenever:
 - **Pairing tip**: put a `gain` node *before* the shaper to push more level
   into the curve, and one *after* to tame the output.
 
+#### FilterProcessor
+- **Purpose**: Multi-mode state-variable filter (TPT/trapezoidal, always stable)
+- **Inputs**:
+  - `in` (signal) - audio to filter
+  - `cutoff_mod_in` (frequency, optional) - live cutoff in Hertz.  When
+    connected it **replaces** the static cutoff entirely (no offset/blend);
+    any frequency producer (fadsr sweep, fm chain, keyboard via fscale) can
+    drive it.  Unconnected = the static cutoff parameter is used alone.
+- **Outputs**: `out` (signal) - filtered audio
+- **Parameters**:
+  - `filter%Cutoff` - static cutoff 20-20000 Hz (log scale), default 1000;
+    the base/fallback cutoff
+  - `filter%Resonance` - resonance 0-1, default 0; sharpens the cutoff;
+    near 1 approaches self-oscillation (stays stable)
+  - `filter%Mode` - 0 = LP, 1 = BP, 2 = HP, 3 = Notch
+- **Behavior**: state-variable filter, coefficients re-derived per sample so
+  cutoff sweeps are click-free.  `startNote()` re-zeros the integrators.
+- **Use when**: bass growl (cutoff envelope on attack), dark pads brightening
+  via LFO (auto-wah), noise risers (LP with rising cutoff), tonal shaping
+  that FM cannot fake, removing harsh FM sidebands (LP/Notch after the osc)
+- **Antipattern**: a `cutoff_mod_in` wire from a Static/LFO osc ignores the
+  pitch chain — the mod input wants a FREQUENCY in Hz, so feed it from
+  `note`/`fadsr`/`fm`/`fscale` outputs only (see Antipattern section above)
+- **XML attributes**: `cutoff` (Hz), `resonance` (0-1), `mode` (0-3)
+
 #### FAdsrProcessor
 - **Purpose**: Pitch envelope in the frequency domain (F-ADSR)
 - **Inputs**: `freq_in` (frequency) - incoming frequency in Hz (typically `note.out` or an FM stage output)
@@ -479,6 +505,7 @@ Each `<Node>` element defines one processor instance:
 | `adsr` | `adsr0` through `adsr7` | 0-7 |
 | `gain` | `gain0` through `gain7` | 0-7 |
 | `shape` | `shape0` through `shape7` | 0-7 |
+| `filter` | `filter0` through `filter7` | 0-7 |
 | `fadsr` | `fadsr0` through `fadsr3` | 0-3 |
 | `output` | `output` (no index) | 0 only |
 
@@ -873,6 +900,63 @@ Connections are only valid when port types match:
 | `fm.out` → `fm.freq_in` | ✓ | frequency → frequency (chaining) |
 | `osc.out` → `osc.note_in` | ✗ | signal → frequency (type mismatch) |
 | `note.out` → `osc.out` | ✗ | output → output (direction wrong) |
+
+#### Filter: Static Cutoff (Simple Tone Shaping)
+A filter without a modulation source works purely from its static cutoff —
+darken a bright FM patch, notch out a nasal resonance, or tame hats.
+
+Use for: tone shaping on any signal path, gentle analog-style warmth.
+
+```
+note.out -> osc0.note_in
+osc0.out   -> filter0.in             (cutoff_mod_in left unconnected)
+filter0.out -> adsr0.in
+adsr0.out   -> output.in1
+```
+Example settings:
+- `filter0.mode = 0` (LP), `filter0.cutoff = 1200` (rounds harsh FM)
+- `filter0.resonance = 0.2` (gentle character; 0.6+ for a wah peak)
+- Notch (mode 3) with cutoff 800 removes boxy/nasal tones
+
+#### Filter: Envelope Cutoff Sweep (Bass Growl / Riser)
+A pitch envelope (F-ADSR) drives the cutoff directly — the filter opens on
+the attack and settles back.  The classic bass growl: filter closed low,
+sweeping open over ~50 ms on each note.
+
+Use for: bass growl, acid squelch, riser noise, percussive opens.
+
+```
+note.out -> fadsr0.freq_in          (envelope in the frequency domain)
+fadsr0.out -> filter0.cutoff_mod_in (envelope output IS the cutoff in Hz)
+osc0.out -> filter0.in
+filter0.out -> adsr0.in
+adsr0.out -> output.in1
+```
+Example settings:
+- `filter0.mode = 0` (LP), `filter0.resonance = 0.4`
+- `fadsr0.up = 4.0`, `fadsr0.down = 1.0` — cutoff sweeps 4x the base
+- Base cutoff via `fadsr0` input from a fixed fscale, e.g.
+  `fscale0.factor = 0.018` (440 Hz -> ~200 Hz base cutoff)
+- `fadsr0.attack = 0.05`, `fadsr0.decay = 0.3`, `fadsr0.sustain = 0.0`
+
+#### Filter: LFO Auto-Wah (Breathing Pads)
+A slow LFO sweeps the cutoff so the sound breathes.  Derive the LFO rate
+from the note via fscale so the rate stays pitch-relative.
+
+Use for: evolving pads, dub chops, moving noise textures.
+
+```
+note.out -> fscale0.freq_in         (scales LFO rate with the keyboard)
+fscale0.out -> osc1.note_in         (osc1 = LFO mode, sine)
+osc1.out -> filter0.cutoff_mod_in   (LFO output IS the cutoff)
+osc0.out -> filter0.in
+filter0.out -> adsr0.in -> output.in1
+```
+Example settings:
+- `osc1.mode = 2` (LFO), `osc1.lforate = 2.0`, `osc1.waveform = 0` (sine)
+- `fscale0.factor = 0.1` (keeps the sweep slow on low notes)
+- `filter0.mode = 0` (LP), `filter0.resonance = 0.5` (audible wah)
+- Pair with a slow-attack adsr for classic house pad movement
 
 ## Instrument Design Recipes
 

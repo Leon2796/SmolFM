@@ -1,0 +1,8 @@
+﻿MSBuild-Version 18.9.1+a81b43525 f├╝r .NET Framework
+
+  Checking File Globs
+  FMModulationProcessor.cpp
+  OscillatorProcessor.cpp
+  ProcessorGraphTests.cpp
+  Code wird generiert...
+  SmolFM_GraphTests.vcxproj -> C:\Users\leon3\source\repos\SmolFM\jumake_build\src\Release\SmolFM_GraphTests.exe

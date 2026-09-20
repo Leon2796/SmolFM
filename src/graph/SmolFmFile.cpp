@@ -116,6 +116,15 @@ namespace
             if (driveId.isNotEmpty()) specs.add ({ "drive", driveId });
             if (shapeId.isNotEmpty()) specs.add ({ "shape", shapeId });
         }
+        else if (baseId == "filter")
+        {
+            const auto cutoffId = GraphNodeRegistry::filterCutoffParameterIdFor    (nodeId);
+            const auto resId    = GraphNodeRegistry::filterResonanceParameterIdFor (nodeId);
+            const auto modeId   = GraphNodeRegistry::filterModeParameterIdFor      (nodeId);
+            if (cutoffId.isNotEmpty()) specs.add ({ "cutoff", cutoffId });
+            if (resId.isNotEmpty())    specs.add ({ "resonance", resId });
+            if (modeId.isNotEmpty())   specs.add ({ "mode", modeId });
+        }
         else if (baseId == "output")
         {
             const auto lvlId = GraphNodeRegistry::levelParameterIdFor (nodeId);

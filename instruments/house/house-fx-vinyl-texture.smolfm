@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<SmolFM version="2" name="house-fx-vinyl-texture">
+  <description>Vinyl-crackle texture bed: static noise at low level with LFO-gated AM creating irregular crackle density, no keyboard tracking - ambient layer for lo-fi house vibes.</description>
+  <Nodes>
+    <Node id="note" x="120" y="60">
+      <Pin id="out" direction="out" type="frequency"/>
+    </Node>
+    <Node id="osc0" x="60" y="60" mode="1" staticfreq="3200" waveform="4">
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="shape0" x="360" y="60" drive="0.7" shape="1">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="am0" x="680" y="60" amount="0.85">
+      <Pin id="carrier_in" direction="in" type="signal"/>
+      <Pin id="modulator_in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="osc1" x="60" y="380" mode="2" lforate="6.3" waveform="2">
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="gain0" x="1000" y="60" factor="0.12">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="adsr0" x="1000" y="380" attack="0.5" decay="0.2" sustain="1.0" release="1.5">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="output" x="1320" y="60" level="0.5"/>
+  </Nodes>
+  <Connections>
+    <Wire from="osc0" fromPort="out" to="shape0" toPort="in"/>
+    <Wire from="shape0" fromPort="out" to="am0" toPort="carrier_in"/>
+    <Wire from="osc1" fromPort="out" to="am0" toPort="modulator_in"/>
+    <Wire from="am0" fromPort="out" to="gain0" toPort="in"/>
+    <Wire from="gain0" fromPort="out" to="adsr0" toPort="in"/>
+    <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
+    <Wire from="note" fromPort="out" to="osc0" toPort="note_in"/>
+    <Wire from="note" fromPort="out" to="osc1" toPort="note_in"/>
+  </Connections>
+</SmolFM>

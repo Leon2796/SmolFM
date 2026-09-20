@@ -56,6 +56,7 @@ enum class NodeType
     fAdsr,
     gain,
     waveshaper,
+    filter,
     masterOutput,
     unknown
 };
@@ -93,6 +94,10 @@ struct NodeSpec
     juce::String mixParameterTemplate;
     juce::String syncParameterTemplate;
     juce::String divisionParameterTemplate;
+
+    // Extra templates for the filter node.
+    juce::String cutoffParameterTemplate;     // "filter%Cutoff" style prefix
+    juce::String resonanceParameterTemplate;  // "filter%Resonance" style prefix
 };
 
 //==============================================================================
@@ -154,6 +159,7 @@ public:
     static constexpr int maxFAdsr       = 4;
     static constexpr int maxGains       = 8;
     static constexpr int maxWaveshapers = 8;
+    static constexpr int maxFilters     = 8;
     static constexpr int maxMasterOutputs = 1;
 
     static const std::vector<NodeSpec>& getAllSpecs();
@@ -186,6 +192,11 @@ public:
     static juce::String driveParameterIdFor     (const juce::String& nodeId);
     static juce::String shapeParameterIdFor     (const juce::String& nodeId);
     static juce::String levelParameterIdFor     (const juce::String& nodeId);
+
+    // Filter-specific parameter ids
+    static juce::String filterCutoffParameterIdFor     (const juce::String& nodeId);
+    static juce::String filterResonanceParameterIdFor  (const juce::String& nodeId);
+    static juce::String filterModeParameterIdFor       (const juce::String& nodeId);
 
     // Delay-specific parameter ids
     static juce::String delayTimeParameterIdFor      (const juce::String& nodeId);
