@@ -2042,3 +2042,597 @@ Update this skill whenever:
 The processor definitions, graph registry, and file-format implementation remain the ultimate
 technical source of truth. This skill should be kept synchronized to prevent documentation drift.
 
+
+---
+
+# Advanced Sound Design Extension — Routing, Instrument Families & Genre Adaptation
+
+This section extends the existing skill with a systematic method for designing high-quality
+instruments across synthesizer families and musical contexts. It does not replace the
+processor reference above. When there is a conflict, the documented processor types,
+ports, instance limits, and file-format rules above remain authoritative.
+
+## 1. Two Signal Domains
+
+Think about every patch as a graph containing two related domains:
+
+### Frequency domain
+
+These nodes produce or transform Hertz values:
+
+- `note`
+- `fscale`
+- `fm`
+- `fadsr`
+
+Typical flow:
+
+```text
+note → fscale/fm/fadsr → osc.note_in
+```
+
+### Audio domain
+
+These nodes produce or process audio-rate signals:
+
+- `osc`
+- `gain`
+- `shape`
+- `filter`
+- `adsr`
+- `ring`
+- `am`
+- `delay`
+- `output`
+
+Typical flow:
+
+```text
+osc → gain/shape/filter → adsr → delay → output
+```
+
+**Never cross these domains with an incompatible wire.** In particular, an oscillator's
+`signal` output cannot directly drive `fm.freq_in`, `fscale.freq_in`, `fadsr.freq_in`,
+or `filter.cutoff_mod_in`. A frequency-producing node is required there.
+
+## 2. General Patch Construction Hierarchy
+
+For every requested sound, make decisions in this order:
+
+1. **Musical role** — bass, lead, pad, pluck, bell, percussion, texture, etc.
+2. **Spectral mechanism** — subtractive, FM, AM, ring modulation, waveshaping, layering,
+   or a deliberate hybrid.
+3. **Signal topology** — decide the minimum graph that can create the mechanism.
+4. **Parameter relationships** — ratios, modulation depth, envelope timing, filter movement,
+   layer balance.
+5. **Fine values** — only after the structure is correct.
+
+Do not start by randomly selecting processor parameters. First decide what physical/DSP
+mechanism should create the requested character.
+
+## 3. Minimum Viable Topology
+
+Prefer the smallest graph that produces the desired audible behavior.
+
+### Basic subtractive voice
+
+```text
+note → osc → filter → adsr → output
+```
+
+### Layered voice
+
+```text
+                 ┌→ gain → filter ─┐
+note → osc0 ─────┤                  ├→ adsr → output
+                 └→ gain → filter ─┘
+note → osc1 ────────────────────────┘
+```
+
+### FM voice
+
+```text
+note → fm.freq_in
+note → fscale → modulator osc → fm.modulator_in
+fm.out → carrier osc.note_in → adsr → output
+```
+
+The exact routing matters: `fm.out` is a **frequency**, so it must feed the carrier
+oscillator's `note_in`, not an audio input.
+
+## 4. Oscillator Selection
+
+Choose waveforms according to the desired spectral starting point:
+
+| Waveform | Typical role | Design tendency |
+|---|---|---|
+| Sine | sub, FM carrier, bell, clean body | minimal harmonic content |
+| Triangle | soft body, mellow lead | fewer upper harmonics than saw |
+| Saw | bass, lead, brass, pad | dense harmonic foundation |
+| Square | hollow bass/lead, digital tones | strong odd-harmonic character |
+| Noise | snare, hats, breath, texture | no pitched harmonic series |
+
+For FM, a sine carrier gives the most predictable sideband structure. A saw or square
+carrier can become dense very quickly because its own harmonics are also modulated.
+
+## 5. Layering Strategy
+
+Layer only when a single oscillator cannot provide all required roles.
+
+Useful layer roles:
+
+- **Sub layer:** sine, usually one octave or more below the main voice.
+- **Body layer:** sine/triangle with little modulation.
+- **Character layer:** FM, ring mod, or waveshaped oscillator.
+- **Transient layer:** short envelope and optionally a pitch envelope.
+- **Noise layer:** noise oscillator for breath, attack, snare, hats, or texture.
+
+Balance layers with `gain` before they reach the final output. Do not assume that eight
+oscillators automatically sound better than two deliberately chosen layers.
+
+## 6. Frequency Scaling and Harmonic Relationships
+
+`fscale` is the main tool for defining frequency ratios.
+
+Examples:
+
+```text
+note → fscale(2.0) → osc       = octave above
+note → fscale(0.5) → osc       = octave below
+note → fscale(3.0) → osc       = third harmonic
+note → fscale(3.5) → osc       = inharmonic FM starting point
+```
+
+Use simple integer ratios for harmonic relationships and non-integer ratios when an
+inharmonic or metallic spectrum is desired.
+
+For a tonal instrument, prefer ratios that preserve a recognizable pitch. For bells,
+gongs, metallic percussion, and experimental sounds, deliberately non-integer ratios can
+be more appropriate.
+
+## 7. FM Design Rules
+
+FM is primarily a **timbre-generation mechanism**, not merely an effect.
+
+Canonical routing:
+
+```text
+note → fm.freq_in
+note → fscale → modulator osc → fm.modulator_in
+fm.out → carrier osc.note_in
+```
+
+### FM ratio
+
+The modulator/carrier frequency ratio determines the spacing and organization of
+sidebands.
+
+- ~1:1 → electric-piano-like, vocal, rounded FM colors
+- ~2:1 → brighter, more harmonic character
+- ~3–4:1 → bell/chime territory
+- non-integer ratios → increasingly inharmonic/metallic behavior
+
+These are starting regions, not fixed presets.
+
+### FM amount
+
+Increase FM amount when more sidebands and brightness are needed. Reduce it when the
+fundamental becomes obscured or the spectrum becomes unnecessarily dense.
+
+For expressive sounds, change FM intensity over time instead of relying only on a static
+high amount.
+
+## 8. Dynamic FM: Modulator Envelope
+
+The existing processor set does not provide a dedicated signal-amplitude modulation
+input for `fm` other than the modulator signal itself. Therefore, shape the modulator
+with an `adsr` when a time-varying FM spectrum is required.
+
+```text
+note → fscale → modulator osc → adsr → fm.modulator_in
+note → fm.freq_in
+fm.out → carrier osc.note_in
+carrier osc → main adsr → output
+```
+
+This is useful for:
+
+- bright attack followed by a mellow sustain,
+- piano/e-piano transients,
+- bells whose high partials disappear during the decay,
+- evolving digital textures.
+
+The modulator envelope and the carrier amplitude envelope should be treated as two
+independent musical controls.
+
+## 9. Ring Modulation
+
+Ring modulation multiplies two audio signals and creates sum/difference components.
+It is therefore a **spectral generator**, not simply an effect placed at the end.
+
+```text
+osc A ─┐
+       ├→ ring → shape/filter → adsr → output
+osc B ─┘
+```
+
+Use harmonic ratios for controlled coloration and inharmonic ratios for metallic or
+experimental spectra.
+
+For a tonal hybrid, keep a dry sine/body layer in parallel:
+
+```text
+osc body → gain ─────────────────────┐
+                                     ├→ output
+osc A + osc B → ring → filter → adsr ─┘
+```
+
+This preserves a stable fundamental while the ring-mod layer supplies character.
+
+## 10. Amplitude Modulation
+
+AM preserves a carrier component because the documented `AmProcessor` uses a biased
+modulator. This makes it suitable for tremolo and animated timbres where the carrier
+should remain identifiable.
+
+### Tremolo
+
+Use an LFO-mode oscillator as the modulator:
+
+```text
+note → carrier osc → am.carrier_in
+LFO osc → am.modulator_in
+am → adsr → output
+```
+
+For a periodic gate/chop, use a square LFO and a high AM amount. For smooth tremolo, use
+a sine LFO and a moderate amount.
+
+### Audio-rate AM
+
+Use a pitch-derived oscillator as the modulator when the sidebands should track the
+played note:
+
+```text
+note → fscale(ratio) → modulator osc
+note → carrier osc
+carrier + modulator → am → adsr → output
+```
+
+## 11. Waveshaping
+
+Waveshaping is most useful when a clean oscillator or FM signal needs additional
+harmonic density.
+
+### Soft
+
+Use low-to-moderate drive for warmth, body, and saturation.
+
+```text
+osc/FM → gain → shape(Soft) → filter → adsr → output
+```
+
+### Hard
+
+Use for aggressive digital/acid-like sounds and dense harmonic buildup.
+
+### Fold
+
+Use for metallic, unstable, or deliberately inharmonic textures. High drive can become
+very dense, so follow it with `gain` and/or `filter` when necessary.
+
+`gain` before a shaper is structurally important: it controls how hard the waveform enters
+the nonlinear transfer function.
+
+## 12. Filter Design
+
+The filter has two fundamentally different operating modes.
+
+### Static filter
+
+Leave `cutoff_mod_in` unconnected and use `filter%Cutoff`.
+
+```text
+source → filter → adsr → output
+```
+
+### Dynamic cutoff
+
+`cutoff_mod_in` expects a **frequency** and replaces the static cutoff. Therefore use
+`fadsr`, `fscale`, or another frequency-producing chain — never a normal `adsr` output.
+
+Correct filter-envelope pattern:
+
+```text
+note → fadsr → filter.cutoff_mod_in
+source → filter.in
+filter → adsr → output
+```
+
+For a fixed base cutoff with a moving range, derive the frequency first, then use the
+frequency envelope:
+
+```text
+note → fscale → fadsr.freq_in → filter.cutoff_mod_in
+```
+
+The filter's static cutoff is ignored once `cutoff_mod_in` is connected.
+
+## 13. F-ADSR: Pitch and Frequency Motion
+
+`fadsr` operates in the frequency domain. Use it for pitch transients and any parameter
+that explicitly expects Hertz.
+
+### Kick / 808 pitch drop
+
+```text
+note → fadsr → sine osc → adsr → output
+```
+
+A short attack/decay with a lower starting factor produces the characteristic falling
+pitch transient.
+
+### Pitch bling / upward transient
+
+```text
+note → fadsr → osc → adsr → output
+```
+
+Use `up` above 1.0 for a transient that begins above the played pitch and settles toward
+the normal register.
+
+### FM sweep
+
+Keep the FM stage in the frequency domain, then place the pitch envelope after it when
+the intention is to move the already-modulated carrier frequency:
+
+```text
+note → fm.freq_in
+note → fscale → modulator osc → fm.modulator_in
+fm.out → fadsr.freq_in
+fadsr.out → carrier osc.note_in
+```
+
+## 14. Gain as a Structural Processor
+
+Do not treat `gain` as only a final volume knob. It has at least four important design
+roles:
+
+1. **Layer balance** — normalize multiple voices before mixing.
+2. **Pre-shaper drive** — increase the level entering `shape`.
+3. **Modulator level management** — control how strongly a modulation source affects a
+   downstream nonlinear stage.
+4. **Post-processing trim** — tame a hot waveshaper or ring-mod output.
+
+When several layers are summed, reduce individual gains rather than relying on the master
+level to hide internal overload.
+
+## 15. Delay as Part of the Instrument Identity
+
+Use delay when the repeat structure is musically meaningful.
+
+Good uses:
+
+- short rhythmic lead repeats,
+- pluck echoes,
+- ambient tails,
+- tempo-synchronized rhythmic patterns,
+- two parallel delay times for staggered echoes.
+
+A delay after the amplitude envelope allows the envelope to define the dry note while the
+delay creates the tail:
+
+```text
+osc → adsr → delay → output
+```
+
+For a dry/wet balance that remains explicit, a dry copy can also feed another output input.
+
+## 16. Instrument Archetype Recipes
+
+These are construction strategies, not fixed presets.
+
+### Sub Bass
+
+```text
+note → sine osc → adsr → output
+```
+
+Optionally add a very low-drive Soft shaper for gentle harmonics.
+
+### Bass / Growl
+
+```text
+note → saw/square osc → shape/filter → adsr → output
+note → fscale → FM modulator → FM → optional second layer
+```
+
+Use dynamic filtering when the growl should open on the attack.
+
+### Lead
+
+Use a saw or square carrier, moderate filtering, expressive ADSR, and optional LFO-mode
+vibrato or light delay.
+
+### Pad
+
+Use multiple carriers with slightly different waveforms/ratios, slow attacks, long
+releases, moderate filtering, and optional AM or delay movement.
+
+### Bell / Chime
+
+Use a sine carrier, inharmonic FM ratio, short attack, and a longer decay. Keep FM
+intensity moderate enough that the pitch remains readable unless an intentionally
+metallic result is requested.
+
+### E-Piano
+
+Use 1:1 FM for the body, a higher-ratio transient component for attack brightness, and
+Soft waveshaping for warmth.
+
+### Organ
+
+Use parallel oscillators at integer frequency ratios. Balance harmonic layers with
+gain rather than relying on distortion.
+
+### Metallic Percussion
+
+Combine FM, ring modulation, or Fold waveshaping with short envelopes. Keep a parallel
+pitched body layer when the hit needs a recognizable root.
+
+### Kick
+
+Use a sine carrier with `fadsr` pitch motion and a short `adsr` amplitude envelope.
+The pitch transient should be substantially faster than the amplitude decay.
+
+### Snare / Noise Percussion
+
+Use a noise oscillator for the noisy body, optionally combined with a short tonal/FM or
+ring-modulated layer. Shape each layer with its own envelope when their decay times differ.
+
+## 17. Genre Adaptation
+
+Genre should modify the design priorities, not force a fixed preset.
+
+### House / Disco / Funk
+
+Prioritize clear fundamentals, rhythmic modulation, moderate filtering, tasteful delay,
+and controlled resonance. Tremolo/AM can be used as a rhythmic movement source.
+
+### Techno
+
+Prioritize strong transient definition, controlled repetition, FM/ring modulation for
+metallic percussion, and tempo-synchronized delay where appropriate.
+
+### Ambient / Experimental
+
+Prioritize long envelopes, evolving FM depth, inharmonic ratios, slow LFO movement,
+layered textures, and long delay tails.
+
+### Synthwave / Retro
+
+Prioritize saw/square carriers, octave layering, restrained detuning, simple harmonic
+ratios, moderate filtering, and audible but controlled delay.
+
+### Bass Music / Drum & Bass
+
+Prioritize a stable sub layer plus a separate character layer. Use FM, hard/fold shaping,
+and dynamic filtering for the character layer while protecting the sub from unnecessary
+spectral complexity.
+
+### Cinematic
+
+Use layered tonal and inharmonic components, long envelopes, carefully controlled pitch
+motion, and broad spectral evolution. Keep the fundamental/body layer stable when the
+sound must remain musically legible.
+
+## 18. Complexity Budget
+
+Every processor should answer a concrete question:
+
+- Does this oscillator provide a missing spectral role?
+- Does this FM stage create a specific sideband structure?
+- Does this ring modulator create a required inharmonic component?
+- Does this shaper add the requested nonlinear character?
+- Does this filter solve a spectral or dynamic problem?
+- Does this envelope define a meaningful temporal change?
+- Does this delay create an intentional spatial/rhythmic behavior?
+
+If the answer is no, remove the processor.
+
+Prefer:
+
+```text
+simple → evaluate → add one purposeful stage → evaluate again
+```
+
+over:
+
+```text
+many processors → hope the result is interesting
+```
+
+## 19. Quality-Control Procedure
+
+Before returning a generated instrument, inspect it in this order:
+
+### A. Graph validity
+
+- Every node uses a documented processor ID.
+- Every instance is within its maximum count.
+- Node IDs follow the naming convention.
+- Every wire connects an output to an input.
+- Signal and frequency types match.
+- No input has multiple competing sources.
+- `output` is reachable from the intended audio path.
+
+### B. Musical validity
+
+- The fundamental is identifiable when the sound is intended to be tonal.
+- The chosen ratios support the intended harmonic or inharmonic character.
+- Attack, decay, sustain, and release fit the instrument role.
+- Modulation depth is proportional to the desired complexity.
+- Layers have intentional level relationships.
+
+### C. Register validity
+
+Check that the sound remains useful across the intended keyboard range. A ratio that is
+convincing in one register can become excessively bright or dense in another.
+
+### D. Repeated-note validity
+
+Consider how the patch behaves on repeated notes. Note-triggered LFO/static oscillators
+re-sync, while delay buffers persist. The resulting interaction should be intentional.
+
+## 20. Patch Documentation Standard
+
+Every generated patch should be explainable without opening the XML. Document:
+
+- **Sound name**
+- **Instrument family / role**
+- **Genre or context** when relevant
+- **Core synthesis principle**
+- **Signal topology**
+- **Important node instances**
+- **Important connections**
+- **Key parameter values**
+- **Reason for each unusual parameter**
+- **Expected audible result**
+- **Useful variation directions**
+
+Use concise wiring notation so a human can reconstruct the architecture:
+
+```text
+note
+ ├─→ carrier frequency path
+ └─→ ratio path → modulator oscillator → FM
+                         ↓
+carrier oscillator → shaping/filtering → ADSR → output
+```
+
+## 21. Final Design Principle
+
+The goal is not maximum processor count. The goal is a **deliberate relationship between
+frequency, spectrum, time, and level**.
+
+A high-quality SmolFM instrument should therefore be designed as:
+
+```text
+musical role
+    ↓
+spectral mechanism
+    ↓
+frequency relationships
+    ↓
+signal topology
+    ↓
+temporal envelopes
+    ↓
+level / nonlinear processing
+    ↓
+final output behavior
+```
+
+Start simple. Add complexity only when the requested sound requires it. Prefer explicit,
+reproducible relationships over arbitrary parameter values. The existing processor and
+file-format documentation remains the source of truth for what can actually be wired.
