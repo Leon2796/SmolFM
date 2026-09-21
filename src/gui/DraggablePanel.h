@@ -53,8 +53,12 @@ public:
                                                                                        juce::AudioProcessorValueTreeState&)> makeContent,
                                        bool makeVisible = true);
 
-    /** Remove a box (and all its wires) from the canvas. */
+        /** Remove a box (and all its wires) from the canvas. */
     void removeNode (DraggableComponent& box);
+
+    /** Remove the last-added box of this base type (e.g. "osc").  Returns true
+        when a box was removed. */
+    bool removeLastNodeOfType (const juce::String& baseId);
 
     // -- Introspection for .smolfm save/load --------------------------------
 

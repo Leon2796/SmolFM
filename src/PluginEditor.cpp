@@ -194,124 +194,30 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     // -----------------------------------------------------------------
     // Toolbar palette: one tile per node type, showing how many are left.
     // -----------------------------------------------------------------
-    oscButton  .configure ("osc",  "Osc",   [] (const juce::Rectangle<float>& r)
-                           {   juce::Path p; p.addEllipse (r.reduced (1.0f)); return p; },
-                           smolfm::GraphNodeRegistry::maxOscillators);
-    fmButton   .configure ("fm",   "FM",    [] (const juce::Rectangle<float>& r)
-                           {   juce::Path p; p.startNewSubPath (r.getX(), r.getCentreY());
-                               p.cubicTo (r.getX() + r.getWidth() * 0.3f, r.getY(),
-                                          r.getRight() - r.getWidth() * 0.3f, r.getBottom(), r.getRight(), r.getCentreY());
-                               return p; },
-                           smolfm::GraphNodeRegistry::maxFmAmounts);
-    scaleButton.configure ("fscale", "Scale", [] (const juce::Rectangle<float>& r)
-                           {   juce::Path p; const float c = r.getCentreY();
-                               p.startNewSubPath (r.getX(), c); p.lineTo (r.getRight(), r.getY());
-                               p.startNewSubPath (r.getX(), c); p.lineTo (r.getRight(), c);
-                               p.startNewSubPath (r.getX(), c); p.lineTo (r.getRight(), r.getBottom());
-                               return p; },
-                           smolfm::GraphNodeRegistry::maxFrequencyScales);
-    adsrButton .configure ("adsr", "ADSR",  [] (const juce::Rectangle<float>& r)
-                           {   juce::Path p; p.startNewSubPath (r.getX(), r.getBottom());
-                               p.lineTo (r.getX() + r.getWidth() * 0.25f, r.getY());
-                               p.lineTo (r.getX() + r.getWidth() * 0.5f, r.getCentreY());
-                               p.lineTo (r.getX() + r.getWidth() * 0.75f, r.getCentreY());
-                               p.lineTo (r.getRight(), r.getBottom()); return p; },
-                           smolfm::GraphNodeRegistry::maxAdsr);
-    fAdsrButton .configure ("fadsr", "F-ADSR", [] (const juce::Rectangle<float>& r)
-                            {   juce::Path p; p.startNewSubPath (r.getX(), r.getBottom());
-                                p.lineTo (r.getX() + r.getWidth() * 0.2f, r.getY());
-                                p.lineTo (r.getX() + r.getWidth() * 0.4f, r.getCentreY());
-                                p.lineTo (r.getX() + r.getWidth() * 0.6f, r.getCentreY());
-                                p.lineTo (r.getRight(), r.getCentreY());
-                                return p; },
-                            smolfm::GraphNodeRegistry::maxFAdsr);
+        oscButton  .configure ("osc",   "Osc",  smolfm::GraphNodeRegistry::maxOscillators);
+    fmButton   .configure ("fm",   "FM",   smolfm::GraphNodeRegistry::maxFmAmounts);
+    scaleButton.configure ("fscale", "FSC",  smolfm::GraphNodeRegistry::maxFrequencyScales);
+    adsrButton .configure ("adsr",  "ADSR", smolfm::GraphNodeRegistry::maxAdsr);
+    fAdsrButton .configure ("fadsr", "FAD", smolfm::GraphNodeRegistry::maxFAdsr);
+    gainButton .configure ("gain",  "GN",   smolfm::GraphNodeRegistry::maxGains);
+    shapeButton .configure ("shape", "SHP",  smolfm::GraphNodeRegistry::maxWaveshapers);
+    filterButton .configure ("filter", "FLT", smolfm::GraphNodeRegistry::maxFilters);
+    noteButton .configure ("note",  "NT",   smolfm::GraphNodeRegistry::maxNotes);
+    ringButton .configure ("ring",  "RNG",  smolfm::GraphNodeRegistry::maxRingModulators);
+    amButton   .configure ("am",   "AM",   smolfm::GraphNodeRegistry::maxAmModulators);
+    delayButton .configure ("delay", "DLY",  smolfm::GraphNodeRegistry::maxDelays);
+    outputButton .configure ("output", "OUT", smolfm::GraphNodeRegistry::maxMasterOutputs);
 
-    noteButton .configure ("note", "Note",  [] (const juce::Rectangle<float>& r)
-                           {   juce::Path p; const float cx = r.getCentreX(), cy = r.getCentreY();
-                               p.startNewSubPath (cx, cy); p.lineTo (cx, r.getY());
-                               p.startNewSubPath (cx - 4, cy); p.addEllipse (cx - 8, cy - 6, 10, 8);
-                               return p; },
-                           smolfm::GraphNodeRegistry::maxNotes);
-    outputButton.configure ("output", "Out", [] (const juce::Rectangle<float>& r)
-                           {   juce::Path p; p.addRectangle (r.reduced (2.0f)); return p; },
-                           smolfm::GraphNodeRegistry::maxMasterOutputs);
-
-        ringButton .configure ("ring", "Ring",  [] (const juce::Rectangle<float>& r)
-                           {   juce::Path p; p.addEllipse (r.reduced (1.0f));
-                               const float cx = r.getCentreX(), cy = r.getCentreY();
-                               p.startNewSubPath (cx - 5, cy - 5); p.lineTo (cx + 5, cy + 5);
-                               p.startNewSubPath (cx + 5, cy - 5); p.lineTo (cx - 5, cy + 5);
-                               return p; },
-                           smolfm::GraphNodeRegistry::maxRingModulators);
-
-    amButton   .configure ("am",   "AM",    [] (const juce::Rectangle<float>& r)
-                           {   juce::Path p;
-                               // Modulated sine icon: a wave whose amplitude tapers
-                               const float cx = r.getCentreX();
-                               const float cy = r.getCentreY();
-                               p.startNewSubPath (r.getX(), cy);
-                               p.quadraticTo (cx - r.getWidth() * 0.15f, r.getY() + 2.0f, cx, cy);
-                               p.quadraticTo (cx + r.getWidth() * 0.15f, r.getBottom() - 2.0f, r.getRight(), cy);
-                               return p; },
-                                                      smolfm::GraphNodeRegistry::maxAmModulators);
-
-    delayButton.configure ("delay", "Delay", [] (const juce::Rectangle<float>& r)
-                           {   juce::Path p;
-                               const float cy = r.getCentreY();
-                               // Arrow with a trailing echo: two parallel lines
-                               p.startNewSubPath (r.getX(), cy);
-                               p.lineTo (r.getRight() - 6.0f, cy);
-                               p.lineTo (r.getRight() - 6.0f, cy - 4.0f);
-                               p.lineTo (r.getRight(), cy);
-                               p.lineTo (r.getRight() - 6.0f, cy + 4.0f);
-                               p.lineTo (r.getRight() - 6.0f, cy);
-                               p.startNewSubPath (r.getX() + 4.0f, cy + 5.0f);
-                               p.lineTo (r.getRight() - 8.0f, cy + 5.0f);
-                               return p; },
-                           smolfm::GraphNodeRegistry::maxDelays);
-
-    gainButton  .configure ("gain", "Gain", [] (const juce::Rectangle<float>& r)
-                            {   juce::Path p;
-                                // Arrow pointing up-right: signal boosted
-                                const float cx = r.getCentreX(), cy = r.getCentreY();
-                                p.startNewSubPath (r.getX() + 2.0f, r.getBottom() - 2.0f);
-                                p.lineTo (r.getRight() - 4.0f, r.getY() + 4.0f);
-                                p.startNewSubPath (r.getRight() - 4.0f, r.getY() + 4.0f);
-                                p.lineTo (r.getRight() - 10.0f, r.getY() + 6.0f);
-                                p.startNewSubPath (r.getRight() - 4.0f, r.getY() + 4.0f);
-                                p.lineTo (r.getRight() - 6.0f, r.getY() + 10.0f);
-                                juce::ignoreUnused (cx, cy);
-                                return p; },
-                            smolfm::GraphNodeRegistry::maxGains);
-
-    shapeButton .configure ("shape", "Shape", [] (const juce::Rectangle<float>& r)
-                            {   juce::Path p;
-                                // Soft-S-curve icon: gentle S through the box
-                                const float cy = r.getCentreY();
-                                p.startNewSubPath (r.getX() + 2.0f, r.getBottom() - 2.0f);
-                                p.cubicTo (r.getX() + r.getWidth() * 0.4f, r.getBottom() - 2.0f,
-                                           r.getX() + r.getWidth() * 0.6f, r.getY() + 2.0f,
-                                           r.getRight() - 2.0f, r.getY() + 2.0f);
-                                juce::ignoreUnused (cy);
-                                return p; },
-                            smolfm::GraphNodeRegistry::maxWaveshapers);
-
-    filterButton .configure ("filter", "Filter", [] (const juce::Rectangle<float>& r)
-                             {   juce::Path p;
-                                 // Low-pass icon: signal decaying past a knee
-                                 const float cy = r.getCentreY();
-                                 p.startNewSubPath (r.getX() + 2.0f, cy);
-                                 p.lineTo (r.getX() + r.getWidth() * 0.45f, cy);
-                                 p.quadraticTo (r.getX() + r.getWidth() * 0.6f, cy,
-                                                r.getX() + r.getWidth() * 0.6f, r.getY() + 3.0f);
-                                 p.lineTo (r.getRight() - 2.0f, r.getY() + 3.0f);
-                                 return p; },
-                             smolfm::GraphNodeRegistry::maxFilters);
-
-    for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &fAdsrButton, &gainButton, &shapeButton, &filterButton, &noteButton, &ringButton, &amButton, &delayButton, &outputButton })
+        for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &fAdsrButton, &gainButton, &shapeButton, &filterButton, &noteButton, &ringButton, &amButton, &delayButton, &outputButton })
     {
         addAndMakeVisible (*b);
-        b->onAddRequested = [this] (const juce::String& baseId) { addNodeFromToolbar (baseId); };
+                b->onCountChanged = [this] (const juce::String& baseId, bool add)
+        {
+            if (add)
+                addNodeFromToolbar (baseId);
+            else
+                graphPanel.removeLastNodeOfType (baseId);
+        };
     }
 
     // -----------------------------------------------------------------
@@ -454,30 +360,49 @@ void AudioPluginAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds().reduced (24);
 
-    // Toolbar: title left, palette center, import/export right.
-    auto toolbar = bounds.removeFromTop (34);
+        // Toolbar: title left, palette center, import/export right.  Height fits the
+    // +/- tiles (52px + margins).
+    auto toolbar = bounds.removeFromTop (60);
     titleLabel.setBounds (toolbar.removeFromLeft (110));
 
     auto buttonsArea = toolbar.removeFromRight (toolbar.getWidth() > 420 ? 400 : toolbar.getWidth() / 2);
     importButton.setBounds (buttonsArea.removeFromRight (84).reduced (2));
     exportButton.setBounds (buttonsArea.removeFromRight (84).reduced (2));
 
-    // Palette tiles, 6 × 62 px each.
-    auto palette = toolbar.reduced (4, 2);
-    const int tileWidth = 62;
-    oscButton   .setBounds (palette.removeFromLeft (tileWidth));
-    fmButton    .setBounds (palette.removeFromLeft (tileWidth));
-    scaleButton .setBounds (palette.removeFromLeft (tileWidth));
-    adsrButton  .setBounds (palette.removeFromLeft (tileWidth));
-    fAdsrButton .setBounds (palette.removeFromLeft (tileWidth));
-    gainButton  .setBounds (palette.removeFromLeft (tileWidth));
-    shapeButton .setBounds (palette.removeFromLeft (tileWidth));
-    filterButton.setBounds (palette.removeFromLeft (tileWidth));
-            noteButton .setBounds (palette.removeFromLeft (tileWidth));
-    ringButton .setBounds (palette.removeFromLeft (tileWidth));
-    amButton   .setBounds (palette.removeFromLeft (tileWidth));
-    delayButton.setBounds (palette.removeFromLeft (tileWidth));
-    outputButton.setBounds (palette.removeFromLeft (tileWidth));
+        // Palette tiles with +/- buttons: 80×52 px each (set by PaletteButton::setSize).
+        auto palette = toolbar.reduced (4, 2);
+        const int tileWidth = 80;
+        const int tileHeight = 52;
+        const int tileSpacing = 8;
+
+        // Arrange in two rows if space is tight
+        const bool twoRows = palette.getWidth() < (tileWidth + tileSpacing) * 13;
+        int x = 0, y = 0;
+
+        auto placeTile = [&] (gui::PaletteButton& b)
+        {
+            if (twoRows && x + tileWidth > palette.getWidth())
+            {
+                x = 0;
+                y += tileHeight + tileSpacing;
+            }
+            b.setBounds (palette.getX() + x, palette.getY() + y, tileWidth, tileHeight);
+            x += tileWidth + tileSpacing;
+        };
+
+        placeTile (oscButton);
+        placeTile (fmButton);
+        placeTile (scaleButton);
+        placeTile (adsrButton);
+        placeTile (fAdsrButton);
+        placeTile (gainButton);
+        placeTile (shapeButton);
+        placeTile (filterButton);
+        placeTile (noteButton);
+        placeTile (ringButton);
+        placeTile (amButton);
+        placeTile (delayButton);
+        placeTile (outputButton);
 
     bounds.removeFromTop (8);
 
@@ -512,8 +437,8 @@ void AudioPluginAudioProcessorEditor::fitWindowToContent()
         return;
 
     // Fixed chrome: margins (24 each side) + toolbar (34) + gaps (8+4) +
-    // patch browser (64).  The canvas sits below all of that.
-    const int chromeTop    = 24 + 34 + 8 + 64 + 4;
+        // patch browser (64).  The canvas sits below all of that.
+    const int chromeTop    = 24 + 60 + 8 + 64 + 4;  // toolbar now 60px
     const int chromeRight  = 24;
     const int chromeBottom = 24;
 

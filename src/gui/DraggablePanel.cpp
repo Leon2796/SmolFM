@@ -132,6 +132,21 @@ void DraggablePanel::removeNode (DraggableComponent& box)
     repaint();
 }
 
+bool DraggablePanel::removeLastNodeOfType (const juce::String& baseId)
+{
+    // Find the last box whose id starts with this base (e.g. "osc2" for "osc").
+    for (int i = boxes.size() - 1; i >= 0; --i)
+    {
+        auto* box = boxes[i];
+        if (box != nullptr && box->getBoxId().startsWith (baseId))
+        {
+            removeNode (*box);
+            return true;
+        }
+    }
+    return false;
+}
+
 //==============================================================================
 DraggableComponent* DraggablePanel::findBox (const juce::String& boxId) noexcept
 {
