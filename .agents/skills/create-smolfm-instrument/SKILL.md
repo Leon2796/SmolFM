@@ -2520,6 +2520,28 @@ Prioritize a stable sub layer plus a separate character layer. Use FM, hard/fold
 and dynamic filtering for the character layer while protecting the sub from unnecessary
 spectral complexity.
 
+### Trap
+
+Aggressive 808-style basses with hard clipping, metallic FM percussion for hats and snares,
+syncopated pluck melodies, and dark atmospheric pads. Prioritize punchy transients,
+sub-bass presence below 60 Hz, and sparse, impactful arrangements that leave room for
+vocals. Use distortion and FM for gritty texture, with tempo-synced delay creating
+space without washing the mix.
+
+### Darkwave / Post-Punk
+
+Cold, cathedral-like reverb pads, detuned saw leads, chorused basses, and gothic
+atmospherics. Prioritize slow attack times, heavy reverb tails, minor-key harmonization,
+and a sense of melancholy grandeur. The sound should feel like empty halls and
+neon-lit streets at 3 AM — digital yet human, mechanical yet emotional.
+
+### Cloud Rap / Chill Trap
+
+Hazy, lo-fi textures with warm detuned pads, vinyl crackle, soft 808s, and dreamy
+reverb-washed leads. Prioritize warmth over precision, softness over aggression,
+and ambiguity over definition. The sound should feel like floating — blurred edges,
+smoothed transients, and a gentle, narcotic quality that invites introspection.
+
 ### Cinematic
 
 Use layered tonal and inharmonic components, long envelopes, carefully controlled pitch
