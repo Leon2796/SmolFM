@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="2">
+  <Nodes><Node id="note" x="60" y="100"/><Node id="osc0" x="400" y="100" waveform="1"/><Node id="adsr0" x="600" y="100"/><Node id="output" x="900" y="100" level="0.8"/></Nodes>
+  <Connections><Wire from="note" fromPort="out" to="osc0" toPort="note_in"/><Wire from="osc0" fromPort="out" to="adsr0" toPort="in"/><Wire from="adsr0" fromPort="out" to="output" toPort="in1"/></Connections>
+</SmolFM>

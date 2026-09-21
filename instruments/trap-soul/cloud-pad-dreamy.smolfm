@@ -2,11 +2,11 @@
 <SmolFM version="2">
   <Nodes>
     <Node id="note" x="60" y="100"/>
-    <Node id="osc0" x="400" y="100" waveform="1">
+    <Node id="osc0" x="400" y="100" waveform="0">
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-    <Node id="adsr0" x="600" y="100" attack="0.01" decay="0.4" sustain="0.7" release="0.3">
+    <Node id="adsr0" x="600" y="100" attack="0.8" decay="1.5" sustain="0.6" release="2.0">
       <Pin id="in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
