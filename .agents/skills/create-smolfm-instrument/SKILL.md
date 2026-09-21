@@ -2548,7 +2548,38 @@ Use layered tonal and inharmonic components, long envelopes, carefully controlle
 motion, and broad spectral evolution. Keep the fundamental/body layer stable when the
 sound must remain musically legible.
 
-## 18. Complexity Budget
+## 18. Full Synthesis Exploitation
+
+**CRITICAL**: Do NOT simply vary ADSR curves. The synthesizer's power lies in the *topology* of the signal graph, not parameter tweaks.
+
+### MANDATORY processor usage per instrument type:
+
+| Instrument Type | Required Processors | Forbidden |
+|-----------------|---------------------|-----------|
+| **808/Bass** | `waveshaper` for clipping, `filter` for formant, `gain` for drive | Only osc+adsr |
+| **Lead** | `fm` for harmonics, `filter` with cutoff mod, `delay` for space | Static saw only |
+| **Pad** | `detune` (multiple osc), `filter` modulation via LFO/envelope, `delay` | Single oscillator |
+| **Percussion** | `noise` + `filter` or `fm` for body, `fadsr` for pitch, `filter` for snap | Only noise+adsr |
+| **Pluck** | `filter` with `fadsr` sweep, `delay` for ambience, `ring` for metallic | Simple sine |
+| **Keys/Organ** | `osc` layering for harmonics, `filter` for tone, `delay` for space | Single osc |
+
+### FORBIDDEN patterns (low-effort):
+
+```
+FORBIDDEN: osc -> adsr -> output
+FORBIDDEN: osc -> filter -> adsr -> output (without modulation)
+FORBIDDEN: noise -> adsr -> output (for percussion)
+```
+
+### REQUIRED depth:
+
+Every sound MUST use at least **one** of:
+- **Frequency Domain**: `fscale` for ratios, `fm` for sidebands, `fadsr` for pitch envelopes
+- **Signal Domain**: `ring` modulation, `am` modulation, `waveshaper` for nonlinearity
+- **Dynamics**: `filter` with envelope/LFO cutoff modulation
+- **Space**: `delay` with feedback for rhythmic/ambient depth
+
+## 18b. Complexity Budget
 
 Every processor should answer a concrete question:
 
