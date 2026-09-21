@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="2">
+  <Nodes>
+    <Node id="note" x="60" y="100"/>
+    <Node id="osc0" x="300" y="60" waveform="4" mode="1" staticfreq="1800">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="osc1" x="300" y="200" waveform="1" mode="1" staticfreq="250">
+      <Pin id="note_in" direction="in" type="frequency"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="adsr0" x="550" y="130" attack="0.001" decay="0.15" sustain="0.0" release="0.05">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="gain0" x="750" y="130" factor="1.0">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="filter0" x="950" y="130" cutoff="4000" resonance="0.3" mode="0">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="output" x="1150" y="130" level="0.8"/>
+  </Nodes>
+  <Connections>
+    <Wire from="osc0" fromPort="out" to="adsr0" toPort="in"/>
+    <Wire from="osc1" fromPort="out" to="adsr0" toPort="in"/>
+    <Wire from="adsr0" fromPort="out" to="gain0" toPort="in"/>
+    <Wire from="gain0" fromPort="out" to="filter0" toPort="in"/>
+    <Wire from="filter0" fromPort="out" to="output" toPort="in1"/>
+  </Connections>
+</SmolFM>

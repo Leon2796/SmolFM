@@ -6,7 +6,7 @@
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-    <Node id="adsr0" x="600" y="100" attack="0.001" decay="0.4" sustain="0.0" release="0.03">
+    <Node id="adsr0" x="600" y="100" attack="0.01" decay="0.5" sustain="0.5" release="0.3">
       <Pin id="in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>

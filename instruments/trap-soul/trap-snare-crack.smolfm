@@ -2,19 +2,23 @@
 <SmolFM version="2">
   <Nodes>
     <Node id="note" x="60" y="100"/>
-    <Node id="osc0" x="400" y="100" waveform="4">
+    <Node id="osc0" x="300" y="100" waveform="4" mode="1" staticfreq="1800">
       <Pin id="note_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
-    <Node id="adsr0" x="600" y="100" attack="0.001" decay="0.15" sustain="0.0" release="0.05">
+    <Node id="adsr0" x="500" y="100" attack="0.0005" decay="0.12" sustain="0.0" release="0.01">
+      <Pin id="in" direction="in" type="signal"/>
+      <Pin id="out" direction="out" type="signal"/>
+    </Node>
+    <Node id="filter0" x="700" y="100" cutoff="10000" resonance="0.5" mode="2">
       <Pin id="in" direction="in" type="signal"/>
       <Pin id="out" direction="out" type="signal"/>
     </Node>
     <Node id="output" x="900" y="100" level="0.8"/>
   </Nodes>
   <Connections>
-    <Wire from="note" fromPort="out" to="osc0" toPort="note_in"/>
     <Wire from="osc0" fromPort="out" to="adsr0" toPort="in"/>
-    <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
+    <Wire from="adsr0" fromPort="out" to="filter0" toPort="in"/>
+    <Wire from="filter0" fromPort="out" to="output" toPort="in1"/>
   </Connections>
 </SmolFM>

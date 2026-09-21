@@ -2,7 +2,7 @@
 <SmolFM version="2">
   <Nodes>
     <Node id="note" x="60" y="100"/>
-    <Node id="fscale0" x="220" y="100" factor="0.08">
+    <Node id="fscale0" x="220" y="100" factor="0.12">
       <Pin id="freq_in" direction="in" type="frequency"/>
       <Pin id="out" direction="out" type="frequency"/>
     </Node>
