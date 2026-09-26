@@ -1,35 +1,45 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<SmolFM version="2" name="house-snare-dry">
-  <description>Dry house snare: ring modulation between a 180 Hz body and a 3.7x-ratio noise-like oscillator, very fast envelope, no tail - sits tight in the mix.</description>
-  <Nodes>
-    <Node id="note" x="60" y="60">
-      <Pin id="out" direction="out" type="frequency"/>
-    </Node>
-    <Node id="osc0" x="680" y="60" mode="1" staticfreq="180" waveform="0">
-      <Pin id="out" direction="out" type="signal"/>
-    </Node>
-    <Node id="fscale0" x="60" y="380" factor="3.7"/>
-    <Node id="osc1" x="360" y="380" mode="1" staticfreq="666" waveform="2">
-      <Pin id="out" direction="out" type="signal"/>
-    </Node>
-    <Node id="ring0" x="1000" y="60">
-      <Pin id="in1" direction="in" type="signal"/>
-      <Pin id="in2" direction="in" type="signal"/>
-      <Pin id="out" direction="out" type="signal"/>
-    </Node>
-    <Node id="adsr0" x="1320" y="60" attack="0.001" decay="0.11" sustain="0.0" release="0.05">
-      <Pin id="in" direction="in" type="signal"/>
-      <Pin id="out" direction="out" type="signal"/>
-    </Node>
-    <Node id="output" x="1640" y="60" level="0.8"/>
-  </Nodes>
-  <Connections>
-    <Wire from="osc0" fromPort="out" to="ring0" toPort="in1"/>
-    <Wire from="osc1" fromPort="out" to="ring0" toPort="in2"/>
-    <Wire from="ring0" fromPort="out" to="adsr0" toPort="in"/>
-    <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
-    <Wire from="note" fromPort="out" to="osc0" toPort="note_in"/>
-    <Wire from="note" fromPort="out" to="osc1" toPort="note_in"/>
-  </Connections>
+<SmolFM version="3" name="house-snare-dry">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="sine" mode="static" staticfreq="180">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="fscale0" factor="3.7" />
+      <Node id="osc1" waveform="square" mode="static" staticfreq="666">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="ring0">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.001" decay="0.11" sustain="0.0" release="0.05">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.8" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="ring0" toPort="in1" />
+      <Wire from="osc1" fromPort="out" to="ring0" toPort="in2" />
+      <Wire from="ring0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="osc1" toPort="note_in" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="osc0" x="680" y="60" />
+      <Box id="fscale0" x="60" y="380" />
+      <Box id="osc1" x="360" y="380" />
+      <Box id="ring0" x="1000" y="60" />
+      <Box id="adsr0" x="1320" y="60" />
+      <Box id="output" x="1640" y="60" />
+    </Boxes>
+  </Layout>
 </SmolFM>

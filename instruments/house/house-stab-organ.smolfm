@@ -1,54 +1,67 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<SmolFM version="2" name="house-stab-organ">
-  <description>Classic house organ stab: FM square stack (1:1 + 2:1 modulators via chained FM), fast attack with short decay and medium sustain - the Chicago/Organ House staple.</description>
-  <Nodes>
-    <Node id="note" x="60" y="60">
-      <Pin id="out" direction="out" type="frequency"/>
-    </Node>
-    <Node id="fm0" x="360" y="60" amount="1.4">
-      <Pin id="freq_in" direction="in" type="frequency"/>
-      <Pin id="modulator_in" direction="in" type="signal"/>
-      <Pin id="out" direction="out" type="frequency"/>
-    </Node>
-    <Node id="fm1" x="360" y="380" amount="0.9">
-      <Pin id="freq_in" direction="in" type="frequency"/>
-      <Pin id="modulator_in" direction="in" type="signal"/>
-      <Pin id="out" direction="out" type="frequency"/>
-    </Node>
-    <Node id="fscale0" x="60" y="680" factor="1.0"/>
-    <Node id="osc2" x="360" y="680" waveform="3">
-      <Pin id="note_in" direction="in" type="frequency"/>
-      <Pin id="out" direction="out" type="signal"/>
-    </Node>
-    <Node id="osc1" x="60" y="380" waveform="3">
-      <Pin id="note_in" direction="in" type="frequency"/>
-      <Pin id="out" direction="out" type="signal"/>
-    </Node>
-    <Node id="osc0" x="680" y="60" waveform="3">
-      <Pin id="note_in" direction="in" type="frequency"/>
-      <Pin id="out" direction="out" type="signal"/>
-    </Node>
-    <Node id="shape0" x="1000" y="60" drive="0.3" shape="0">
-      <Pin id="in" direction="in" type="signal"/>
-      <Pin id="out" direction="out" type="signal"/>
-    </Node>
-    <Node id="adsr0" x="1320" y="60" attack="0.003" decay="0.18" sustain="0.35" release="0.12">
-      <Pin id="in" direction="in" type="signal"/>
-      <Pin id="out" direction="out" type="signal"/>
-    </Node>
-    <Node id="output" x="1640" y="60" level="0.7"/>
-  </Nodes>
-  <Connections>
-    <Wire from="note" fromPort="out" to="fm0" toPort="freq_in"/>
-    <Wire from="fm0" fromPort="out" to="fm1" toPort="freq_in"/>
-    <Wire from="fm1" fromPort="out" to="osc0" toPort="note_in"/>
-    <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in"/>
-    <Wire from="fscale0" fromPort="out" to="osc2" toPort="note_in"/>
-    <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in"/>
-    <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in"/>
-    <Wire from="osc0" fromPort="out" to="shape0" toPort="in"/>
-    <Wire from="shape0" fromPort="out" to="adsr0" toPort="in"/>
-    <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
-  </Connections>
+<SmolFM version="3" name="house-stab-organ">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fm0" amount="1.4">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="modulator_in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fm1" amount="0.9">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="modulator_in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fscale0" factor="1.0" />
+      <Node id="osc2" waveform="triangle">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc1" waveform="triangle">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc0" waveform="triangle">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="shape0" drive="0.3" shape="soft">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.003" decay="0.18" sustain="0.35" release="0.12">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fm0" toPort="freq_in" />
+      <Wire from="fm0" fromPort="out" to="fm1" toPort="freq_in" />
+      <Wire from="fm1" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="osc2" toPort="note_in" />
+      <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in" />
+      <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in" />
+      <Wire from="osc0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="fm0" x="360" y="60" />
+      <Box id="fm1" x="360" y="380" />
+      <Box id="fscale0" x="60" y="680" />
+      <Box id="osc2" x="360" y="680" />
+      <Box id="osc1" x="60" y="380" />
+      <Box id="osc0" x="680" y="60" />
+      <Box id="shape0" x="1000" y="60" />
+      <Box id="adsr0" x="1320" y="60" />
+      <Box id="output" x="1640" y="60" />
+    </Boxes>
+  </Layout>
 </SmolFM>

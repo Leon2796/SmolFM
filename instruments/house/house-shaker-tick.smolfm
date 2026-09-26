@@ -1,33 +1,42 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<SmolFM version="2" name="house-shaker-tick">
-  <description>16th-note house shaker: band-limited metallic noise tick with two-stage attack swell and quick fall, softer than a closed hat - the glue between kicks and hats.</description>
-  <Nodes>
-    <Node id="note" x="120" y="60">
-      <Pin id="out" direction="out" type="frequency"/>
-    </Node>
-    <Node id="osc0" x="60" y="60" mode="1" staticfreq="4800" waveform="4">
-      <Pin id="out" direction="out" type="signal"/>
-    </Node>
-    <Node id="shape0" x="360" y="60" drive="0.4" shape="1">
-      <Pin id="in" direction="in" type="signal"/>
-      <Pin id="out" direction="out" type="signal"/>
-    </Node>
-    <Node id="gain0" x="680" y="60" factor="0.25">
-      <Pin id="in" direction="in" type="signal"/>
-      <Pin id="out" direction="out" type="signal"/>
-    </Node>
-    <Node id="adsr0" x="1000" y="60" attack="0.008" decay="0.09" sustain="0.0" release="0.04">
-      <Pin id="in" direction="in" type="signal"/>
-      <Pin id="out" direction="out" type="signal"/>
-    </Node>
-    <Node id="output" x="1320" y="60" level="0.6"/>
-  </Nodes>
-  <Connections>
-    <Wire from="osc0" fromPort="out" to="shape0" toPort="in"/>
-    <Wire from="shape0" fromPort="out" to="gain0" toPort="in"/>
-    <Wire from="gain0" fromPort="out" to="adsr0" toPort="in"/>
-    <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
-    <Wire from="note" fromPort="out" to="osc0" toPort="note_in"/>
-  </Connections>
+<SmolFM version="3" name="house-shaker-tick">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="noise" mode="static" staticfreq="4800">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="shape0" drive="0.4" shape="hard">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.25">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.008" decay="0.09" sustain="0.0" release="0.04">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.6" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="120" y="60" />
+      <Box id="osc0" x="60" y="60" />
+      <Box id="shape0" x="360" y="60" />
+      <Box id="gain0" x="680" y="60" />
+      <Box id="adsr0" x="1000" y="60" />
+      <Box id="output" x="1320" y="60" />
+    </Boxes>
+  </Layout>
 </SmolFM>

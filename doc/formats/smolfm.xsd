@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+  <!-- Root element.  Version 3 splits the document into a semantic part
+       (<Graph>: processors + wiring) and a presentation part (<Layout>:
+       canvas boxes; future UI settings extend it).  Version 2 files keep
+       the flat legacy structure; the reader accepts both. -->
+  <xs:element name="SmolFM">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Graph" type="GraphType"/>
+        <xs:element name="Layout" type="LayoutType" minOccurs="0"/>
+      </xs:sequence>
+      <xs:attribute name="version" type="xs:string" use="required"/>
+      <xs:attribute name="name" type="xs:string" use="optional"/>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- Enumerations of the semantic part: the named spelling the writer
+       emits; the reader also accepts the numeric legacy values. -->
+  <xs:simpleType name="WaveformType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="sine"/>
+      <xs:enumeration value="saw"/>
+      <xs:enumeration value="square"/>
+      <xs:enumeration value="triangle"/>
+      <xs:enumeration value="noise"/>
+      <xs:enumeration value="perlin"/>
+      <xs:enumeration value="simplex"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="OscModeType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="pitch"/>
+      <xs:enumeration value="static"/>
+      <xs:enumeration value="lfo"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="FilterModeType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="lp"/>
+      <xs:enumeration value="bp"/>
+      <xs:enumeration value="hp"/>
+      <xs:enumeration value="notch"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ShapeType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="soft"/>
+      <xs:enumeration value="hard"/>
+      <xs:enumeration value="fold"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="SyncType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="off"/>
+      <xs:enumeration value="on"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="DivisionType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="half"/>
+      <xs:enumeration value="quarter"/>
+      <xs:enumeration value="eighth"/>
+      <xs:enumeration value="sixteenth"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PortDirectionType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="in"/>
+      <xs:enumeration value="out"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="PortKindType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="frequency"/>
+      <xs:enumeration value="signal"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- Valid ranges for the numeric attributes, mirroring the APVTS
+       NormalisableRange bounds from PluginProcessor::createParameterLayout().
+       Strict validators (xsi:type) enforce them; loose validation skips. -->
+  <xs:simpleType name="StaticFreqRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="20"/>
+      <xs:maxInclusive value="20000"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="LfoRateRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0.01"/>
+      <xs:maxInclusive value="50"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="FmAmountRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="10"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="FrequencyFactorRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="10"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EnvelopeTimeRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0.001"/>
+      <xs:maxInclusive value="5"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EnvelopeSustainRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EnvelopeReleaseRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0.001"/>
+      <xs:maxInclusive value="10"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="EnvelopeFactorRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="10"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="GainFactorRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="10"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="DriveRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="FilterCutoffRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="20"/>
+      <xs:maxInclusive value="20000"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="FilterResonanceRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="AmAmountRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="DelayTimeRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="1"/>
+      <xs:maxInclusive value="2000"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="DelayFeedbackRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="0.95"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="DelayMixRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="MasterLevelRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!--
+    One explicit complexType per processor. SmolFmFile::save writes the
+    generic <Node> element for every node; a validator applies the
+    processor-specific type only when the document states it:
+
+        <Node xsi:type="OscillatorNodeType" id="osc0" waveform="saw"/>
+  -->
+  <xs:complexType name="GraphType">
+    <xs:sequence>
+      <xs:element name="Nodes" type="NodesType"/>
+      <xs:element name="Connections" type="ConnectionsType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="NodesType">
+    <xs:sequence>
+      <xs:element name="Node" type="BaseNodeType" minOccurs="1" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Semantic shared base: identity + ports.  Presentation data (canvas
+       position, UI settings) lives in the <Layout> part, never here; the
+       anyAttribute keeps the writer's loose output valid. -->
+  <xs:complexType name="BaseNodeType">
+    <xs:sequence>
+      <xs:element name="Pin" type="PinType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="id" type="xs:string" use="required"/>
+    <xs:anyAttribute processContents="skip"/>
+  </xs:complexType>
+
+  <!-- Note input (note): parameter-free. -->
+  <xs:complexType name="NoteNodeType">
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType"/>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- Oscillator (osc) -->
+  <xs:complexType name="OscillatorNodeType">
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType">
+        <xs:attribute name="waveform" type="WaveformType" use="optional"/>
+        <xs:attribute name="mode" type="OscModeType" use="optional"/>
+        <xs:attribute name="staticfreq" type="StaticFreqRangeType" use="optional"/>
+        <xs:attribute name="lforate" type="LfoRateRangeType" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- FM modulator (fm) -->
+  <xs:complexType name="FMNodeType">
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType">
+        <xs:attribute name="amount" type="FmAmountRangeType" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- Frequency scale (fscale) -->
+  <xs:complexType name="FrequencyScaleNodeType">
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType">
+        <xs:attribute name="factor" type="FrequencyFactorRangeType" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- ADSR (adsr) -->
+  <xs:complexType name="AdsrNodeType">
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType">
+        <xs:attribute name="attack" type="EnvelopeTimeRangeType" use="optional"/>
+        <xs:attribute name="decay" type="EnvelopeTimeRangeType" use="optional"/>
+        <xs:attribute name="sustain" type="EnvelopeSustainRangeType" use="optional"/>
+        <xs:attribute name="release" type="EnvelopeReleaseRangeType" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- FADSR (fadsr) -->
+  <xs:complexType name="FAdsrNodeType">
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType">
+        <xs:attribute name="attack" type="EnvelopeTimeRangeType" use="optional"/>
+        <xs:attribute name="decay" type="EnvelopeTimeRangeType" use="optional"/>
+        <xs:attribute name="sustain" type="EnvelopeSustainRangeType" use="optional"/>
+        <xs:attribute name="release" type="EnvelopeReleaseRangeType" use="optional"/>
+        <xs:attribute name="up" type="EnvelopeFactorRangeType" use="optional"/>
+        <xs:attribute name="down" type="EnvelopeFactorRangeType" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- Gain (gain) -->
+  <xs:complexType name="GainNodeType">
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType">
+        <xs:attribute name="factor" type="GainFactorRangeType" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- Waveshaper (shape) -->
+  <xs:complexType name="WaveshaperNodeType">
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType">
+        <xs:attribute name="drive" type="DriveRangeType" use="optional"/>
+        <xs:attribute name="shape" type="ShapeType" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <!-- Filter (filter) -->
+  <xs:complexType name="FilterNodeType">
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType">
+        <xs:attribute name="cutoff" type="FilterCutoffRangeType" use="optional"/>
+        <xs:attribute name="resonance" type="FilterResonanceRangeType" use="optional"/>
+        <xs:attribute name="mode" type="FilterModeType" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- Delay (delay) -->
+  <xs:complexType name="DelayNodeType">
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType">
+        <xs:attribute name="time" type="DelayTimeRangeType" use="optional"/>
+        <xs:attribute name="feedback" type="DelayFeedbackRangeType" use="optional"/>
+        <xs:attribute name="mix" type="DelayMixRangeType" use="optional"/>
+        <xs:attribute name="sync" type="SyncType" use="optional"/>
+        <xs:attribute name="division" type="DivisionType" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- Ring modulator (ring): parameter-free, like the note input. -->
+  <xs:complexType name="RingModulatorNodeType">
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType"/>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- AM modulator (am) -->
+  <xs:complexType name="AMNodeType">
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType">
+        <xs:attribute name="amount" type="AmAmountRangeType" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- Master output (output) -->
+  <xs:complexType name="MasterOutputNodeType">
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType">
+        <xs:attribute name="level" type="MasterLevelRangeType" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- Presentation part: canvas layout; future UI settings extend this. -->
+  <xs:complexType name="LayoutType">
+    <xs:sequence>
+      <xs:element name="Boxes" type="BoxesType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="BoxesType">
+    <xs:sequence>
+      <xs:element name="Box" type="BoxType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="BoxType">
+    <xs:attribute name="id" type="xs:string" use="required"/>
+    <xs:attribute name="x" type="xs:int" use="required"/>
+    <xs:attribute name="y" type="xs:int" use="required"/>
+    <xs:anyAttribute processContents="skip"/>
+  </xs:complexType>
+
+  <!-- Pin definition: ports are semantic, part of the graph. -->
+  <xs:complexType name="PinType">
+    <xs:attribute name="id" type="xs:string" use="required"/>
+    <xs:attribute name="direction" type="PortDirectionType" use="required"/>
+    <xs:attribute name="type" type="PortKindType" use="required"/>
+  </xs:complexType>
+
+  <!-- Connections container -->
+  <xs:complexType name="ConnectionsType">
+    <xs:sequence>
+      <xs:element name="Wire" type="WireType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Wire definition -->
+  <xs:complexType name="WireType">
+    <xs:attribute name="from" type="xs:string" use="required"/>
+    <xs:attribute name="fromPort" type="xs:string" use="required"/>
+    <xs:attribute name="to" type="xs:string" use="required"/>
+    <xs:attribute name="toPort" type="xs:string" use="required"/>
+  </xs:complexType>
+
+</xs:schema>

@@ -1,4 +1,4 @@
-"# SmolFM Processor Vertical-Slice Skill
+# SmolFM Processor Vertical-Slice Skill
 
 Expert skill for adding a **complete new processor** (vertical slice) to SmolFM:
 DSP core → voice graph → GraphNodeRegistry → palette button → editor factory
@@ -167,6 +167,31 @@ Minimal panel that binds the processor's APVTS parameters:
 The save side already walks the specs; the load side already asks
 `onCreateMissingNode` — once §3 and §6 are done, load/save *just work*.
 
+- **Format grammars follow the processor**: every new processor gets an
+  explicit per-processor entry in both format grammars:
+  1. `doc/formats/smolfm.xsd` - one explicit complexType `FooNodeType`
+     (xs:extension of `BaseNodeType`, semantic part) owning only the
+     attributes this processor has, with a comment naming the baseId;
+     enumerated parameters reference a named simpleType (like
+     `WaveformType`) and float parameters a range simpleType with
+     minInclusive/maxInclusive taken from the APVTS `NormalisableRange`
+     (like `StaticFreqRangeType`, 20..20000 Hz); parameter-free processors
+     get an empty extension (see `RingModulatorNodeType`).
+  2. `doc/formats/smolfm-yaml-grammar.md` - a `### Foo (foo)` section under
+     **Dynamic Attributes by Node Type** (one bullet per attribute with its
+     named enumeration, or "No parameters"), plus a row in the Enumerations
+     table for any new attribute; keep the YAML key identical to the XML
+     attribute name.
+  3. Parser whitelists, or the patch saves fine but silently loses the
+     parameter on load: `knownAttributes[]` in `SmolFmXmlParser.cpp` and
+     the key chain in `readNodeAttribute` (`SmolFmYamlParser.cpp`).  For a
+     NEW enumerated value set: extend the name tables plus `enumOrNumber` /
+     `enumValueText` in `ISmolFmParser.h`.
+  4. `SmolFmParserTests.cpp` - add the attributes to both sample documents
+     plus one CHECK on the parsed value.
+  Positions are presentation: canvas coordinates belong to the `<Layout>`
+  part (YAML `layout:` boxes), never to the semantic node block.
+
 ### 8. Build — `src/CMakeLists.txt`
 
 Add both `.cpp` files (processor + component) to the `target_sources` list
@@ -224,6 +249,14 @@ show it, but no generated instrument will ever wire it in.
   `GraphNodes.cpp` spec, `PluginProcessor::createParameterLayout`,
   `SynthVoiceParameters` cache init, `SmolFmFile::parametersForNode`. A typo
   in any of them means: node visible, but parameter never written.
+- **Attribute-name drift**: the short attribute (e.g. `amount`) must be
+  spelled identically in six places - `SmolFmFile::parametersForNode`,
+  `knownAttributes[]` in `SmolFmXmlParser.cpp`, the key chain in
+  `SmolFmYamlParser.cpp::readNodeAttribute`, `doc/formats/smolfm.xsd`,
+  `doc/formats/smolfm-yaml-grammar.md` and the sample documents in
+  `SmolFmParserTests.cpp`. A missed spot means the patch saves fine but
+  silently loses the parameter on load (whitelist) or documents a key no
+  parser reads.
 - **Missing resolver branch** in `SynthVoice`: node appears in the patch
   browser, wires render, but audio is silent because `resolveInput` returns
   `nullptr`.
@@ -259,4 +292,3 @@ Expected diff: ~12 files, mostly 3–8 lines each + the two new files.
 Stop when the node shows up in the palette, patches save and load, and a
 wired `in → out` produces sound. Anything beyond that (visuals, extra modes)
 belongs to a follow-up task, not this vertical slice.
-"

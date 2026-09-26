@@ -37,7 +37,7 @@ public:
                       const juce::File& file);
 
     /**
-        Load a .smolfm XML file and apply it to the editor.
+        Load a .smolfm file (XML or YAML) and apply it to the editor.
 
         Restores APVTS parameters (via replaceState), box positions and
         wiring.  Missing pieces keep their current values so a partial file
@@ -56,7 +56,7 @@ public:
         Read only the instrument name of a .smolfm file.
 
         Falls back to the file name without extension when the file has no
-        name attribute.  Cheap: parses just the XML root element.
+        name attribute.  Works for the XML and the YAML flavour (doc/formats/).
     */
     static juce::String readInstrumentName (const juce::File& file);
 

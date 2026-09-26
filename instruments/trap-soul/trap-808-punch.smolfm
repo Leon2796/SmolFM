@@ -1,36 +1,48 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="2">
-  <Nodes>
-    <Node id="note" x="60" y="100"/>
-    <Node id="fscale0" x="200" y="100" factor="0.5">
-      <Pin id="freq_in" direction="in" type="frequency"/>
-      <Pin id="out" direction="out" type="frequency"/>
-    </Node>
-    <Node id="osc0" x="400" y="100" waveform="1">
-      <Pin id="note_in" direction="in" type="frequency"/>
-      <Pin id="out" direction="out" type="signal"/>
-    </Node>
-    <Node id="adsr0" x="600" y="60" attack="0.001" decay="0.4" sustain="0.0" release="0.05">
-      <Pin id="in" direction="in" type="signal"/>
-      <Pin id="out" direction="out" type="signal"/>
-    </Node>
-    <Node id="shape0" x="600" y="180" drive="0.8" shape="1">
-      <Pin id="in" direction="in" type="signal"/>
-      <Pin id="out" direction="out" type="signal"/>
-    </Node>
-    <Node id="filter0" x="800" y="120" cutoff="1200" resonance="0.4" mode="0">
-      <Pin id="in" direction="in" type="signal"/>
-      <Pin id="cutoff_mod_in" direction="in" type="frequency"/>
-      <Pin id="out" direction="out" type="signal"/>
-    </Node>
-    <Node id="output" x="1000" y="120" level="0.85"/>
-  </Nodes>
-  <Connections>
-    <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in"/>
-    <Wire from="fscale0" fromPort="out" to="osc0" toPort="note_in"/>
-    <Wire from="osc0" fromPort="out" to="adsr0" toPort="in"/>
-    <Wire from="adsr0" fromPort="out" to="shape0" toPort="in"/>
-    <Wire from="shape0" fromPort="out" to="filter0" toPort="in"/>
-    <Wire from="filter0" fromPort="out" to="output" toPort="in1"/>
-  </Connections>
+<SmolFM version="3">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="fscale0" factor="0.5">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="saw">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.001" decay="0.4" sustain="0.0" release="0.05">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="shape0" drive="0.8" shape="hard">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" mode="lp" cutoff="1200" resonance="0.4">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="cutoff_mod_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.85" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="100" />
+      <Box id="fscale0" x="200" y="100" />
+      <Box id="osc0" x="400" y="100" />
+      <Box id="adsr0" x="600" y="60" />
+      <Box id="shape0" x="600" y="180" />
+      <Box id="filter0" x="800" y="120" />
+      <Box id="output" x="1000" y="120" />
+    </Boxes>
+  </Layout>
 </SmolFM>

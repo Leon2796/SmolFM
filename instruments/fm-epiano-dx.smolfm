@@ -1,35 +1,40 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<!-- Advanced: DX-Style E-Piano (Transient/Sustain Split) -->
-<SmolFM version="2" name="DX E-Piano">
-  <description>FM percussive attack layer plus sustained sine body layer</description>
-  <Nodes>
-    <Node id="note" x="100" y="100"/>
-
-    <Node id="fscale0" x="300" y="300" factor="3.0"/>
-    
-    <Node id="fm0" x="500" y="100" amount="2.5"/>
-    
-    <Node id="osc0" x="700" y="100" waveform="0"/>
-    <Node id="osc1" x="500" y="300" waveform="0"/>
-    <Node id="osc2" x="700" y="500" waveform="0"/>
-    
-    <Node id="adsr0" x="900" y="100" attack="0.001" decay="0.15" sustain="0.0" release="0.1"/>
-    <Node id="adsr1" x="900" y="500" attack="0.005" decay="0.6" sustain="0.4" release="0.3"/>
-    
-    <Node id="output" x="1100" y="300" level="0.5"/>
-  </Nodes>
-  <Connections>
-    <Wire from="note" fromPort="out" to="fm0" toPort="freq_in"/>
-    <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in"/>
-    <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in"/>
-    <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in"/>
-    <Wire from="fm0" fromPort="out" to="osc0" toPort="note_in"/>
-    <Wire from="osc0" fromPort="out" to="adsr0" toPort="in"/>
-    <Wire from="adsr0" fromPort="out" to="output" toPort="in1"/>
-    
-    <Wire from="note" fromPort="out" to="osc2" toPort="note_in"/>
-    <Wire from="osc2" fromPort="out" to="adsr1" toPort="in"/>
-    <Wire from="adsr1" fromPort="out" to="output" toPort="in2"/>
-  </Connections>
+<SmolFM version="3" name="DX E-Piano">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="fscale0" factor="3.0" />
+      <Node id="fm0" amount="2.5" />
+      <Node id="osc0" waveform="sine" />
+      <Node id="osc1" waveform="sine" />
+      <Node id="osc2" waveform="sine" />
+      <Node id="adsr0" attack="0.001" decay="0.15" sustain="0.0" release="0.1" />
+      <Node id="adsr1" attack="0.005" decay="0.6" sustain="0.4" release="0.3" />
+      <Node id="output" level="0.5" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fm0" toPort="freq_in" />
+      <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in" />
+      <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in" />
+      <Wire from="fm0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="note" fromPort="out" to="osc2" toPort="note_in" />
+      <Wire from="osc2" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="adsr1" fromPort="out" to="output" toPort="in2" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="100" y="100" />
+      <Box id="fscale0" x="300" y="300" />
+      <Box id="fm0" x="500" y="100" />
+      <Box id="osc0" x="700" y="100" />
+      <Box id="osc1" x="500" y="300" />
+      <Box id="osc2" x="700" y="500" />
+      <Box id="adsr0" x="900" y="100" />
+      <Box id="adsr1" x="900" y="500" />
+      <Box id="output" x="1100" y="300" />
+    </Boxes>
+  </Layout>
 </SmolFM>

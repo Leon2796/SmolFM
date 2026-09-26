@@ -36,6 +36,8 @@ target_sources(${PROJECT_NAME}
         processors/MasterOutputProcessor.cpp
         graph/GraphNodes.cpp
         graph/SmolFmFile.cpp
+        graph/SmolFmXmlParser.cpp
+        graph/SmolFmYamlParser.cpp
         gui/components/OscillatorPanel.cpp
         gui/components/FMModulationComponent.cpp
         gui/components/FrequencyScaleComponent.cpp
@@ -89,3 +91,13 @@ add_executable(SmolFM_GraphTests
 
 target_include_directories(SmolFM_GraphTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
 target_link_libraries(SmolFM_GraphTests PRIVATE juce::juce_audio_basics juce::juce_core juce::juce_graphics)
+
+# Minimal self-check for the .smolfm parsers: the XML and the YAML flavour of
+# the same instrument must parse into identical SmolFmData (SmolFmParserTests.cpp).
+add_executable(SmolFM_ParserTests
+    graph/SmolFmParserTests.cpp
+    graph/SmolFmXmlParser.cpp
+    graph/SmolFmYamlParser.cpp)
+
+target_include_directories(SmolFM_ParserTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
+target_link_libraries(SmolFM_ParserTests PRIVATE juce::juce_core)

@@ -28,6 +28,8 @@
 */
 
 #include "SmolFmFile.h"
+#include "SmolFmXmlParser.h"
+#include "SmolFmYamlParser.h"
 #include "../gui/DraggablePanel.h"
 #include "../gui/DraggableComponent.h"
 #include "../gui/PinComponent.h"
@@ -153,29 +155,58 @@ namespace
             return param->getDefaultValue();
         return 0.0f;
     }
+
+    // -- Format detection ----------------------------------------------------
+    // The .smolfm format has an XML and a YAML flavour (doc/formats/);
+    // content sniffing picks the parser, XML wins on its canonical marker.
+    std::unique_ptr<ISmolFmParser> createParser (const juce::File& file)
+    {
+        if (auto xml = std::make_unique<SmolFmXmlParser>(); xml->canParse (file))
+            return xml;
+
+        if (auto yaml = std::make_unique<SmolFmYamlParser>(); yaml->canParse (file))
+            return yaml;
+
+        return nullptr;
+    }
+
+    bool parseFile (const juce::File& file, SmolFmData& data)
+    {
+        auto parser = createParser (file);
+        return parser != nullptr && parser->parse (file, data);
+    }
 }
 
 bool SmolFmFile::save (gui::DraggablePanel& panel,
                        juce::AudioProcessorValueTreeState& apvts,
                        const juce::File& file)
 {
+    // Version 3 splits the document: <Graph> carries the semantic part
+    // (processors, their sound parameters and the wiring), <Layout> the
+    // presentation (canvas boxes; future UI settings extend this).  Enum
+    // parameters are written as their names (saw, static, quarter, ...).
     juce::XmlElement root ("SmolFM");
-    root.setAttribute ("version", 2);
+    root.setAttribute ("version", 3);
     root.setAttribute ("name", file.getFileNameWithoutExtension());
 
-    auto* nodes = root.createNewChildElement ("Nodes");
+    auto* graph = root.createNewChildElement ("Graph");
+    auto* nodes = graph->createNewChildElement ("Nodes");
+    auto* boxes = root.createNewChildElement ("Layout")->createNewChildElement ("Boxes");
 
     for (const juce::String& boxId : panel.getBoxIds())
     {
         const auto bounds = panel.getBoxBounds (boxId);
+
         auto* nodeXml = nodes->createNewChildElement ("Node");
         nodeXml->setAttribute ("id", boxId);
-        nodeXml->setAttribute ("x", bounds.getX());
-        nodeXml->setAttribute ("y", bounds.getY());
 
-        // The node bundles its own sound-defining parameters.
+        const juce::String baseId = GraphNodeRegistry::baseIdOf (boxId);
+
+        // The node bundles its own sound-defining parameters (enum values
+        // as their names, everything else as numbers).
         for (const auto& p : parametersForNode (boxId))
-            nodeXml->setAttribute (p.attribute, getParameter (apvts, p.parameterId));
+            nodeXml->setAttribute (p.attribute,
+                                  enumValueText (p.attribute, baseId, getParameter (apvts, p.parameterId)));
 
         if (const NodeSpec* spec = GraphNodeRegistry::findSpec (boxId))
         {
@@ -194,9 +225,15 @@ bool SmolFmFile::save (gui::DraggablePanel& panel,
                 pinXml->setAttribute ("type", typeToString (spec->outputType));
             }
         }
+
+        // Presentation: the canvas position lives in the layout part only.
+        auto* boxXml = boxes->createNewChildElement ("Box");
+        boxXml->setAttribute ("id", boxId);
+        boxXml->setAttribute ("x", bounds.getX());
+        boxXml->setAttribute ("y", bounds.getY());
     }
 
-    auto* wires = root.createNewChildElement ("Connections");
+    auto* wires = graph->createNewChildElement ("Connections");
 
     for (const auto& c : panel.getCurrentPatch().connections)
     {
@@ -214,41 +251,31 @@ bool SmolFmFile::load (gui::DraggablePanel& panel,
                        juce::AudioProcessorValueTreeState& apvts,
                        const juce::File& file)
 {
-    const std::unique_ptr<juce::XmlElement> root (juce::XmlDocument::parse (file));
-
-    if (root == nullptr || ! root->hasTagName ("SmolFM"))
+    SmolFmData data;
+    if (! parseFile (file, data) || ! data.isValid())
         return false;
 
     bool appliedAnything = false;
 
-    if (auto* nodes = root->getChildByName ("Nodes"))
+    for (const auto& node : data.nodes)
     {
-        for (auto* nodeXml = nodes->getFirstChildElement();
-             nodeXml != nullptr;
-             nodeXml = nodeXml->getNextElement())
+        const juce::String& id = node.id;
+
+        // If this node isn't on the canvas, ask the editor to create it.
+        // panel owns a factory hook that knows how to build the content
+        // for an instance.  PluginEditor configures it at startup.
+        if (panel.getBoxIds().contains (id) == false
+            && panel.onCreateMissingNode != nullptr)
         {
-            if (! nodeXml->hasTagName ("Node"))
-                continue;
+            panel.onCreateMissingNode (id);
+        }
 
-            const juce::String id = nodeXml->getStringAttribute ("id");
-
-            // If this node isn't on the canvas, ask the editor to create it.
-            if (panel.getBoxIds().contains (id) == false)
-            {
-                // panel owns a factory hook that knows how to build the content
-                // for an instance.  PluginEditor configures it at startup.
-                if (panel.onCreateMissingNode != nullptr)
-                    panel.onCreateMissingNode (id);
-            }
-
-            // Position (arrangement).
-            const int x = nodeXml->getIntAttribute ("x", -1);
-            const int y = nodeXml->getIntAttribute ("y", -1);
-            if (x >= 0 && y >= 0)
-            {
-                panel.setBoxPosition (id, { x, y });
-                appliedAnything = true;
-            }
+        // Position (arrangement).
+        if (node.x >= 0 && node.y >= 0)
+        {
+            panel.setBoxPosition (id, { node.x, node.y });
+            appliedAnything = true;
+        }
 
             // Parameters (sound) live on the node itself.  Attributes the
             // file does not carry are RESET to the parameter's declared
@@ -257,37 +284,31 @@ bool SmolFmFile::load (gui::DraggablePanel& panel,
             // inherits Static from an earlier drum-patch load.
             for (const auto& p : parametersForNode (id))
             {
-                const float value = nodeXml->hasAttribute (p.attribute)
-                    ? static_cast<float> (nodeXml->getDoubleAttribute (p.attribute))
+                const auto it = node.parameters.find (p.attribute);
+                const float value = it != node.parameters.end()
+                    ? it->second
                     : parameterDefault (apvts, p.parameterId);
 
                 setParameter (apvts, p.parameterId, value);
                 appliedAnything = true;
             }
-        }
     }
 
     // Rebuild the wiring and push it to the panel (which notifies the processor).
-    if (auto* wires = root->getChildByName ("Connections"))
+    // A file without a Connections section keeps the current wiring; a file
+    // with the section (even empty) replaces it. save() always writes it.
+    if (data.hasConnections)
     {
         ConnectionPatch patch;
 
-        for (auto* wireXml = wires->getFirstChildElement();
-             wireXml != nullptr;
-             wireXml = wireXml->getNextElement())
+        for (const auto& c : data.connections)
         {
-            if (! wireXml->hasTagName ("Wire"))
-                continue;
-
-            ConnectionPatch::Connection c;
-            c.from.nodeId = wireXml->getStringAttribute ("from");
-            c.from.portId = wireXml->getStringAttribute ("fromPort");
-            c.to.nodeId   = wireXml->getStringAttribute ("to");
-            c.to.portId   = wireXml->getStringAttribute ("toPort");
-
-            if (c.from.nodeId.isNotEmpty() && c.from.portId.isNotEmpty()
-             && c.to.nodeId.isNotEmpty()   && c.to.portId.isNotEmpty())
-                patch.connections.push_back (c);
+            ConnectionPatch::Connection conn;
+            conn.from.nodeId = c.from;
+            conn.from.portId = c.fromPort;
+            conn.to.nodeId   = c.to;
+            conn.to.portId   = c.toPort;
+            patch.connections.push_back (conn);
         }
 
         // One wire per input pin: later wires in the file replace earlier
@@ -329,14 +350,10 @@ bool SmolFmFile::load (gui::DraggablePanel& panel,
 
 juce::String SmolFmFile::readInstrumentName (const juce::File& file)
 {
-    const std::unique_ptr<juce::XmlElement> root (juce::XmlDocument::parse (file));
-
-    if (root != nullptr && root->hasTagName ("SmolFM"))
-    {
-        const juce::String name = root->getStringAttribute ("name");
-        if (name.isNotEmpty())
-            return name;
-    }
+    // Works for both format flavours (see doc/formats/).
+    SmolFmData data;
+    if (parseFile (file, data) && data.name.isNotEmpty())
+        return data.name;
 
     return file.getFileNameWithoutExtension();
 }
