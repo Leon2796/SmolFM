@@ -1,48 +1,106 @@
-<SmolFM version="3">
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="darkwave-pad-cathedral">
   <Graph>
     <Nodes>
-      <Node id="note" />
-      <Node id="fscale0" factor="0.08">
-        <Pin id="freq_in" direction="in" type="frequency" />
+      <Node id="note">
         <Pin id="out" direction="out" type="frequency" />
       </Node>
       <Node id="osc0" waveform="saw">
         <Pin id="note_in" direction="in" type="frequency" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
+      <Node id="fscale0" factor="1.006">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
       <Node id="osc1" waveform="saw">
         <Pin id="note_in" direction="in" type="frequency" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="adsr0" attack="1.2" decay="2.0" sustain="0.7" release="1.8">
+      <Node id="fscale1" factor="0.5">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc2" waveform="sine">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.5">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="delay0" feedback="0.4" mix="0.35" sync="off">
+      <Node id="gain1" factor="0.45">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="output" level="0.8" />
+      <Node id="gain2" factor="0.4">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="1.5" decay="1.2" sustain="0.85" release="3.6">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay0" time="600" feedback="0.55" mix="0.42" sync="off" division="quarter">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr1" attack="1.5" decay="1.2" sustain="0.85" release="3.6">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr2" attack="1.5" decay="1.2" sustain="0.85" release="3.6">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay1" time="600" feedback="0.55" mix="0.42" sync="off" division="quarter">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay2" time="600" feedback="0.55" mix="0.42" sync="off" division="quarter">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.45" />
     </Nodes>
     <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
       <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
-      <Wire from="fscale0" fromPort="out" to="osc0" toPort="note_in" />
       <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in" />
-      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
-      <Wire from="osc1" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="note" fromPort="out" to="fscale1" toPort="freq_in" />
+      <Wire from="fscale1" fromPort="out" to="osc2" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="osc1" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="osc2" fromPort="out" to="gain2" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="gain1" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="gain2" fromPort="out" to="adsr2" toPort="in" />
       <Wire from="adsr0" fromPort="out" to="delay0" toPort="in" />
+      <Wire from="adsr1" fromPort="out" to="delay1" toPort="in" />
+      <Wire from="adsr2" fromPort="out" to="delay2" toPort="in" />
       <Wire from="delay0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="delay1" fromPort="out" to="output" toPort="in2" />
+      <Wire from="delay2" fromPort="out" to="output" toPort="in3" />
     </Connections>
   </Graph>
   <Layout>
     <Boxes>
-      <Box id="note" x="60" y="100" />
-      <Box id="fscale0" x="220" y="100" />
-      <Box id="osc0" x="440" y="60" />
-      <Box id="osc1" x="440" y="180" />
-      <Box id="adsr0" x="660" y="120" />
-      <Box id="delay0" x="860" y="120" />
-      <Box id="output" x="1060" y="120" />
+      <Box id="note" x="60" y="60" />
+      <Box id="osc0" x="360" y="60" />
+      <Box id="fscale0" x="60" y="380" />
+      <Box id="osc1" x="360" y="380" />
+      <Box id="fscale1" x="60" y="700" />
+      <Box id="osc2" x="360" y="700" />
+      <Box id="gain0" x="680" y="60" />
+      <Box id="gain1" x="680" y="380" />
+      <Box id="gain2" x="680" y="700" />
+      <Box id="adsr0" x="1000" y="60" />
+      <Box id="adsr1" x="1000" y="380" />
+      <Box id="adsr2" x="1000" y="700" />
+      <Box id="delay0" x="1320" y="60" />
+      <Box id="delay1" x="1320" y="380" />
+      <Box id="delay2" x="1320" y="700" />
+      <Box id="output" x="1640" y="380" />
     </Boxes>
   </Layout>
 </SmolFM>

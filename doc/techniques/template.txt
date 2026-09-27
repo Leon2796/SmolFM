@@ -1,0 +1,67 @@
+technique:
+  name: <unique technique name>
+
+  idea: |
+    <Abstract description of the synthesis idea.
+    Explain what the technique does, why it is useful,
+    and how it generally affects the resulting sound. 
+	Keep the idea conformative with the possibilies given the .xsd format file.>
+
+  involved_nodes:
+    - type: <NodeType>
+      role: <role of this node within the technique>
+
+  involved_ports:
+    - node_role: <role of node above>
+      port: <port id / semantic port name>
+      role: <what this connection does>
+
+  topology:
+    description: |
+      <Describe the signal/modulation topology in abstract terms regarding the .xsd. 
+	  E.g. can be a certain send or input patterns, but also a full subgraph(s). Just describe 
+	  the implied topology.>
+
+  parameters:
+    - name: <parameter>
+      role: |
+        <What this parameter controls within the technique.>
+
+  relationships:
+    - name: <relationship>
+      description: |
+        <Important relationship between parameters,
+        frequencies, envelopes, amounts, etc. >
+
+  perceptual_effects:
+    - <effect>
+	
+	
+-------------------------------------------------------------
+
+Formuliere mir einen Skill zum Erstellen solcher Techniken. 
+Es geht darum viele sinnvolle synthsizer techniken zu erzeugen. 
+Dabei soll jede Technik einen beschreibende yaml 
+Datei, welche wie oben strukturiert und definiert ist. Der Skill 
+soll dieses Template enthalten und ein Vorgehen zum Identifizieren 
+solcher Techniken beschreiben. Zuerst soll die format xsd gelesen werden,
+um den Synth grammatikalisch zu verstehen. Dann sollen vorhandene Techniken 
+eingelesen werden, um Dopplungen zu vermeiden. Vermeide redundante Techniken, 
+frage den User dann lieber vorhandenen Techniken anzupassen. Der Agent soll online 
+Techniken, Synthsizer architekturen, Tutorials, etc. und eigenes Wissen verwenden, 
+um mögliche Techniken vorzuschlagen, die bisher nicht beschrieben sind, aber auf basis der 
+xsd möglich wären. Frage den Nutzer, ob er einen Technik sinnvoll findet bevor du sie erstellst.
+Arbeite ggf. Feedback ein. 
+
+
+-------------------------------------------------------------------------------------------------
+
+Formuliere mir einen Skill zum erstellen eines .smolfm instrument. Skillname: create-smol-fm-instrument(ein neuer, alte nicht löschen).
+Referenziere die xsd für die grammatik der Instrumente. Referenziere die techniken als repository für Anwendungsmöglichkeiten im Graph. 
+
+Der Skill soll beschreibungen zum genre, soundbild, instrumenttyp berücksichtigen und eines oder mehrere passende .smolfm instrumte erstellen.
+Dabei soll die Anwendung der Techniken durch den Agent passenbd zur Beschreibung der vorher formulierten Anforderung passen. 
+Dafür soll öffentliche Dokumentation, Synthsizer Tutorials, Techniken, Synthsizer Architekturen, Tutorials, etc. 
+und eigenes Wissen genutzt werden, um die korrekten Techniken auszuwählen um den Anforderungen entsprechende möglichst hochqualitative 
+Instrumente zu generieren. Sag dem Skill er ist ein Synthesizer Guru, der selbst unter härstesten DSP Bedingungen, den bestmöglichsten 
+Sound rausholt. 

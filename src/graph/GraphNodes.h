@@ -5,10 +5,19 @@
     processor in the voice pool and its own APVTS parameter pair.
 
         Node id scheme
-            note0 .. note3  up to 4 MIDI note sources (all emit the played note)
-            osc0 .. osc7  up to 8 oscillators (carrier or modulator â€” same thing)
-            fm0 .. fm3    up to 4 FM amount stages
-            adsr          exactly one (final envelope)
+            note                exactly one MIDI note source (emits the played note)
+            osc0 .. osc7        up to 8 oscillators (carrier or modulator — same thing)
+            fm0 .. fm3          up to 4 FM amount stages
+            fscale0 .. fscale7  up to 8 frequency scalers
+            ring0 .. ring3      up to 4 ring modulators
+            am0 .. am3          up to 4 AM modulators
+            delay0 .. delay7    up to 8 delays
+            adsr0 .. adsr7      up to 8 amplitude envelopes
+            fadsr0 .. fadsr3    up to 4 frequency envelopes
+            gain0 .. gain7      up to 8 gain stages
+            shape0 .. shape7    up to 8 waveshapers
+            filter0 .. filter7  up to 8 filters
+            output              exactly one master output (mixes up to 8 signal inputs)
 
     A connection is expressed from the input side, because an InputPort can
     only ever have one source.  FM stages live in the frequency domain and
@@ -19,7 +28,7 @@
         osc1.out (signal)      -> fm0.modulator_in
         fm0.out  (frequency)   -> fm1.freq_in   (chained FM stages)
         fm1.out  (frequency)   -> osc0.note_in
-        osc0.out (signal)      -> adsr.in
+        osc0.out (signal)      -> adsr0.in
 */
 
 #pragma once
@@ -41,7 +50,7 @@ namespace smolfm
 //==============================================================================
 /**
     Coarse node kind.  Oscillator nodes are identical whether they act as
-    carrier or modulator â€” the wiring decides that role.
+    carrier or modulator — the wiring decides that role.
 */
 enum class NodeType
 {

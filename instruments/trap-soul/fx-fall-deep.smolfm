@@ -1,29 +1,50 @@
-<SmolFM version="3">
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="fx-fall-deep">
   <Graph>
     <Nodes>
-      <Node id="note" />
-      <Node id="osc0" waveform="saw">
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fscale0" factor="0.5">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fadsr0" attack="0.01" decay="2.0" sustain="0.0" release="0.5" up="1.0" down="0.0">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="sine">
         <Pin id="note_in" direction="in" type="frequency" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="adsr0" attack="0.01" decay="0.5" sustain="0.5" release="0.3">
+      <Node id="shape0" drive="0.25" shape="soft">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="output" level="0.8" />
+      <Node id="adsr0" attack="0.01" decay="2.0" sustain="0.0" release="0.8">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.7" />
     </Nodes>
     <Connections>
-      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
-      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="fadsr0" toPort="freq_in" />
+      <Wire from="fadsr0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="adsr0" toPort="in" />
       <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
     </Connections>
   </Graph>
   <Layout>
     <Boxes>
-      <Box id="note" x="60" y="100" />
-      <Box id="osc0" x="400" y="100" />
-      <Box id="adsr0" x="600" y="100" />
-      <Box id="output" x="900" y="100" />
+      <Box id="note" x="60" y="60" />
+      <Box id="fscale0" x="300" y="60" />
+      <Box id="fadsr0" x="540" y="60" />
+      <Box id="osc0" x="780" y="60" />
+      <Box id="shape0" x="1020" y="60" />
+      <Box id="adsr0" x="1260" y="60" />
+      <Box id="output" x="1500" y="60" />
     </Boxes>
   </Layout>
 </SmolFM>

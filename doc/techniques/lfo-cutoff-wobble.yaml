@@ -1,0 +1,122 @@
+technique:
+  name: lfo-cutoff-wobble
+
+  idea: |
+    A filter follows its dedicated cutoff modulation input, and the wobble
+    is generated in the frequency domain: the keyboard send feeds the FM
+    stage, whose modulator is a static-frequency LFO oscillator.  A connected
+    cutoff_mod_in replaces the static cutoff entirely, so the filter opens
+    and closes rhythmically at the LFO rate while its centre tracks the
+    played key.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; base frequency for the audio voice and the wobble
+        centre.
+    - type: fm
+      role: Frequency-domain bridge; multiplies the centre by (1 + amount *
+        LFO) and is the permitted frequency source for cutoff_mod_in.
+    - type: osc
+      role: Audio oscillator in pitch mode; provides the signal to be
+        filtered.
+    - type: osc
+      role: LFO oscillator in LFO mode; its slow signal is the wobble
+        modulator.
+    - type: filter
+      role: Filter with LP/BP/HP/Notch character and modulated cutoff.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the FM stage and the audio voice
+        (frequency).
+    - node_role: FM stage
+      port: freq_in
+      role: Receives the wobble centre frequency (frequency).
+    - node_role: FM stage
+      port: modulator_in
+      role: Receives the LFO signal (signal).
+    - node_role: FM stage
+      port: out
+      role: Wobbled cutoff frequency into the filter (frequency).
+    - node_role: LFO oscillator
+      port: out
+      role: Wobble modulator into the FM stage (signal).
+    - node_role: Audio oscillator
+      port: note_in
+      role: Receives the base frequency (frequency).
+    - node_role: Audio oscillator
+      port: out
+      role: Audio signal into the filter (signal).
+    - node_role: Filter
+      port: cutoff_mod_in
+      role: Receives the wobbled cutoff; replaces the static cutoff
+        (frequency).
+    - node_role: Filter
+      port: in
+      role: Receives the audio signal (signal).
+    - node_role: Filter
+      port: out
+      role: Filtered signal towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: Dedicated mix input for the filtered voice (signal).
+
+  topology:
+    description: |
+      note.out -> fm.freq_in (frequency); note.out -> osc.note_in
+      (frequency).  LFO osc.out -> fm.modulator_in (signal).
+      fm.out -> filter.cutoff_mod_in (frequency).  audio osc.out ->
+      filter.in (signal).  filter.out -> output (signal).  The LFO output
+      is a signal and cannot drive the frequency-domain cutoff port
+      directly; the FM stage is the bridge that turns it into a permitted
+      frequency source.
+
+  parameters:
+    - name: wobble depth
+      role: |
+        FM amount, 0..10; practical 0.05..0.5.  Sets the relative deviation
+        of the cutoff: deviation = amount * centre.
+    - name: wobble rate
+      role: |
+        LFO rate, 0.01..50 Hz.  Sets how fast the cutoff opens and closes.
+    - name: centre scale
+      role: |
+        Optional fscale factor 0..10 between note and fm.freq_in; fixes the
+        centre relationship (0.5 = an octave below the note, 2 = an octave
+        above).  Without it the centre is the raw note frequency.
+    - name: resonance
+      role: |
+        Filter resonance, 0..1.  Accentuates the movement at the cutoff
+        edge.
+    - name: filter mode
+      role: |
+        lp | bp | hp | notch.  Determines the filter character of the
+        sweep.
+
+  relationships:
+    - name: modulator-override
+      description: |
+        A connected cutoff_mod_in replaces the static cutoff completely
+        (clamped 20..20000 Hz); its permitted sources are note, fadsr, fm
+        and fscale — all frequency-domain.  An oscillator out port is a
+        signal, so the LFO is routed through the FM stage, whose out port
+        is a genuine frequency.
+    - name: proportional-wobble
+      description: |
+        The FM stage computes out = f_in * (1 + amount * modulator), so the
+        wobble swing scales with the played key; an optional scale stage
+        before the FM input fixes the centre relationship (for example one
+        octave below) while the deviation stays proportional.
+    - name: rate-to-character
+      description: |
+        Rates below 5 Hz read as sweeps, mid rates as wobble and high rates
+        as buzz; while the modulator is connected the centre is the FM
+        input frequency, not the filter's static cutoff attribute.
+
+  perceptual_effects:
+    - auto-wah like sweeps that track the played key
+    - resonant wobble and dub-style filter movement
+    - rhythmic tonal reshaping at higher rates

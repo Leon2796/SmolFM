@@ -1,0 +1,112 @@
+technique:
+  name: shaped-modulator-fm
+
+  idea: |
+    A waveshaper sits inside the FM operator, between the modulator
+    oscillator and the FM stage's modulator input.  Drive and fold shaping
+    enrich the modulation signal with overtones before the index acts on
+    it, so the sideband families inherit the shaper's harmonic content
+    while the carrier ratio and the amount stay untouched — drive becomes
+    a spectral-density control layered on top of the FM index.  The
+    topology is classic-two-op-fm with the shaper pushed into the
+    modulation path; serial-drive-filter-sculpt instead shapes the audio
+    path behind the voice, colouring the rendered signal itself.
+
+  involved_nodes:
+    - type: note
+      role: MIDI note source; carrier frequency for the FM stage.
+    - type: osc
+      role: Modulator oscillator; its raw waveform feeds the shaper.
+    - type: shape
+      role: Waveshaper in the modulation path; drive and fold add overtones
+        to the modulator before the index multiplies it.
+    - type: fm
+      role: FM stage; multiplies the note frequency by (1 + amount *
+        modulator) using the shaped modulator signal.
+    - type: osc
+      role: Carrier oscillator in pitch mode; renders the modulated
+        frequency.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: MIDI note source
+      port: out
+      role: Base frequency into the FM stage (frequency).
+    - node_role: Modulator oscillator
+      port: out
+      role: Raw modulation signal into the shaper (signal).
+    - node_role: Waveshaper
+      port: in
+      role: Receives the raw modulator (signal).
+    - node_role: Waveshaper
+      port: out
+      role: Shaped modulator into the FM stage (signal).
+    - node_role: FM stage
+      port: freq_in
+      role: Receives the note frequency (frequency).
+    - node_role: FM stage
+      port: modulator_in
+      role: Receives the shaped modulator signal (signal).
+    - node_role: FM stage
+      port: out
+      role: Modulated frequency towards the carrier (frequency).
+    - node_role: Carrier oscillator
+      port: note_in
+      role: Receives the modulated frequency (frequency).
+    - node_role: Carrier oscillator
+      port: out
+      role: Rendered signal towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the voice (signal).
+
+  topology:
+    description: |
+      note -> fm.freq_in (frequency).  Modulator oscillator -> shape.in
+      (signal).  shape.out -> fm.modulator_in (signal).  fm.out ->
+      carrier.note_in (frequency).  carrier.out -> output (signal).  The
+      shaper lives in the modulation path only — the audio path stays
+      clean, and the timbre changes arrive exclusively through the
+      frequency arithmetic.
+
+  parameters:
+    - name: fm amount
+      role: |
+        Modulation index, 0..10.  Depth of the deviation around the note.
+    - name: drive
+      role: |
+        Waveshaper drive, 0..1.  Adds overtones to the modulator; with
+        fold mode the index excursions get angular and dense.
+    - name: shape mode
+      role: |
+        soft | hard | fold.  Soft rounds the modulator, hard clips it,
+        fold produces the richest index ripple.
+    - name: modulator staticfreq
+      role: |
+        Modulator frequency, 20..20000 Hz.  Sets the sideband ratio
+        against the note.
+
+  relationships:
+    - name: index-times-shaping
+      description: |
+        The FM stage computes out = f_in * (1 + amount * shaped_m); the
+        shaper adds its overtones to the modulation signal, so the same
+        index produces a denser sideband structure than the raw
+        oscillator could.
+    - name: clean-carrier-path
+      description: |
+        The shaper never touches the rendered signal; the colour change
+        reaches the output only through the modulation arithmetic, which
+        keeps the carrier waveform pristine while the spectrum hardens.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8, shape <= 8, fm <= 4,
+        output = 1.  One shaper per FM operator; cascades can shape every
+        operator's modulator independently.
+
+  perceptual_effects:
+    - richer sideband families at an unchanged modulation index
+    - metallic index ripple from folded modulators
+    - a continuous morph from clean two-op FM to gnarled spectra as the
+      drive opens

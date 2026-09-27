@@ -229,20 +229,24 @@ not for end users.
 
 ### 10. Update the instrument-design skill
 
-Every new processor **must** be registered in
-`.agents/skills/create-smolfm-instrument/SKILL.md` so instruments generated
-from text descriptions can reference it. Add / update all four spots:
+Every new processor **must** be registered so instruments generated from text
+descriptions can reference it. The machine-readable registration is §7 (the
+instrument skill treats `doc/formats/smolfm.xsd` as its binding grammar —
+the complexType plus appinfo annotation IS the grammar entry). Three
+human-readable spots follow:
 
-1. **"Complete Processor Reference" table** — one row: `**FooProcessor** | `foo` | <max> | <ins> | <outs> | <1-line function>`.
-2. **"Node ID Convention" table** — row: `` `foo` | `foo0` through `foo<N-1>` | 0-<N-1> ``.
-3. **"Processor Port Details"** — a `#### FooProcessor` block matching the
-   existing format (Purpose, Inputs, Outputs, Parameters, Behavior, special
-   cases like unwired defaults).
-4. **"Graph Wiring Principles"** — three short ASCII wiring snippets named
-   after their use case, each 5–8 lines plus an "Example settings" list of
-   concrete parameter values. Copy the style of the `#### Amplitude Modulation`
-   entries. These snippets are what the instrument designer copies verbatim
-   into new `.smolfm` patches.
+1. **Node/port map in `.agents/skills/create-smol-fm-instrument/SKILL.md`** —
+   one row in the "Node and port map" table
+   (`` `foo` | <ins> | <outs> | <budget> ``), mirroring
+   `GraphNodeRegistry::maxFoos` and the xsd port annotations exactly.
+2. **Common pitfalls in the same SKILL.md** — only if the processor introduces
+   a failure mode patch authors must know (new port kind, surprising unwired
+   default). Skip for well-behaved nodes.
+3. **Technique catalogue** — if the processor enables reusable wiring
+   patterns, register them via `.agents/skills/create-smolfm-technique` (one
+   user-approved `doc/techniques/*.yaml` per pattern). The instrument skill
+   composes instruments FROM that catalogue; embedded ASCII wiring-snippet
+   lists inside the instrument skill are legacy and no longer exist there.
 
 Skip this and the new node is invisible to the patch-generation skill: palettes
 show it, but no generated instrument will ever wire it in.
@@ -288,7 +292,7 @@ For a new **Wavefolder** (`fold` node, 1 input sample `in`, 1 output sample
 3. `GraphNodes.{h,cpp}` — `NodeType::wavefolder`, `maxWavefolders = 4`,
    spec, `typeOf`, `maxInstancesOf`, `amountParameterIdFor` case.
 4. `PluginProcessor.cpp` — APVTS loop + voiceParameters cache.
-5. `gui/components/WavefolderComponent.{h,cpp}` — one slider.
+5. `src/gui/components/WavefolderComponent.{h,cpp}` — one slider.
 6. `PluginEditor.{h,cpp}` — factory + palette + toolbar mapping +
    `onCreateMissingNode`.
 7. `SmolFmFile.cpp` — `parametersForNode` branch returning

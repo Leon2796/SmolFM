@@ -1,0 +1,64 @@
+technique:
+  name: tempo-synced-delay-tail
+
+  idea: |
+    The delay runs tempo-synced: its repeat distance is a note length
+    (half, quarter, eighth or sixteenth) instead of free milliseconds.  With
+    mid feedback and half mix the voice leaves a musical echo tail that
+    repeats on the beat.
+
+  involved_nodes:
+    - type: osc
+      role: Dry signal source in pitch or static mode.
+    - type: delay
+      role: Tempo-synced delay with musical repeat distance.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Oscillator
+      port: out
+      role: Dry signal into the delay (signal).
+    - node_role: Delay
+      port: in
+      role: Receives the dry signal (signal).
+    - node_role: Delay
+      port: out
+      role: Dry plus beat-synced repeats towards the output (signal).
+
+  topology:
+    description: |
+      osc -> delay.in (signal).  delay.out -> output (signal).  The delay is
+      the only processor; sync on turns the time parameter off and the
+      division into the repeat distance.
+
+  parameters:
+    - name: sync
+      role: |
+        off | on.  on enables tempo sync; the delay time parameter is
+        ignored while synced.
+    - name: division
+      role: |
+        half | quarter | eighth | sixteenth.  Repeat distance in notes;
+        quarter is the default.
+    - name: feedback
+      role: |
+        0..0.95; 0.4..0.6 keeps a musical multi-beat tail.
+    - name: mix
+      role: |
+        0..1; 0.3..0.5 keeps the dry voice in front of the tail.
+
+  relationships:
+    - name: beat-distance
+      description: |
+        The repeat distance equals the chosen division of the current tempo;
+        changing the division doubles or halves the tail spacing.
+    - name: feedback-to-tail
+      description: |
+        Feedback sets how many beats the echo survives; below 0.4 only the
+        next beat echoes, above 0.6 several beats overlap.
+
+  perceptual_effects:
+    - rhythmic echo tails locked to the tempo
+    - dub-style repeats at quarter or eighth divisions
+    - wide, musical afterglow behind every note

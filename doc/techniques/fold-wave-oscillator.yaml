@@ -1,0 +1,79 @@
+technique:
+  name: fold-wave-oscillator
+
+  idea: |
+    The waveshaper is the timbre generator itself: a plain oscillator is
+    folded, and the folded spectrum is the voice.  Rising drive folds the
+    waveform over itself again and again — from a near-clean sine through
+    square-like richness to dense, metallic spectra — without any filter in
+    the path.
+
+  involved_nodes:
+    - type: osc
+      role: Source in pitch or static mode; plain waveform input for the
+        folder.
+    - type: shape
+      role: Waveform shaper in fold mode; the drive parameter is the timbre
+        control.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Oscillator
+      port: out
+      role: Raw waveform into the shaper (signal).
+    - node_role: Waveshaper
+      port: in
+      role: Receives the raw waveform (signal).
+    - node_role: Waveshaper
+      port: out
+      role: Folded voice towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: Dedicated mix input for the folded voice (signal).
+
+  topology:
+    description: |
+      osc.out -> shape.in (signal).  shape.out -> output (signal).  A
+      two-stage serial path; the fold shaping defines the voice and no
+      filter stage follows it.
+
+  parameters:
+    - name: drive
+      role: |
+        Waveshaper drive, 0..1.  0 = near-transparent; rising values fold
+        the waveform over itself in perceptible steps, each step a new
+        timbre stage.
+    - name: shape mode
+      role: |
+        fold is the core of this technique; soft or hard keep the spectrum
+        closer to the input and turn the voice into a gentle saturator
+        instead.
+    - name: oscillator mode
+      role: |
+        Pitch mode tracks the keyboard for folded leads; static mode turns
+        the voice into an atonal timbre generator.
+
+  relationships:
+    - name: fold-to-spectrum
+      description: |
+        Each fold pass doubles the perceived harmonic density; the drive
+        position selects the timbre stage, so the voice morphs from sine
+        through square-like into dense folded spectra as drive rises.
+    - name: siblings
+      description: |
+        serial-drive-filter-sculpt places the same shaper before a filter,
+        so its drive products get sculpted; here the folded spectrum is the
+        end of the path.  noise-drive-percussion folds noise behind an
+        envelope for one-shots; this technique keeps a pitched, sustained
+        voice.
+    - name: headroom
+      description: |
+        Folding compresses the input and adds harmonic energy in steps;
+        balance the drive against the output input level to keep the
+        folded voice even with other sources.
+
+  perceptual_effects:
+    - square-like and metallic voices generated from a plain sine
+    - stepwise timbre morph driven by the drive parameter
+    - dense folded leads without any filter colouration

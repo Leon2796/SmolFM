@@ -1,0 +1,70 @@
+technique:
+  name: am-tremolo-lfo
+
+  idea: |
+    An LFO oscillator modulates the amplitude of a carrier oscillator through
+    the AM stage.  The bipolar modulator spans the gain around the dry level,
+    so the amount parameter sets the tremolo depth and the LFO rate sets the
+    wobble speed.
+
+  involved_nodes:
+    - type: osc
+      role: Carrier in pitch or static mode; provides the signal to tremolo.
+    - type: osc
+      role: LFO oscillator in LFO mode; provides the amplitude modulator.
+    - type: am
+      role: Amplitude-modulation stage between carrier and modulator.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Carrier oscillator
+      port: out
+      role: Carrier signal into the AM stage (signal).
+    - node_role: LFO oscillator
+      port: out
+      role: Amplitude modulator into the AM stage (signal).
+    - node_role: AM stage
+      port: carrier_in
+      role: Receives the carrier signal (signal).
+    - node_role: AM stage
+      port: modulator_in
+      role: Receives the tremolo modulator (signal).
+    - node_role: AM stage
+      port: out
+      role: Tremolo signal towards the output (signal).
+
+  topology:
+    description: |
+      carrier.out -> am.carrier_in (signal).  lfo.out -> am.modulator_in
+      (signal).  am.out -> output (signal).  The AM stage is the only
+      processor; its depth is the amount parameter.
+
+  parameters:
+    - name: am amount
+      role: |
+        Tremolo depth, 0..1.  0 = dry pass-through, 1 = full amplitude swing.
+    - name: lfo rate
+      role: |
+        Tremolo speed, 0.01..50 Hz.  Low rates read as slow pulsing, high
+        rates as fast tremolo.
+    - name: carrier waveform
+      role: |
+        Waveform of the tremoloed signal; sine tremolos smoothly, richer
+        waveforms tremolo all partials together.
+
+  relationships:
+    - name: rate-to-speed
+      description: |
+        The tremolo frequency equals the LFO rate; the swing width equals the
+        amount.
+    - name: depth-to-gain
+      description: |
+        With amount 1 the gain swings across the full bipolar modulator
+        range; with 0.5 the level only dips partway, keeping the voice
+        audible.
+
+  perceptual_effects:
+    - classic tremolo pulsing of pads and leads
+    - slow breathing amplitude at low rates
+    - fast machine-gun amplitude flutter at high rates

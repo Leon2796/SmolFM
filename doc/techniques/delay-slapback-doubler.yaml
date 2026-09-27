@@ -1,0 +1,60 @@
+technique:
+  name: delay-slapback-doubler
+
+  idea: |
+    A short delay with low feedback and around half mix adds a single early
+    repetition right after the original signal.  At slapback times the repeat
+    reads as a doubling of the voice rather than an echo, thickening the
+    sound without any modulation.
+
+  involved_nodes:
+    - type: osc
+      role: Dry signal source in pitch or static mode.
+    - type: delay
+      role: Single-tap delay; free-running time, low feedback, half mix.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Oscillator
+      port: out
+      role: Dry signal into the delay (signal).
+    - node_role: Delay
+      port: in
+      role: Receives the dry signal (signal).
+    - node_role: Delay
+      port: out
+      role: Dry plus one repeat towards the output (signal).
+
+  topology:
+    description: |
+      osc -> delay.in (signal).  delay.out -> output (signal).  The delay's
+      internal feedback buffer produces the repeat; no external wiring is
+      needed.  Sync stays off for a fixed slapback distance.
+
+  parameters:
+    - name: delay time
+      role: |
+        1..2000 ms; 30..80 ms keeps the repeat inside the slapback doubling
+        band, above ~100 ms it turns into a distinct echo.
+    - name: feedback
+      role: |
+        0..0.95; 0.2..0.4 holds one to two repeats instead of a long tail.
+    - name: mix
+      role: |
+        0..1; around 0.5 balances dry and repeat.
+
+  relationships:
+    - name: repeat-distance
+      description: |
+        The single repeat sits at the delay time; with the mix near 0.5 the
+        original dominates and the repeat only thickens the onset.
+    - name: feedback-to-tail
+      description: |
+        Feedback below 0.4 keeps exactly one audible repeat; higher values
+        turn the doubler into a repeating echo.
+
+  perceptual_effects:
+    - doubled, wider voice without modulation
+    - rockabilly-style slapback onset
+    - subtle thickness on static tones

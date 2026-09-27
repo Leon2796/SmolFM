@@ -1,0 +1,75 @@
+technique:
+  name: double-delay-space
+
+  idea: |
+    Two delay stages in series with different times: a short slapback feeds a
+    long tail stage.  The first repeat echoes quickly, and the long stage
+    repeats that repeat again — one path, two echo distances, a complex
+    decaying space.
+
+  involved_nodes:
+    - type: osc
+      role: Dry signal source in pitch or static mode.
+    - type: delay
+      role: First stage; short slapback time, low feedback.
+    - type: delay
+      role: Second stage; long tail time, mid feedback and mix.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Oscillator
+      port: out
+      role: Dry signal into the first delay (signal).
+    - node_role: First delay
+      port: in
+      role: Receives the dry signal (signal).
+    - node_role: First delay
+      port: out
+      role: Slapback signal into the second delay (signal).
+    - node_role: Second delay
+      port: in
+      role: Receives the slapback signal (signal).
+    - node_role: Second delay
+      port: out
+      role: Combined echo space towards the output (signal).
+
+  topology:
+    description: |
+      osc -> delay0.in (signal).  delay0.out -> delay1.in (signal).
+      delay1.out -> output (signal).  Two serial stages with independent
+      time, feedback and mix; the second stage repeats the first stage's
+      repeats as well.
+
+  parameters:
+    - name: first stage time
+      role: |
+        1..2000 ms; 30..80 ms keeps the first stage in the slapback band.
+    - name: first stage feedback
+      role: |
+        0..0.95; low values keep the slapback to one tap.
+    - name: second stage time
+      role: |
+        1..2000 ms; 200..1000 ms builds the wide tail behind the slapback.
+    - name: second stage feedback
+      role: |
+        0..0.95; 0.4..0.6 extends the long tail over several beats.
+    - name: mixes
+      role: |
+        0..1 per stage; balance slapback and tail against the dry signal.
+
+  relationships:
+    - name: two-distances
+      description: |
+        The second stage repeats both the dry signal and the first stage's
+        slapback, so the pattern contains two echo distances plus their sum
+        and difference spacing.
+    - name: stage-order
+      description: |
+        Slapback before tail keeps the tight repeat close to the original;
+        swapping the times moves the tight tap behind the long tail.
+
+  perceptual_effects:
+    - layered slapback and long tail in one path
+    - complex, rhythmic echo space with two distances
+    - wide, decaying afterglow behind static and pitched tones

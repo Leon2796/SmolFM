@@ -1,0 +1,74 @@
+technique:
+  name: noise-drive-percussion
+
+  idea: |
+    A static-mode oscillator switched to noise provides an atonal source, the
+    waveshaper forms its spectrum with drive, and a short ADSR turns the
+    result into a percussive one-shot.  No pitch port is involved; the voice
+    is entirely shaped by drive and envelope.
+
+  involved_nodes:
+    - type: osc
+      role: Noise source in static mode with waveform noise.
+    - type: shape
+      role: Waveform shaper; the drive parameter forms the noise spectrum.
+    - type: adsr
+      role: Percussion envelope; near-zero attack and short decay.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Noise oscillator
+      port: out
+      role: Noise signal into the shaper (signal).
+    - node_role: Waveshaper
+      port: in
+      role: Receives the noise signal (signal).
+    - node_role: Waveshaper
+      port: out
+      role: Driven noise into the ADSR (signal).
+    - node_role: ADSR
+      port: in
+      role: Receives the shaped noise (signal).
+    - node_role: ADSR
+      port: out
+      role: Percussive one-shot towards the output (signal).
+
+  topology:
+    description: |
+      noise oscillator -> shape.in (signal).  shape.out -> adsr.in (signal).
+      adsr.out -> output (signal).  A straight serial path; no pitch source,
+      no modulation — the envelope is the only musical control.
+
+  parameters:
+    - name: drive
+      role: |
+        Waveshaper drive, 0..1.  Shapes the noise density before the envelope.
+    - name: shape mode
+      role: |
+        soft | hard | fold.  Fold produces the densest, most resonant noise.
+    - name: adsr attack
+      role: |
+        0.001..5 s; near-zero attack keeps the onset click-like.
+    - name: adsr decay
+      role: |
+        0.001..5 s; sets the percussion length (hi-hat to snare range).
+    - name: adsr release
+      role: |
+        0.001..10 s; the tail after note-off.
+
+  relationships:
+    - name: drive-to-spectrum
+      description: |
+        Drive flattens and compresses the noise; higher drive with fold
+        shaping concentrates energy and shortens the perceived tone colour
+        before the envelope even opens.
+    - name: decay-to-length
+      description: |
+        Decay defines the percussive length; attack near zero keeps the
+        onset sharp while release fades the tail.
+
+  perceptual_effects:
+    - noise hi-hats and snare bodies
+    - percussive clicks and shaker-like textures
+    - atonal rhythm layers with no pitch

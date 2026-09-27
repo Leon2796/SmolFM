@@ -1,0 +1,88 @@
+technique:
+  name: fadsr-fm-spectrum-sweep
+
+  idea: |
+    The F-ADSR pitch envelope sits between the note source and the FM stage's
+    carrier-frequency input.  The whole FM spectrum therefore moves with the
+    envelope: the up and down factors translate the carrier frequency during
+    attack and decay while the modulator ratio sets the spectral shape.
+
+  involved_nodes:
+    - type: note
+      role: MIDI note source; base frequency for the envelope.
+    - type: fadsr
+      role: Pitch envelope in front of the FM stage.
+    - type: fm
+      role: Frequency-modulation stage behind the envelope.
+    - type: osc
+      role: Modulator oscillator feeding the FM stage (signal).
+    - type: osc
+      role: Carrier oscillator rendering the swept FM spectrum.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: MIDI note source
+      port: out
+      role: Base frequency into the envelope (frequency).
+    - node_role: F-ADSR
+      port: freq_in
+      role: Receives the note frequency (frequency).
+    - node_role: F-ADSR
+      port: out
+      role: Envelope-scaled frequency into the FM stage (frequency).
+    - node_role: FM stage
+      port: freq_in
+      role: Receives the envelope-scaled carrier frequency (frequency).
+    - node_role: FM stage
+      port: modulator_in
+      role: Receives the modulator signal (signal).
+    - node_role: FM stage
+      port: out
+      role: Swept modulated frequency towards the carrier (frequency).
+    - node_role: Carrier oscillator
+      port: note_in
+      role: Receives the swept frequency (frequency).
+    - node_role: Carrier oscillator
+      port: out
+      role: Rendered signal towards the output (signal).
+
+  topology:
+    description: |
+      note -> fadsr.freq_in (frequency).  fadsr.out -> fm.freq_in (frequency).
+      modulator oscillator -> fm.modulator_in (signal).  fm.out ->
+      carrier.note_in (frequency).  carrier.out -> output (signal).  The
+      envelope sits between the note source and the FM stage's carrier
+      frequency input; the modulator path is independent.
+
+  parameters:
+    - name: envelope factors
+      role: |
+        up and down, 0..10.  Set the start and end translation of the whole
+        FM carrier frequency.
+    - name: envelope time
+      role: |
+        attack/decay 0.001..5 s, release 0.001..10 s.  Speed of the spectral
+        sweep.
+    - name: fm amount
+      role: |
+        Modulation index, 0..10.  Spectral density at every envelope point.
+    - name: modulator staticfreq
+      role: |
+        Ratio against the moving carrier frequency.
+
+  relationships:
+    - name: envelope-to-spectrum
+      description: |
+        The carrier frequency equals note times envelope times FM; when the
+        envelope travels, all sidebands travel with it and re-lock against
+        the fixed modulator ratio.
+    - name: ratio-drift
+      description: |
+        The effective modulator ratio changes while the carrier moves, so the
+        spectrum drifts between harmonic and inharmonic during the sweep.
+
+  perceptual_effects:
+    - metallic sweeps with travelling sidebands
+    - bell tones that bend through their spectrum
+    - evolving FM drops and rises

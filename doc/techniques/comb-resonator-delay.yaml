@@ -1,0 +1,83 @@
+technique:
+  name: comb-resonator-delay
+
+  idea: |
+    The delay runs free with micro times below 25 ms and strong feedback.
+    At such short distances the repeat no longer reads as an echo: the mix
+    sums the original and the repeat sample by sample, so frequencies
+    spaced at multiples of 1/time reinforce while the in-between notches
+    cancel - the delay becomes a static comb resonator, a pipe the voice
+    rings in.
+
+  involved_nodes:
+    - type: osc
+      role: Voice oscillator in pitch or static mode; the signal being
+        resonated.
+    - type: delay
+      role: Comb delay in free-running mode; micro time, strong feedback,
+        mid mix.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Voice oscillator
+      port: out
+      role: Voice signal into the comb delay (signal).
+    - node_role: Comb delay
+      port: in
+      role: Receives the voice signal (signal).
+    - node_role: Comb delay
+      port: out
+      role: Comb-resonated signal towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: Dedicated mix input for the resonated voice (signal).
+
+  topology:
+    description: |
+      osc.out -> delay.in (signal).  delay.out -> output (signal).  The
+      comb forms inside the delay's own recirculation: the mix parameter
+      sums dry signal and repeat, feedback recirculates the repeat, and
+      sync stays off so the resonance distance stays fixed in
+      milliseconds.
+
+  parameters:
+    - name: delay time
+      role: |
+        1..2000 ms; 1..25 ms is the comb band.  Below ~10 ms the peaks sit
+        close together and sound metallic, near 25 ms the resonance spacing
+        opens into a hollow, roomy colour.
+    - name: feedback
+      role: |
+        0..0.95; 0.5..0.9 sharpens the comb teeth into audible resonances,
+        the 0.95 ceiling keeps the recirculation stable.
+    - name: mix
+      role: |
+        0..1; 0.3..0.7 balances resonance depth against the dry voice.
+    - name: oscillator waveform
+      role: |
+        Noise becomes a resonated pipe or spring tone with a fixed tonal
+        centre; pitched voices gain a hollow, static flanger sheen.
+
+  relationships:
+    - name: micro-time-band
+      description: |
+        delay-slapback-doubler works at 30..80 ms where the repeat is a
+        doubling, double-delay-space stacks two echo distances and
+        tempo-synced-delay-tail locks to the beat; this technique stays
+        below 25 ms, where repeats fuse into resonance instead of echoes.
+    - name: comb-spacing
+      description: |
+        The peak spacing equals 1000/time Hz; halving the time doubles the
+        resonance spacing, so the time parameter tunes the resonator in
+        octave steps while feedback sets the sharpness.
+    - name: resonance-without-filter
+      description: |
+        The colouration comes from recirculated sums, not from a filter
+        curve; it complements subtractive-voice-chain and
+        serial-drive-filter-sculpt as the delay-domain resonator.
+
+  perceptual_effects:
+    - metallic pipe or spring resonance behind the voice
+    - resonated noise with a fixed tonal centre
+    - hollow static flanger colour on pitched tones

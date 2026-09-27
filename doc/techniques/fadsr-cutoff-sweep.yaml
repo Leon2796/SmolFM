@@ -1,0 +1,114 @@
+technique:
+  name: fadsr-cutoff-sweep
+
+  idea: |
+    The F-ADSR pitch envelope is wired to the filter's cutoff modulation
+    input instead of a voice: its frequency output is a live cutoff in Hz,
+    and a connected cutoff port replaces the static cutoff entirely.  The
+    filter therefore opens and closes along an ADSR shape, and because the
+    envelope scales the played note frequency, the whole swept band
+    follows the keyboard — every key sweeps a proportionally placed
+    region of the spectrum instead of a fixed corner of it.  The sibling
+    techniques use the same envelope family for FM spectrum sweeps
+    (fadsr-fm-spectrum-sweep) or pitch movement (fadsr-pitch-drop); here
+    the F-ADSR articulates timbre in the frequency domain — a transient,
+    note-tracked filter sweep rather than periodic wobble or pitch glide.
+
+  involved_nodes:
+    - type: note
+      role: MIDI note source; base frequency for both the envelope and the
+        voice.
+    - type: fadsr
+      role: F-ADSR; scales the note frequency along an ADSR shape and hands
+        the result to the filter as the live cutoff.
+    - type: osc
+      role: Voice in pitch mode; renders the signal that gets swept.
+    - type: filter
+      role: SVF run by the live envelope cutoff; lp/bp/hp/notch sets the
+        sweep character.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: MIDI note source
+      port: out
+      role: Base frequency into the envelope and the voice (frequency).
+    - node_role: F-ADSR
+      port: freq_in
+      role: Receives the note frequency (frequency).
+    - node_role: F-ADSR
+      port: out
+      role: Envelope-scaled frequency as the live cutoff (frequency).
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the plain note frequency (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Voice signal into the filter (signal).
+    - node_role: Filter stage
+      port: in
+      role: Receives the voice signal (signal).
+    - node_role: Filter stage
+      port: cutoff_mod_in
+      role: Receives the envelope-scaled live cutoff; connected, it replaces
+        the static cutoff (frequency).
+    - node_role: Filter stage
+      port: out
+      role: Swept signal towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the voice chain (signal).
+
+  topology:
+    description: |
+      note -> fadsr.freq_in (frequency) and note -> osc.note_in
+      (frequency); the note fans out to both.  fadsr.out ->
+      filter.cutoff_mod_in (frequency).  osc.out -> filter.in (signal).
+      filter.out -> output (signal).  The frequency-domain control path
+      and the audio path meet only at the filter — while cutoff_mod_in is
+      connected its value IS the cutoff in Hz, so the static cutoff
+      parameter is ignored.
+
+  parameters:
+    - name: envelope factors
+      role: |
+        up and down, 0..10.  Place the cutoff's start and end as a
+        multiple of the played note frequency (0.5 = an octave below the
+        note, 2 = an octave above).
+    - name: envelope time
+      role: |
+        attack/decay 0.001..5 s, release 0.001..10 s.  Sweep speed and
+        shape of the filter movement.
+    - name: filter character
+      role: |
+        mode lp | bp | hp | notch and resonance 0..1; resonance
+        accentuates the moving cutoff edge.
+    - name: voice waveform
+      role: |
+        Waveform of the swept voice; richer waveforms give the sweep more
+        spectrum to open and close.
+
+  relationships:
+    - name: envelope-as-cutoff
+      description: |
+        The filter's cutoff port is a frequency input, and a connected
+        envelope becomes the live cutoff (clamped to 20..20000 Hz) — no
+        offset or blend against the static cutoff.  The envelope factors
+        alone place and move the swept band.
+    - name: note-tracking
+      description: |
+        The envelope output is note frequency times factor, so the swept
+        band sits at a fixed musical distance from the fundamental; the
+        patch sweeps formant-like regions that follow every key instead
+        of sweeping a fixed Hz band.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, fadsr <= 4, osc <= 8, filter <= 8,
+        output = 1.  One envelope can drive several filters at once
+        (fan-out from fadsr.out), so a layered voice can share one
+        note-tracked sweep.
+
+  perceptual_effects:
+    - keyboard-tracked wah and pluck-opening sweeps
+    - risers whose brightness scales with the played key
+    - transient formant glides without any pitch movement

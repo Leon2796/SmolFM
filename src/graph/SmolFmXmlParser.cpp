@@ -50,8 +50,15 @@ namespace
 
 bool SmolFmXmlParser::canParse (const juce::File& file)
 {
+    // Content sniffing on the canonical root marker.  The XML declaration is
+    // what SmolFmFile::save writes, but XML itself makes it optional and the
+    // hand-written instruments (fm-bell.smolfm and the whole instruments/
+    // corpus) omit it.  Demanding "<?xml" here made createParser() fall
+    // through to the YAML sniff (which needs "version:"/"nodes:"), so
+    // SmolFmFile::load silently refused every hand-written file before any
+    // parsing happened.
     auto content = file.loadFileAsString();
-    return content.contains ("<?xml") && content.contains ("<SmolFM");
+    return content.contains ("<SmolFM");
 }
 
 bool SmolFmXmlParser::parse (const juce::File& file, SmolFmData& data)

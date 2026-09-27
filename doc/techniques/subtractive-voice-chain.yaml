@@ -1,0 +1,76 @@
+technique:
+  name: subtractive-voice-chain
+
+  idea: |
+    Classic subtractive voice.  A rich oscillator feeds a filter that cuts
+    the overtones at the set cutoff, and the ADSR shapes the amplitude per
+    note.  The cutoff and resonance decide the timbre, the envelope decides
+    the articulation — the standard oscillator-filter-envelope chain of
+    subtractive synthesis, expressed directly in the .smolfm graph.
+
+  involved_nodes:
+    - type: osc
+      role: Sound source in pitch mode; saw (or square) carries rich overtones
+        for the filter to shape.
+    - type: filter
+      role: Tonal shaper; attenuates the overtones above the cutoff.
+    - type: adsr
+      role: Amplitude envelope; articulates the note.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Oscillator
+      port: out
+      role: Raw signal into the filter (signal).
+    - node_role: Filter
+      port: in
+      role: Receives the oscillator signal (signal).
+    - node_role: Filter
+      port: out
+      role: Filtered signal into the ADSR (signal).
+    - node_role: ADSR
+      port: in
+      role: Receives the filtered signal (signal).
+    - node_role: ADSR
+      port: out
+      role: Enveloped signal towards the output (signal).
+
+  topology:
+    description: |
+      osc.out -> filter.in (signal).  filter.out -> adsr.in (signal).
+      adsr.out -> output (signal).  A straight serial signal path; the
+      filter sits behind the oscillator, the envelope behind the filter.
+
+  parameters:
+    - name: cutoff
+      role: |
+        Filter cutoff, 20..20000 Hz (log scale).  Low values thin the sound,
+        open values pass the full saw spectrum.
+    - name: resonance
+      role: |
+        Filter resonance, 0..1.  Emphasises the cutoff edge.
+    - name: filter mode
+      role: |
+        lp | bp | hp | notch.  lp for classic pads, bp/hp for thin or nasal
+        characters, notch for hollow notching.
+    - name: adsr envelope
+      role: |
+        attack/decay 0.001..5 s, sustain 0..1, release 0.001..10 s.  Slow
+        attack for pads, short attack with fast decay for plucks.
+
+  relationships:
+    - name: cutoff-to-timbre
+      description: |
+        The saw's overtones decay with harmonic number; the cutoff position
+        selects how many of them survive, resonance pushes the partial right
+        at the edge.
+    - name: envelope-to-loudness
+      description: |
+        The ADSR scales the filtered signal per note; closed sustain with
+        short decay turns the pad voice into a pluck.
+
+  perceptual_effects:
+    - classic pads, leads and brass sweeps
+    - plucked, percussive voices with closed filter and short decay
+    - nasal or hollow colours via bp/notch modes

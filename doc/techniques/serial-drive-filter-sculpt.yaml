@@ -1,0 +1,75 @@
+technique:
+  name: serial-drive-filter-sculpt
+
+  idea: |
+    The waveshaper sits in front of the filter: drive and fold shaping add
+    new overtones first, and the filter then sculpts the distorted spectrum.
+    The order matters — shaping before filtering produces denser, driven
+    filter colours than filtering alone.
+
+  involved_nodes:
+    - type: osc
+      role: Sound source in pitch or static mode; raw input for the shaper.
+    - type: shape
+      role: Waveform shaper; drive and fold mode add distortion overtones.
+    - type: filter
+      role: Tonal sculptor behind the shaper; cuts or emphasises the driven
+        spectrum.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Oscillator
+      port: out
+      role: Raw signal into the shaper (signal).
+    - node_role: Waveshaper
+      port: in
+      role: Receives the oscillator signal (signal).
+    - node_role: Waveshaper
+      port: out
+      role: Driven signal into the filter (signal).
+    - node_role: Filter
+      port: in
+      role: Receives the driven signal (signal).
+    - node_role: Filter
+      port: out
+      role: Sculpted signal towards the output (signal).
+
+  topology:
+    description: |
+      osc -> shape.in (signal).  shape.out -> filter.in (signal).
+      filter.out -> output (signal).  Straight serial chain; the drive stage
+      precedes the filter so the distortion products are filtered, not
+      filtered then distorted.
+
+  parameters:
+    - name: drive
+      role: |
+        Waveshaper drive, 0..1.  Creates new overtones and compresses the
+        input before the filter.
+    - name: shape mode
+      role: |
+        soft | hard | fold.  Fold produces the densest distortion spectrum.
+    - name: cutoff
+      role: |
+        Filter cutoff, 20..20000 Hz.  Selects which driven overtones survive.
+    - name: resonance
+      role: |
+        Filter resonance, 0..1.  Accentuates the driven spectrum at the
+        cutoff edge.
+
+  relationships:
+    - name: shape-before-filter
+      description: |
+        Drive adds partials that the cutoff then selects; opening the drive
+        while closing the cutoff keeps the volume stable but changes the
+        colour from clean to aggressive.
+    - name: mode-to-colour
+      description: |
+        Fold with low cutoff yields dense folded tones, soft with high cutoff
+        stays near-transparent.
+
+  perceptual_effects:
+    - warm, driven filter colours
+    - aggressive folded leads behind a thin cutoff
+    - static-driven sculpted textures in static mode

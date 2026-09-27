@@ -1,12 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <SmolFM version="3">
   <Graph>
     <Nodes>
       <Node id="note" />
-      <Node id="osc1" waveform="saw" mode="lfo" lforate="4.5">
+      <Node id="osc1" waveform="saw" mode="lfo" lforate="3.8">
         <Pin id="note_in" direction="in" type="frequency" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="fm0" amount="6.0">
+      <Node id="fm0" amount="7.0">
         <Pin id="freq_in" direction="in" type="frequency" />
         <Pin id="modulator_in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="frequency" />
@@ -19,7 +20,7 @@
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="filter0" mode="lp" cutoff="3000" resonance="0.4">
+      <Node id="filter0" mode="lp" cutoff="2200" resonance="0.5">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>

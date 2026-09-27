@@ -1,0 +1,85 @@
+technique:
+  name: fadsr-pitch-drop
+
+  idea: |
+    The note frequency passes through the F-ADSR before reaching the
+    oscillator.  The Up factor transposes the attack peak above the base
+    frequency and the Down factor transposes the sustain tail, so attack and
+    decay shape a fast pitch drop from the start value to the final one.
+
+  involved_nodes:
+    - type: note
+      role: MIDI note source; provides the base frequency.
+    - type: fadsr
+      role: Pitch envelope; scales the note frequency between the up and down
+        factors across its six-stage envelope.
+    - type: osc
+      role: Carrier oscillator in pitch mode; renders the scaled frequency.
+    - type: adsr
+      role: Amplitude envelope over the rendered signal.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: MIDI note source
+      port: out
+      role: Base frequency into the F-ADSR (frequency).
+    - node_role: F-ADSR
+      port: freq_in
+      role: Receives the base frequency (frequency).
+    - node_role: F-ADSR
+      port: out
+      role: Scaled frequency towards the carrier (frequency).
+    - node_role: Carrier oscillator
+      port: note_in
+      role: Receives the scaled frequency (frequency).
+    - node_role: Carrier oscillator
+      port: out
+      role: Rendered signal into the ADSR (signal).
+    - node_role: ADSR
+      port: in
+      role: Receives the carrier signal (signal).
+    - node_role: ADSR
+      port: out
+      role: Enveloped signal towards the output (signal).
+
+  topology:
+    description: |
+      note -> fadsr.freq_in (frequency).  fadsr.out -> carrier.note_in
+      (frequency).  carrier.out -> adsr.in (signal).  adsr.out -> output
+      (signal).  The pitch envelope sits between the note source and the
+      carrier; the amplitude envelope sits behind the carrier.
+
+  parameters:
+    - name: fadsr attack
+      role: |
+        Time of the initial pitch rise, 0.001..5 s.
+    - name: fadsr decay
+      role: |
+        Time of the fall towards the sustain level, 0.001..5 s.  Drives the
+        drop speed.
+    - name: fadsr down
+      role: |
+        End frequency factor, 0..10.  Values below 1 pull the pitch below the
+        note, above 1 push it past the note.
+    - name: fadsr up
+      role: |
+        Start frequency factor, 0..10.  The attack peak sits at note times up.
+    - name: adsr release
+      role: |
+        Amplitude tail, 0.001..10 s.  Keeps the drop audible after note-off.
+
+  relationships:
+    - name: pitch-span
+      description: |
+        Start frequency equals note times up, end frequency equals note times
+        down; the ratio between them sets the interval of the drop or rise.
+    - name: time-shape
+      description: |
+        Attack and decay define how fast the pitch travels between the up and
+        down factors; release keeps the drop sounding after note-off.
+
+  perceptual_effects:
+    - 808-style sub drops
+    - percussive pitch sweeps and risers
+    - sliding, vocal start gestures

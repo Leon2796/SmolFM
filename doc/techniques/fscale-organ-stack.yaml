@@ -1,0 +1,118 @@
+technique:
+  name: fscale-organ-stack
+
+  idea: |
+    One keyboard send fans its frequency out through scale stages into
+    parallel voices, so a single key sounds as a drawbar-style stack of
+    harmonics: fundamental, octave and twelfth, each rendered by its own
+    oscillator and balanced by its own output input level.  The partials are
+    derived in the frequency domain from rational scale factors, so the
+    stack stays locked to the key on every note.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; the single pitch reference every partial derives
+        from.
+    - type: fscale
+      role: Octave scale stage, factor 2.
+    - type: fscale
+      role: Twelfth scale stage, factor 3.
+    - type: osc
+      role: Fundamental voice in pitch mode.
+    - type: osc
+      role: Octave voice in pitch mode.
+    - type: osc
+      role: Twelfth voice in pitch mode.
+    - type: output
+      role: Master merge; one dedicated input per partial, the input levels
+        act as the drawbar faders.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency fan-out into all three voices (frequency).
+    - node_role: Octave scale stage
+      port: freq_in
+      role: Receives the base frequency (frequency).
+    - node_role: Octave scale stage
+      port: out
+      role: Octave frequency into the octave voice (frequency).
+    - node_role: Twelfth scale stage
+      port: freq_in
+      role: Receives the base frequency (frequency).
+    - node_role: Twelfth scale stage
+      port: out
+      role: Twelfth frequency into the twelfth voice (frequency).
+    - node_role: Fundamental oscillator
+      port: note_in
+      role: Receives the base frequency (frequency).
+    - node_role: Fundamental oscillator
+      port: out
+      role: Fundamental partial into one output input (signal).
+    - node_role: Octave oscillator
+      port: note_in
+      role: Receives the octave frequency (frequency).
+    - node_role: Octave oscillator
+      port: out
+      role: Octave partial into one output input (signal).
+    - node_role: Twelfth oscillator
+      port: note_in
+      role: Receives the twelfth frequency (frequency).
+    - node_role: Twelfth oscillator
+      port: out
+      role: Twelfth partial into one output input (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One dedicated mix input per partial; input levels set the
+        drawbar balance (signal).
+
+  topology:
+    description: |
+      note.out -> osc1.note_in (frequency).  note.out -> fscale1.freq_in,
+      fscale1.out (factor 2) -> osc2.note_in.  note.out -> fscale2.freq_in,
+      fscale2.out (factor 3) -> osc3.note_in.  The three osc.out ports feed
+      three dedicated output inputs (signal); the per-input levels are the
+      drawbar faders and the master level scales the whole stack.
+
+  parameters:
+    - name: drawbar ratios
+      role: |
+        Scale stage factors, 0..10.  Rational values keep the stack
+        consonant: 2 = octave, 3 = twelfth, 4 = double octave, 0.5 = sub
+        octave; irrational values place a partial inharmonically.
+    - name: partial waveforms
+      role: |
+        One waveform per voice (sine, saw, square, triangle, noise, perlin,
+        simplex).  Sine partials stay flute-like, saw or square partials
+        enrich their own overtone series.
+    - name: drawbar levels
+      role: |
+        Output input level 0..1 per partial; the balance between
+        fundamental and upper work.
+    - name: master level
+      role: |
+        Output level, 0..1.  Scales the complete organ stack.
+
+  relationships:
+    - name: rational-ratio-stack
+      description: |
+        Every partial's pitch relationship is its scale factor, so integer
+        factors keep the stack harmonic on every key — the frequency-domain
+        counterpart to the structural chain layering of
+        sub-instrument-layering.
+    - name: umbrella-and-focus
+      description: |
+        pitch-related-instrument describes the general framework of
+        frequency-domain branches (transposition, FM, ratio modulators);
+        this technique is its drawbar voicing — fixed rational factors and
+        per-partial output levels, no modulation stages.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, fscale <= 8, osc <= 8, output = 1.  The
+        shown three-partial stack fits easily; up to eight partial voices
+        fit under one output (one input per voice).
+
+  perceptual_effects:
+    - drawbar organ registrations from a single keyboard send
+    - octave and twelfth thickening locked to the played key
+    - one key press sounds as a chord of harmonic partials

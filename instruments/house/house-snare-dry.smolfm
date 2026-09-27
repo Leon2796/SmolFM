@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <SmolFM version="3" name="house-snare-dry">
   <Graph>
     <Nodes>
@@ -7,7 +8,6 @@
       <Node id="osc0" waveform="sine" mode="static" staticfreq="180">
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="fscale0" factor="3.7" />
       <Node id="osc1" waveform="square" mode="static" staticfreq="666">
         <Pin id="out" direction="out" type="signal" />
       </Node>
@@ -35,7 +35,6 @@
     <Boxes>
       <Box id="note" x="60" y="60" />
       <Box id="osc0" x="680" y="60" />
-      <Box id="fscale0" x="60" y="380" />
       <Box id="osc1" x="360" y="380" />
       <Box id="ring0" x="1000" y="60" />
       <Box id="adsr0" x="1320" y="60" />

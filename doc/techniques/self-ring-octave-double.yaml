@@ -1,0 +1,98 @@
+technique:
+  name: self-ring-octave-double
+
+  idea: |
+    One oscillator feeds both inputs of a ring modulator, so the ring
+    multiplies the voice by itself.  The product of a signal with itself is
+    its squared waveform: a sine becomes a pure tone one octave above plus
+    a DC floor, richer waveforms push their whole partial series onto the
+    even multiples.  A high-pass filter removes the DC floor and leaves a
+    clean, key-locked octave-up voice generated without any scale stage.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; provides the voice pitch.
+    - type: osc
+      role: Voice oscillator in pitch mode; the single source of the
+        technique.
+    - type: ring
+      role: Sample-wise multiplier wired with the same signal on both
+        inputs; squares the voice.
+    - type: filter
+      role: High-pass stage; removes the DC floor of the squared waveform.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Voice pitch into the oscillator (frequency).
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the played note frequency (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Raw voice signal fanned out to both ring inputs (signal).
+    - node_role: Ring modulator
+      port: in1
+      role: Receives the voice signal (signal).
+    - node_role: Ring modulator
+      port: in2
+      role: Receives the same voice signal again (signal).
+    - node_role: Ring modulator
+      port: out
+      role: Squared waveform towards the DC-block filter (signal).
+    - node_role: DC-block filter
+      port: in
+      role: Receives the squared waveform (signal).
+    - node_role: DC-block filter
+      port: out
+      role: Centered octave-up voice towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: Dedicated mix input for the doubled voice (signal).
+
+  topology:
+    description: |
+      note.out -> osc.note_in (frequency).  osc.out -> ring.in1 (signal)
+      and osc.out -> ring.in2 (signal); both ring inputs carry the same
+      wire.  ring.out -> filter.in (signal), filter.out -> output
+      (signal).  One source, one self-product stage, one DC-block stage.
+
+  parameters:
+    - name: oscillator waveform
+      role: |
+        Sine squares into a pure octave plus DC; saw and square square
+        every partial pair, emphasising the even partials.
+    - name: filter mode
+      role: |
+        hp with a low cutoff (20..40 Hz) removes the DC floor; bp keeps a
+        chosen band of the doubled spectrum.
+    - name: filter cutoff
+      role: |
+        20..20000 Hz.  For the pure DC block it sits near 20 Hz; higher
+        values trim the doubled voice further.
+
+  relationships:
+    - name: self-product
+      description: |
+        With both inputs carrying the same wire, the ring output is y*y;
+        for a sine this is (1 - cos(2wt))/2 - a DC term plus exactly one
+        octave up - so the doubling happens in the signal domain without
+        an fscale stage.
+    - name: siblings
+      description: |
+        osc-ring-mod-cross multiplies two different oscillators and keeps
+        the full sideband pair; difference-tone-bass regenerates the
+        fundamental from a ratio-locked pair; fscale-organ-stack doubles
+        in the frequency domain with factor 2.  Here in1 and in2 are the
+        same wire, so no second voice and no ratio exists.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc = 1, ring = 1, filter = 1,
+        output = 1 - the leanest ring technique in the registry.
+
+  perceptual_effects:
+    - hollow, flute-like octave-up voice from a plain sine
+    - clarinet-like even-partial emphasis from richer waveforms
+    - positive-only squared waveform centred by the DC-block stage

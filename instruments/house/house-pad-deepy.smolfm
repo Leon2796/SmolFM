@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <SmolFM version="3" name="house-pad-deepy">
   <Graph>
     <Nodes>
@@ -35,6 +36,15 @@
         <Pin id="note_in" direction="in" type="frequency" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
+      <Node id="fscale2" factor="2.5">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fm1" amount="0.4">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="modulator_in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
       <Node id="filter0" mode="lp" cutoff="500" resonance="0.5">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="cutoff_mod_in" direction="in" type="frequency" />
@@ -55,7 +65,10 @@
       <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in" />
       <Wire from="osc0" fromPort="out" to="filter0" toPort="in" />
       <Wire from="note" fromPort="out" to="osc3" toPort="note_in" />
-      <Wire from="osc3" fromPort="out" to="filter0" toPort="cutoff_mod_in" />
+      <Wire from="note" fromPort="out" to="fscale2" toPort="freq_in" />
+      <Wire from="fscale2" fromPort="out" to="fm1" toPort="freq_in" />
+      <Wire from="osc3" fromPort="out" to="fm1" toPort="modulator_in" />
+      <Wire from="fm1" fromPort="out" to="filter0" toPort="cutoff_mod_in" />
       <Wire from="filter0" fromPort="out" to="adsr0" toPort="in" />
       <Wire from="osc2" fromPort="out" to="adsr1" toPort="in" />
       <Wire from="note" fromPort="out" to="fscale1" toPort="freq_in" />
@@ -76,6 +89,8 @@
       <Box id="osc2" x="360" y="940" />
       <Box id="adsr0" x="1000" y="60" />
       <Box id="osc3" x="60" y="1200" />
+      <Box id="fscale2" x="60" y="1460" />
+      <Box id="fm1" x="360" y="1460" />
       <Box id="filter0" x="1320" y="60" />
       <Box id="adsr1" x="680" y="940" />
       <Box id="output" x="1640" y="60" />

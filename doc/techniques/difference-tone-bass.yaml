@@ -1,0 +1,121 @@
+technique:
+  name: difference-tone-bass
+
+  idea: |
+    Two note-locked voices at high integer ratios — 4x and 5x the played
+    note — feed a ring modulator.  The ring output keeps only the sidebands:
+    the sum 9x note and the difference 1x note.  The difference sideband is
+    the fundamental itself, regenerated from two voices that contain no
+    fundamental at all — the missing fundamental made literal, and it stays
+    locked to the key.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; both ring inputs and the perceived fundamental
+        derive from it.
+    - type: fscale
+      role: Ratio-four scale stage, factor 4.
+    - type: fscale
+      role: Ratio-five scale stage, factor 5.
+    - type: osc
+      role: Upper voice A in pitch mode, fed by the 4x scale stage.
+    - type: osc
+      role: Upper voice B in pitch mode, fed by the 5x scale stage.
+    - type: ring
+      role: Sample-wise multiplier; its difference sideband lands on the
+        fundamental.
+    - type: output
+      role: Master merge; the ring product plus an optional quiet dry
+        reference.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency fan-out into both scale stages (frequency).
+    - node_role: Ratio-four scale stage
+      port: freq_in
+      role: Receives the base frequency (frequency).
+    - node_role: Ratio-four scale stage
+      port: out
+      role: 4x voice frequency into upper voice A (frequency).
+    - node_role: Ratio-five scale stage
+      port: freq_in
+      role: Receives the base frequency (frequency).
+    - node_role: Ratio-five scale stage
+      port: out
+      role: 5x voice frequency into upper voice B (frequency).
+    - node_role: Ratio-four oscillator
+      port: note_in
+      role: Receives the 4x frequency (frequency).
+    - node_role: Ratio-four oscillator
+      port: out
+      role: 4x signal into the ring modulator (signal).
+    - node_role: Ratio-five oscillator
+      port: note_in
+      role: Receives the 5x frequency (frequency).
+    - node_role: Ratio-five oscillator
+      port: out
+      role: 5x signal into the ring modulator (signal).
+    - node_role: Ring modulator
+      port: in1
+      role: Receives the 4x signal (signal).
+    - node_role: Ring modulator
+      port: in2
+      role: Receives the 5x signal (signal).
+    - node_role: Ring modulator
+      port: out
+      role: Sideband product towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: Dedicated mix inputs for the ring product and the optional dry
+        fundamental (signal).
+
+  topology:
+    description: |
+      note.out -> fscale1.freq_in (factor 4), fscale1.out ->
+      osc-a.note_in.  note.out -> fscale2.freq_in (factor 5),
+      fscale2.out -> osc-b.note_in.  osc-a.out -> ring.in1 (signal);
+      osc-b.out -> ring.in2 (signal); ring.out -> output (signal).
+      Optionally a third voice carries a quiet dry fundamental on its own
+      output input as a mixing reference.
+
+  parameters:
+    - name: upper ratios
+      role: |
+        Scale stage factors, 0..10.  Typically 4 and 5, so the difference
+        5 - 4 = 1 lands exactly on the played note; 6 - 5 or 8 - 5 give
+        other key-locked difference pitches.
+    - name: voice waveforms
+      role: |
+        Sine inputs keep the sideband family clean (f and 9f); saw or
+        square inputs multiply every partial pair into dense sideband
+        families around both products.
+    - name: ring level
+      role: |
+        Output input level 0..1 for the ring product; the optional dry
+        fundamental rides a separate input, scaled low.
+
+  relationships:
+    - name: difference-sideband
+      description: |
+        The ring output contains fA + fB = 9f and fA - fB = f only; no
+        carrier survives.  The physical fundamental is absent from both
+        inputs yet present in the output as the difference sideband — the
+        missing fundamental made literal.
+    - name: ring-versus-am
+      description: |
+        The ring stage suppresses both carriers, while am-sideband-pairing
+        is biased and keeps its carrier audible; here the bass exists only
+        as the difference product, there it sits beside the note-locked
+        pair.
+    - name: ratio-lock
+      description: |
+        Both ratios derive from the keyboard send through scale stages, so
+        the difference sideband stays exactly one times the played note on
+        every key; osc-ring-mod-cross uses static components instead and
+        drifts out of pitch relationship across the keyboard.
+
+  perceptual_effects:
+    - deep, key-locked bass generated from two high partials
+    - bell-like clang sheen around the regenerated fundamental
+    - psychoacoustic missing-fundamental effect made spectral

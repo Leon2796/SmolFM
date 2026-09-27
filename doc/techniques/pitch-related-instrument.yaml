@@ -1,0 +1,157 @@
+technique:
+  name: pitch-related-instrument
+
+  idea: |
+    Frequencies are scaled through the graph in dependence on the note-in
+    frequency, so parallel derivations of one keyboard send create
+    deliberate harmonic (or inharmonic) effects relative to the fundamental
+    — also inside signal-consuming processors.  The single note source fans
+    its frequency out to parallel branches; every branch derives from the
+    played fundamental but expresses its own pitch relationship to it:
+    plain tracking, transposition by a frequency scale factor, or
+    proportional FM whose deviation scales with the note frequency
+    (out = f_in * (1 + a * m)).  Rational factors and note-tracking ratio
+    modulators sit harmonically beside the fundamental; irrational factors
+    and free-running or noisy modulators place a branch inharmonically —
+    yet all branches keep answering to the keyboard.  The technique lives
+    in the frequency domain: it derives related frequencies from one send
+    and lets the processors that consume signals turn them into sound.  It
+    does not layer complete signal chains or pre-process merged groups —
+    that is sub-instrument-layering.
+
+  involved_nodes:
+    - type: note
+      role: The single keyboard send; its out port is the shared pitch
+        reference every branch derives from.
+    - type: fscale
+      role: Branch transposer; its factor fixes the branch's harmonic or
+        inharmonic distance to the fundamental.
+    - type: fm
+      role: Proportional FM stage in a branch; multiplies the branch
+        frequency by (1 + amount * modulator), so the deviation tracks the
+        played note.
+    - type: osc
+      role: Branch voice (pitch mode) rendering the branch instrument; a
+        second voice can serve as FM modulator in static, LFO or
+        ratio-driven pitch mode.
+    - type: output
+      role: Master stack; one dedicated input per branch, level scales the
+        summed instrument family.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency fan-out into every branch (frequency).
+    - node_role: Branch scale stage
+      port: freq_in
+      role: Receives the shared note frequency (frequency).
+    - node_role: Branch scale stage
+      port: out
+      role: Transposed branch frequency onwards (frequency).
+    - node_role: FM stage
+      port: freq_in
+      role: Receives the note (or scaled note) frequency as carrier
+        (frequency).
+    - node_role: FM stage
+      port: modulator_in
+      role: Receives the modulator voice signal (signal).
+    - node_role: FM stage
+      port: out
+      role: Proportionally modulated branch frequency into the voice
+        (frequency).
+    - node_role: Branch voice oscillator
+      port: note_in
+      role: Receives the branch frequency (frequency).
+    - node_role: Branch voice oscillator
+      port: out
+      role: Rendered branch signal into one dedicated output input
+        (signal).
+    - node_role: Modulator oscillator
+      port: note_in
+      role: Optional; receives a scaled note frequency when the modulator
+        runs in pitch mode as a ratio modulator (frequency).
+    - node_role: Modulator oscillator
+      port: out
+      role: Modulator signal into the FM stage (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One dedicated mix input per branch (signal).
+
+  topology:
+    description: |
+      All scaling acts on the frequency ports, before any voice renders a
+      signal; the signal domain begins only at the voices and at the
+      fm.modulator_in send.  The note out port fans out — one send, many
+      consumers — and parallel branch families hang off this single send:
+      - tracking branch: note.out -> osc.note_in (factor 1 relationship).
+      - transposed branch: note.out -> fscale.freq_in -> osc.note_in.
+      - proportionally modulated branch: note.out -> fm.freq_in;
+        fm.out -> osc.note_in.  The fm modulator_in is fed either by a
+        free-running voice (osc in static or LFO mode, any waveform) or by
+        a note-tracking ratio voice (note.out -> fscale.factor = r ->
+        osc pitch mode -> fm.modulator_in), keeping the modulation tied to
+        the fundamental at every key.
+      Every branch voice feeds one dedicated master output input.  The
+      branches are independent; they share only the note send.
+
+  parameters:
+    - name: branch scale factors
+      role: |
+        Frequency multipliers, 0..10 per scale stage.  Rational factors
+        place a branch harmonically (0.5 sub octave, 1.5 fifth, 2 octave,
+        1.25 major third); irrational factors place it inharmonically.
+    - name: fm amounts
+      role: |
+        Modulation index per FM stage, 0..10.  Sets the relative deviation
+        a in f_branch = f_in * (1 + a * m); small amounts wobble the
+        branch around its relationship, large amounts fragment it into
+        sideband families.
+    - name: modulator configuration
+      role: |
+        Free-running voices: waveform plus static frequency (20..20000 Hz)
+        or LFO rate (0.01..50 Hz).  Ratio-driven voices: the scale factor
+        r sets the modulator-to-fundamental ratio; integer r keeps the
+        sidebands harmonic, non-integer r detunes them inharmonically.
+    - name: branch waveforms
+      role: |
+        One waveform per branch voice (sine, saw, square, triangle, noise,
+        perlin, simplex).  Different waveforms separate the related
+        instruments spectrally.
+    - name: master level
+      role: |
+        Output level, 0..1.  Scales the complete instrument family.
+
+  relationships:
+    - name: proportional-deviation
+      description: |
+        An FM stage computes out = f_in * (1 + amount * modulator), so the
+        absolute deviation amount * f_in scales with the played note.  The
+        branch keeps the same relative pitch colour on every key — unlike
+        a fixed absolute detune, which would drift out of relationship as
+        the fundamental moves.
+    - name: factor-composition
+      description: |
+        A branch's total pitch relationship to the fundamental is the
+        product of its scale factors and its FM factors; rational products
+        yield harmonic relatives, irrational or time-variant products
+        yield inharmonic ones.
+    - name: send-fan-out
+      description: |
+        The note processor allows exactly one instance, but its out port
+        feeds many consumers; every branch reads the same keyboard
+        frequency, so all related instruments follow each played note
+        simultaneously.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, fscale <= 8, fm <= 4, osc <= 8,
+        output = 1.  A tracking or transposed branch costs one voice, a
+        modulated branch costs voice plus modulator; up to eight branches
+        fit under one output (one input per branch), fewer when modulated
+        branches add modulator voices.
+
+  perceptual_effects:
+    - every branch stays locked in a fixed pitch relationship to the played key across the whole keyboard
+    - consonant instrument stacks from rational factors and ratio modulators
+    - metallic, inharmonic relatives of the fundamental from irrational factors or noisy modulators
+    - proportional FM keeps the deviation musically scaled instead of a fixed absolute detune
+    - one key press sounds as a chord of related instruments from a single send

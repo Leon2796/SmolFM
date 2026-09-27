@@ -1,0 +1,89 @@
+technique:
+  name: perlin-tremolo-breath
+
+  idea: |
+    A noise-family LFO — perlin or simplex waveform — drives the amplitude
+    of a sustained carrier through the AM stage.  Because the modulator
+    never repeats, the level swells and recedes organically instead of
+    pulsing on a grid: the voice breathes at the drift rate.
+
+  involved_nodes:
+    - type: osc
+      role: Carrier in pitch or static mode; the sustained signal to
+        tremolo.
+    - type: osc
+      role: Drift oscillator in LFO mode with perlin or simplex waveform;
+        provides the non-periodic amplitude modulator.
+    - type: am
+      role: Amplitude-modulation stage between carrier and drift modulator.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Carrier oscillator
+      port: out
+      role: Carrier signal into the AM stage (signal).
+    - node_role: Drift oscillator
+      port: out
+      role: Non-periodic amplitude modulator into the AM stage (signal).
+    - node_role: AM stage
+      port: carrier_in
+      role: Receives the carrier signal (signal).
+    - node_role: AM stage
+      port: modulator_in
+      role: Receives the breathing modulator (signal).
+    - node_role: AM stage
+      port: out
+      role: Tremoloed signal towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: Dedicated mix input for the breathing voice (signal).
+
+  topology:
+    description: |
+      carrier.out -> am.carrier_in (signal).  drift osc.out ->
+      am.modulator_in (signal).  am.out -> output (signal).  The AM stage
+      is the only processor; its depth is the amount parameter and the
+      drift voice's rate sets the breathing speed.
+
+  parameters:
+    - name: am amount
+      role: |
+        Tremolo depth, 0..1.  0 = dry pass-through, 1 = full amplitude
+        swing around the dry level.
+    - name: drift rate
+      role: |
+        LFO rate of the noise voice, 0.01..50 Hz.  Low rates give slow
+        sea-like swelling, high rates a nervous flutter without any pulse.
+    - name: noise waveform
+      role: |
+        perlin or simplex; both wander without repeating, simplex reads
+        smoother, perlin grainier.
+    - name: carrier waveform
+      role: |
+        Waveform of the tremoloed signal; sine or triangle carriers breathe
+        most evenly on pads.
+
+  relationships:
+    - name: non-periodic-breath
+      description: |
+        Perlin and simplex outputs never repeat, so the amplitude moves
+        without a perceivable cycle; the periodic sibling of this
+        technique is am-tremolo-lfo, which pulses on a grid at the LFO
+        rate.
+    - name: domain-siblings
+      description: |
+        The same noise-family LFO in the frequency domain drives FM drift
+        (perlin-drift-modulation, pitch wobble); here it stays in the
+        amplitude domain, so the pitch stays stable while the level
+        breathes.
+    - name: depth-to-gain
+      description: |
+        The AM stage is biased: the gain swings around the dry level, so
+        the voice stays audible even at amount 1 — the breath dips the
+        note without fully collapsing it.
+
+  perceptual_effects:
+    - organic, non-repeating amplitude breathing on pads and leads
+    - slow sea-like swelling at low drift rates
+    - alive, unstable sustain without any rhythmic pulse

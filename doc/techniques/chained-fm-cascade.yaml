@@ -1,0 +1,89 @@
+technique:
+  name: chained-fm-cascade
+
+  idea: |
+    Two FM stages in series inside the frequency path.  The first stage
+    modulates the note frequency, the second stage modulates the already
+    modulated frequency of the first — a cascaded modulation index that
+    builds denser, more inharmonic spectra than a single two-operator pair.
+
+  involved_nodes:
+    - type: note
+      role: MIDI note source feeding the first FM stage.
+    - type: fm
+      role: First FM stage; modulates the base frequency.
+    - type: fm
+      role: Second FM stage; modulates the output of the first stage.
+    - type: osc
+      role: Modulator for the first stage (static or pitch mode).
+    - type: osc
+      role: Modulator for the second stage.
+    - type: osc
+      role: Carrier oscillator rendering the cascaded frequency.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: MIDI note source
+      port: out
+      role: Base frequency into the first FM stage (frequency).
+    - node_role: First FM stage
+      port: freq_in
+      role: Receives the note frequency (frequency).
+    - node_role: First FM stage
+      port: modulator_in
+      role: Receives the first modulator signal (signal).
+    - node_role: First FM stage
+      port: out
+      role: First-level modulated frequency into the second stage (frequency).
+    - node_role: Second FM stage
+      port: freq_in
+      role: Receives the first-level modulated frequency (frequency).
+    - node_role: Second FM stage
+      port: modulator_in
+      role: Receives the second modulator signal (signal).
+    - node_role: Second FM stage
+      port: out
+      role: Cascaded frequency towards the carrier (frequency).
+    - node_role: Carrier oscillator
+      port: note_in
+      role: Receives the cascaded frequency (frequency).
+    - node_role: Carrier oscillator
+      port: out
+      role: Rendered signal towards the output (signal).
+
+  topology:
+    description: |
+      Frequency-domain cascade: note -> fm0.freq_in; fm0.out -> fm1.freq_in;
+      fm1.out -> carrier.note_in.  Two modulator oscillators (signal) feed
+      fm0.modulator_in and fm1.modulator_in; the carrier renders the result.
+
+  parameters:
+    - name: first stage amount
+      role: |
+        Modulation index of the first stage, 0..10.  Shapes the base spectrum.
+    - name: second stage amount
+      role: |
+        Modulation index of the second stage, 0..10.  Adds slow pitch
+        movement on top of the already modulated frequency.
+    - name: modulator waveforms
+      role: |
+        Waveforms of both modulator oscillators; different shapes stack
+        different sideband families.
+
+  relationships:
+    - name: cascade-depth
+      description: |
+        The second index acts on an already modulated frequency, so the
+        effective deviation is the product of both stages; small second-stage
+        amounts create slow motion, large ones fragment the spectrum.
+    - name: index-ratio-interplay
+      description: |
+        Both modulator ratios multiply their influence on the carrier
+        frequency; keeping the first ratio integer while detuning the second
+        preserves a harmonic root with unstable upper partials.
+
+  perceptual_effects:
+    - denser, more inharmonic spectra than a single FM pair
+    - slow wobbling pitch movement at low second-stage amounts
+    - aggressive, evolving metallic textures at high amounts

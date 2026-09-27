@@ -1,0 +1,119 @@
+technique:
+  name: serial-gain-staging
+
+  idea: |
+    Inter-stage level management inside one serial chain.  A pre gain
+    positions the operating point on the waveshaper's transfer curve before
+    the shaping stage, and a trim gain restores the level behind it.
+    Timbre sweeps keep a constant loudness while the curve traversal
+    changes, and the master stays clip-free.
+
+  involved_nodes:
+    - type: note
+      role: Pitch source for the staged voice.
+    - type: osc
+      role: Signal source in pitch or static mode; raw input for the staging
+        chain.
+    - type: gain
+      role: Pre gain; positions the operating point on the shaper's transfer
+        curve.
+    - type: shape
+      role: Nonlinear stage; soft, hard or fold curve driven by the staged
+        level.
+    - type: gain
+      role: Trim gain; restores the level after the shaping and guards the
+        headroom before the output.
+    - type: output
+      role: Master endpoint; receives the trimmed chain signal.
+
+  involved_ports:
+    - node_role: Pitch source
+      port: out
+      role: Base frequency into the source oscillator (frequency).
+    - node_role: Source oscillator
+      port: note_in
+      role: Receives the base frequency (frequency).
+    - node_role: Source oscillator
+      port: out
+      role: Raw signal into the pre gain (signal).
+    - node_role: Pre gain stage
+      port: in
+      role: Receives the oscillator signal (signal).
+    - node_role: Pre gain stage
+      port: out
+      role: Level-scaled signal into the shaper (signal).
+    - node_role: Waveshaper
+      port: in
+      role: Receives the staged signal (signal).
+    - node_role: Waveshaper
+      port: out
+      role: Shaped signal into the trim gain (signal).
+    - node_role: Trim gain stage
+      port: in
+      role: Receives the shaped signal (signal).
+    - node_role: Trim gain stage
+      port: out
+      role: Trimmed signal towards the output (signal).
+    - node_role: Master output
+      port: in1
+      role: Receives the trimmed chain signal (signal).
+
+  topology:
+    description: |
+      note -> osc.note_in (frequency).  osc.out -> gain0.in (signal).
+      gain0.out -> shape.in (signal).  shape.out -> gain1.in (signal).
+      gain1.out -> output.in1 (signal).  Two serial gain stages wrap the
+      nonlinear stage: the pre gain sets how hard the curve is traversed,
+      the trim stage restores the level behind it.
+
+  parameters:
+    - name: pre gain factor
+      role: |
+        0..10.  Boosts or attenuates the signal in front of the curve;
+        together with the drive it positions the operating point on the
+        transfer curve.
+    - name: trim gain factor
+      role: |
+        0..10.  Restores the level behind the shaper; 0 mutes the staged
+        chain.
+    - name: shape drive
+      role: |
+        0..1.  Scales the shaper input alongside the pre gain; the staging
+        point is the product of both.
+    - name: shape mode
+      role: |
+        soft | hard | fold.  Soft bounds the output near 1, hard and fold
+        stay unbounded, so the trim gain is their only headroom guard.
+    - name: master level
+      role: |
+        0..1.  Final fader; scales the trimmed chain signal.
+
+  relationships:
+    - name: pre-gain-to-curve
+      description: |
+        Pre gain and drive compose multiplicatively at the shaper input
+        (x times gain times (1 + k times drive)).  Raising the pre gain
+        traverses the curve harder — earlier saturation on soft, more folds
+        on fold — without touching the drive parameter.
+    - name: trim-compensation
+      description: |
+        The trim gain scales the already shaped signal only: it changes the
+        loudness, not the harmonic structure.  Raising the pre gain while
+        lowering the trim keeps the loudness constant and changes only the
+        colour.
+    - name: headroom
+      description: |
+        The output multiplies its input by the master level; the chain is
+        trimmed so the staged level stays inside full scale.  Hard and fold
+        stages are unbounded, so the trim gain is the only clipping guard
+        between them and the sum.
+    - name: mute
+      description: |
+        A gain factor of 0 silences the chain completely, useful for
+        auditioning single nodes while sound designing.
+
+  perceptual_effects:
+    - consistent loudness while sweeping drive and curve colours
+    - hotter internal saturation without clipping the master
+    - clean headroom through long serial chains
+    - chain mute for auditioning during sound design

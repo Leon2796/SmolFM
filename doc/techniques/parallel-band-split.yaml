@@ -1,0 +1,109 @@
+technique:
+  name: parallel-band-split
+
+  idea: |
+    One voice is split into three parallel filter bands — low-pass,
+    band-pass and high-pass — each with its own static cutoff, and each band
+    lands on its own output input with its own level.  The bands are
+    complementary cuts of the same signal, so their sum reconstitutes the
+    spectrum while every band can be trimmed, boosted or muted
+    independently.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send driving the single voice.
+    - type: osc
+      role: Voice in pitch or static mode; the signal that is split.
+    - type: filter
+      role: Low-band filter, lp mode, cutoff at the lower band edge.
+    - type: filter
+      role: Mid-band filter, bp mode, cutoff at the mid band centre.
+    - type: filter
+      role: High-band filter, hp mode, cutoff at the upper band edge.
+    - type: output
+      role: Master merge; one dedicated input per band, the input levels act
+        as the crossover mixer.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the voice (frequency).
+    - node_role: Band oscillator
+      port: note_in
+      role: Receives the base frequency (frequency).
+    - node_role: Band oscillator
+      port: out
+      role: Voice signal fanned out into the three band filters (signal).
+    - node_role: Low-band filter
+      port: in
+      role: Receives the voice signal (signal).
+    - node_role: Low-band filter
+      port: out
+      role: Low band towards one output input (signal).
+    - node_role: Mid-band filter
+      port: in
+      role: Receives the voice signal (signal).
+    - node_role: Mid-band filter
+      port: out
+      role: Mid band towards one output input (signal).
+    - node_role: High-band filter
+      port: in
+      role: Receives the voice signal (signal).
+    - node_role: High-band filter
+      port: out
+      role: High band towards one output input (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One dedicated mix input per band; input levels set the band
+        balance (signal).
+
+  topology:
+    description: |
+      note.out -> osc.note_in (frequency).  osc.out fans out into
+      filter-lp.in, filter-bp.in and filter-hp.in (signal, one filter
+      instance per band).  The three filter.out ports feed three dedicated
+      output inputs (signal); each filter's static cutoff defines its band
+      edge, each output input level its band balance.
+
+  parameters:
+    - name: band cutoffs
+      role: |
+        Static cutoff per filter, 20..20000 Hz.  The lp cutoff, the bp
+        centre and the hp cutoff together define the two crossover points.
+    - name: band resonances
+      role: |
+        Resonance 0..1 per filter; accents each band edge and can push a
+        single band into a lead colour.
+    - name: band modes
+      role: |
+        lp | bp | hp | notch per filter; the lp/bp/hp trio is the classic
+        split, a notch replaces one band with a carved hole.
+    - name: band levels
+      role: |
+        Output input level 0..1 per band; pulling one level isolates the
+        complementary pair.
+
+  relationships:
+    - name: complementary-bands
+      description: |
+        The three filters process parallel copies of one signal, so their
+        sum returns the full spectrum; band balance alone turns the same
+        voice hollow (mid pulled), nasal (mids alone) or thin (lows
+        pulled).
+    - name: split-after-voice
+      description: |
+        The split happens after the voice renders: each output input
+        accepts exactly one source, so the band filters are per-branch
+        instances and no stage can sit behind the merge.  The serial
+        alternative is subtractive-voice-chain, which filters the single
+        path instead of splitting it.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8, filter <= 8, output = 1.
+        Three band branches cost three filters; up to eight parallel bands
+        fit under one output.
+
+  perceptual_effects:
+    - crossover-style tone shaping of one voice
+    - hollow mid carve or nasal band focus by band balance alone
+    - resonant single-band leads over a dry two-band anchor

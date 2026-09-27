@@ -1,29 +1,44 @@
-<SmolFM version="3">
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="perc-conga">
   <Graph>
     <Nodes>
-      <Node id="note" />
-      <Node id="osc0" waveform="saw">
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fadsr0" attack="0.002" decay="0.14" sustain="0.0" release="0.1" up="1.25" down="1.0">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="sine">
         <Pin id="note_in" direction="in" type="frequency" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="adsr0" attack="0.01" decay="0.5" sustain="0.5" release="0.3">
+      <Node id="shape0" drive="0.2" shape="soft">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.001" decay="0.32" sustain="0.0" release="0.12">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
       <Node id="output" level="0.8" />
     </Nodes>
     <Connections>
-      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
-      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="note" fromPort="out" to="fadsr0" toPort="freq_in" />
+      <Wire from="fadsr0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="adsr0" toPort="in" />
       <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
     </Connections>
   </Graph>
   <Layout>
     <Boxes>
-      <Box id="note" x="60" y="100" />
-      <Box id="osc0" x="400" y="100" />
-      <Box id="adsr0" x="600" y="100" />
-      <Box id="output" x="900" y="100" />
+      <Box id="note" x="60" y="60" />
+      <Box id="fadsr0" x="360" y="60" />
+      <Box id="osc0" x="680" y="60" />
+      <Box id="shape0" x="1000" y="60" />
+      <Box id="adsr0" x="1320" y="60" />
+      <Box id="output" x="1640" y="60" />
     </Boxes>
   </Layout>
 </SmolFM>

@@ -1,0 +1,87 @@
+technique:
+  name: am-sidechain-duck
+
+  idea: |
+    A rhythmic modulator chain sits on the AM modulator input while the pad
+    signal sits on the carrier input.  The bipolar modulator pulls the
+    carrier gain down on every percussive pulse, so the pad ducks in the
+    rhythm of the modulator — a sidechain-style pump without a compressor.
+
+  involved_nodes:
+    - type: osc
+      role: Pad carrier in pitch or static mode; the signal being ducked.
+    - type: osc
+      role: Percussion source in static mode with waveform noise.
+    - type: shape
+      role: Forms the percussion pulse before it ducks the carrier.
+    - type: adsr
+      role: Short envelope; defines the length of each duck pulse.
+    - type: am
+      role: Modulation stage; the perc modulator pulls the carrier gain.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Pad carrier oscillator
+      port: out
+      role: Carrier signal into the AM stage (signal).
+    - node_role: Percussion oscillator
+      port: out
+      role: Noise into the shaper (signal).
+    - node_role: Waveshaper
+      port: in
+      role: Receives the perc noise (signal).
+    - node_role: Waveshaper
+      port: out
+      role: Shaped perc signal into the ADSR (signal).
+    - node_role: Percussion ADSR
+      port: in
+      role: Receives the shaped perc signal (signal).
+    - node_role: Percussion ADSR
+      port: out
+      role: Perc pulse towards the AM modulator input (signal).
+    - node_role: AM stage
+      port: carrier_in
+      role: Receives the pad signal (signal).
+    - node_role: AM stage
+      port: modulator_in
+      role: Receives the perc pulse that ducks the carrier (signal).
+    - node_role: AM stage
+      port: out
+      role: Pumped signal towards the output (signal).
+
+  topology:
+    description: |
+      Perc chain: noise osc -> shape.in -> shape.out -> adsr.in -> adsr.out ->
+      am.modulator_in (signal).  Pad: pad osc -> am.carrier_in (signal).
+      am.out -> output (signal).  No feedback, no LFO — the duck rhythm is
+      the perc envelope pattern.
+
+  parameters:
+    - name: am amount
+      role: |
+        Duck depth, 0..1.  1 pulls the carrier gain fully down on each pulse.
+    - name: perc adsr decay
+      role: |
+        0.001..5 s.  Sets the length of every duck pulse.
+    - name: shape drive
+      role: |
+        0..1.  Shapes the perc pulse that pushes the gain.
+    - name: carrier waveform
+      role: |
+        Waveform of the ducked pad signal.
+
+  relationships:
+    - name: pulse-to-duck
+      description: |
+        Every perc pulse swings the modulator negative and pulls the carrier
+        gain down; the pulse decay time equals the duck length.
+    - name: depth-to-balance
+      description: |
+        Amount 0 keeps the pad dry; full amount ducks it completely behind
+        each pulse, creating the rhythmic pumping gap.
+
+  perceptual_effects:
+    - rhythmic sidechain pumping
+    - breathing pads behind percussive pulses
+    - ducking gaps that push forward rhythm forward motion

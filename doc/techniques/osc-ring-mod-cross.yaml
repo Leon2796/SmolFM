@@ -1,0 +1,68 @@
+technique:
+  name: osc-ring-mod-cross
+
+  idea: |
+    Two oscillators feed a ring modulator, which multiplies them sample by
+    sample.  The output carries only the sidebands (sum and difference
+    frequencies) and no carrier, so the character is defined entirely by the
+    two oscillator frequencies and waveforms.
+
+  involved_nodes:
+    - type: osc
+      role: First ring input; usually static mode to fix its frequency.
+    - type: osc
+      role: Second ring input; static or LFO mode for the contrasting component.
+    - type: ring
+      role: Sample-wise multiplier of both input signals.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: First oscillator
+      port: out
+      role: First ring input (signal).
+    - node_role: Second oscillator
+      port: out
+      role: Second ring input (signal).
+    - node_role: Ring modulator
+      port: in1
+      role: Receives the first signal (signal).
+    - node_role: Ring modulator
+      port: in2
+      role: Receives the second signal (signal).
+    - node_role: Ring modulator
+      port: out
+      role: Product of both inputs towards the output (signal).
+
+  topology:
+    description: |
+      osc A -> ring.in1 (signal).  osc B -> ring.in2 (signal).
+      ring.out -> output (signal).  No other modulation path; the technique
+      is a pure two-input multiplication.
+
+  parameters:
+    - name: oscillator a staticfreq
+      role: |
+        Frequency of the first component, 20..20000 Hz (static mode).
+    - name: oscillator b mode
+      role: |
+        Static mode for a fixed tone or LFO mode for a low-frequency ring.
+    - name: waveforms
+      role: |
+        Sine inputs produce clean sum/difference sidebands; square inputs add
+        one sideband pair per harmonic.
+
+  relationships:
+    - name: sidebands
+      description: |
+        The output contains fA + fB and fA - fB only; no carrier component
+        survives, so silence appears when both inputs share a frequency.
+    - name: waveform-density
+      description: |
+        Rich waveforms on either input multiply their partials into full
+        inharmonic sideband families.
+
+  perceptual_effects:
+    - robotic, metallic character
+    - inharmonic, non-musical textures at unrelated frequencies
+    - hollow beating when both frequencies sit close together

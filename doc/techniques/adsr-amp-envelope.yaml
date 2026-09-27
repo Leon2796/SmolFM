@@ -1,0 +1,94 @@
+technique:
+  name: adsr-amp-envelope
+
+  idea: |
+    The ADSR sits directly in the voice's signal path: the oscillator feeds
+    the envelope stage, and the enveloped signal leaves it towards the
+    output.  The note event shapes the amplitude - attack swells the voice
+    in, decay settles it onto the sustain level, release fades it after the
+    key is lifted.  This is the standard amplitude envelope of a synth
+    voice, expressed as explicit wiring instead of a hidden per-voice
+    setting.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; provides the voice pitch and triggers the
+        envelope timing.
+    - type: osc
+      role: Voice oscillator in pitch mode; the signal being enveloped.
+    - type: adsr
+      role: Amplitude envelope in the signal path; shapes the voice level
+        per note event.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Voice pitch into the oscillator (frequency).
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the played note frequency (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Raw voice signal into the envelope stage (signal).
+    - node_role: Voice envelope
+      port: in
+      role: Receives the raw voice signal (signal).
+    - node_role: Voice envelope
+      port: out
+      role: Enveloped voice towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: Dedicated mix input for the enveloped voice (signal).
+
+  topology:
+    description: |
+      note.out -> osc.note_in (frequency).  osc.out -> adsr.in (signal).
+      adsr.out -> output (signal).  A single serial voice path; the
+      envelope is the only dynamic stage and lives entirely in the signal
+      domain.
+
+  parameters:
+    - name: attack
+      role: |
+        0.001..5 s.  Short values gate the voice on instantly, long values
+        build swelling pads.
+    - name: decay
+      role: |
+        0.001..5 s.  Fall time from the attack peak down to the sustain
+        level; short decay with sustain 0 forms plucked, percussive
+        voices.
+    - name: sustain
+      role: |
+        0..1.  Held level while the key is down; 0 turns the voice into a
+        one-shot decay.
+    - name: release
+      role: |
+        0.001..10 s.  Fade-out time after the key is lifted.
+    - name: oscillator waveform
+      role: |
+        Waveform of the enveloped voice; the envelope shapes any source
+        equally.
+
+  relationships:
+    - name: event-shaped-amplitude
+      description: |
+        The level curve is tied to note events, not to a free-running
+        clock: am-tremolo-lfo pulses periodically, am-sidechain-duck reacts
+        to a second voice's pulses, and this technique shapes exactly one
+        voice by its own key presses.
+    - name: signal-domain-envelope
+      description: |
+        The ADSR works on the signal passing through it, while
+        fadsr-cutoff-sweep applies its envelope in the frequency domain;
+        same envelope family, opposite port domain.
+    - name: budget
+      description: |
+        Registry budgets: adsr <= 4, osc <= 8, output = 1.  Up to four
+        independently enveloped voices fit under one output.
+
+  perceptual_effects:
+    - swelling pad attacks with long attack times
+    - plucked, percussive voices from short decay with sustain 0
+    - clean, note-synced fade-outs at the end of each phrase

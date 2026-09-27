@@ -103,7 +103,7 @@ namespace
 
     void compareParsed (const SmolFmData& d)
     {
-        CHECK (d.version == "2");
+        CHECK (d.version == "3");
         CHECK (d.name == "Demo");
         CHECK (d.nodes.size() == 2);
         CHECK (d.hasConnections);
@@ -231,7 +231,7 @@ int main()
     CHECK (legacy.version == "2" && legacy.nodes.size() == 1);
     if (! legacy.nodes.empty())
     {
-        const auto& n = legacy.nodes[0];
+        auto& n = legacy.nodes[0];
         CHECK (n.id == "osc0" && n.x == 7 && n.y == 9);
         CHECK (n.parameters["waveform"] == 1.0f && n.parameters["staticfreq"] == 220.0f);
     }
@@ -252,10 +252,67 @@ int main()
     CHECK (legacyY.nodes.size() == 1);
     if (! legacyY.nodes.empty())
     {
-        const auto& n = legacyY.nodes[0];
+        auto& n = legacyY.nodes[0];
         CHECK (n.x == 3 && n.y == 4);
         CHECK (n.parameters["waveform"] == 1.0f
             && n.parameters["mode"] == 1.0f);
+    }
+
+    // Regression: hand-written instruments carry no "<?xml" declaration (see
+    // fm-bell.smolfm).  Format detection must still pick the XML parser via
+    // the <SmolFM root marker and must not fall through to YAML, or the app
+    // silently refuses to load the whole instruments corpus.
+    const auto bareXml = writeTemp ("bare_xml.smolfm",
+        "<SmolFM version=\"3\" name=\"Demo\">\n"
+        "  <Graph>\n"
+        "    <Nodes>\n"
+        "      <Node id=\"note\">\n"
+        "        <Pin id=\"out\" direction=\"out\" type=\"frequency\"/>\n"
+        "      </Node>\n"
+        "      <Node id=\"osc0\" waveform=\"saw\" mode=\"pitch\" staticfreq=\"440\">\n"
+        "        <Pin id=\"note_in\" direction=\"in\" type=\"frequency\"/>\n"
+        "        <Pin id=\"out\" direction=\"out\" type=\"signal\"/>\n"
+        "      </Node>\n"
+        "    </Nodes>\n"
+        "    <Connections>\n"
+        "      <Wire from=\"note\" fromPort=\"out\" to=\"osc0\" toPort=\"note_in\"/>\n"
+        "    </Connections>\n"
+        "  </Graph>\n"
+        "  <Layout>\n"
+        "    <Boxes>\n"
+        "      <Box id=\"note\" x=\"60\" y=\"100\"/>\n"
+        "      <Box id=\"osc0\" x=\"400\" y=\"100\"/>\n"
+        "    </Boxes>\n"
+        "  </Layout>\n"
+        "</SmolFM>\n");
+    CHECK (xmlParser.canParse (bareXml));
+    CHECK (! yamlParser.canParse (bareXml));
+    SmolFmData fromBareXml;
+    CHECK (xmlParser.parse (bareXml, fromBareXml));
+    compareParsed (fromBareXml);
+
+    // The migrated instruments/*.smolfm files are version 3 documents: the
+    // same parser stack the synthesizer uses must load them all.  The folder
+    // is located via the executable path (repo checkout layout) and the
+    // check skips silently when it is absent.
+    auto instrumentsDir = juce::File::getSpecialLocation (juce::File::currentExecutableFile)
+                              .getParentDirectory()
+                              .getParentDirectory()
+                              .getParentDirectory()
+                              .getChildFile ("instruments");
+
+    if (instrumentsDir.isDirectory())
+    {
+        int loaded = 0;
+        for (const auto& instrument : instrumentsDir.findChildFiles (juce::File::findFiles, true, "*.smolfm"))
+        {
+            SmolFmData instrumentData;
+            CHECK (xmlParser.canParse (instrument));
+            CHECK (xmlParser.parse (instrument, instrumentData));
+            CHECK (instrumentData.isValid());
+            ++loaded;
+        }
+        CHECK (loaded > 0);
     }
 
     if (failures == 0)

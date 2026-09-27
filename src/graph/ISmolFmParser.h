@@ -115,12 +115,12 @@ inline float enumOrNumber (const juce::String& key, const juce::String& baseId, 
     const juce::String k = key.toLowerCase();
     const juce::String name = text.trim();
 
-    if (k == "waveform" && baseId == "osc")    { const int i = waveformNames().indexOf (name);    if (i >= 0) return (float) i; }
-    if (k == "mode"     && baseId == "osc")    { const int i = oscModeNames().indexOf (name);     if (i >= 0) return (float) i; }
-    if (k == "mode"     && baseId == "filter") { const int i = filterModeNames().indexOf (name);  if (i >= 0) return (float) i; }
-    if (k == "shape"    && baseId == "shape")  { const int i = shapeNames().indexOf (name);       if (i >= 0) return (float) i; }
-    if (k == "sync"     && baseId == "delay")  { const int i = syncNames().indexOf (name);        if (i >= 0) return (float) i; }
-    if (k == "division" && baseId == "delay")  { const int i = divisionNames().indexOf (name);    if (i >= 0) return (float) i; }
+    if (k == "waveform" && baseId == "osc")    { const int i = waveformNames().indexOf (name, true);    if (i >= 0) return (float) i; }
+    if (k == "mode"     && baseId == "osc")    { const int i = oscModeNames().indexOf (name, true);     if (i >= 0) return (float) i; }
+    if (k == "mode"     && baseId == "filter") { const int i = filterModeNames().indexOf (name, true);  if (i >= 0) return (float) i; }
+    if (k == "shape"    && baseId == "shape")  { const int i = shapeNames().indexOf (name, true);       if (i >= 0) return (float) i; }
+    if (k == "sync"     && baseId == "delay")  { const int i = syncNames().indexOf (name, true);        if (i >= 0) return (float) i; }
+    if (k == "division" && baseId == "delay")  { const int i = divisionNames().indexOf (name, true);    if (i >= 0) return (float) i; }
 
     return name.getFloatValue();
 }

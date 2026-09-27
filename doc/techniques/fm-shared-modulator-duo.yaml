@@ -1,0 +1,117 @@
+technique:
+  name: fm-shared-modulator-duo
+
+  idea: |
+    One static modulator oscillator fans its signal into two FM stages, and
+    the keyboard send fans its frequency into both as well.  Each FM stage
+    carries its own amount, so two pitch-mode carriers render two sideband
+    spectra that share the same modulation skeleton but differ in index -
+    a phase-locked, key-locked inharmonic dyad that beats coherently
+    instead of drifting apart.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; base frequency for both FM stages.
+    - type: osc
+      role: Shared modulator oscillator in static mode; one signal, two FM
+        stages.
+    - type: fm
+      role: First FM stage; pairs the note with the shared modulator at its
+        own amount.
+    - type: fm
+      role: Second FM stage; same pair, different amount.
+    - type: osc
+      role: First carrier in pitch mode; renders stage one's spectrum.
+    - type: osc
+      role: Second carrier in pitch mode; renders stage two's spectrum.
+    - type: output
+      role: Master merge; one dedicated input per carrier.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency fan-out into both FM stages (frequency).
+    - node_role: Shared modulator oscillator
+      port: out
+      role: Modulation signal fan-out into both FM stages (signal).
+    - node_role: FM stage
+      port: freq_in
+      role: Receives the base frequency (frequency).
+    - node_role: FM stage
+      port: modulator_in
+      role: Receives the shared modulation signal (signal).
+    - node_role: FM stage
+      port: out
+      role: Modulated frequency into its carrier (frequency).
+    - node_role: First carrier oscillator
+      port: note_in
+      role: Receives the first modulated frequency (frequency).
+    - node_role: First carrier oscillator
+      port: out
+      role: First spectrum into one output input (signal).
+    - node_role: Second carrier oscillator
+      port: note_in
+      role: Receives the second modulated frequency (frequency).
+    - node_role: Second carrier oscillator
+      port: out
+      role: Second spectrum into one output input (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: Dedicated mix inputs for both carriers (signal).
+
+  topology:
+    description: |
+      note.out -> fm1.freq_in (frequency) and -> fm2.freq_in (frequency).
+      modulator.out -> fm1.modulator_in (signal) and ->
+      fm2.modulator_in (signal).  fm1.out -> osc-a.note_in (frequency),
+      fm2.out -> osc-b.note_in (frequency).  osc-a.out and osc-b.out feed
+      two dedicated output inputs (signal).  One modulator, two parallel
+      FM stages, no cascade between them.
+
+  parameters:
+    - name: modulator staticfreq
+      role: |
+        Shared modulator frequency, 20..20000 Hz; its ratio against the
+        note defines both spectra at once.
+    - name: per-stage amount
+      role: |
+        FM amount 0..10 per stage; differing values give the dyad its
+        contrast, equal values collapse the pair into a doubled unison.
+    - name: carrier waveforms
+      role: |
+        One waveform per carrier; matching waveforms interlock the dyad,
+        mixed waveforms separate the two spectra.
+    - name: modulator waveform
+      role: |
+        Shape of the shared modulation signal; sine keeps both sideband
+        families clean.
+
+  relationships:
+    - name: shared-skeleton
+      description: |
+        Both carriers derive from the same note and the same modulator, so
+        their sideband families stay phase-locked; the dyad never drifts
+        out of pitch relationship across the keyboard.
+    - name: structure
+      description: |
+        classic-two-op-fm is one modulator for one carrier and
+        chained-fm-cascade stacks stages in series; here one modulator
+        fans out in parallel and the amounts - not a second modulation
+        stage - create the difference between the two spectra.
+    - name: siblings
+      description: |
+        fscale-organ-stack fans one note into rational partials in the
+        frequency domain; this technique fans one modulator into sideband
+        families in the modulation domain.  sub-instrument-layering layers
+        complete voices structurally; here the split happens before the
+        carriers render.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, fm <= 4, osc <= 8, output = 1.  The
+        shown duo uses fm = 2 and osc = 3; up to four FM stages can share
+        one modulator.
+
+  perceptual_effects:
+    - bell-like dyad double stops locked to the played key
+    - glockenspiel-like pairs with interlocked sideband skeletons
+    - coherent inharmonic unison that thickens without beating

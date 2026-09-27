@@ -1,16 +1,19 @@
-<SmolFM version="3">
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="trap-perc-rim">
   <Graph>
     <Nodes>
-      <Node id="note" />
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
       <Node id="osc0" waveform="noise" mode="static" staticfreq="3000">
         <Pin id="note_in" direction="in" type="frequency" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="adsr0" attack="0.0005" decay="0.03" sustain="0.0" release="0.01">
+      <Node id="adsr0" attack="0.001" decay="0.04" sustain="0.0" release="0.01">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="filter0" mode="hp" cutoff="10000" resonance="0.5">
+      <Node id="filter0" mode="bp" cutoff="1700" resonance="0.6">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
@@ -20,6 +23,7 @@
       <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
       <Wire from="adsr0" fromPort="out" to="filter0" toPort="in" />
       <Wire from="filter0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
     </Connections>
   </Graph>
   <Layout>

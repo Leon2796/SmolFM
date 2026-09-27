@@ -1,0 +1,135 @@
+technique:
+  name: sub-instrument-layering
+
+  idea: |
+    Whole signal chains are unified in the master output.  Every layer is a
+    complete sub-instrument chain — its own voice, its own articulation, its
+    own tone shaping — and the chains are pre-processed either separately
+    (each layer stages its own processing) or jointly (the same stage is
+    applied to the whole stack by giving every chain an identical instance,
+    for example a common EQ realised as one filter instance per layer,
+    because each input accepts exactly one source).  The pre-processed
+    chains meet in the output, the only summing point, which merges them
+    into one playable instrument.  The technique is structural: it layers
+    and unifies complete signal chains in front of the output.  Deliberate
+    pitch relationships between the layers are incidental here; for
+    frequency-domain derivations of the fundamental see
+    pitch-related-instrument.
+
+  involved_nodes:
+    - type: note
+      role: Shared pitch source; every layer chain derives its base frequency
+        from it.
+    - type: fscale
+      role: Optional per-chain register placement of the layer voice; part of
+        a chain, not the point of the technique.
+    - type: osc
+      role: Layer voice in pitch mode; the sound source of one chain.
+    - type: adsr
+      role: Optional per-chain amplitude envelope articulating the layer
+        separately.
+    - type: filter
+      role: Optional per-chain tone stage (SVF lp/bp/hp/notch).  Identical
+        settings on every chain realise one jointly applied EQ in front of
+        the output; different settings shape each chain separately.
+    - type: output
+      role: Master merge; the only summing point, one dedicated input per
+        layer chain, level scales the unified result.
+
+  involved_ports:
+    - node_role: Shared note source
+      port: out
+      role: Base frequency fan-out into every layer chain (frequency).
+    - node_role: Chain register stage
+      port: freq_in
+      role: Receives the shared note frequency (frequency).
+    - node_role: Chain register stage
+      port: out
+      role: Register-placed chain frequency into the chain voice (frequency).
+    - node_role: Layer voice oscillator
+      port: note_in
+      role: Receives the chain frequency (frequency).
+    - node_role: Layer voice oscillator
+      port: out
+      role: Chain signal into the chain's first shaping stage or straight
+        into the output (signal).
+    - node_role: Chain amplitude envelope
+      port: in
+      role: Receives the chain signal (signal).
+    - node_role: Chain amplitude envelope
+      port: out
+      role: Articulated chain towards the next chain stage or the output
+        (signal).
+    - node_role: Chain filter stage
+      port: in
+      role: Receives the chain signal; one filter instance per chain
+        (signal).
+    - node_role: Chain filter stage
+      port: out
+      role: Shaped chain signal into one output input (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One dedicated mix input per layer chain (signal).
+
+  topology:
+    description: |
+      Parallel layer chains, one per output input.  A chain starts at the
+      shared note send — note.out -> fscale.freq_in -> osc.note_in when a
+      register stage is used, otherwise note.out -> osc.note_in — and then
+      runs its own serial signal path before it reaches the output:
+      osc.out -> adsr.in and/or osc.out -> filter.in, stage by stage,
+      ending in one dedicated output.inK (signal).  Chains may differ
+      freely: every stage is optional, so one layer can be a bare voice and
+      another a fully staged sub-instrument.  A stage meant to treat the
+      merged instrument jointly is realised as one identical instance per
+      chain (same processor type, same settings) — each input pin accepts
+      exactly one source and the output is the only summing point, so no
+      single stage can sit behind the merge.  The output sums all chains;
+      there is no cross-layer routing, the chains share only the note send.
+
+  parameters:
+    - name: layer chain staging
+      role: |
+        Per chain: optional register factor (fscale, 0..10, rational values
+        keep the layer consonant), waveform (sine, saw, square, triangle,
+        noise, perlin, simplex) and optional adsr (attack/decay
+        0.001..5 s, sustain 0..1, release 0.001..10 s).
+    - name: chain filter settings
+      role: |
+        Optional per-chain SVF: cutoff 20..20000 Hz, resonance 0..1, mode
+        lp|bp|hp|notch.  Identical settings on every chain act as one joint
+        EQ in front of the output; different settings shape each chain
+        separately.
+    - name: master level
+      role: |
+        Output level, 0..1.  Scales the unified stack after the merge.
+
+  relationships:
+    - name: merge-at-output
+      description: |
+        The master output is the only summing node and every input pin
+        accepts exactly one source; the layer chains therefore stay
+        parallel and are unified only inside the output (sum over in1..in8,
+        scaled by master level).  Joint pre-processing lives in the chains
+        as duplicated identical instances, separate pre-processing as
+        chain-specific stages.
+    - name: separate-versus-joint
+      description: |
+        Separate pre-processing differs per chain (own envelope, own filter
+        settings); joint pre-processing uses identical instances across the
+        chains, so one shared setting re-shapes the whole merged
+        instrument.  Optional per-chain trims for headroom follow the
+        dedicated layer-gain-staging pattern.
+    - name: budget-to-layers
+      description: |
+        A bare layer costs one voice; a fully staged layer costs voice plus
+        register stage, envelope and filter.  The eight output inputs
+        support eight bare or fewer fully staged chains, inside the
+        registry budgets (note = 1, fscale/osc/adsr/filter <= 8,
+        output = 1).
+
+  perceptual_effects:
+    - one playable instrument built from parallel, complete sub-instrument chains
+    - chains kept apart by their own envelopes and tone stages, unified by the output sum
+    - joint EQ-style reshaping of the whole stack through identical per-chain filter stages
+    - per-chain articulation and shaping without touching the other layers

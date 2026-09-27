@@ -1,0 +1,85 @@
+technique:
+  name: classic-two-op-fm
+
+  idea: |
+    Classic two-operator FM. A note source provides the base frequency, a
+    static-mode oscillator acts as the modulator and the FM stage applies
+    the modulation to the frequency; a pitch-mode carrier oscillator renders
+    the modulated frequency as audio.  With integer modulator ratios the
+    spectrum stays harmonic, with inharmonic ratios it turns bell-like, and
+    the amount parameter scales the spectral complexity.
+
+  involved_nodes:
+    - type: note
+      role: MIDI note source; provides the base frequency.
+    - type: osc
+      role: Modulator oscillator in static mode; its fixed frequency sets the
+        modulation ratio against the note.
+    - type: fm
+      role: Frequency-modulation stage combining note frequency and modulator
+        signal.
+    - type: osc
+      role: Carrier oscillator in pitch mode; renders the modulated frequency.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: MIDI note source
+      port: out
+      role: Base frequency into the FM stage (frequency).
+    - node_role: Modulator oscillator
+      port: out
+      role: Modulation signal into the FM stage (signal).
+    - node_role: FM stage
+      port: freq_in
+      role: Receives the base frequency (frequency).
+    - node_role: FM stage
+      port: modulator_in
+      role: Receives the modulation signal (signal).
+    - node_role: FM stage
+      port: out
+      role: Modulated frequency towards the carrier (frequency).
+    - node_role: Carrier oscillator
+      port: note_in
+      role: Receives the modulated frequency (frequency).
+    - node_role: Carrier oscillator
+      port: out
+      role: Rendered signal towards the output (signal).
+
+  topology:
+    description: |
+      note -> fm.freq_in (frequency).  Modulator oscillator -> fm.modulator_in
+      (signal).  fm.out -> carrier.note_in (frequency).  carrier.out -> output
+      (signal).  The FM stage lives entirely in the frequency domain; the
+      modulator oscillator is the only signal source feeding it.
+
+  parameters:
+    - name: fm amount
+      role: |
+        Modulation index, 0..10.  Scales the frequency deviation of the carrier.
+    - name: modulator staticfreq
+      role: |
+        Modulator frequency, 20..20000 Hz.  Together with the note frequency
+        it forms the modulation ratio.
+    - name: carrier waveform
+      role: |
+        Rendered waveform of the modulated frequency.
+    - name: modulator waveform
+      role: |
+        Shape of the modulation signal; sine keeps the sidebands clean.
+
+  relationships:
+    - name: ratio
+      description: |
+        Modulator staticfreq divided by the note frequency.  Integer ratios
+        keep the spectrum harmonic; non-integer ratios produce bell-like
+        inharmonic sidebands.
+    - name: amount-to-index
+      description: |
+        The frequency deviation grows linearly with the amount; at 0 the
+        carrier renders the plain note frequency.
+
+  perceptual_effects:
+    - bell-like and marimba-like tones at integer ratios
+    - metallic, glassy character at inharmonic ratios
+    - brightness grows with the amount

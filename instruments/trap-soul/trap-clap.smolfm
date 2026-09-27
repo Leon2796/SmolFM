@@ -1,29 +1,70 @@
-<SmolFM version="3">
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="trap-clap">
   <Graph>
     <Nodes>
-      <Node id="note" />
-      <Node id="osc0" waveform="saw">
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="noise" mode="static" staticfreq="1900">
         <Pin id="note_in" direction="in" type="frequency" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="adsr0" attack="0.01" decay="0.5" sustain="0.5" release="0.3">
+      <Node id="shape0" drive="0.25" shape="hard">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="output" level="0.8" />
+      <Node id="adsr0" attack="0.001" decay="0.04" sustain="0.0" release="0.02">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr1" attack="0.012" decay="0.04" sustain="0.0" release="0.02">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr2" attack="0.024" decay="0.09" sustain="0.0" release="0.04">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.55">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain1" factor="0.4">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain2" factor="0.35">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.85" />
     </Nodes>
     <Connections>
       <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
-      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
-      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="osc0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="adsr2" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="adsr1" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="adsr2" fromPort="out" to="gain2" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="gain1" fromPort="out" to="output" toPort="in2" />
+      <Wire from="gain2" fromPort="out" to="output" toPort="in3" />
     </Connections>
   </Graph>
   <Layout>
     <Boxes>
-      <Box id="note" x="60" y="100" />
-      <Box id="osc0" x="400" y="100" />
-      <Box id="adsr0" x="600" y="100" />
-      <Box id="output" x="900" y="100" />
+      <Box id="note" x="60" y="60" />
+      <Box id="osc0" x="360" y="60" />
+      <Box id="shape0" x="680" y="220" />
+      <Box id="adsr0" x="1000" y="60" />
+      <Box id="adsr1" x="1000" y="220" />
+      <Box id="adsr2" x="1000" y="380" />
+      <Box id="gain0" x="1320" y="60" />
+      <Box id="gain1" x="1320" y="220" />
+      <Box id="gain2" x="1320" y="380" />
+      <Box id="output" x="1640" y="220" />
     </Boxes>
   </Layout>
 </SmolFM>

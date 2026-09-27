@@ -1,8 +1,15 @@
-<SmolFM version="3">
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="trap-808-gritty">
   <Graph>
     <Nodes>
-      <Node id="note" />
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
       <Node id="fscale0" factor="0.5">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fadsr0" attack="0.002" decay="0.05" sustain="0.0" release="0.2" up="2.2" down="1.0">
         <Pin id="freq_in" direction="in" type="frequency" />
         <Pin id="out" direction="out" type="frequency" />
       </Node>
@@ -10,7 +17,7 @@
         <Pin id="note_in" direction="in" type="frequency" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="adsr0" attack="0.001" decay="0.4" sustain="0.0" release="0.05">
+      <Node id="adsr0" attack="0.001" decay="0.6" sustain="0.85" release="0.15">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
@@ -20,14 +27,14 @@
       </Node>
       <Node id="filter0" mode="lp" cutoff="1200" resonance="0.4">
         <Pin id="in" direction="in" type="signal" />
-        <Pin id="cutoff_mod_in" direction="in" type="frequency" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
       <Node id="output" level="0.85" />
     </Nodes>
     <Connections>
       <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
-      <Wire from="fscale0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="fscale0" fromPort="out" to="fadsr0" toPort="freq_in" />
+      <Wire from="fadsr0" fromPort="out" to="osc0" toPort="note_in" />
       <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
       <Wire from="adsr0" fromPort="out" to="shape0" toPort="in" />
       <Wire from="shape0" fromPort="out" to="filter0" toPort="in" />
@@ -36,13 +43,14 @@
   </Graph>
   <Layout>
     <Boxes>
-      <Box id="note" x="60" y="100" />
-      <Box id="fscale0" x="200" y="100" />
-      <Box id="osc0" x="400" y="100" />
-      <Box id="adsr0" x="600" y="60" />
-      <Box id="shape0" x="600" y="180" />
-      <Box id="filter0" x="800" y="120" />
-      <Box id="output" x="1000" y="120" />
+      <Box id="note" x="60" y="60" />
+      <Box id="fscale0" x="300" y="60" />
+      <Box id="fadsr0" x="540" y="60" />
+      <Box id="osc0" x="780" y="60" />
+      <Box id="adsr0" x="1020" y="60" />
+      <Box id="shape0" x="1260" y="60" />
+      <Box id="filter0" x="1500" y="60" />
+      <Box id="output" x="1740" y="60" />
     </Boxes>
   </Layout>
 </SmolFM>

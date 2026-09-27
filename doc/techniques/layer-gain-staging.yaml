@@ -1,0 +1,85 @@
+technique:
+  name: layer-gain-staging
+
+  idea: |
+    Gain staging across parallel layers.  Every layer chain ends in its own
+    trim gain before one output input, so the eight-way sum of the master
+    keeps its headroom and the master level stays a global fader over the
+    whole stack.
+
+  involved_nodes:
+    - type: note
+      role: Shared pitch source for the stacked layers.
+    - type: osc
+      role: Signal source of one layer in pitch or static mode; each layer
+        runs its own oscillator or chain.
+    - type: gain
+      role: Layer trim; balances one layer against the stack and guards the
+        headroom of the output sum.
+    - type: output
+      role: Master summing endpoint; one input per layer.
+
+  involved_ports:
+    - node_role: Pitch source
+      port: out
+      role: Base frequency into each layer oscillator (frequency).
+    - node_role: Layer oscillator
+      port: note_in
+      role: Receives the base frequency (frequency).
+    - node_role: Layer oscillator
+      port: out
+      role: Layer signal into the layer trim (signal).
+    - node_role: Layer trim
+      port: in
+      role: Receives the layer signal (signal).
+    - node_role: Layer trim
+      port: out
+      role: Trimmed layer signal towards one output input (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One input per layer; every layer sits behind its own trim gain
+        (signal).
+
+  topology:
+    description: |
+      One trim gain per layer chain: oscN.out -> gainN.in (signal),
+      gainN.out -> output.inM (signal), with one output input per layer.
+      The pitch source feeds every layer oscillator so the stack stays in
+      tune; the master sums up to eight trimmed layers and multiplies the
+      sum by the master level.  Each layer chain may itself carry fuller
+      internal staging; this technique fixes only the balance in front of
+      the sum.
+
+  parameters:
+    - name: layer trim factors
+      role: |
+        0..10 per layer chain.  Balances the layers against each other; 0
+        mutes a single layer.
+    - name: master level
+      role: |
+        0..1.  Global fader; scales the sum of all trimmed layers.
+
+  relationships:
+    - name: layer-trim-to-headroom
+      description: |
+        The output sums up to eight inputs at full scale and multiplies the
+        sum by the master level; the per-layer trims are set so level times
+        the sum of all connected inputs stays inside full scale.  Layers
+        that are clean individually can still clip together, because the
+        inputs add up before the master level.  One trim gain per layer
+        stays inside the gain budget of eight, matching the eight output
+        inputs.
+    - name: trim-per-layer-versus-fader
+      description: |
+        Layer levels are set once at each layer trim; the master level then
+        scales the whole stack without changing the balance between the
+        layers.
+    - name: mute
+      description: |
+        A layer trim factor of 0 silences one layer, useful for auditioning
+        the stack layer by layer while staging it.
+
+  perceptual_effects:
+    - balanced, clip-free eight-layer stacks
+    - layer-by-layer auditioning without rebalancing the stack
+    - global level changes through a single master fader

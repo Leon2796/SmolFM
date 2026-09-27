@@ -1,0 +1,59 @@
+technique:
+  name: static-detune-beating
+
+  idea: |
+    Two static-mode oscillators run at closely spaced fixed frequencies and
+    their signals are summed at the output.  The small frequency difference
+    produces a slow amplitude beating between the partials, a modulation-free
+    way to widen and warm a tone.
+
+  involved_nodes:
+    - type: osc
+      role: First static oscillator; anchors the base frequency.
+    - type: osc
+      role: Second static oscillator; detuned by a few hertz.
+    - type: output
+      role: Sums both oscillators into one beating tone.
+
+  involved_ports:
+    - node_role: First oscillator
+      port: out
+      role: First component into the output (signal).
+    - node_role: Second oscillator
+      port: out
+      role: Second component into the output (signal).
+
+  topology:
+    description: |
+      osc A -> output.in1 (signal).  osc B -> output.in2 (signal).  Both
+      oscillators run in static mode, no note port and no modulation — the
+      pair lives directly on the master output inputs.
+
+  parameters:
+    - name: staticfreq a
+      role: |
+        Base frequency of the first component, 20..20000 Hz.
+    - name: staticfreq b
+      role: |
+        Frequency of the second component, 20..20000 Hz; the difference to A
+        sets the beating rate.
+    - name: waveforms
+      role: |
+        Identical waveforms beat cleanly; different waveforms beat per
+        partial with a denser, rougher result.
+
+  relationships:
+    - name: beating-rate
+      description: |
+        The perceived wobble frequency equals the absolute difference of the
+        two static frequencies; below ~10 Hz it reads as a slow amplitude
+        beat, above it becomes roughness.
+    - name: offset-to-width
+      description: |
+        The closer the two frequencies, the slower the beat; larger offsets
+        detune faster and eventually stop beating altogether.
+
+  perceptual_effects:
+    - warm, chorus-like widening without a modulator
+    - slow, organic pulsing at small detune offsets
+    - fat static drones that never lock to a note

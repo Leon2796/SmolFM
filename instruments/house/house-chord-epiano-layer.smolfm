@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <SmolFM version="3" name="house-chord-epiano-layer">
   <Graph>
     <Nodes>
@@ -14,7 +15,14 @@
         <Pin id="modulator_in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="frequency" />
       </Node>
-      <Node id="fscale0" factor="14.0" />
+      <Node id="fscale0" factor="7.0">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fscale1" factor="2.0">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
       <Node id="osc2" waveform="sine">
         <Pin id="note_in" direction="in" type="frequency" />
         <Pin id="out" direction="out" type="signal" />
@@ -42,7 +50,8 @@
       <Wire from="fm0" fromPort="out" to="fm1" toPort="freq_in" />
       <Wire from="fm1" fromPort="out" to="osc0" toPort="note_in" />
       <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
-      <Wire from="fscale0" fromPort="out" to="osc2" toPort="note_in" />
+      <Wire from="fscale0" fromPort="out" to="fscale1" toPort="freq_in" />
+      <Wire from="fscale1" fromPort="out" to="osc2" toPort="note_in" />
       <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in" />
       <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in" />
       <Wire from="osc0" fromPort="out" to="shape0" toPort="in" />
@@ -56,6 +65,7 @@
       <Box id="fm0" x="360" y="60" />
       <Box id="fm1" x="360" y="380" />
       <Box id="fscale0" x="60" y="680" />
+      <Box id="fscale1" x="60" y="940" />
       <Box id="osc2" x="360" y="680" />
       <Box id="osc1" x="60" y="380" />
       <Box id="osc0" x="680" y="60" />
