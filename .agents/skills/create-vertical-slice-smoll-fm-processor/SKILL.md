@@ -171,7 +171,14 @@ The save side already walks the specs; the load side already asks
   explicit per-processor entry in both format grammars:
   1. `doc/formats/smolfm.xsd` - one explicit complexType `FooNodeType`
      (xs:extension of `BaseNodeType`, semantic part) owning only the
-     attributes this processor has, with a comment naming the baseId;
+     attributes this processor has, with a comment naming the baseId and
+     an `xs:appinfo` annotation (namespace `urn:smolfm:node-meta`) with
+     `purpose` (max 2 sentences: what the processor does and what it is
+     used for - signal processing only, no sound-design advice), a
+     `docReference` pointing at the processor md created in step 9
+     (e.g. `doc/processors/FooProcessor.md`), its `inputs`/`outputs`
+     port lists (`id` + signal `type`) and a `maxInstances` tag
+     mirroring `GraphNodeRegistry::maxFoos`;
      enumerated parameters reference a named simpleType (like
      `WaveformType`) and float parameters a range simpleType with
      minInclusive/maxInclusive taken from the APVTS `NormalisableRange`
@@ -201,7 +208,9 @@ match the existing pattern).
 ### 9. Documentation — `doc/processors/FooProcessor.md`
 
 **Template is mandatory**: `doc/processor-template.md` defines the fixed
-4-section structure; do not reorder or rename. Copy the file and fill it in.
+4-section structure; do not reorder or rename.  Copy the file and fill it in.
+The file path is referenced by the NodeType annotation (`docReference`) in
+`doc/formats/smolfm.xsd` - keep the annotation and the file name in sync.
 Sections:
 
 1. **Ports & real parameters** — copy the tables, replace names; if no

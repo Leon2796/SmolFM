@@ -242,6 +242,16 @@
 
   <!-- Note input (note): parameter-free. -->
   <xs:complexType name="NoteNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Wandelt die aktuell gespielte MIDI-Note in eine Frequenz (Hz) um und stellt sie als Frequenzsignal bereit. Dient als MIDI-Quelle des Graphen ohne eigene Parameter.</purpose>
+        <docReference>doc/processors/NoteProcessor.md</docReference>
+        <outputs>
+          <port id="out" type="frequency"/>
+        </outputs>
+        <maxInstances>1</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
     <xs:complexContent>
       <xs:extension base="BaseNodeType"/>
     </xs:complexContent>
@@ -249,6 +259,21 @@
 
   <!-- Oscillator (osc) -->
   <xs:complexType name="OscillatorNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Integriert die momentane Eingangsfrequenz und rendert daraus die gewählte Wellenform (sine, saw, square, triangle, noise, perlin, simplex). 
+		Im Pitch-Modus folgt die Frequenz dem note_in-Eingang, im Static-Modus schwingt der Oszillator mit der festen StaticFreq und im LFO-Modus erzeugt er eine periodische Niederfrequenz mit der einstellbaren LfoRate. 
+		Ohne angeschlossenen Eingang nutzt er den Port-Standardwert von 440 Hz. Damit dient er im Graph als Träger- oder Modulator-Oszillator sowie als LFO-Quelle.</purpose>
+        <docReference>doc/processors/OscillatorProcessor.md</docReference>
+        <inputs>
+          <port id="note_in" type="frequency"/>
+        </inputs>
+        <outputs>
+          <port id="out" type="signal"/>
+        </outputs>
+        <maxInstances>8</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
     <xs:complexContent>
       <xs:extension base="BaseNodeType">
         <xs:attribute name="waveform" type="WaveformType" use="optional"/>
@@ -261,6 +286,20 @@
 
   <!-- FM modulator (fm) -->
   <xs:complexType name="FMNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Moduliert die Eingangsfrequenz um die Summe aus Amount und dem angelegten Modulatoreingang und gibt die resultierende Frequenz aus. Dient als FM-Modulationsstufe im Frequenz-Pfad.</purpose>
+        <docReference>doc/processors/FMModulationProcessor.md</docReference>
+        <inputs>
+          <port id="freq_in" type="frequency"/>
+          <port id="modulator_in" type="signal"/>
+        </inputs>
+        <outputs>
+          <port id="out" type="frequency"/>
+        </outputs>
+        <maxInstances>4</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
     <xs:complexContent>
       <xs:extension base="BaseNodeType">
         <xs:attribute name="amount" type="FmAmountRangeType" use="optional"/>
@@ -270,6 +309,19 @@
 
   <!-- Frequency scale (fscale) -->
   <xs:complexType name="FrequencyScaleNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Skaliert die Eingangsfrequenz mit einem konstanten Faktor und gibt das Ergebnis weiter. Dient zur Intervall- oder Oktavskalierung im Frequenz-Pfad.</purpose>
+        <docReference>doc/processors/FrequencyScaleProcessor.md</docReference>
+        <inputs>
+          <port id="freq_in" type="frequency"/>
+        </inputs>
+        <outputs>
+          <port id="out" type="frequency"/>
+        </outputs>
+        <maxInstances>8</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
     <xs:complexContent>
       <xs:extension base="BaseNodeType">
         <xs:attribute name="factor" type="FrequencyFactorRangeType" use="optional"/>
@@ -279,6 +331,19 @@
 
   <!-- ADSR (adsr) -->
   <xs:complexType name="AdsrNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Formt das Eingangssignal mit einer vierstufigen Hüllkurve (Attack/Decay/Sustain/Release) als Amplitudenmodulation, getriggert pro Note. Gibt das gehüllte Signal weiter.</purpose>
+        <docReference>doc/processors/AdsrProcessor.md</docReference>
+        <inputs>
+          <port id="in" type="signal"/>
+        </inputs>
+        <outputs>
+          <port id="out" type="signal"/>
+        </outputs>
+        <maxInstances>8</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
     <xs:complexContent>
       <xs:extension base="BaseNodeType">
         <xs:attribute name="attack" type="EnvelopeTimeRangeType" use="optional"/>
@@ -291,6 +356,19 @@
 
   <!-- FADSR (fadsr) -->
   <xs:complexType name="FAdsrNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Skaliert die Eingangsfrequenz mit einer sechsstufigen Hüllkurve; Up und Down bestimmen den Frequenzfaktor bei E=1 bzw. E=0. Dient als Pitch-Hüllkurve im Frequenz-Pfad.</purpose>
+        <docReference>doc/processors/FAdsrProcessor.md</docReference>
+        <inputs>
+          <port id="freq_in" type="frequency"/>
+        </inputs>
+        <outputs>
+          <port id="out" type="frequency"/>
+        </outputs>
+        <maxInstances>4</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
     <xs:complexContent>
       <xs:extension base="BaseNodeType">
         <xs:attribute name="attack" type="EnvelopeTimeRangeType" use="optional"/>
@@ -305,6 +383,19 @@
 
   <!-- Gain (gain) -->
   <xs:complexType name="GainNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Multipliziert das Eingangssignal mit einem konstanten Faktor und gibt das skalierte Signal weiter. Dient zum Anheben oder Absenken der Amplitude im Signal-Pfad.</purpose>
+        <docReference>doc/processors/GainProcessor.md</docReference>
+        <inputs>
+          <port id="in" type="signal"/>
+        </inputs>
+        <outputs>
+          <port id="out" type="signal"/>
+        </outputs>
+        <maxInstances>8</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
     <xs:complexContent>
       <xs:extension base="BaseNodeType">
         <xs:attribute name="factor" type="GainFactorRangeType" use="optional"/>
@@ -314,6 +405,19 @@
 
   <!-- Waveshaper (shape) -->
   <xs:complexType name="WaveshaperNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Verzerrt das Eingangssignal über eine nichtlineare Übertragungskurve in Soft-, Hard- oder Fold-Variante mit einstellbarem Drive-Anteil. Gibt das verzerrte Signal weiter.</purpose>
+        <docReference>doc/processors/WaveshaperProcessor.md</docReference>
+        <inputs>
+          <port id="in" type="signal"/>
+        </inputs>
+        <outputs>
+          <port id="out" type="signal"/>
+        </outputs>
+        <maxInstances>8</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
     <xs:complexContent>
       <xs:extension base="BaseNodeType">
         <xs:attribute name="drive" type="DriveRangeType" use="optional"/>
@@ -323,6 +427,20 @@
   </xs:complexType>
   <!-- Filter (filter) -->
   <xs:complexType name="FilterNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Filtert das Eingangssignal mit LP-, BP-, HP- oder Notch-Charakteristik über einstellbare Cutoff-Frequenz und Resonanz. Ein angebundener Modulationseingang überschreibt die statische Cutoff-Frequenz.</purpose>
+        <docReference>doc/processors/FilterProcessor.md</docReference>
+        <inputs>
+          <port id="in" type="signal"/>
+          <port id="cutoff_mod_in" type="frequency"/>
+        </inputs>
+        <outputs>
+          <port id="out" type="signal"/>
+        </outputs>
+        <maxInstances>8</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
     <xs:complexContent>
       <xs:extension base="BaseNodeType">
         <xs:attribute name="cutoff" type="FilterCutoffRangeType" use="optional"/>
@@ -334,6 +452,19 @@
 
   <!-- Delay (delay) -->
   <xs:complexType name="DelayNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Verzögert das Eingangssignal um eine einstellbare Zeit mit Feedback-Anteil und mischt Original und Echo. Die Zeit läuft statisch in Millisekunden oder tempo-synchronisiert über eine Noten-Länge.</purpose>
+        <docReference>doc/processors/DelayProcessor.md</docReference>
+        <inputs>
+          <port id="in" type="signal"/>
+        </inputs>
+        <outputs>
+          <port id="out" type="signal"/>
+        </outputs>
+        <maxInstances>8</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
     <xs:complexContent>
       <xs:extension base="BaseNodeType">
         <xs:attribute name="time" type="DelayTimeRangeType" use="optional"/>
@@ -347,6 +478,20 @@
 
   <!-- Ring modulator (ring): parameter-free, like the note input. -->
   <xs:complexType name="RingModulatorNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Multipliziert beide Eingangssignale sampleweise (Ringmodulation) und gibt das Produkt aus. Erzeugt damit Nebenbänder beider Signale im Signal-Pfad.</purpose>
+        <docReference>doc/processors/RingModulatorProcessor.md</docReference>
+        <inputs>
+          <port id="in1" type="signal"/>
+          <port id="in2" type="signal"/>
+        </inputs>
+        <outputs>
+          <port id="out" type="signal"/>
+        </outputs>
+        <maxInstances>4</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
     <xs:complexContent>
       <xs:extension base="BaseNodeType"/>
     </xs:complexContent>
@@ -354,6 +499,20 @@
 
   <!-- AM modulator (am) -->
   <xs:complexType name="AMNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Moduliert die Amplitude des Trägersignals mit dem Modulatoreingang; Depth mischt zwischen unverändertem Durchgang und voller Modulation. Gibt das amplitudenmodulierte Signal weiter.</purpose>
+        <docReference>doc/processors/AmProcessor.md</docReference>
+        <inputs>
+          <port id="carrier_in" type="signal"/>
+          <port id="modulator_in" type="signal"/>
+        </inputs>
+        <outputs>
+          <port id="out" type="signal"/>
+        </outputs>
+        <maxInstances>4</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
     <xs:complexContent>
       <xs:extension base="BaseNodeType">
         <xs:attribute name="amount" type="AmAmountRangeType" use="optional"/>
@@ -363,6 +522,23 @@
 
   <!-- Master output (output) -->
   <xs:complexType name="MasterOutputNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Summiert bis zu acht Eingangssignale und skaliert die Summe über den Master-Level auf den Hauptausgang. Bildet den Endpunkt des Signalgraphen und hat keinen Ausgangsport.</purpose>
+        <docReference>doc/processors/MasterOutputProcessor.md</docReference>
+        <inputs>
+          <port id="in1" type="signal"/>
+          <port id="in2" type="signal"/>
+          <port id="in3" type="signal"/>
+          <port id="in4" type="signal"/>
+          <port id="in5" type="signal"/>
+          <port id="in6" type="signal"/>
+          <port id="in7" type="signal"/>
+          <port id="in8" type="signal"/>
+        </inputs>
+        <maxInstances>1</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
     <xs:complexContent>
       <xs:extension base="BaseNodeType">
         <xs:attribute name="level" type="MasterLevelRangeType" use="optional"/>
@@ -391,10 +567,56 @@
   </xs:complexType>
 
   <!-- Pin definition: ports are semantic, part of the graph. -->
-  <xs:complexType name="PinType">
+  <!-- Connection endpoint classes: fixed direction + signal kind.  Strict
+       validators apply them per <Pin xsi:type="...">; the loose writer
+       output carries direction/type as enum attributes. -->
+  <xs:complexType name="PinBaseType">
     <xs:attribute name="id" type="xs:string" use="required"/>
-    <xs:attribute name="direction" type="PortDirectionType" use="required"/>
-    <xs:attribute name="type" type="PortKindType" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="PinType">
+    <xs:complexContent>
+      <xs:extension base="PinBaseType">
+        <xs:attribute name="direction" type="PortDirectionType" use="required"/>
+        <xs:attribute name="type" type="PortKindType" use="required"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="FrequencyInPinType">
+    <xs:complexContent>
+      <xs:extension base="PinBaseType">
+        <xs:attribute name="direction" type="PortDirectionType" use="required" fixed="in"/>
+        <xs:attribute name="type" type="PortKindType" use="required" fixed="frequency"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="FrequencyOutPinType">
+    <xs:complexContent>
+      <xs:extension base="PinBaseType">
+        <xs:attribute name="direction" type="PortDirectionType" use="required" fixed="out"/>
+        <xs:attribute name="type" type="PortKindType" use="required" fixed="frequency"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="SignalInPinType">
+    <xs:complexContent>
+      <xs:extension base="PinBaseType">
+        <xs:attribute name="direction" type="PortDirectionType" use="required" fixed="in"/>
+        <xs:attribute name="type" type="PortKindType" use="required" fixed="signal"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="SignalOutPinType">
+    <xs:complexContent>
+      <xs:extension base="PinBaseType">
+        <xs:attribute name="direction" type="PortDirectionType" use="required" fixed="out"/>
+        <xs:attribute name="type" type="PortKindType" use="required" fixed="signal"/>
+      </xs:extension>
+    </xs:complexContent>
   </xs:complexType>
 
   <!-- Connections container -->
