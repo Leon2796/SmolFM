@@ -552,8 +552,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
             juce::NormalisableRange<float> (0.0f, 1.0f), 0.0f));
     }
 
-        // -- Delay pool ------------------------------------------------------------
-    // Sync = choice index 0..4 (free, 1/2, 1/4, 1/8, 1/16).
+    // -- Delay pool ------------------------------------------------------------
+    // SyncMode = bool (free ms vs host-BPM); Division = choice index 0..3 (1/2, 1/4, 1/8, 1/16).
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxDelays; ++i)
     {
         const juce::String num (i);

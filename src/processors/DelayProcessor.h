@@ -19,10 +19,10 @@
         - Feedback feeds a scaled amount of the delay line back into itself;
           values close to 1.0 run for a long tail without oscillating.
 
-    Per-sample processing is real-time safe: one buffer write, one read, one
-    linear interpolation.  The buffer holds StereoFrames (2 channels), is
-    pre-allocated to maxDelay at prepare() and never resized on the audio
-    thread.
+    Per-sample processing is real-time safe: one buffer write, one read (no
+    interpolation — the nearest sample is used).  The buffer holds StereoFrames
+    (2 channels), is pre-allocated to maxDelay at prepare() and never resized
+    on the audio thread.
 */
 
 #pragma once
