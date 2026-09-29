@@ -9,7 +9,7 @@ Ausgang stumm (analog zu einem Dioden-Ringmodulator).
 
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
-| Max. Instanzen | 4 | `GraphNodeRegistry::maxRingModulators` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
+| Max. Instanzen | 8 | `GraphNodeRegistry::maxRingModulators` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
 | Input-Ports | `in1`, `in2` (`PortType::signal`) | `InputPort input1`, `input2` | [src/processors/RingModulatorProcessor.h](../../src/processors/RingModulatorProcessor.h) |
 | Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/RingModulatorProcessor.h](../../src/processors/RingModulatorProcessor.h) |
 

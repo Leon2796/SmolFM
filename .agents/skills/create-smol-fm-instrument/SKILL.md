@@ -217,20 +217,20 @@ Signal kinds: `frequency` and `signal` only; a wire connects like with like.
 | Node      | Inputs                          | Outputs              | Budget |
 |-----------|---------------------------------|----------------------|--------|
 | `note`    | —                               | `out` (frequency)    | 1 |
-| `osc`     | `note_in` (frequency)           | `out` (signal)       | 8 |
-| `fm`      | `freq_in` (frequency), `modulator_in`, `amount_mod_in` (signal) | `out` (frequency) | 4 |
-| `fscale`  | `freq_in` (frequency)           | `out` (frequency)    | 8 |
-| `adsr`    | `in` (signal)                   | `out` (signal)       | 8 |
-| `fadsr`   | `freq_in` (frequency)           | `out` (frequency)    | 4 |
-| `gain`    | `in`, `factor_mod_in` (signal)  | `out` (signal)       | 8 |
-| `shape`   | `in`, `drive_mod_in` (signal)   | `out` (signal)       | 8 |
-| `filter`  | `in` (signal), `cutoff_mod_in` (frequency), `resonance_mod_in` (signal) | `out` (signal) | 8 |
-| `delay`   | `in`, `time_mod_in` (signal)    | `out` (signal)       | 8 |
-| `ring`    | `in1`, `in2` (signal)           | `out` (signal)       | 4 |
-| `am`      | `carrier_in`, `modulator_in` (signal) | `out` (signal) | 4 |
+| `osc`     | `note_in` (frequency)           | `out` (signal)       | 16 |
+| `fm`      | `freq_in` (frequency), `modulator_in`, `amount_mod_in` (signal) | `out` (frequency) | 8 |
+| `fscale`  | `freq_in` (frequency)           | `out` (frequency)    | 16 |
+| `adsr`    | `in` (signal)                   | `out` (signal)       | 16 |
+| `fadsr`   | `freq_in` (frequency)           | `out` (frequency)    | 8 |
+| `gain`    | `in`, `factor_mod_in` (signal)  | `out` (signal)       | 16 |
+| `shape`   | `in`, `drive_mod_in` (signal)   | `out` (signal)       | 16 |
+| `filter`  | `in` (signal), `cutoff_mod_in` (frequency), `resonance_mod_in` (signal) | `out` (signal) | 16 |
+| `delay`   | `in`, `time_mod_in` (signal)    | `out` (signal)       | 16 |
+| `ring`    | `in1`, `in2` (signal)           | `out` (signal)       | 8 |
+| `am`      | `carrier_in`, `modulator_in` (signal) | `out` (signal) | 8 |
 | `output`  | `in1`…`in8` (signal)            | —                    | 1 |
-| `split`   | `in` (signal)                   | `outL` (signal), `outR` (signal) | 4 |
-| `merge`   | `in1`, `in2` (signal)           | `out` (signal)       | 4 |
+| `split`   | `in` (signal)                   | `outL` (signal), `outR` (signal) | 8 |
+| `merge`   | `in1`, `in2` (signal)           | `out` (signal)       | 8 |
 
 Attribute ranges live in the xsd simpleTypes (FM/AM amounts, envelope times,
 cutoff 20–20000 Hz, delay 1–2000 ms, feedback ≤ 0.95, master level 0–1) —

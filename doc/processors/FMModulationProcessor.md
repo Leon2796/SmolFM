@@ -16,7 +16,7 @@ Modulationstiefe.
 
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
-| Max. Instanzen | 4 | `GraphNodeRegistry::maxFmAmounts` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
+| Max. Instanzen | 8 | `GraphNodeRegistry::maxFmAmounts` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
 | Input-Ports | `freq_in` (`PortType::frequency`), `modulator_in` (`PortType::signal`), `amount_mod_in` (`PortType::signal`) | `InputPort freqInput`, `InputPort modulatorInput`, `InputPort amountMod` | [src/processors/FMModulationProcessor.h](../../src/processors/FMModulationProcessor.h) |
 | Output-Ports | `out` (`PortType::frequency`) | `OutputPort output` | [src/processors/FMModulationProcessor.h](../../src/processors/FMModulationProcessor.h) |
 

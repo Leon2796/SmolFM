@@ -10,7 +10,7 @@ nie ganz ausgelöscht wird.
 
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
-| Max. Instanzen | 4 | `GraphNodeRegistry::maxAmModulators` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
+| Max. Instanzen | 8 | `GraphNodeRegistry::maxAmModulators` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
 | Input-Ports | `carrier_in`, `modulator_in` (`PortType::signal`) | `InputPort carrierIn`, `modulatorIn` | [src/processors/AmProcessor.h](../../src/processors/AmProcessor.h) |
 | Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/AmProcessor.h](../../src/processors/AmProcessor.h) |
 

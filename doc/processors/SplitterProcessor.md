@@ -12,7 +12,7 @@ direkt in den Master geroutet werden und mischt nur in genau einen Kanal.
 
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
-| Max. Instanzen | 4 | `GraphNodeRegistry::maxSplitters` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
+| Max. Instanzen | 8 | `GraphNodeRegistry::maxSplitters` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
 | Input-Ports | `in` (`PortType::signal`) | `InputPort input` | [src/processors/SplitterProcessor.h](../../src/processors/SplitterProcessor.h) |
 | Output-Ports | `outL` (`PortType::signal`, Hinweis `ChannelSide::left`), `outR` (`PortType::signal`, Hinweis `ChannelSide::right`) | `OutputPort leftOutput`, `rightOutput` | [src/processors/SplitterProcessor.h](../../src/processors/SplitterProcessor.h) |
 

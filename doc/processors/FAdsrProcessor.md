@@ -12,7 +12,7 @@ bei Note-On gelesen (JUCE-Empfehlung) und wirken daher auf die nächste Note.
 
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
-| Max. Instanzen | 4 | `GraphNodeRegistry::maxFAdsr` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
+| Max. Instanzen | 8 | `GraphNodeRegistry::maxFAdsr` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
 | Input-Ports | `freq_in` (`PortType::frequency`) | `InputPort freqInput` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
 | Output-Ports | `out` (`PortType::frequency`) | `OutputPort output` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
 

@@ -298,7 +298,7 @@
         <outputs>
           <port id="out" type="signal"/>
         </outputs>
-        <maxInstances>8</maxInstances>
+        <maxInstances>16</maxInstances>
       </xs:appinfo>
     </xs:annotation>
     <xs:complexContent>
@@ -325,7 +325,7 @@
         <outputs>
           <port id="out" type="frequency"/>
         </outputs>
-        <maxInstances>4</maxInstances>
+        <maxInstances>8</maxInstances>
       </xs:appinfo>
     </xs:annotation>
     <xs:complexContent>
@@ -347,7 +347,7 @@
         <outputs>
           <port id="out" type="frequency"/>
         </outputs>
-        <maxInstances>8</maxInstances>
+        <maxInstances>16</maxInstances>
       </xs:appinfo>
     </xs:annotation>
     <xs:complexContent>
@@ -370,7 +370,7 @@
         <outputs>
           <port id="out" type="signal"/>
         </outputs>
-        <maxInstances>8</maxInstances>
+        <maxInstances>16</maxInstances>
       </xs:appinfo>
     </xs:annotation>
     <xs:complexContent>
@@ -395,7 +395,7 @@
         <outputs>
           <port id="out" type="frequency"/>
         </outputs>
-        <maxInstances>4</maxInstances>
+        <maxInstances>8</maxInstances>
       </xs:appinfo>
     </xs:annotation>
     <xs:complexContent>
@@ -423,7 +423,7 @@
         <outputs>
           <port id="out" type="signal"/>
         </outputs>
-        <maxInstances>8</maxInstances>
+        <maxInstances>16</maxInstances>
       </xs:appinfo>
     </xs:annotation>
     <xs:complexContent>
@@ -446,7 +446,7 @@
         <outputs>
           <port id="out" type="signal"/>
         </outputs>
-        <maxInstances>8</maxInstances>
+        <maxInstances>16</maxInstances>
       </xs:appinfo>
     </xs:annotation>
     <xs:complexContent>
@@ -470,7 +470,7 @@
         <outputs>
           <port id="out" type="signal"/>
         </outputs>
-        <maxInstances>8</maxInstances>
+        <maxInstances>16</maxInstances>
       </xs:appinfo>
     </xs:annotation>
     <xs:complexContent>
@@ -495,7 +495,7 @@
         <outputs>
           <port id="out" type="signal"/>
         </outputs>
-        <maxInstances>8</maxInstances>
+        <maxInstances>16</maxInstances>
       </xs:appinfo>
     </xs:annotation>
     <xs:complexContent>
@@ -522,7 +522,7 @@
         <outputs>
           <port id="out" type="signal"/>
         </outputs>
-        <maxInstances>4</maxInstances>
+        <maxInstances>8</maxInstances>
       </xs:appinfo>
     </xs:annotation>
     <xs:complexContent>
@@ -543,7 +543,7 @@
           <port id="outL" type="signal"/>
           <port id="outR" type="signal"/>
         </outputs>
-        <maxInstances>4</maxInstances>
+        <maxInstances>8</maxInstances>
       </xs:appinfo>
     </xs:annotation>
     <xs:complexContent>
@@ -564,7 +564,7 @@
         <outputs>
           <port id="out" type="signal"/>
         </outputs>
-        <maxInstances>4</maxInstances>
+        <maxInstances>8</maxInstances>
       </xs:appinfo>
     </xs:annotation>
     <xs:complexContent>
@@ -585,7 +585,7 @@
         <outputs>
           <port id="out" type="signal"/>
         </outputs>
-        <maxInstances>4</maxInstances>
+        <maxInstances>8</maxInstances>
       </xs:appinfo>
     </xs:annotation>
     <xs:complexContent>

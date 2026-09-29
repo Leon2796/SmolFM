@@ -6,17 +6,17 @@
 
         Node id scheme
             note                exactly one MIDI note source (emits the played note)
-            osc0 .. osc7        up to 8 oscillators (carrier or modulator — same thing)
-            fm0 .. fm3          up to 4 FM amount stages
-            fscale0 .. fscale7  up to 8 frequency scalers
-            ring0 .. ring3      up to 4 ring modulators
-            am0 .. am3          up to 4 AM modulators
-            delay0 .. delay7    up to 8 delays
-            adsr0 .. adsr7      up to 8 amplitude envelopes
-            fadsr0 .. fadsr3    up to 4 frequency envelopes
-            gain0 .. gain7      up to 8 gain stages
-            shape0 .. shape7    up to 8 waveshapers
-            filter0 .. filter7  up to 8 filters
+            osc0 .. osc15       up to 16 oscillators (carrier or modulator — same thing)
+            fm0 .. fm7          up to 8 FM amount stages
+            fscale0 .. fscale15 up to 16 frequency scalers
+            ring0 .. ring7      up to 8 ring modulators
+            am0 .. am7          up to 8 AM modulators
+            delay0 .. delay15   up to 16 delays
+            adsr0 .. adsr15     up to 16 amplitude envelopes
+            fadsr0 .. fadsr7    up to 8 frequency envelopes
+            gain0 .. gain15     up to 16 gain stages
+            shape0 .. shape15   up to 16 waveshapers
+            filter0 .. filter15 up to 16 filters
             output              exactly one master output (mixes up to 8 signal inputs)
 
     A connection is expressed from the input side, because an InputPort can
@@ -171,21 +171,21 @@ struct ConnectionPatch
 class GraphNodeRegistry
 {
 public:
-    static constexpr int maxOscillators = 8;
-    static constexpr int maxFmAmounts   = 4;
-    static constexpr int maxFrequencyScales = 8;
-    static constexpr int maxRingModulators  = 4;
-    static constexpr int maxAmModulators    = 4;
-    static constexpr int maxDelays          = 8;
+    static constexpr int maxOscillators = 16;
+    static constexpr int maxFmAmounts   = 8;
+    static constexpr int maxFrequencyScales = 16;
+    static constexpr int maxRingModulators  = 8;
+    static constexpr int maxAmModulators    = 8;
+    static constexpr int maxDelays          = 16;
     static constexpr int maxNotes       = 1;
-    static constexpr int maxAdsr        = 8;
-    static constexpr int maxFAdsr       = 4;
-    static constexpr int maxGains       = 8;
-    static constexpr int maxWaveshapers = 8;
-    static constexpr int maxFilters     = 8;
+    static constexpr int maxAdsr        = 16;
+    static constexpr int maxFAdsr       = 8;
+    static constexpr int maxGains       = 16;
+    static constexpr int maxWaveshapers = 16;
+    static constexpr int maxFilters     = 16;
     static constexpr int maxMasterOutputs = 1;
-    static constexpr int maxSplitters   = 4;
-    static constexpr int maxMergers     = 4;
+    static constexpr int maxSplitters   = 8;
+    static constexpr int maxMergers     = 8;
 
     static const std::vector<NodeSpec>& getAllSpecs();
 

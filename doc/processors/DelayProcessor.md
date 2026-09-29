@@ -9,7 +9,7 @@ freie Millisekunden oder Sync an die Host-Tempo.
 
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
-| Max. Instanzen | 8 | `GraphNodeRegistry::maxDelays` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
+| Max. Instanzen | 16 | `GraphNodeRegistry::maxDelays` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
 | Input-Ports | `in` (`PortType::signal`), `time_mod_in` (`PortType::signal`) | `InputPort input`, `InputPort timeMod` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
 | Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
 

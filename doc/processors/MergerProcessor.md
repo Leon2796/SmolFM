@@ -12,7 +12,7 @@ speisen — `out` ist dann wieder das zentrierte Eingangsframe.
 
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
-| Max. Instanzen | 4 | `GraphNodeRegistry::maxMergers` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
+| Max. Instanzen | 8 | `GraphNodeRegistry::maxMergers` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
 | Input-Ports | `in1` (`PortType::signal`, Hinweis `ChannelSide::left`), `in2` (`PortType::signal`, Hinweis `ChannelSide::right`) | `InputPort leftInput`, `rightInput` | [src/processors/MergerProcessor.h](../../src/processors/MergerProcessor.h) |
 | Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/MergerProcessor.h](../../src/processors/MergerProcessor.h) |
 

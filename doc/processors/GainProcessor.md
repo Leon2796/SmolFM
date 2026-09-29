@@ -10,7 +10,7 @@ Stillstand (Default-Eingang 0.0).
 
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
-| Max. Instanzen | 8 | `GraphNodeRegistry::maxGains` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
+| Max. Instanzen | 16 | `GraphNodeRegistry::maxGains` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
 | Input-Ports | `in` (`PortType::signal`), `factor_mod_in` (`PortType::signal`) | `InputPort input`, `InputPort modInput` | [src/processors/GainProcessor.h](../../src/processors/GainProcessor.h) |
 | Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/GainProcessor.h](../../src/processors/GainProcessor.h) |
 

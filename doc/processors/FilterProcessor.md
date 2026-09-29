@@ -10,7 +10,7 @@ stabil auch bei hoher Resonance, Cutoff wird pro Sample neu hergeleitet.
 
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
-| Max. Instanzen | 8 | `GraphNodeRegistry::maxFilters` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
+| Max. Instanzen | 16 | `GraphNodeRegistry::maxFilters` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
 | Input-Ports | `in` (`PortType::signal`), `cutoff_mod_in` (`PortType::frequency`), `resonance_mod_in` (`PortType::signal`) | `InputPort input`, `InputPort cutoffMod`, `InputPort resonanceMod` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
 | Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
 

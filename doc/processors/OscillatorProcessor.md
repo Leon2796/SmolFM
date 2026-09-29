@@ -10,7 +10,7 @@ Momentanfrequenz in die Phase — das ist die Stelle, an der echte FM entsteht.
 
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
-| Max. Instanzen | 8 | `GraphNodeRegistry::maxOscillators` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
+| Max. Instanzen | 16 | `GraphNodeRegistry::maxOscillators` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
 | Input-Ports | `note_in` (`PortType::frequency`) | `InputPort noteInput` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
 | Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
 

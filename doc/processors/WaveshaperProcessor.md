@@ -10,7 +10,7 @@ ist nahezu transparent (Identität bei kleinen Amplituden).
 
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
-| Max. Instanzen | 8 | `GraphNodeRegistry::maxWaveshapers` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
+| Max. Instanzen | 16 | `GraphNodeRegistry::maxWaveshapers` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
 | Input-Ports | `in` (`PortType::signal`), `drive_mod_in` (`PortType::signal`) | `InputPort input`, `InputPort driveMod` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
 | Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
 
