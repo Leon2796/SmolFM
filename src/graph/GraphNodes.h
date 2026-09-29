@@ -211,6 +211,7 @@ public:
     static juce::String oscStaticFreqParameterIdFor (const juce::String& nodeId);
     static juce::String oscLfoRateParameterIdFor    (const juce::String& nodeId);
     static juce::String amountParameterIdFor    (const juce::String& nodeId);
+    static juce::String freqScaleIntervalParameterIdFor (const juce::String& nodeId);
     static juce::String adsrParameterIdFor      (const juce::String& nodeId, const juce::String& which);
     static juce::String fAdsrParameterIdFor     (const juce::String& nodeId, const juce::String& which);
     static juce::String gainParameterIdFor      (const juce::String& nodeId);

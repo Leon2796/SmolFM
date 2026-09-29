@@ -3,7 +3,11 @@
     function.
 
     Ports:
-        - in  (signal): incoming audio.
+        - in            (signal): incoming audio.
+        - drive_mod_in  (signal): optional multiplier on the drive.  The
+          connected value's stereo mean is clamped to [-1, +1] and the
+          effective drive becomes drive * (1 + m), clamped to 0..1.
+          Unconnected: the static drive runs as-is.
         - out (signal): the shaped audio.
 
     Per sample (per channel — standard stereo distortion behaviour):
@@ -47,6 +51,7 @@ public:
     StereoFrame processSample() override;
 
     InputPort& getInput() noexcept   { return input; }
+    InputPort& getDriveModInput() noexcept { return driveMod; }
     OutputPort& getOutput() noexcept { return output; }
 
 private:
@@ -54,6 +59,7 @@ private:
     std::atomic<float>* shape;
 
     InputPort input  { PortType::signal };
+    InputPort driveMod { PortType::signal };
     OutputPort output { PortType::signal, *this };
 };
 

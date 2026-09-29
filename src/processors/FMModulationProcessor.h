@@ -6,6 +6,11 @@
         - freq_in       (frequency): carrier base frequency in Hertz, wired
                           from note.out or from the previous FM stage's out.
         - modulator_in  (signal):    the signal that bends the frequency.
+        - amount_mod_in (signal):    optional multiplier on the FM amount.
+                          The connected value's stereo mean is clamped to
+                          [-1, +1] and the effective index becomes
+                          amount * (1 + m), clamped to 0..10.  Unconnected:
+                          the static amount runs as-is.
         - out           (frequency): instantaneous carrier frequency.
 
     Per sample (modulator collapsed to one scalar — see below):
@@ -67,6 +72,7 @@ public:
 
     InputPort& getFreqInput() noexcept      { return freqInput; }
     InputPort& getModulatorInput() noexcept { return modulatorInput; }
+    InputPort& getAmountModInput() noexcept { return amountMod; }
     OutputPort& getOutput() noexcept        { return output; }
 
 private:
@@ -74,6 +80,7 @@ private:
 
     InputPort freqInput { PortType::frequency };
     InputPort modulatorInput { PortType::signal };
+    InputPort amountMod { PortType::signal };
     OutputPort output { PortType::frequency, *this };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FMModulationProcessor)

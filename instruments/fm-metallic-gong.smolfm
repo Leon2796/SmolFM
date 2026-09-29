@@ -1,4 +1,4 @@
-<SmolFM version="3" name="Metallic Gong">
+<SmolFM version="3" name="Metallic Gong" description="" techniques="">
   <Graph>
     <Nodes>
       <Node id="note" />
@@ -30,13 +30,13 @@
     <Boxes>
       <Box id="note" x="100" y="100" />
       <Box id="fscale0" x="300" y="300" />
-      <Box id="fscale1" x="300" y="500" />
+      <Box id="fscale1" x="300" y="508" />
       <Box id="fm0" x="500" y="100" />
-      <Box id="osc0" x="700" y="100" />
-      <Box id="osc1" x="500" y="300" />
-      <Box id="osc2" x="500" y="500" />
+      <Box id="osc0" x="700" y="212" />
+      <Box id="osc1" x="500" y="454" />
+      <Box id="osc2" x="500" y="696" />
       <Box id="ring0" x="900" y="100" />
-      <Box id="adsr0" x="1100" y="100" />
+      <Box id="adsr0" x="1100" y="212" />
       <Box id="output" x="1300" y="100" />
     </Boxes>
   </Layout>

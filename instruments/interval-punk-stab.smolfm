@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Interval Punk Stab" description="Punchy open-fifth stab: square voices clipped hard per branch and kept key-locked by tempered fifth and octave intervals, thrown forward by a tight 85 ms slapback tail" techniques="fscale-interval-power-stack, serial-drive-filter-sculpt, delay-slapback-doubler">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="square">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="fscale0" factor="1" interval="fifth_up" />
+      <Node id="fscale1" factor="1" interval="octave_up" />
+      <Node id="osc1" waveform="square">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc2" waveform="saw">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="shape0" drive="0.55" shape="hard">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="shape1" drive="0.4" shape="soft">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.002" decay="0.28" sustain="0.5" release="0.18">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr1" attack="0.002" decay="0.28" sustain="0.4" release="0.18">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr2" attack="0.002" decay="0.2" sustain="0.28" release="0.14">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay0" time="85" feedback="0.25" mix="0.25">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="delay0" toPort="in" />
+      <Wire from="delay0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in" />
+      <Wire from="osc1" fromPort="out" to="shape1" toPort="in" />
+      <Wire from="shape1" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="adsr1" fromPort="out" to="output" toPort="in2" />
+      <Wire from="note" fromPort="out" to="fscale1" toPort="freq_in" />
+      <Wire from="fscale1" fromPort="out" to="osc2" toPort="note_in" />
+      <Wire from="osc2" fromPort="out" to="adsr2" toPort="in" />
+      <Wire from="adsr2" fromPort="out" to="output" toPort="in3" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="260" />
+      <Box id="osc0" x="380" y="60" />
+      <Box id="fscale0" x="380" y="302" />
+      <Box id="fscale1" x="380" y="510" />
+      <Box id="osc1" x="700" y="260" />
+      <Box id="osc2" x="700" y="502" />
+      <Box id="shape0" x="1020" y="60" />
+      <Box id="shape1" x="1020" y="262" />
+      <Box id="adsr0" x="1340" y="60" />
+      <Box id="adsr1" x="1340" y="372" />
+      <Box id="adsr2" x="1340" y="684" />
+      <Box id="delay0" x="1660" y="60" />
+      <Box id="output" x="1940" y="260" />
+    </Boxes>
+  </Layout>
+</SmolFM>

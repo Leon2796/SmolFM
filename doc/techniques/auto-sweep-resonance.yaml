@@ -1,0 +1,84 @@
+technique:
+  name: auto-sweep-resonance
+
+  idea: |
+    A saw-shaped oscillatory frequency source drives the filter's
+    resonance_mod_in as a repeated down-ramp: each cycle the resonance
+    starts closed and climbs to full drive, then snaps back.  Against a
+    note-tracked cutoff this reads as a cyclic "squelch-and-snap" — an
+    automatic resonance sweep that turns every note into a rhythmic filter
+    zipper without touching cutoff, pitch or amplitude.  One LFO voice
+    replaces an entire pattern generator.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; key-tracks the cutoff through the static cutoff scale.
+    - type: osc
+      role: Sweep oscillator in lfo mode; saw waveform makes the per-cycle ramp.
+    - type: filter
+      role: Multi-mode filter; resonance_mod_in receives the ramp.
+    - type: osc
+      role: Voice oscillator feeding the filter.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Key-tracking base for the static cutoff scale (frequency).
+    - node_role: Sweep oscillator
+      port: out
+      role: Ramp signal into resonance_mod_in (signal).
+    - node_role: Multi-mode filter
+      port: resonance_mod_in
+      role: Multiplies the static resonance by (1 + m) per sample (signal).
+    - node_role: Voice oscillator
+      port: out
+      role: Source signal into the filter input (signal).
+
+  topology:
+    description: |
+      osc-sweep.out (lfo mode, lfoRate = sweep period, waveform saw, lfo
+      amplitude via staticfreq-free ramp) -> filter.resonance_mod_in
+      (signal).  osc-voice.out -> filter.in (signal).  filter.out ->
+      output.in1 (signal).  The saw's fall from +amplitude to -amplitude
+      maps to a resonance climb across the effective (1 + m) window; the
+      exact range follows from the lfo amplitude scaling.
+
+  parameters:
+    - name: sweep rate
+      role: |
+        Osc lfoRate 0.01..50 Hz = one resonance climb per cycle.  Sub-harmonic
+        rates (0.5 Hz, 1 Hz) read as rhythmic; audio-rate becomes a rough
+        sideband texture.
+    - name: static resonance
+      role: |
+        Centre value 0..1; the ramp swings it across (1 + m).  0.4..0.6
+        crosses the self-oscillation threshold once per cycle.
+    - name: waveform
+      role: |
+        Saw = linear climb with hard reset; perlin drifts; sine breathes
+        symmetrically — but only saw produces the characteristic climb-and-snap.
+
+  relationships:
+    - name: ramp-to-snap
+      description: |
+        Over one cycle the effective resonance sweeps res..(res*2) clamped
+        to 1; the moment it crosses the self-oscillation onset the filtered
+        note rings by itself, then collapses at the saw's reset — a per-cycle
+        ping.
+    - name: socket-siblings
+      description: |
+        fadsr-cutoff-sweep sweeps the cutoff with an envelope; perlin-
+        cutoff-drift wanders the cutoff organically; key-tracking-filter
+        scales the cutoff with the key.  This technique leaves cutoff and
+        pitch alone and automates only the resonance as a repeated ramp —
+        the closest analog a pattern generator would produce, without one.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8 (two used), filter <= 8, output = 1.
+
+  perceptual_effects:
+    - cyclic squelch-and-snap on every note, rhythmic without any sequencer
+    - resonance-driven ratchet texture rising inside each LFO cycle
+    - pitched self-oscillation pings when the climb crosses the threshold

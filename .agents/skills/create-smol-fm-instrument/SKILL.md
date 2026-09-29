@@ -33,11 +33,11 @@ instrument, not when it merely runs.
 - `doc/formats/smolfm-yaml-grammar.md` documents the version-3 file
   structure (semantic `Graph` + presentation `Layout`), the dynamic
   attributes per node type, the enumerations and the validation rules.
-- `instruments/fm-bell.smolfm` is the canonical, writer-style example:
-  `<?xml version="1.0" encoding="UTF-8"?>` + `<SmolFM version="3">` (capital
-  FM — the app's format sniffing and parser require exactly that root tag)
-  with `Graph`/`Nodes`/`Connections` and `Layout`/`Boxes`.  New instrument
-  files look exactly like it.
+- `instruments/fm-bell.smolfm` is the canonical, writer-style example:  a
+  `<?xml version="1.0" encoding="UTF-8"?>` declaration followed by a version-3
+  root element spelled `SmolFM` (capital FM — the app's format sniffing and
+  parser require exactly that root tag)  with `Graph`/`Nodes`/`Connections`
+  and `Layout`/`Boxes`.  New instrument files look exactly like it.
 
 ---
 
@@ -47,12 +47,16 @@ instrument, not when it merely runs.
    Klangbild, instrument type — and any explicit wishes like brightness,
    attack character, movement, space) derive a sonic target: spectral
    character, envelope behavior, dynamics, modulation movement, articulation.
-   If the description is ambiguous, ask before building.
+   If the description is ambiguous, ask before building.  Musicality is the
+   default bar (see "Musicality and chaos mode" below): patches stay playable
+   and tonally legible.  Only explicit chaos/experiment wording ("chaotic",
+   "experimental", "extreme", "broken", "wild") activates the chaos mode —
+   never infer it from a genre alone.
 2. **Understand the grammar.**  Read `doc/formats/smolfm.xsd` and
    `doc/formats/smolfm-yaml-grammar.md`: node types with their
    `purpose`/`inputs`/`outputs`/`maxInstances` annotations, enums
-   (`waveform`, `mode`, `shape`, filter modes, delay sync/divisions) and the
-   numeric ranges of every attribute.
+   (`waveform`, `mode`, `shape`, filter modes, delay sync/divisions, fscale
+   `interval`) and the numeric ranges of every attribute.
 3. **Select the techniques.**  Read the technique catalogue
    `doc/techniques/*.yaml` and pick the techniques whose
    `perceptual_effects` match the target.  Compose several techniques into
@@ -64,11 +68,11 @@ instrument, not when it merely runs.
    inside the documented ranges (modulator ratios, FM amounts, envelope
    times, cutoffs, gains).  Budget the node instances against their
    `maxInstances` annotations.  Keep the graph as simple as the target
-   allows; every node must earn its place.
+   allows; every node must earn its place.  Simple is not bare - never deliver a minimal demo patch (a naked two-operator sine bell, a single voice without articulation or shaping); an instrument gets an envelope, at least one colouring or space stage and enough voice richness to read as a finished playable instrument.
 5. **Write the file(s).**  One descriptive kebab-case filename per
    instrument (`<name>.smolfm`), written to `instruments/`, in version-3
    XML exactly like `instruments/fm-bell.smolfm` (see the embedded skeleton
-   below).  Include a `Layout` box for every node.  When the user asked for
+   below).  Include a `Layout` box for every node.  Fill the root metadata attributes (`name`, `description`, `techniques` - rules in "Root metadata" below).  When the user asked for
    a genre or Klangbild rather than a single instrument, deliver a small
    matching set (e.g. lead, bass, pad) as separate files.
 6. **Validate before presenting.**  Run the checklist below.  Only present
@@ -84,7 +88,7 @@ the reference):
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3">
+<SmolFM version="3" name="<Name>" description="<one-sentence sound-design goal referencing the techniques>" techniques="<comma-separated technique names, empty ok>">
   <Graph>
     <Nodes>
       <Node id="note" />
@@ -143,6 +147,69 @@ Notes on the skeleton:
 
 ---
 
+## Root metadata (name / description / techniques)
+
+The root element carries the metadata group next to `version`:
+
+```xml
+<SmolFM version="3" name="Interval Fifth Bell"
+        description="Glassy fifth-clang bell built from fscale-interval-modulator-fm: the FM modulator sits one exact pure fifth above the raw key, giving a key-stable bell grid"
+        techniques="fscale-interval-modulator-fm">
+```
+
+- `description`: ONE concise sentence - the sound-design goal with the
+  techniques that realise it.  No tutorial, no parameter dump.
+- `techniques`: comma-separated names of the catalogue techniques actually
+  used (`doc/techniques/*.yaml`).  Empty string is allowed when none of the
+  catalogue applies, but a designed patch normally names what it composes.
+
+---
+
+## Musicality and chaos mode
+
+**Default discipline — musical first.**  Unless the user explicitly asks for
+chaos, every patch obeys these sound-design guardrails:
+
+- **Pitch anchor**: at least one voice sits on the played key; every other
+  voice sits on a musical relationship — named intervals, integer or small
+  rational FM ratios, or cent detune within ±50 cents.  Inharmonic ratios
+  and huge offsets are a *choice* for a named Klangbild (bell, metallic,
+  growl), never random filler across all layers.
+- **Modulation depth discipline**: the five `_mod_in` sockets
+  (`fm amount`, `delay time`, `filter resonance`, `gain factor`, `shape
+  drive`) run at musical depths by default — FM index swing ≤ 2x its base,
+  resonance/drive LFOs at musical rates (≤ ~2x base), delay-time wobble a
+  fraction of the echo time.  Full-depth audio-rate modulation belongs to
+  chaos mode only.
+- **Level budget**: two or more summed voices keep output inputs ≤ ~0.5
+  and the master level ≤ 0.8 — headroom before the mix stops being
+  playable.  Eight stacked saws at level 1.0 is always wrong.
+- **Articulation per voice**: every voice has an envelope or a gate; no
+  layer drones at full level forever.  Noise only ever appears shaped
+  (filtered, enveloped) — an always-on raw noise layer is not musical.
+- **Rhythmic coherence**: gate/chop rates (gain-gate-chops, pulse-stepper-
+  grit) sit at musically sensible periods; detunes and drifts relate to the
+  played tempo and key rather than to random hertz values.
+
+**Chaos mode — opt-in only, musicality still guaranteed.**  When the user's
+description explicitly asks for chaos/experiment, the discipline relaxes:
+
+- allowed as the patch's core: audio-rate modulation at full depth, detune
+  into ±1200 cents, stacked inharmonic ratios, always-on noise and metallic
+  fold textures — the catalogue's extreme siblings (`self-drive-growl-fm`,
+  `pulse-stepper-grit`, `auto-sweep-resonance`, `dub-wobble-echo-drift`,
+  `fm-metallic-*` recipes) become legitimate foundations.
+- still guaranteed, even in chaos: **one anchor** the ear can hold (a stable
+  sub-voice on the key, a static centre frequency or a periodic pulse),
+  **dynamic headroom** (master ≤ 0.8, level budget across layers so the
+  instrument stays mix-able) and **controllability** (every voice keeps some
+  articulation or gate so the instrument responds to playing, not just
+  drones).
+- chaos comes from parameter combinations, never from invalid values: stay
+  inside every xsd range, and record in the root `description` what breaks
+  (sideband density, unstable pitch, noise) and what anchors it — that
+  sentence IS the sound-design contract of a chaos patch.
+
 ## Node and port map (confirm against the xsd annotations)
 
 Signal kinds: `frequency` and `signal` only; a wire connects like with like.
@@ -151,14 +218,14 @@ Signal kinds: `frequency` and `signal` only; a wire connects like with like.
 |-----------|---------------------------------|----------------------|--------|
 | `note`    | —                               | `out` (frequency)    | 1 |
 | `osc`     | `note_in` (frequency)           | `out` (signal)       | 8 |
-| `fm`      | `freq_in` (frequency), `modulator_in` (signal) | `out` (frequency) | 4 |
+| `fm`      | `freq_in` (frequency), `modulator_in`, `amount_mod_in` (signal) | `out` (frequency) | 4 |
 | `fscale`  | `freq_in` (frequency)           | `out` (frequency)    | 8 |
 | `adsr`    | `in` (signal)                   | `out` (signal)       | 8 |
 | `fadsr`   | `freq_in` (frequency)           | `out` (frequency)    | 4 |
-| `gain`    | `in` (signal)                   | `out` (signal)       | 8 |
-| `shape`   | `in` (signal)                   | `out` (signal)       | 8 |
-| `filter`  | `in` (signal), `cutoff_mod_in` (frequency) | `out` (signal) | 8 |
-| `delay`   | `in` (signal)                   | `out` (signal)       | 8 |
+| `gain`    | `in`, `factor_mod_in` (signal)  | `out` (signal)       | 8 |
+| `shape`   | `in`, `drive_mod_in` (signal)   | `out` (signal)       | 8 |
+| `filter`  | `in` (signal), `cutoff_mod_in` (frequency), `resonance_mod_in` (signal) | `out` (signal) | 8 |
+| `delay`   | `in`, `time_mod_in` (signal)    | `out` (signal)       | 8 |
 | `ring`    | `in1`, `in2` (signal)           | `out` (signal)       | 4 |
 | `am`      | `carrier_in`, `modulator_in` (signal) | `out` (signal) | 4 |
 | `output`  | `in1`…`in8` (signal)            | —                    | 1 |
@@ -183,15 +250,22 @@ never write a value outside them.
 6. The graph reaches the `output` node — no dangling unused signal chains
    unless they are deliberate modulation sources.
 7. The patch audibly matches the requested genre/Klangbild/instrument type
-   as judged by the technique catalogue's `perceptual_effects`.
+   as judged by the technique catalogue's `perceptual_effects`, WITHIN the
+   declared mode: default = musically legible (pitch anchor, musical ratios,
+   level headroom); chaos mode = anchor + headroom + controllability are
+   demonstrably present even as the texture breaks.
 8. The file starts with the XML declaration and the root tag is spelled
    `SmolFM` exactly.
 9. No input port receives more than one `Wire` — parallel voices are summed
    at the `output` node's inputs, never merged into a shared downstream
    input.
 
+10. Root metadata filled: one concise `description` sentence (sound-design goal, referencing the techniques used) and `techniques` listing the catalogue names actually wired, comma-separated - empty strings only when genuinely nothing from the catalogue applies.
+
 ## Common pitfalls
 
+- Delivering a bare demo patch (raw `fm`+`osc` bell, one unterminated voice, no envelope, no tone/space stage) instead of a finished instrument - the goal is instrument character, not a wiring diagram; only go minimal when the user explicitly asks for a minimal test patch.
+- Letting the patch drift into unmusical chaos by default: audio-rate modulators at full depth, unanchored ±1200 detune stacks or always-on raw noise on a normal instrument request make the result unplayable noise.  Musicality is the default bar; chaos is opt-in via the user's explicit wording, and even then it keeps an anchor, headroom and controllability (see Musicality and chaos mode).
 - Inventing node types, port ids or signal kinds the xsd does not declare.
 - Blowing instance budgets or writing values outside the xsd ranges.
 - Modulation wired into the wrong kind of port (e.g. signal into a

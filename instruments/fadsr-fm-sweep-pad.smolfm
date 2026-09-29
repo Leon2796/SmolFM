@@ -1,4 +1,4 @@
-<SmolFM version="3" name="fadsr-fm-sweep-pad">
+<SmolFM version="3" name="fadsr-fm-sweep-pad" description="" techniques="">
   <Graph>
     <Nodes>
       <Node id="note">

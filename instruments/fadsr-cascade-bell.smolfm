@@ -1,4 +1,4 @@
-<SmolFM version="3" name="fadsr-chaos-bell-cascade">
+<SmolFM version="3" name="fadsr-chaos-bell-cascade" description="" techniques="">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -76,7 +76,7 @@
       <Box id="fm0" x="1000" y="60" />
       <Box id="fm1" x="1000" y="380" />
       <Box id="fscale0" x="60" y="940" />
-      <Box id="osc2" x="360" y="940" />
+      <Box id="osc2" x="360" y="1012" />
       <Box id="adsr0" x="1340" y="60" />
       <Box id="adsr1" x="1340" y="380" />
       <Box id="delay0" x="1340" y="700" />

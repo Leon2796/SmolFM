@@ -1,0 +1,80 @@
+technique:
+  name: drift-drive-texture
+
+  idea: |
+    A perlin oscillator drives the waveshaper's drive_mod_in: distortion
+    amount that wanders organically, never repeating.  The tone slides
+    between warm saturation and aggressive fold and back again like a
+    slowly changing material — a texture effect for long pads and drones.
+    Combined with perlin on the cutoff (perlin-cutoff-drift) the whole
+    character drifts as one organism.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; pitches the source.
+    - type: osc
+      role: Drift oscillator in lfo mode with perlin waveform.
+    - type: shape
+      role: Waveshaper; drive_mod_in receives the drift.
+    - type: osc
+      role: Signal source being waveshaped.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the source oscillator (frequency).
+    - node_role: Drift oscillator
+      port: out
+      role: Organic drift into drive_mod_in (signal).
+    - node_role: Waveshaper node
+      port: drive_mod_in
+      role: Multiplies the static drive by (1 + m), clamped [-1,+1] (signal).
+    - node_role: Source oscillator
+      port: out
+      role: Raw signal into the shape input (signal).
+
+  topology:
+    description: |
+      note.out -> source-osc.note_in (frequency).  lfo-perlin.out (lfo
+      mode, lfoRate 0.05..0.3 Hz) -> shape.drive_mod_in (signal).
+      source-osc.out -> shape.in (signal).  shape.out -> output.in1
+      (signal).  Only the drive wanders; shape and source voice stay put.
+
+  parameters:
+    - name: drift rate
+      role: |
+        lfoRate 0.01..50 Hz: 0.05..0.2 Hz = slow material change; faster
+        rates turn into shimmering distortion flutter.
+    - name: static drive
+      role: |
+        Centre 0..1 of the wander: 0.25..0.45 lets the tone cross between
+        barely-warm and heavily clipped over each drift arc.
+    - name: shape function and source
+      role: |
+        Fold + perlin reads as metallic material change; soft + perlin as
+        warm analogue wander.  The source oscillator's waveform decides the
+        harmonic canvas the drift paints on.
+
+  relationships:
+    - name: drive-window
+      description: |
+        Effective drive = drive * (1 + m) per sample with m clipped
+        [-1,+1]; perlin spends most time mid-window, so the texture evolves
+        continuously instead of ping-ponging between extremes.
+    - name: socket-siblings
+      description: |
+        perlin-cutoff-drift wanders the filter cutoff; resonance-breathing-
+        filter wanders the Q; drift-drive-texture wanders the waveshaper
+        drive — three parallel "drift" sockets, combinable into one
+        continuously evolving filter+shape stage.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8 (two used), shape <= 8 (one
+        used), output = 1.
+
+  perceptual_effects:
+    - slowly transforming saturation on drones and pads
+    - waveshaper grit that never settles into one pattern
+    - warm-to-metallic material drift without pitch movement

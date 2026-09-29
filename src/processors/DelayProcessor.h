@@ -3,7 +3,12 @@
     synchronisation to the host BPM.
 
     Ports:
-        - in (signal): audio to delay.
+        - in           (signal): audio to delay.
+        - time_mod_in  (signal): optional multiplier on the delay time.  The
+          connected value's stereo mean is clamped to [-1, +1] and the
+          effective delay becomes base_time * (1 + m) in both modes (free
+          milliseconds and host-sync).  Unconnected: base time as-is.
+          Time near zero clamps to the minimum line length (flanger style).
         - out (signal): delayed audio (wet + dry mix).
 
     Behaviour:
@@ -72,6 +77,7 @@ public:
     void reset() noexcept;
 
     InputPort& getInput() noexcept  { return input; }
+    InputPort& getTimeModInput() noexcept { return timeMod; }
     OutputPort& getOutput() noexcept { return output; }
 
 private:
@@ -83,6 +89,7 @@ private:
     float getDelaySamples() const noexcept;
 
     InputPort input  { PortType::signal };
+    InputPort timeMod { PortType::signal };
     OutputPort output { PortType::signal, *this };
 
     std::atomic<float>* timeMs = nullptr;     // free-running delay in ms

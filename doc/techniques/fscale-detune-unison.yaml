@@ -1,0 +1,155 @@
+technique:
+  name: fscale-detune-unison
+
+  idea: |
+    One keyboard send fans out into two or three note-tracking voices; every
+    voice past the first passes a frequency scaler whose ratio sits a few
+    cents off unity, so all voices render the same note at deliberately
+    offset pitches.  Summed at the output they beat at a key-tracking rate —
+    the classic dual-oscillator detune of hardware and app synths, e.g.
+    AudioKit Synth One's morph2Detuning/detuningMultiplier pair, reproduced
+    here as an explicit wiring instead of an oscillator-internal knob.  The
+    offsets are exact cents (factor = 2^(cents/1200)) and stay phase-accurate
+    on every key, because each oscillator integrates the momentary input
+    frequency sample by sample.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; the single pitch reference all detuned voices track.
+    - type: fscale
+      role: Detune stage of the first detuned voice; factor a few cents above or below unity.
+    - type: fscale
+      role: Detune stage of the second detuned voice; opposite cents direction to keep the stack centred.
+    - type: osc
+      role: Anchor voice in pitch mode, straight on the raw key.
+    - type: osc
+      role: Detuned voice in pitch mode behind detune stage one.
+    - type: osc
+      role: Detuned voice in pitch mode behind detune stage two.
+    - type: output
+      role: Sums the voices; the per-input balance acts as the per-osc volume of the unison stack.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency fan-out into the anchor voice and both detune stages (frequency).
+    - node_role: Detune stage of the first detuned voice
+      port: freq_in
+      role: Receives the played note (frequency).
+    - node_role: Detune stage of the first detuned voice
+      port: out
+      role: Cent-offset frequency into its voice (frequency).
+    - node_role: Detune stage of the second detuned voice
+      port: freq_in
+      role: Receives the played note (frequency).
+    - node_role: Detune stage of the second detuned voice
+      port: out
+      role: Opposite cent-offset frequency into its voice (frequency).
+    - node_role: Anchor voice oscillator
+      port: note_in
+      role: Renders the un-detuned component from the raw key (frequency).
+    - node_role: Anchor voice oscillator
+      port: out
+      role: Anchor component into one output input (signal).
+    - node_role: Detuned voice oscillator (first)
+      port: note_in
+      role: Renders from the cent-offset frequency (frequency).
+    - node_role: Detuned voice oscillator (first)
+      port: out
+      role: First detuned component into one output input (signal).
+    - node_role: Detuned voice oscillator (second)
+      port: note_in
+      role: Renders from the opposite cent-offset frequency (frequency).
+    - node_role: Detuned voice oscillator (second)
+      port: out
+      role: Second detuned component into one output input (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One dedicated mix input per unison voice; input levels balance the stack (signal).
+
+  topology:
+    description: |
+      note.out -> osc0.note_in (frequency).  note.out -> fscale0.freq_in
+      (frequency), fscale0.out (factor slightly above 1) -> osc1.note_in.
+      note.out -> fscale1.freq_in (frequency), fscale1.out (factor slightly
+      below 1) -> osc2.note_in.  osc0.out -> output.in1, osc1.out ->
+      output.in2, osc2.out -> output.in3 (signal).  The three branches are
+      strictly parallel and share only the note send; no merging happens
+      before the output, so the voices only beat when summed there.  With an
+      optional moving detune (Synth One detuneLFO analogue), one branch is
+      routed note.out -> fscale0.freq_in -> fm.freq_in -> osc1.note_in with
+      an LFO-mode oscillator feeding fm.modulator_in at a small amount, and
+      that voice drifts around its cent offset over time.
+
+  parameters:
+    - name: detune factors
+      role: |
+        Frequency scalers, 0..10, chosen as factor = 2^(cents/1200):
+        +-3 cents = 1.00174, +-5 cents = 1.00290, +-10 cents = 1.00579,
+        +-20 cents = 1.01162, +-50 cents = 1.02930.  One voice sharp, one
+        voice flat keeps the stack pitch-centred; combined offsets widen it.
+    - name: register intervals
+      role: |
+        Optional interval per branch (interval octave_up/dn with factor 1)
+        shifts a voice an octave sideways first, detune stacks on top of it —
+        octave+detune combos build supersaw-class stacks from three voices.
+    - name: voice waveforms
+      role: |
+        Waveforms of the voices (sine, saw, square, triangle, noise, perlin,
+        simplex).  Identical waveforms beat cleanly per partial; identical
+        saws through detune give the classic fat unison lead.
+    - name: voice balance
+      role: |
+        Output input levels, 0..1 per voice (or one gain stage per branch);
+        keeps the anchor louder than the detuned wings if the key should
+        stay dominant.
+    - name: optional drift amount and rate
+      role: |
+        With the LFM branch wired: fm amount 0..10 scaled small (about
+        0.05..0.2 = a few cents of swing) and lfo rate 0.01..50 Hz
+        (0.3..1 Hz reads as organic drift, faster as vibrato).
+
+  relationships:
+    - name: cents-to-factor
+      description: |
+        A cent offset c converts to the branch ratio 2^(c/1200); two voices
+        offset +-c each widen the effective distance to 2c.  The beat rate
+        of two summed voices equals the frequency difference f * |r2 - r1|:
+        a +-5-cent pair at 220 Hz beats at about 1.27 Hz — slow widening on
+        bass notes, gently faster higher up.
+    - name: synthone-parity
+      description: |
+        AudioKit Synth One exposes detune as three voice parameters inside
+        its kernel (S1DSPKernel.hpp): morph2Detuning (-4..0..4, tapered
+        semitone scale, detunes morph oscillator 2 against oscillator 1),
+        detuningMultiplier (1..1..2, a plain frequency ratio) and detuneLFO
+        (0..0..3, selects an LFO to move the detune).  The mapping onto this
+        format is direct: morph2Detuning/detuningMultiplier -> the detune
+        factors around unity; morph1/2SemitoneOffset (-12..0..24) -> a
+        register interval per branch; detuneLFO -> the optional fm+LFO
+        branch.  The audible result is identical because both engines apply
+        the offset to the oscillator frequency/phase increment per sample.
+    - name: socket-siblings
+      description: |
+        static-detune-beating detunes two static oscillators in hertz and
+        never locks to a note; stereo-micropitch-spread uses the same
+        fscale-around-unity socket but assigns the sides to a stereo merger
+        for width, while this technique sums the voices mono at the output
+        for keyed beating; fscale-temper-beating pins its offsets to musical
+        intervals (pure vs tempered), where here the cents are free artistic
+        choice; pitch-related-instrument frames the general note-send
+        family.  A moving detune reuses the lvo-vibrato-fm socket with the
+        LFO routed into the branch FM stage.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, fscale <= 8, osc <= 8, fm <= 4,
+        output = 1.  The three-voice stack uses two scalers and three
+        voices; five-voice supersaw stacks (three fscale + five osc) also
+        fit, one output input per voice.
+
+  perceptual_effects:
+    - classic analog-style unison thickening locked to every played key
+    - slow key-tracking beating that reads as chorus without delay lines
+    - supersaw-class stacks from octave+detune combinations of three voices
+    - alive, organic pitch drift when the optional LFM branch is wired
+    - cent-exact tuning widths, reproducible on every patch load

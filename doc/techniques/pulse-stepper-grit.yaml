@@ -1,0 +1,82 @@
+technique:
+  name: pulse-stepper-grit
+
+  idea: |
+    A square LFO drives the waveshaper's drive_mod_in as a hard step
+    between two drive amounts: each LFO half-period the transfer curve
+    snaps between clean (or soft) and fully driven — rhythmic grit steps
+    synchronized to a pulse instead of a pattern.  Because hard clip and
+    fold react extremely to drive changes, the step lands as a textural
+    stutter inside the note: distortion becomes a percussion instrument.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; pitches the stepped voice.
+    - type: osc
+      role: Step oscillator in lfo mode; square waveform sets the step edges.
+    - type: shape
+      role: Waveshaper; drive_mod_in receives the square.
+    - type: osc
+      role: Signal source being stepped.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the source oscillator (frequency).
+    - node_role: Step oscillator
+      port: out
+      role: Square wave into drive_mod_in (signal).
+    - node_role: Waveshaper node
+      port: drive_mod_in
+      role: Multiplies the static drive by (1 + m), clamped [-1,+1] (signal).
+    - node_role: Source oscillator
+      port: out
+      role: Raw signal into the shape input (signal).
+
+  topology:
+    description: |
+      note.out -> source-osc.note_in (frequency).  lfo-osc.out (lfo mode,
+      square, lfoRate = step rate) -> shape.drive_mod_in (signal).
+      source-osc.out -> shape.in (signal).  shape.out -> output.in1
+      (signal).  Each LFO half-period is one drive state; the transition
+      is sample-sharp because the drive multiply is instantaneous.
+
+  parameters:
+    - name: step rate
+      role: |
+        lfoRate 0.01..50 Hz: 4..8 Hz = coarse distortion stutter, 16 Hz =
+        buzz-step under a pad, audio-rate blends into dynamic ring texture.
+    - name: drive pair
+      role: |
+        Static drive sets one state, the square's ±1 doubles it for the
+        other: base 0.35 gives 0 (clean) and 0.7 (driven) alternation;
+        base 0.5 gives 0..1 full range.
+    - name: shape function
+      role: |
+        Hard clip steps read as stutter distortion; fold steps flip between
+        warm and metallic — each step is a different instrument.
+
+  relationships:
+    - name: step-pair
+      description: |
+        The effective drive holds exactly two values per cycle (base and
+        base*2, clamped 0..1): the waveshaper's transfer curve jumps
+        between them sample-sharp, so the spectrum alternates between two
+        harmonics families at the step rate.
+    - name: socket-siblings
+      description: |
+        gain-gate-chops steps an amplitude with the same square socket
+        (volume rhythm); pulse-stepper-grit steps distortion instead —
+        timbre rhythm at constant level.  drive-envelope-growl is the
+        envelope-shaped sibling; pulse-stepper-grit is its rhythmic cousin.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8 (two used), shape <= 8 (one
+        used), output = 1.
+
+  perceptual_effects:
+    - hard-edged distortion stutter at constant perceived level
+    - two-character timbre stepping per note (clean/grit alternation)
+    - grainy ring texture at step rates near audio frequencies

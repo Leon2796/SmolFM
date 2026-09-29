@@ -22,6 +22,10 @@ FMModulationComponent::FMModulationComponent (juce::AudioProcessorValueTreeState
     fmAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts,
                                                                                 parameterID,
                                                                                 fmSlider));
+
+    // Compact content size: DraggableComponent sizes the node box from this,
+    // so a single-knob FM node no longer falls back to the 220x260 default.
+    setSize (100, 140);
 }
 
 FMModulationComponent::~FMModulationComponent()

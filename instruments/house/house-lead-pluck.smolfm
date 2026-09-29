@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3" name="house-lead-pluck">
+<SmolFM version="3" name="house-lead-pluck" description="" techniques="">
   <Graph>
     <Nodes>
       <Node id="note">

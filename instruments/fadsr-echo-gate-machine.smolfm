@@ -1,4 +1,4 @@
-<SmolFM version="3" name="fadsr-echo-gate-machine">
+<SmolFM version="3" name="fadsr-echo-gate-machine" description="" techniques="">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -55,9 +55,9 @@
       <Box id="osc0" x="680" y="60" />
       <Box id="adsr0" x="680" y="380" />
       <Box id="delay0" x="1000" y="60" />
-      <Box id="delay1" x="1000" y="260" />
-      <Box id="delay2" x="1000" y="460" />
-      <Box id="delay3" x="1000" y="660" />
+      <Box id="delay1" x="1000" y="292" />
+      <Box id="delay2" x="1000" y="524" />
+      <Box id="delay3" x="1000" y="756" />
       <Box id="output" x="1340" y="60" />
     </Boxes>
   </Layout>

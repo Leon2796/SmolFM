@@ -11,7 +11,7 @@ stabil auch bei hoher Resonance, Cutoff wird pro Sample neu hergeleitet.
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
 | Max. Instanzen | 8 | `GraphNodeRegistry::maxFilters` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `in` (`PortType::signal`), `cutoff_mod_in` (`PortType::frequency`) | `InputPort input`, `InputPort cutoffMod` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
+| Input-Ports | `in` (`PortType::signal`), `cutoff_mod_in` (`PortType::frequency`), `resonance_mod_in` (`PortType::signal`) | `InputPort input`, `InputPort cutoffMod`, `InputPort resonanceMod` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
 | Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
 
 | Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
@@ -24,6 +24,15 @@ stabil auch bei hoher Resonance, Cutoff wird pro Sample neu hergeleitet.
 
 `cutoff_mod_in` unverbunden: statischer `cutoff`-Parameter. Verbunden: der
 Portwert (Hz) **ist** die Cutoff (auf 20–20000 Hz begrenzt).
+
+`resonance_mod_in` unverbunden: statische `resonance`. Verbunden: der
+Stereo-Mittelwert des Ports wird auf $[-1,+1]$ geclampt und multipliziert
+die statische Resonanz — $r_{\text{eff}} = \mathrm{clamp}(r\cdot(1+m), 0, 1)$
+(0–1). Damit ist die Resonanz selbst modulierbar: Perlin → organische
+Q-Atmung, Saw-LFO → zyklische Selbstoszillations-Rampen, statischer Osc →
+ADSR → Hammer-Envelopes für modale Pings.
+Port-ID-Sync: `GraphNodes`-Spec, XSD-Annotation (`filter`-complexType) und
+`SynthVoice::resolveInput` tragen denselben Namen `resonance_mod_in`.
 
 ## Abschnitt 2 — UI-Konfiguration
 
@@ -40,7 +49,7 @@ Symboltabelle:
 | $x_n$ | Eingangssample | Amplitude |
 | $f_c$ | aktuelle Cutoff-Frequenz (stat. oder aus `cutoff_mod_in`) | Hz |
 | $f_s$ | Sample-Rate | Hz |
-| $r$ | Resonance (0–1) | linear |
+| $r$ | Basis-Resonanz (0–1); wirksam $r_{\text{eff}} = \mathrm{clamp}(r\,(1+m_{\text{res}}), 0, 1)$ mit $m_{\text{res}}$ aus `resonance_mod_in` (unverbunden $= 0$) | linear |
 | $k$ | Dämpfungsfaktor (SVF) | linear |
 | $g$ | Integrator-Koeffizient $\tan(\pi f_c/f_s)$ | linear |
 | $m$ | Mode-Index (0–3) | — |
@@ -84,7 +93,7 @@ Spezialfälle:
 | $x_n$ | `input.getSample()` → `x` | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | Port lesen (Default 0.0f unverbunden) |
 | $f_c$ (dynamisch) | `cutoffMod.isConnected()` → `cutoffMod.getSample()` | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | jlimit 20–20000 |
 | $f_c$ (statisch) | `cutoff->load()` | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | Fallback ohne Mod-Port |
-| $r$ | `resonance->load()` → `res` | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | jlimit 0–1 |
+| $r$ | `resonance->load()` → `resBase` → `res` | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | Basis jlimit 0–1; `resonance_mod_in` verbunden: $r \cdot (1+m)$, $m$ = Stereo-Mittel geclampt $[-1,+1]$, Ergebnis jlimit 0–1 |
 | $m$ | `mode->load()` → `modeIndex` | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | round + jlimit 0–3 |
 | $g, k, a_1..a_3$ | `g`, `k`, `a1`, `a2`, `a3` | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | pro Sample in `processSample()` |
 | $v_1, v_2, v_3$ | `v1`, `v2`, `v3` | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | TPT-Zwischengrößen |

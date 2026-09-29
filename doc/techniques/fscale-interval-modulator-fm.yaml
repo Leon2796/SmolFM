@@ -1,0 +1,117 @@
+technique:
+  name: fscale-interval-modulator-fm
+
+  idea: |
+    The frequency scaler sits inside the modulator branch of a
+    two-operator FM stage, so the modulator oscillator tracks the key
+    through a named interval: the carrier centre stays on the raw note
+    while the modulator voice is derived from the note times an exact
+    12-TET ratio.  The modulator-to-carrier ratio therefore stays a
+    musically named constant on every key — fifth, third, octave — and
+    the sideband grid wanders with the key instead of drifting; the free
+    factor on top trims or stretches the ratio in cents.
+
+  involved_nodes:
+    - type: note
+      role: MIDI note source; feeds both the FM centre and the modulator branch.
+    - type: fscale
+      role: Interval stage inside the modulator branch; fixes the modulator's named musical ratio to the key.
+    - type: osc
+      role: Modulator oscillator in pitch mode; renders the interval-locked modulation signal.
+    - type: fm
+      role: Proportional FM stage; deviates the raw-key carrier at the locked ratio.
+    - type: osc
+      role: Carrier oscillator in pitch mode; renders the modulated voice.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: MIDI note source
+      port: out
+      role: Note frequency into the FM centre and the modulator branch (frequency).
+    - node_role: Interval stage
+      port: freq_in
+      role: Receives the note frequency for the modulator (frequency).
+    - node_role: Interval stage
+      port: out
+      role: Interval-scaled frequency into the modulator voice (frequency).
+    - node_role: Modulator oscillator
+      port: note_in
+      role: Receives the interval-scaled frequency (frequency).
+    - node_role: Modulator oscillator
+      port: out
+      role: Modulator signal into the FM stage (signal).
+    - node_role: FM stage
+      port: freq_in
+      role: Receives the raw note frequency as carrier centre (frequency).
+    - node_role: FM stage
+      port: modulator_in
+      role: Receives the modulator signal (signal).
+    - node_role: FM stage
+      port: out
+      role: Modulated frequency towards the carrier (frequency).
+    - node_role: Carrier oscillator
+      port: note_in
+      role: Receives the modulated frequency (frequency).
+    - node_role: Carrier oscillator
+      port: out
+      role: Rendered signal towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the FM voice (signal).
+
+  topology:
+    description: |
+      note.out -> fscale.freq_in (frequency); fscale.out (interval) ->
+      modulator.note_in.  modulator.out -> fm.modulator_in (signal).
+      note.out -> fm.freq_in (frequency).  fm.out -> carrier.note_in
+      (frequency), carrier.out -> output (signal).  The interval lives
+      only in the modulator branch, so the carrier centre follows the
+      raw key while the modulation ratio is named and exact.
+
+  parameters:
+    - name: modulator interval
+      role: |
+        Named 12-TET option of the branch fscale (none, octave_up, ...,
+        semitone_down), each an exact ratio 2^k/12; none leaves the
+        modulator on the raw key, which collapses the ratio to 1.
+    - name: modulator factor
+      role: |
+        Free multiplier 0..10 after the interval.  1.00113 turns the
+        tempered fifth (2^(7/12) = 1.4983) into the pure ratio 1.5;
+        cent offsets detune the sideband grid inharmonically.
+    - name: fm amount
+      role: |
+        Modulation index, 0..10.  Opens the sideband families around the
+        locked ratio; 0 renders the plain key.
+    - name: modulator and carrier waveforms
+      role: |
+        Rendered waveforms; sine keeps the sidebands clean, richer
+        modulator waveforms densify the spectra.
+
+  relationships:
+    - name: named-ratio-lock
+      description: |
+        The modulator-to-carrier ratio equals interval ratio times
+        factor and holds on every key, so the relative spectrum is
+        reproducible across the keyboard — unlike a static modulator
+        frequency whose ratio only ever matches at one note.
+    - name: socket-siblings
+      description: |
+        fscale-fm-harmonic-shift places the scaler before the FM stage,
+        so the whole cluster lands on a harmonic; classic-two-op-fm uses
+        a static modulator frequency.  Here the scaler feeds the
+        modulator voice, which keeps the carrier on the key and fixes
+        the ratio instead.  pitch-related-instrument describes the same
+        ratio-voice socket in general terms; this technique focuses it
+        on named intervals.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, fscale <= 8, osc <= 8, fm <= 4,
+        output = 1.
+
+  perceptual_effects:
+    - hollow, fifth-scaled FM clang that keeps its colour on every key
+    - bell- and brass-tone sideband grids at exact musical ratios
+    - inharmonic colour fields from cent offsets or stretched factors
+    - interval-voiced FM families without hand-set hertz ratios

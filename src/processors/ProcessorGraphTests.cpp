@@ -14,6 +14,7 @@
 #include <string>
 
 #include "NoteProcessor.h"
+#include "FrequencyScaleProcessor.h"
 #include "OscillatorProcessor.h"
 #include "FMModulationProcessor.h"
 #include "AdsrProcessor.h"
@@ -256,6 +257,71 @@ namespace
                      + std::to_string (minHz) + ".." + std::to_string (maxHz) + " Hz when active" };
     }
 
+    // Frequency scale: the interval dropdown multiplies with the factor knob.
+    // Scaler A carries an interval (octave up = choice index 1), scaler B is
+    // built the legacy way (no interval pointer, fully transparent).
+    TestResult runFrequencyScaleTest()
+    {
+        std::atomic<float> factorA { 1.0f };
+        std::atomic<float> intervalA { 1.0f };   // octave up
+        std::atomic<float> factorB { 1.0f };
+
+        smolfm::SignalGraph graph;
+
+        auto note = std::make_unique<smolfm::NoteProcessor>();
+        smolfm::NoteProcessor* notePtr = note.get();
+
+        auto scalerA = std::make_unique<smolfm::FrequencyScaleProcessor> (&factorA, &intervalA);
+        smolfm::FrequencyScaleProcessor* aPtr = scalerA.get();
+
+        auto scalerB = std::make_unique<smolfm::FrequencyScaleProcessor> (&factorB);
+        smolfm::FrequencyScaleProcessor* bPtr = scalerB.get();
+
+        if (! aPtr->getFreqInput().connect (notePtr->getOutput()))
+            return { false, "Failed to connect note to scaler A" };
+
+        if (! bPtr->getFreqInput().connect (aPtr->getOutput()))
+            return { false, "Failed to chain scaler A into scaler B" };
+
+        graph.addProcessor (std::move (note));
+        graph.addProcessor (std::move (scalerA));
+        graph.addProcessor (std::move (scalerB));
+
+        graph.prepare (48000.0);
+        notePtr->setMidiNoteNumber (69);   // A4 = 440 Hz
+        graph.startNote();
+
+        // (1) 440 Hz * octave up (2.0) = 880 Hz; legacy scaler B is transparent.
+        graph.processSample();
+        if (std::abs (aPtr->getOutput().getSample().l - 880.0f) > 0.01f)
+            return { false, "Octave-up interval wrong (got " + std::to_string (aPtr->getOutput().getSample().l) + " Hz instead of 880)" };
+
+        if (std::abs (bPtr->getOutput().getSample().l - 880.0f) > 0.01f)
+            return { false, "Legacy scaler without interval pointer is not transparent (got " + std::to_string (bPtr->getOutput().getSample().l) + " Hz)" };
+
+        // (2) Dropdown and knob multiply: 880 * 0.25 = 220 Hz downstream.
+        factorB.store (0.25f);
+        graph.processSample();
+        if (std::abs (bPtr->getOutput().getSample().l - 220.0f) > 0.01f)
+            return { false, "Interval * factor combination wrong (got " + std::to_string (bPtr->getOutput().getSample().l) + " Hz instead of 220)" };
+
+        // (3) Interval none (index 0) is transparent again.
+        factorA.store (1.0f);
+        intervalA.store (0.0f);
+        graph.processSample();
+        if (std::abs (aPtr->getOutput().getSample().l - 440.0f) > 0.01f)
+            return { false, "None interval is not transparent (got " + std::to_string (aPtr->getOutput().getSample().l) + " Hz)" };
+
+        // (4) An out-of-range raw value falls back to transparent, not to a
+        // wild ratio.
+        intervalA.store (99.0f);
+        graph.processSample();
+        if (std::abs (aPtr->getOutput().getSample().l - 440.0f) > 0.01f)
+            return { false, "Out-of-range interval did not fall back to transparent" };
+
+        return { true, "Octave up -> 880 Hz; chained with factor 0.25 -> 220 Hz; none and out-of-range transparent" };
+    }
+
     TestResult runStereoSplitMergeTest()
     {
         smolfm::SignalGraph graph;
@@ -361,6 +427,7 @@ int main()
     runTest ("Note-driven graph", runNoteDrivenGraphTest);
     runTest ("Hz-only graph", runHzOnlyGraphTest);
     runTest ("Chained FM stages", runChainedFmTest);
+    runTest ("Frequency scale interval", runFrequencyScaleTest);
     runTest ("Stereo split & merge", runStereoSplitMergeTest);
 
     return failures;

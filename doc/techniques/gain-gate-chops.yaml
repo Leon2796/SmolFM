@@ -1,0 +1,88 @@
+technique:
+  name: gain-gate-chops
+
+  idea: |
+    A square-shaped LFO oscillator drives the gain's factor_mod_in: between
+    (1 + m) = 0 and 2 the gain node becomes a hard rhythmic gate that chops
+    any sustained voice at the LFO period — gated pads, trance gates and
+    strobe slices built from plain wiring.  Because gain multiplies
+    multiply-style rather than ring-modulating, the chop is a clean linear
+    on/off without AM's depth semantis; the square's duty behaviour plus
+    the static gain decide how hard the silence bites.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; pitches the gated voice.
+    - type: osc
+      role: Gate oscillator in lfo mode; square waveform sets chop edges.
+    - type: gain
+      role: The gate; factor_mod_in receives the square.
+    - type: osc
+      role: Sustained pad voice being chopped.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the pad voice (frequency).
+    - node_role: Gate oscillator
+      port: out
+      role: Square wave into factor_mod_in (signal).
+    - node_role: Gain node
+      port: factor_mod_in
+      role: Multiplies the static gain by (1 + m), clamped [-1,+1] (signal).
+    - node_role: Pad voice oscillator
+      port: out
+      role: Chopped signal into the gain input (signal).
+
+  topology:
+    description: |
+      note.out -> pad-osc.note_in (frequency).  lfo-osc.out (lfo mode, wave
+      square, lfoRate = chop rate) -> gain.factor_mod_in (signal).
+      pad-osc.out -> gain.in (signal).  gain.out -> output.in1 (signal).
+      One gain and one LFO voice turn a sustain into an arbitrary-rate
+      rhythm section.
+
+  parameters:
+    - name: chop rate
+      role: |
+        lfoRate 0.01..50 Hz: 4..16 Hz gives classic trance gates (8th/16th
+        feel at 120-140 bpm); audio-rate stutters into amplitude noise.
+    - name: base gain
+      role: |
+        Static factor 0..10 sets the "on" level: gain * (1 + m) with the
+        square at ±1 swings between 0 (silence) and 2x the base — keep the
+        base at 0.5 so the open state passes the voice untouched.
+    - name: pad waveform
+      role: |
+        The chopped source: saw or square gates read as synth stabs; sine
+        gates sound like broken mallets.
+
+  relationships:
+    - name: gate-curve
+      description: |
+        The effective gain is factor * (1 + m) per sample; the square's
+        ±1 halves give exactly 0 and 2x the base — a hard on/off gate whose
+        open level is the parameter, not the LFO amplitude.
+    - name: chop-vs-adsr
+      description: |
+        An ADSR shapes one note's articulation; this socket repeats a binary
+        gate while the note holds — rhythm without retrigger.  am-based
+        tremolo mixes carrier and modulator product and never reaches full
+        silence; the multiplicative gain closes it.
+    - name: socket-siblings
+      description: |
+        gain-swell-pads uses the same factor_mod_in socket with perlin for
+        organic breath; gain-ratchet-riser uses saw for ramps.  For stereo
+        widening of the chopped signal see stereo-micropitch-spread.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8 (two used), gain <= 8 (one
+        used), output = 1.  Chopping multiple layers: one gate oscillator
+        can fan into several gains' factor_mod_in.
+
+  perceptual_effects:
+    - hard rhythmic gating of any sustained voice at LFO rate
+    - trance-style pad chops and strobe gates without a sequencer
+    - stutter rhythm when chop rate approaches audio frequencies

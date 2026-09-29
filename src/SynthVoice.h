@@ -60,6 +60,7 @@ struct SynthVoiceParameters
     std::array<std::atomic<float>*, GraphNodeRegistry::maxOscillators> oscLfoRate;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFmAmounts>   fmAmount;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFrequencyScales> freqScaleFactor;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxFrequencyScales> freqScaleInterval;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrAttack;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrDecay;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrSustain;

@@ -1,4 +1,4 @@
-<SmolFM version="3" name="Vintage Tremolo">
+<SmolFM version="3" name="Vintage Tremolo" description="" techniques="">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -41,12 +41,12 @@
   </Graph>
   <Layout>
     <Boxes>
-      <Box id="note" x="80" y="100" />
+      <Box id="note" x="80" y="342" />
       <Box id="osc0" x="260" y="100" />
-      <Box id="fscale0" x="260" y="280" />
-      <Box id="osc1" x="440" y="280" />
+      <Box id="fscale0" x="260" y="342" />
+      <Box id="osc1" x="440" y="352" />
       <Box id="am0" x="620" y="190" />
-      <Box id="adsr0" x="800" y="190" />
+      <Box id="adsr0" x="800" y="352" />
       <Box id="output" x="980" y="190" />
     </Boxes>
   </Layout>

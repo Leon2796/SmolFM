@@ -48,6 +48,8 @@ layout:
 ### Root
 - `version`: Required string; "3" = split format (this document), "2" = legacy flat
 - `name`: Optional string, instrument name
+- `description`: Optional string; one concise sentence stating the sound-design goal (empty string allowed)
+- `techniques`: Optional string; comma-separated names of the `doc/techniques` catalogue techniques used (empty string allowed)
 - `graph`: Required mapping - `nodes` (required array) and `connections`
   (optional array; an empty list clears the wiring)
 - `layout`: Optional mapping - `boxes`: one position per node id; a node
@@ -86,8 +88,10 @@ layout:
 | `shape` (shape) | soft, hard, fold |
 | `sync` (delay) | off, on |
 | `division` (delay) | half, quarter, eighth, sixteenth |
+| `interval` (fscale) | none, octave_up, octave_down, fifth_up, fifth_down, fourth_up, fourth_down, minor_third_up, major_third_up, semitone_up, semitone_down |
 
 The names match the APVTS choice order declared in
+`PluginProcessor::createParameterLayout()`.
 ## Dynamic Attributes by Node Type
 
 One section per processor - the YAML mirror of the explicit per-processor
@@ -108,6 +112,7 @@ for a node type are ignored by the parsers.
 
 ### Frequency Scale (fscale)
 - `factor`: float, 0..10 (default 1 = transparent)
+- `interval`: none | octave_up | octave_down | fifth_up | fifth_down | fourth_up | fourth_down | minor_third_up | major_third_up | semitone_up | semitone_down (default none = transparent; each name stands for its exact 12-TET ratio and multiplies with `factor`, so `interval: octave_up` at `factor: 1.0` equals `factor: 2.0`)
 
 ### ADSR (adsr)
 - `attack`, `decay`: float, 0.001..5 s

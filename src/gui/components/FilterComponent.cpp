@@ -40,6 +40,9 @@ FilterComponent::FilterComponent (juce::AudioProcessorValueTreeState& apvts,
     cutoffAttachment    = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (apvts, cutoffParameterID, cutoffSlider);
     resonanceAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (apvts, resonanceParameterID, resonanceSlider);
     modeAttachment      = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (apvts, modeParameterID, modeBox);
+
+    // Compact content size: keeps the filter node box small.
+    setSize (200, 190);
 }
 
 void FilterComponent::resized()

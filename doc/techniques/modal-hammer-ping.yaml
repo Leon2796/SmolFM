@@ -1,0 +1,106 @@
+technique:
+  name: modal-hammer-ping
+
+  idea: |
+    An ADSR-shaped constant drives the filter's resonance_mod_in while a
+    noise burst runs through a note-tracked cutoff: the envelope spikes the
+    resonance for a moment exactly when the noise hits the filter, so the
+    filter rings at its own resonant frequency like a struck plate — a
+    pitched modal ping.  The envelope source is itself a patch: a static
+    oscillator feeds an amplitude ADSR, and the ADSR's output shape acts as
+    the modulation ramp.  This is the closest the graph gets to modal
+    synthesis without a new processor.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; pitches the filter's resonant frequency through cutoff tracking.
+    - type: osc
+      role: Constant source in static mode; feeds the envelope generator.
+    - type: adsr
+      role: Envelope generator; its shaped output drives resonance_mod_in.
+    - type: fadsr
+      role: Optional decay envelope on the cutoff so the ping narrows as it decays.
+    - type: osc
+      role: Noise voice providing the excitation burst.
+    - type: filter
+      role: The resonant body; resonance_mod_in receives the hammer envelope.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Played frequency into the filter's cutoff tracking (frequency).
+    - node_role: Constant source
+      port: out
+      role: Steady ±1 carrier into the envelope generator (signal).
+    - node_role: Envelope generator
+      port: in
+      role: Receives the constant (signal).
+    - node_role: Envelope generator
+      port: out
+      role: Hammer envelope into resonance_mod_in (signal).
+    - node_role: Resonant body
+      port: resonance_mod_in
+      role: Multiplies the static resonance by (1 + m), clamped [-1,+1] (signal).
+    - node_role: Noise voice
+      port: out
+      role: Excitation burst into the filter input (signal).
+
+  topology:
+    description: |
+      note.out -> filter.cutoff_mod_in (frequency, tracked ping pitch).
+      constant-osc.out (static mode) -> adsr.in (signal), adsr.out ->
+      filter.resonance_mod_in (signal).  noise-osc.out -> filter.in
+      (signal).  filter.out -> output.in1 (signal).  The adsr envelope
+      shapes the constant into a 0..1 control ramp with its own attack,
+      decay, sustain and release; a short attack and decay produce the
+      hammer impulse on the resonance.
+
+  parameters:
+    - name: hammer envelope
+      role: |
+        adsr attack/decay 0.001..5 s, sustain 0..1, release 0.001..10 s:
+        attack 0.001 s and decay ~0.05..0.3 s per beat of the body; sustain
+        0 releases the Q cleanly so the ping dies with the noise.
+    - name: static resonance
+      role: |
+        Centre 0..1; at 0.6..0.8 the envelope's ±1 swing reaches past the
+        self-oscillation onset — the ring is strongest right at the strike.
+    - name: ping pitch
+      role: |
+        The tracked cutoff scale sets the resonant frequency of the body;
+        the played key pitches the ping.
+    - name: excitation character
+      role: |
+        Noise voice waveform (noise for broadband strikes; perlin for
+        softer mallets) and any pre-filter shaping of the burst.
+
+  relationships:
+    - name: strike-window
+      description: |
+        The effective resonance is res * (1 + m) with m shaped by the ADSR;
+        the ping rings because the moment of max m coincides with the
+        broadband burst entering the filter — decay sets how long the body
+        rings after the burst has passed.
+    - name: pitch-of-the-ping
+      description: |
+        Unlike tuned-noise-percussion (key-tracked cutoff, static
+        resonance) the struck pitch here comes from the resonant frequency
+        alone; the body rings at its cutoff-scale pitch and the resonance
+        envelope decides how long it sings.
+    - name: socket-siblings
+      description: |
+        tuned-noise-percussion excites noise through a key-tracked filter
+        with static Q; fadsr-cutoff-sweep drives the cutoff, not the
+        resonance.  This technique adds the third axis: an envelope on the
+        resonance itself, built from a static oscillator and an ADSR.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8 (two used), adsr <= 8 (one
+        used), fadsr <= 4 (one used), filter <= 8, output = 1.
+
+  perceptual_effects:
+    - pitched struck-body pings: marimba-to-gong by envelope length
+    - broadband strike resolving into a single singing resonant pitch
+    - dynamic resonance: the body only sings while the hammer envelope holds

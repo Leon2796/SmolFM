@@ -1,0 +1,86 @@
+technique:
+  name: flanger-delay-line
+
+  idea: |
+    A fast small sine drives the delay's time_mod_in while feedback rides
+    high: the delay line sweeps from base time down toward zero and back —
+    the classic bucket-brigade flanger, built from the delay node instead
+    of a dedicated effect.  This is the first true flanger expressible in
+    the format: before time_mod_in existed there was no way to move a
+    delay's time, so the whole bucket-brigade family was unreachable.
+
+  involved_nodes:
+    - type: note
+      role: Not required for effect-only wiring; for pitched sources it tracks the voice.
+    - type: osc
+      role: Sweep oscillator in lfo mode; fast sine, small amplitude.
+    - type: delay
+      role: The flanging line; time_mod_in receives the sweep, feedback high.
+    - type: adsr
+      role: Articulation of the swept voice (optional but musical).
+    - type: osc
+      role: Source voice being flanged.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Sweep oscillator
+      port: out
+      role: Fast small swing into time_mod_in (signal).
+    - node_role: Flanging delay
+      port: time_mod_in
+      role: Multiplies the base delay time by (1 + m) per sample (signal).
+    - node_role: Source voice oscillator
+      port: out
+      role: Audio into the delay input (signal).
+    - node_role: Delay
+      port: out
+      role: Flanged mix into the output (signal).
+
+  topology:
+    description: |
+      osc-sweep.out (lfo mode, sine, lfoRate 0.1..3 Hz, small lfo
+      amplitude) -> delay.time_mod_in (signal).  voice-osc.out ->
+      adsr.in (signal), adsr.out -> delay.in (signal).  delay.out ->
+      output.in1 (signal).  The delay's static time sits near 1..8 ms in
+      flanger territory; the sweep multiplies it by (1 + m), so the line
+      dives toward the 1-sample minimum and back each cycle.  Mix stays
+      modest; feedback carries the classic comb ripple.
+
+  parameters:
+    - name: sweep rate and depth
+      role: |
+        lfoRate 0.1..2 Hz, LFO amplitude trimmed so the effective time
+        swings inside the 1..8 ms window; depth is (1 + m) on a small base
+        time, so keep the base low and the amplitude dominant for classic
+        through-zero-ish dips.
+    - name: base time
+      role: |
+        delay time 1..2000 ms: 2..5 ms = jet swoosh; 20..80 ms = chorus-style
+        thickening instead of jet.
+    - name: feedback and mix
+      role: |
+        feedback 0..0.95: 0.5..0.8 rings the comb; mix 0.3..0.5 keeps the
+        dry note under the swoosh.
+
+  relationships:
+    - name: comb-wobble
+      description: |
+        The effective delay is base_time * (1 + m); as the line shortens the
+        comb notches spread and sweep upward through the spectrum, and with
+        feedback the notch count multiplies — the bucket-brigade swoosh
+        follows directly from the (1 + m) time scaling.
+    - name: depth-from-line
+      description: |
+        Clamping keeps the effective length at >= 1 sample: the deepest dips
+        collapse into the minimum line and give the jet character its
+        pressure drop.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8 (sweep + voice used), delay <= 8
+        (one used), adsr <= 8 (one used), output = 1.
+
+  perceptual_effects:
+    - jet-swoosh flanger sweeping through notches on every note
+    - chorus-style thickening from longer base times with gentler depth
+    - dub-pressure when the sweep rides a synced tempo division

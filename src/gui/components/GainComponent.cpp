@@ -3,6 +3,7 @@
 */
 
 #include "GainComponent.h"
+#include "SliderUtils.h"
 
 namespace gui
 {
@@ -10,9 +11,7 @@ namespace gui
 GainComponent::GainComponent (juce::AudioProcessorValueTreeState& apvts,
                               const juce::String& gainParameterID)
 {
-    gainSlider.setSliderStyle (juce::Slider::RotaryVerticalDrag);
-    gainSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 60, 20);
-    gainSlider.setTextValueSuffix ("x");
+    configureRotarySlider (gainSlider, "x");
     addAndMakeVisible (gainSlider);
 
     gainLabel.setText ("Gain", juce::dontSendNotification);
@@ -20,14 +19,18 @@ GainComponent::GainComponent (juce::AudioProcessorValueTreeState& apvts,
     addAndMakeVisible (gainLabel);
 
     gainAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (apvts, gainParameterID, gainSlider);
+
+    // Compact content size: DraggableComponent reads this to size the node
+    // box, so a single gain knob does not fall back to the 220x260 default.
+    setSize (100, 114);
 }
 
 void GainComponent::resized()
 {
-    auto r = getLocalBounds().reduced (8);
-    gainLabel.setBounds (r.removeFromTop (20));
-    r.removeFromTop (8);
-    gainSlider.setBounds (r.withSizeKeepingCentre (90, r.getHeight() - 20).translated (r.getCentreX() - 45 - r.getX(), 0));
+    auto r = getLocalBounds().reduced (4);
+    gainLabel.setBounds (r.removeFromTop (18));
+    r.removeFromTop (4);
+    gainSlider.setBounds (r.withSizeKeepingCentre (juce::jmin (92, r.getWidth()), r.getHeight()));
 }
 
 } // namespace gui

@@ -1,0 +1,83 @@
+technique:
+  name: gain-drift-swell
+
+  idea: |
+    A perlin oscillator's slow wander drives the gain's factor_mod_in, so a
+    sustained voice's level rises and falls with organic, non-repeating
+    drift.  No ADSR retrigger, no tremolo pattern: the level just moves like
+    a tide, sometimes louder, sometimes shy.  With two detuned voices
+    drifting out of phase (fscale-detune-unison wired INTO this socket) the
+    breathing becomes spatial without stereo width.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; pitches the drifting voice.
+    - type: osc
+      role: Drift oscillator in lfo mode with perlin waveform.
+    - type: gain
+      role: The VCA; factor_mod_in receives the drift.
+    - type: osc
+      role: Sustained voice being level-modulated.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the sustained voice (frequency).
+    - node_role: Drift oscillator
+      port: out
+      role: Organic level drift into factor_mod_in (signal).
+    - node_role: Gain stage
+      port: factor_mod_in
+      role: Multiplies the static factor by (1 + m), clamped [-1,+1] (signal).
+    - node_role: Sustained voice oscillator
+      port: out
+      role: Sustained signal into the gain input (signal).
+
+  topology:
+    description: |
+      note.out -> voice-osc.note_in (frequency).  lfo-perlin.out (lfo mode,
+      lfoRate 0.05..0.3 Hz) -> gain.factor_mod_in (signal).  voice-osc.out
+      -> gain.in (signal).  gain.out -> output.in1 (signal).  The gain is
+      the only moving node; everything else is a steady sustained voice.
+
+  parameters:
+    - name: drift rate
+      role: |
+        lfoRate 0.01..50 Hz: 0.05..0.15 Hz = slow ambient tide; 0.3..1 Hz =
+        nervous breathing; above 5 Hz becomes texture.
+    - name: base factor
+      role: |
+        Static gain 0..10 around which the drift swings: factor 0.6 with
+        ±1 perlin drifts the level between near-silence and 1.2 — generous
+        ambient travel for pads.
+    - name: drift waveform
+      role: |
+        Perlin = smooth non-repeating; sine = symmetric breathing; noise =
+        grainy flutter (audio-rate noise flutter is another sound again).
+
+  relationships:
+    - name: level-window
+      description: |
+        The effective factor is factor * (1 + m) per sample with m clipped
+        to [-1,+1]; perlin rarely reaches the clip, so the level wanders
+        inside the window continuously.  The average level equals the base
+        factor over long stretches.
+    - name: socket-siblings
+      description: |
+        am-tremolo (AM socket) tremolos with a repeating LFO depth and
+        carrier offset semantics; here perlin moves a clean multiplicative
+        VCA with no carrier residue.  gain-gate-chops hard-clips with a
+        square; gain-ratchet-riser ramps.  Same factor_mod_in socket,
+        different drive character per source.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8 (two used), gain <= 8 (one
+        used), output = 1.
+
+  perceptual_effects:
+    - patient ambient level tides with no repeating cycle
+    - breathing pads whose loudness feels alive, never modulated-by-a-pattern
+    - layered stacks whose drift phases differ per voice (wire two gains
+      off two perlin voices) for evolving stereo width

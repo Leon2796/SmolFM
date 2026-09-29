@@ -1,4 +1,4 @@
-<SmolFM version="3" name="Sidechain Duck">
+<SmolFM version="3" name="Sidechain Duck" description="" techniques="">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -46,13 +46,13 @@
   </Graph>
   <Layout>
     <Boxes>
-      <Box id="note" x="80" y="100" />
+      <Box id="note" x="80" y="342" />
       <Box id="osc0" x="260" y="100" />
-      <Box id="fscale0" x="260" y="280" />
-      <Box id="osc1" x="440" y="280" />
-      <Box id="am0" x="620" y="190" />
+      <Box id="fscale0" x="260" y="342" />
+      <Box id="osc1" x="440" y="574" />
+      <Box id="am0" x="620" y="412" />
       <Box id="adsr0" x="800" y="100" />
-      <Box id="adsr1" x="800" y="300" />
+      <Box id="adsr1" x="800" y="574" />
       <Box id="output" x="980" y="190" />
     </Boxes>
   </Layout>

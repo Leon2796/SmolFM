@@ -14,6 +14,9 @@ WaveshaperProcessor::WaveshaperProcessor (std::atomic<float>* driveParameter,
       shape (shapeParameter)
 {
     input.setDefaultValue (0.0f);
+
+    // Unwired drive_mod_in contributes no scaling: (1 + 0) = static drive.
+    driveMod.setDefaultValue (0.0f);
 }
 
 void WaveshaperProcessor::prepare (double /*newSampleRate*/)
@@ -30,10 +33,22 @@ StereoFrame WaveshaperProcessor::processSample()
 {
     const StereoFrame x = input.getSample();
 
-    const float d = drive != nullptr ? juce::jlimit (0.0f, 1.0f, drive->load()) : 0.0f;
+    const float dBase = drive != nullptr ? juce::jlimit (0.0f, 1.0f, drive->load()) : 0.0f;
     const int shapeIndex = shape != nullptr
         ? juce::jlimit (0, 2, static_cast<int> (std::round (shape->load())))
         : 0;
+
+    // Drive modulation: the connected value's stereo mean, clamped to
+    // [-1, +1], multiplies the static drive by (1 + m) — an envelope or LFO
+    // can run the curve from clean to driven per sample.  Unwired: static
+    // drive, fully transparent.
+    float d = dBase;
+    if (driveMod.isConnected())
+    {
+        const StereoFrame pair = driveMod.getSample();
+        const float m = juce::jlimit (-1.0f, 1.0f, 0.5f * (pair.l + pair.r));
+        d = juce::jlimit (0.0f, 1.0f, dBase * (1.0f + m));
+    }
 
     // The transfer function runs once per channel (standard stereo
     // distortion).  Both channels are shaped independently; M/S processing

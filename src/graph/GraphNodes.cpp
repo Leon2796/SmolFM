@@ -88,9 +88,9 @@ namespace
 
             fm.outputType = PortType::frequency;
 
-            fm.inputPortIds = { "freq_in", "modulator_in" };
+            fm.inputPortIds = { "freq_in", "modulator_in", "amount_mod_in" };
 
-            fm.inputTypes = { PortType::frequency, PortType::signal };
+            fm.inputTypes = { PortType::frequency, PortType::signal, PortType::signal };
 
             fm.amountParameterTemplate = "fmAmount%";
 
@@ -151,8 +151,8 @@ namespace
             delay.title = "Delay";
             delay.outputPortId = "out";
             delay.outputType = PortType::signal;
-            delay.inputPortIds = { "in" };
-            delay.inputTypes = { PortType::signal };
+            delay.inputPortIds = { "in", "time_mod_in" };
+            delay.inputTypes = { PortType::signal, PortType::signal };
             delay.timeParameterTemplate     = "delay%TimeMs";
             delay.feedbackParameterTemplate = "delay%Feedback";
             delay.mixParameterTemplate      = "delay%Mix";
@@ -213,9 +213,9 @@ namespace
 
             gain.outputType = PortType::signal;
 
-            gain.inputPortIds = { "in" };
+            gain.inputPortIds = { "in", "factor_mod_in" };
 
-            gain.inputTypes = { PortType::signal };
+            gain.inputTypes = { PortType::signal, PortType::signal };
 
             gain.gainParameterTemplate = "gain%";
 
@@ -234,9 +234,9 @@ namespace
 
             shaper.outputType = PortType::signal;
 
-            shaper.inputPortIds = { "in" };
+            shaper.inputPortIds = { "in", "drive_mod_in" };
 
-            shaper.inputTypes = { PortType::signal };
+            shaper.inputTypes = { PortType::signal, PortType::signal };
 
             shaper.driveParameterTemplate = "shape%";
 
@@ -255,9 +255,9 @@ namespace
 
             filt.outputType = PortType::signal;
 
-            filt.inputPortIds = { "in", "cutoff_mod_in" };
+            filt.inputPortIds = { "in", "cutoff_mod_in", "resonance_mod_in" };
 
-            filt.inputTypes = { PortType::signal, PortType::frequency };
+            filt.inputTypes = { PortType::signal, PortType::frequency, PortType::signal };
 
             filt.cutoffParameterTemplate = "filter%Cutoff";
 
@@ -781,6 +781,18 @@ juce::String GraphNodeRegistry::delayDivisionParameterIdFor (const juce::String&
     if (spec == nullptr || spec->divisionParameterTemplate.isEmpty())
         return {};
     return withIndex (spec->divisionParameterTemplate, indexOf (nodeId));
+}
+
+juce::String GraphNodeRegistry::freqScaleIntervalParameterIdFor (const juce::String& nodeId)
+{
+    // Interval shares the amount template prefix ("fscale%Factor"),
+    // suffixed "Interval" — mirrors the waveshaper drive/shape and the
+    // osc waveform/static/lfo replace pattern.  Only the fscale spec has it.
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->id != "fscale" || spec->amountParameterTemplate.isEmpty())
+        return {};
+
+    return withIndex (spec->amountParameterTemplate, indexOf (nodeId)).replace ("Factor", "Interval");
 }
 
 

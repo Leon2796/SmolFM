@@ -1,4 +1,4 @@
-<SmolFM version="3" name="fm-metallic-pad-V2">
+<SmolFM version="3" name="fm-metallic-pad-V2" description="" techniques="">
   <Graph>
     <Nodes>
       <Node id="note" />

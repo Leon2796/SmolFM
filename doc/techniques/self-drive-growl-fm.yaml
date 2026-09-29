@@ -1,0 +1,91 @@
+technique:
+  name: self-drive-growl-fm
+
+  idea: |
+    The carrier's own rendered signal drives its own FM stage's
+    amount_mod_in: the louder the note plays, the deeper the modulation —
+    dynamics-driven growl.  At quiet playing the index sits near the static
+    base (clean); at loud peaks the index doubles and the sidebands roar.
+    The stage literally listens to itself through a signal that was
+    rendered by the voice it feeds.  This is an envelope-follower effect
+    built from wiring alone: amplitude becomes timbre.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; pitches the carrier chain.
+    - type: osc
+      role: Modulator oscillator tracking the key.
+    - type: osc
+      role: Carrier oscillator; its OUT also feeds back as the drive signal.
+    - type: fm
+      role: FM stage; amount_mod_in receives the carrier's own signal.
+    - type: adsr
+      role: Amplitude envelope after the FM rendering (articulation).
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Carrier frequency into fm.freq_in (frequency).
+    - node_role: Modulator oscillator
+      port: out
+      role: Modulation signal into fm.modulator_in (signal).
+    - node_role: Carrier oscillator
+      port: out
+      role: Rendered audio, fanned into drive AND the output path (signal).
+    - node_role: FM stage
+      port: amount_mod_in
+      role: Audio-driven multiplier on the static amount (signal).
+    - node_role: Carrier oscillator
+      port: note_in
+      role: Receives fm.freq_in deviation source (frequency).
+
+  topology:
+    description: |
+      note.out -> fm.freq_in (frequency).  modulator-osc.out -> 
+      fm.modulator_in (signal).  fm.out -> carrier-osc.note_in (frequency).
+      carrier-osc.out -> fm.amount_mod_in (signal) AND carrier-osc.out ->
+      adsr.in (signal), adsr.out -> output.in1 (signal).  One wire makes the
+      stage dynamics-aware: the effective amount is amount * (1 + m) with m
+      = the carrier's own rendered value, clamped [-1,+1].
+
+  parameters:
+    - name: base fm amount
+      role: |
+        Amount 0..10 at the quiet end of the dynamics: the growl swings it
+        between 0 and 2x per sample.  0.8..2.0 keeps quiet playing clean
+        while peaks roar.
+    - name: feedback waveform
+      role: |
+        Carrier waveform (saw/square rich in ±1 excursions swings the index
+        hardest; sine pumps smoothly at twice the frequency).
+    - name: articulation
+      role: |
+        The trailing ADSR decides whether the growl lives with the sustain
+        (held notes roar continuously) or dies into a clean tail.
+
+  relationships:
+    - name: loudness-to-timbre
+      description: |
+        Per sample the effective index is amount * (1 + m) with m = the
+        current carrier sample — so the rendered amplitude instantaneously
+        reshapes the sidebands.  Loud parts of the waveshape get extra
+        deviation; the growl is literally the waveform driving its own
+        brightness.
+    - name: socket-siblings
+      description: |
+        shaped-modulator-fm envelopes the modulator signal for sideband
+        density; self-ring-octave-double feeds a ring input with its own
+        signal for spectral folding.  Here the OWN rendered carrier drives
+        the index depth — the audio-feedback variant of the amount_mod_in
+        socket; the static-detune-beating family keeps detune static.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8 (two used), fm <= 4 (one
+        used), adsr <= 8 (one used), output = 1.
+
+  perceptual_effects:
+    - dynamics-driven growl: whisper stays pure, fort peaks split into sidebands
+    - rougher, angrier sustain at high base amounts (snarl under the note)
+    - envelope-shaped articulation where the growl dies into clean tail

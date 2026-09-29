@@ -1,0 +1,86 @@
+technique:
+  name: dub-wobble-echo-drift
+
+  idea: |
+    A perlin oscillator slowly wanders a host-synced delay's time_mod_in, so
+    the echoes' timing breathes around the grid — the tail wobbles between
+    groove and drunken swing forever, never repeating.  Because delay time
+    and echo pitch are two sides of one coin, the drift also smears the
+    repeats' pitch slightly: a tape-dub feel from pure wiring.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; voices the input being echoed.
+    - type: osc
+      role: Drift oscillator in lfo mode with perlin waveform.
+    - type: delay
+      role: Synced echo line; time_mod_in receives the drift.
+    - type: osc
+      role: Voice feeding the delay.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Pitch of the echoed voice (frequency).
+    - node_role: Drift oscillator
+      port: out
+      role: Organic time wander into time_mod_in (signal).
+    - node_role: Synced echo line
+      port: time_mod_in
+      role: Multiplies the synced base time by (1 + m) per sample (signal).
+    - node_role: Voice oscillator
+      port: out
+      role: Echo input into the delay (signal).
+
+  topology:
+    description: |
+      note.out -> echo-osc.note_in (frequency).  echo-osc.out -> delay.in
+      (signal).  lfo-perlin.out (lfo mode, lfoRate 0.03..0.15 Hz) ->
+      delay.time_mod_in (signal).  delay.out -> output.in1 (signal).  The
+      delay runs in sync mode (a division like 1/8); the perlin multiplier
+      drifts (1 + m) around that grid — echoes land near the grid but
+      wander musically.
+
+  parameters:
+    - name: drift rate
+      role: |
+        lfoRate 0.01..50 Hz: 0.03..0.12 Hz = one wobble arc every ~10 s;
+        faster drifts groove harder.  Keep it sub-hearing to feel tempo like.
+    - name: synced division
+      role: |
+        delay division 0..3 with sync on; the base time is the grid the
+        drift wobbles around — 1/8 at 120 bpm is the classic dub bed.
+    - name: feedback and mix
+      role: |
+        Feedback 0..0.95 high (0.7+) so the drift is HEARD across repeats;
+        mix up to 0.4 keeps the groove legible.
+
+  relationships:
+    - name: grid-drift
+      description: |
+        The effective time is the synced grid time multiplied by (1 +
+        perlin) per sample: echoes breathe within roughly ±100 % of the
+        grid — deliberately loose, never quantized by the LFO cycle since
+        perlin does not repeat.
+    - name: time-means-pitch
+      description: |
+        Moving delay time resamples the line content, so repeats drift slightly
+        in pitch as their position wanders — the tape-warble side effect that
+        makes the groove human.
+    - name: socket-siblings
+      description: |
+        dub-chord-stab and echo-cathedral style instruments use static synced
+        times; stereo-dub-chime spreads statically.  Here the synced grid
+        breathes — the time_mod_in socket's perlin character.  flanger-
+        delay-line is the fast/small sibling.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8 (two used), delay <= 8 (one
+        used), output = 1.
+
+  perceptual_effects:
+    - human dub groove that breathes around the tempo grid forever
+    - tape-warble pitch smear on the echo tail
+    - slow evolving space that never sits on the exact grid

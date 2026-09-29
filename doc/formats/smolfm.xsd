@@ -13,8 +13,14 @@
         <xs:element name="Graph" type="GraphType"/>
         <xs:element name="Layout" type="LayoutType" minOccurs="0"/>
       </xs:sequence>
+      <!-- Metadata group on the root element (kept together with name):
+           description = one concise sentence about the sound-design goal;
+           techniques = comma-separated names from the doc/techniques
+           catalogue.  Both optional, an empty string is allowed. -->
       <xs:attribute name="version" type="xs:string" use="required"/>
       <xs:attribute name="name" type="xs:string" use="optional"/>
+      <xs:attribute name="description" type="xs:string" use="optional"/>
+      <xs:attribute name="techniques" type="xs:string" use="optional"/>
     </xs:complexType>
   </xs:element>
 
@@ -70,6 +76,27 @@
       <xs:enumeration value="quarter"/>
       <xs:enumeration value="eighth"/>
       <xs:enumeration value="sixteenth"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="FscaleIntervalType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Musikalischer Kurzbefehl für die fscale-Stufe: jede Option steht für ein exaktes 12-TET-Frequenzverhältnis (2^k/12, "none" = 1); Ratio und Faktor multiplizieren sich.</purpose>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="none"/>
+      <xs:enumeration value="octave_up"/>
+      <xs:enumeration value="octave_down"/>
+      <xs:enumeration value="fifth_up"/>
+      <xs:enumeration value="fifth_down"/>
+      <xs:enumeration value="fourth_up"/>
+      <xs:enumeration value="fourth_down"/>
+      <xs:enumeration value="minor_third_up"/>
+      <xs:enumeration value="major_third_up"/>
+      <xs:enumeration value="semitone_up"/>
+      <xs:enumeration value="semitone_down"/>
     </xs:restriction>
   </xs:simpleType>
 
@@ -293,6 +320,7 @@
         <inputs>
           <port id="freq_in" type="frequency"/>
           <port id="modulator_in" type="signal"/>
+          <port id="amount_mod_in" type="signal"/>
         </inputs>
         <outputs>
           <port id="out" type="frequency"/>
@@ -325,6 +353,7 @@
     <xs:complexContent>
       <xs:extension base="BaseNodeType">
         <xs:attribute name="factor" type="FrequencyFactorRangeType" use="optional"/>
+        <xs:attribute name="interval" type="FscaleIntervalType" use="optional"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -389,6 +418,7 @@
         <docReference>doc/processors/GainProcessor.md</docReference>
         <inputs>
           <port id="in" type="signal"/>
+          <port id="factor_mod_in" type="signal"/>
         </inputs>
         <outputs>
           <port id="out" type="signal"/>
@@ -411,6 +441,7 @@
         <docReference>doc/processors/WaveshaperProcessor.md</docReference>
         <inputs>
           <port id="in" type="signal"/>
+          <port id="drive_mod_in" type="signal"/>
         </inputs>
         <outputs>
           <port id="out" type="signal"/>
@@ -434,6 +465,7 @@
         <inputs>
           <port id="in" type="signal"/>
           <port id="cutoff_mod_in" type="frequency"/>
+          <port id="resonance_mod_in" type="signal"/>
         </inputs>
         <outputs>
           <port id="out" type="signal"/>
@@ -458,6 +490,7 @@
         <docReference>doc/processors/DelayProcessor.md</docReference>
         <inputs>
           <port id="in" type="signal"/>
+          <port id="time_mod_in" type="signal"/>
         </inputs>
         <outputs>
           <port id="out" type="signal"/>

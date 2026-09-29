@@ -2,7 +2,13 @@
     GainProcessor boosts or attenuates a signal by a constant factor.
 
     Ports:
-        - in  (signal): incoming audio.
+        - in           (signal): incoming audio.
+        - factor_mod_in (signal): optional multiplier on the gain.  The
+          connected value's stereo mean is clamped to [-1, +1] and the
+          effective gain becomes gain * (1 + m), clamped to 0..10.
+          Unconnected: the static gain runs as-is.  An LFO here turns the
+          node into a clean VCA (linear tremolo/swells); a fast square is a
+          rhythmic gate.
         - out (signal): the scaled audio.
 
     Per sample (per channel):
@@ -42,12 +48,14 @@ public:
     StereoFrame processSample() override;
 
     InputPort& getInput() noexcept   { return input; }
+    InputPort& getModInput() noexcept { return modInput; }
     OutputPort& getOutput() noexcept { return output; }
 
 private:
     std::atomic<float>* gain;
 
     InputPort input  { PortType::signal };
+    InputPort modInput { PortType::signal };
     OutputPort output { PortType::signal, *this };
 };
 

@@ -27,6 +27,9 @@ MasterOutputComponent::MasterOutputComponent (juce::AudioProcessorValueTreeState
                                                                                      levelSlider));
 
     startTimerHz (30);
+
+    // Compact content size: keeps the master node box small (title, knob, meter).
+    setSize (110, 150);
 }
 
 MasterOutputComponent::~MasterOutputComponent()

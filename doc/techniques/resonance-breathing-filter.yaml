@@ -1,0 +1,86 @@
+technique:
+  name: resonance-breathing-filter
+
+  idea: |
+    A perlin oscillator drives the filter's resonance_mod_in, so the filter's
+    Q opens and closes as slow organic noise instead of an LFO's cycle.  The
+    cutoff stays static or note-tracked; only the resonance breathes.  This
+    gives filters a constantly moving character — sometimes clean, sometimes
+    whistling self-oscillation — without any repeated pattern and without
+    touching pitch.  The wiring reproduces the same perceptual slot as the
+    classic modulated-resonance synth parameter, but rides only on existing
+    nodes: the perlin voice IS the modulator.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; tracks the filter cutoff to the played key.
+    - type: perlin-osc
+      role: Oscillator in lfo mode with perlin waveform; the breathing depth source.
+    - type: filter
+      role: The resonant filter; resonance_mod_in receives the drift.
+    - type: osc
+      role: Voice oscillator rendering the source sound.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the cutoff tracking (frequency).
+    - node_role: Breathing depth source
+      port: out
+      role: Organic drift signal into resonance_mod_in (signal).
+    - node_role: Resonant filter
+      port: resonance_mod_in
+      role: Multiplies the static resonance by (1 + m), clamped [-1,+1] (signal).
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the played (or transformed) frequency (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Raw signal into the filter input (signal).
+
+  topology:
+    description: |
+      note.out -> filter.cutoff_mod_in (frequency, key tracking) — optional.
+      perlin-osc.out -> filter.resonance_mod_in (signal).  osc.out ->
+      filter.in (signal).  filter.out -> output.in1 (signal).  One perlin
+      voice is enough; its waveform choice ("perlin") makes the drift
+      smooth and non-repeating.
+
+  parameters:
+    - name: perlin lfo rate
+      role: |
+        Osc lfoRate, 0.01..50 Hz.  0.05..0.3 Hz reads as a slow breath;
+        above ~2 Hz it becomes a nervous flutter.
+    - name: static resonance
+      role: |
+        Resonance 0..1, the centre of the breathing: the drift swings this
+        value between 0 and up to 2x (effectively 0..1), so 0.35..0.6 gives
+        the widest audible travel.
+    - name: cutoff
+      role: |
+        Static or key-tracked via cutoff_mod_in; keep it musical so the
+        resonance carries the motion alone.
+
+  relationships:
+    - name: q-swing
+      description: |
+        The effective resonance is res * (1 + perlin), perlin clipped to
+        [-1,+1]; near res = 0.5 the Q crosses both a tame low-pass and the
+        onset of self-oscillation within one breath.
+    - name: socket-siblings
+      description: |
+        perlin-cutoff-drift moves the cutoff with perlin and leaves the
+        resonance static; key-tracking-filter tracks only the cutoff; this
+        technique moves only the resonance.  Combining it with one of those
+        gives coupled cutoff+Q drifts.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8 (two used), filter <= 8 (one
+        used), output = 1.
+
+  perceptual_effects:
+    - filter tone that never repeats: clean plateau, whistling crest
+    - organic breathing pads where only the resonance moves, not the pitch
+    - no comb-filtering, no chorus — a pure Q motion

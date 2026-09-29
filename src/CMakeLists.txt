@@ -89,6 +89,7 @@ target_link_libraries(${PROJECT_NAME}
 add_executable(SmolFM_GraphTests
     processors/ProcessorGraphTests.cpp
     processors/NoteProcessor.cpp
+    processors/FrequencyScaleProcessor.cpp
     processors/OscillatorProcessor.cpp
     processors/FMModulationProcessor.cpp
     processors/AdsrProcessor.cpp

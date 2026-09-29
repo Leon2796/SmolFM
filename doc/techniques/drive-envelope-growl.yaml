@@ -1,0 +1,85 @@
+technique:
+  name: drive-envelope-growl
+
+  idea: |
+    An ADSR-shaped constant drives the waveshaper's drive_mod_in, so the
+    transfer curve itself becomes an envelope: the note starts clean and
+    grows its grit over the attack, or starts with maximum bite and relaxes
+    into pure tone.  Waveshaping amount is usually a static knob — this
+    socket makes it a timbre contour, so pluck-to-growl transitions and
+    biting-then-calm leads come from the same wiring as a filter sweep.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; pitches the shaped voice.
+    - type: osc
+      role: Constant source in static mode; feeds the drive envelope.
+    - type: adsr
+      role: Drive envelope generator; out drives drive_mod_in.
+    - type: osc
+      role: Signal source being distorted.
+    - type: shape
+      role: Waveshaper; drive_mod_in receives the envelope.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the source oscillator (frequency).
+    - node_role: Constant source
+      port: out
+      role: Steady ±1 carrier into the drive envelope (signal).
+    - node_role: Waveshaper node
+      port: drive_mod_in
+      role: Multiplies the static drive by (1 + m), clamped [-1,+1] (signal).
+    - node_role: Source oscillator
+      port: out
+      role: Raw signal into the shape input (signal).
+
+  topology:
+    description: |
+      note.out -> source-osc.note_in (frequency).  constant-osc.out (static
+      mode) -> adsr.in (signal), adsr.out -> shape.drive_mod_in (signal).
+      source-osc.out -> shape.in (signal).  shape.out -> output.in1
+      (signal).  The static drive sets the envelope's centre; the ADSR
+      swings it toward clean and toward growl on its own schedule.
+
+  parameters:
+    - name: drive base and envelope shape
+      role: |
+        Static drive 0..1 is the centre the ADSR swings by (1 + m): base
+        0.3 with a decay envelope spans clean..0.6; base 0.6 spans clean to
+        full saturation.  Decay length sets how long the growl rides.
+    - name: shape function
+      role: |
+        Soft/Hard/Fold: fold reacts most dramatically to drive changes
+        (metallic sideband flicker), soft keeps body, hard clips hardest.
+    - name: source oscillator
+      role: |
+        The distorted signal: saw grows into grind, sine into wave-folding
+        warmth, triangle into clipped chime.
+
+  relationships:
+    - name: timbre-as-envelope
+      description: |
+        The effective drive is drive * (1 + m) per sample with m the
+        envelope value: harmonic density follows the curve exactly.  Since
+        drive scales the input into the transfer curve, the harmonic count
+        rises with (1 + 9·drive_envelope) — the timbre envelope is audible
+        and smooth per sample.
+    - name: socket-siblings
+      description: |
+        shaped-modulator-fm shapes the FM modulator's signal; serial-drive-
+        filter-sculpt uses a static shape stage.  Here only the DRIVE is
+        enveloped — the curve stays selectable and the signal path stays
+        put.  Index-envelope-fm is the FM-domain analogue of the same idea.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8 (two used), adsr <= 8 (one
+        used), shape <= 8 (one used), output = 1.
+
+  perceptual_effects:
+    - pluck-to-growl transitions driven by the waveshaper envelope
+    - bright percussive bites that relax into clean sustain
+    - evolving distortion character controlled by ADSR times

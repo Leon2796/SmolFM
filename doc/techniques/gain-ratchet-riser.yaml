@@ -1,0 +1,85 @@
+technique:
+  name: gain-ratchet-riser
+
+  idea: |
+    A saw-shaped LFO drives the gain's factor_mod_in as a repeating linear
+    climb: every cycle the level rises steplessly from silence (or from a
+    quiet floor) to full and snaps back — an endless riser or a
+    volume-ratchet that pumps upward without any sequencer.  Layered with an
+    octave-detuned third voice it becomes an escalating riser stack.  The
+    saw-to-gain socket is the loudest simple riser the graph offers.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; pitches the riser voice.
+    - type: osc
+      role: Rise oscillator in lfo mode; saw waveform makes the linear climb.
+    - type: gain
+      role: The VCA; factor_mod_in receives the ramp.
+    - type: osc
+      role: Rising pad voice rendered through the gain.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the riser voice (frequency).
+    - node_role: Rise oscillator
+      port: out
+      role: Climb ramp into factor_mod_in (signal).
+    - node_role: Gain stage
+      port: factor_mod_in
+      role: Multiplies the static factor by (1 + m) per sample (signal).
+    - node_role: Rising pad oscillator
+      port: out
+      role: Pad signal into the gain input (signal).
+
+  topology:
+    description: |
+      note.out -> pad-osc.note_in (frequency).  lfo-osc.out (lfo mode, saw,
+      lfoRate = climb period) -> gain.factor_mod_in (signal).  pad-osc.out
+      -> gain.in (signal).  gain.out -> output.in1 (signal).  The saw's
+      rise maps to a level climb per cycle; the reset snaps the voice back
+      to its floor.  For a rising STACK, feed a third voice through
+      fscale-detune-unison-style octave branches and mix all through this
+      gain.
+
+  parameters:
+    - name: climb period
+      role: |
+        lfoRate 0.01..50 Hz: 0.1..0.3 Hz = slow bar-length swell; 2 Hz =
+        ratchet stutter.  Synced feel via round rates.
+    - name: floor and ceiling
+      role: |
+        Static factor 0..10 sets the climb target (2x base at the crest);
+        combine with a second smaller gain pre-connected so the snap-back
+        lands on an audible floor instead of hard silence.
+    - name: riser waveform
+      role: |
+        Saw pad stacks keep harmonics rising with the level; sine risers
+        sound like swell-waves; detuned stacks add width to the climb.
+
+  relationships:
+    - name: climb-and-snap
+      description: |
+        Per cycle the effective factor sweeps factor..(factor*2) (clamped
+        0..10) across the saw's rise; the reset returns the floor in one
+        sample.  The perceived intensity therefore stairs upward at exactly
+        the LFO period — a ratchet.
+    - name: socket-siblings
+      description: |
+        gain-gate-chops uses the square for binary chopping; gain-drift-
+        swell uses perlin for organic tide.  The saw is this socket's riser
+        character.  fadsr-pitch-drop moves pitch, not level; auto-sweep-
+        resonance ratchets a filter's Q with the same ramp idea — a natural
+        pair for full-ensemble risers (level + Q climbing together).
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8 (two used), gain <= 8 (one
+        used), output = 1.
+
+  perceptual_effects:
+    - endless bar-building risers with sample-sharp snap-downs
+    - layered escalation when the climb stacks with interval branches
+    - ratchet pumping pads that never quite settle

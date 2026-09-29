@@ -82,20 +82,20 @@
     <Boxes>
       <Box id="note" x="60" y="60" />
       <Box id="osc0" x="380" y="60" />
-      <Box id="fscale0" x="380" y="260" />
-      <Box id="fscale1" x="380" y="460" />
-      <Box id="fscale2" x="380" y="660" />
-      <Box id="fscale3" x="380" y="860" />
+      <Box id="fscale0" x="380" y="302" />
+      <Box id="fscale1" x="380" y="510" />
+      <Box id="fscale2" x="380" y="718" />
+      <Box id="fscale3" x="380" y="926" />
       <Box id="osc1" x="700" y="260" />
-      <Box id="osc2" x="700" y="460" />
-      <Box id="osc3" x="700" y="660" />
-      <Box id="osc4" x="700" y="860" />
+      <Box id="osc2" x="700" y="502" />
+      <Box id="osc3" x="700" y="744" />
+      <Box id="osc4" x="700" y="986" />
       <Box id="filter0" x="1020" y="60" />
       <Box id="adsr0" x="1340" y="60" />
-      <Box id="adsr1" x="1340" y="260" />
-      <Box id="adsr2" x="1340" y="460" />
-      <Box id="adsr3" x="1340" y="660" />
-      <Box id="adsr4" x="1340" y="860" />
+      <Box id="adsr1" x="1340" y="372" />
+      <Box id="adsr2" x="1340" y="684" />
+      <Box id="adsr3" x="1340" y="996" />
+      <Box id="adsr4" x="1340" y="1308" />
       <Box id="output" x="1660" y="460" />
     </Boxes>
   </Layout>

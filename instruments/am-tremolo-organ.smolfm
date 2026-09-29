@@ -1,4 +1,4 @@
-<SmolFM version="3" name="Tremolo Organ">
+<SmolFM version="3" name="Tremolo Organ" description="" techniques="">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -65,17 +65,17 @@
   </Graph>
   <Layout>
     <Boxes>
-      <Box id="note" x="80" y="60" />
+      <Box id="note" x="80" y="302" />
       <Box id="osc0" x="280" y="60" />
-      <Box id="fscale0" x="280" y="200" />
-      <Box id="osc1" x="480" y="200" />
-      <Box id="fscale1" x="280" y="340" />
-      <Box id="osc2" x="480" y="340" />
+      <Box id="fscale0" x="280" y="302" />
+      <Box id="osc1" x="480" y="302" />
+      <Box id="fscale1" x="280" y="510" />
+      <Box id="osc2" x="480" y="706" />
       <Box id="output" x="1080" y="240" />
-      <Box id="fscale2" x="280" y="480" />
-      <Box id="osc3" x="480" y="480" />
-      <Box id="am0" x="680" y="240" />
-      <Box id="adsr0" x="880" y="240" />
+      <Box id="fscale2" x="280" y="718" />
+      <Box id="osc3" x="480" y="948" />
+      <Box id="am0" x="680" y="544" />
+      <Box id="adsr0" x="880" y="706" />
     </Boxes>
   </Layout>
 </SmolFM>

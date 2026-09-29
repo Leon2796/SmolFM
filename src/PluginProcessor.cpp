@@ -52,7 +52,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxFrequencyScales; ++i)
     {
         const juce::String num (i);
-        voiceParameters.freqScaleFactor[static_cast<size_t> (i)] = parameters.getRawParameterValue ("fscale" + num + "Factor");
+        voiceParameters.freqScaleFactor   [static_cast<size_t> (i)] = parameters.getRawParameterValue ("fscale" + num + "Factor");
+        voiceParameters.freqScaleInterval [static_cast<size_t> (i)] = parameters.getRawParameterValue ("fscale" + num + "Interval");
     }
 
         for (int i = 0; i < smolfm::GraphNodeRegistry::maxAdsr; ++i)
@@ -385,8 +386,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     }
 
     // -- Frequency scale pool ------------------------------------------------
-    // 1.0 is the transparent default: f_out = f_in.  The UI range caps the
-    // factor at 10.
+    // Two multiplicative parameters per instance: the free-range factor knob
+    // (0-10,  default 1) and the musical interval dropdown, whose names map
+    // onto exact 12-TET ratios (see fscaleIntervalRatioFromIndex in
+    // FrequencyScaleProcessor.h; "None" = no shift).  Defaults are fully
+    // transparent: f_out = f_in.  The UI range caps the factor at 10.
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxFrequencyScales; ++i)
     {
         const juce::String num (i);
@@ -394,6 +398,15 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "fscale" + num + "Factor", "Frequency Scale " + num + " Factor",
             juce::NormalisableRange<float> (0.0f, 10.0f), 1.0f));
+
+        // Choice order must match fscaleIntervalNames() (ISmolFmParser.h)
+        // and the FrequencyScaleComponent dropdown item list.
+        layout.add (std::make_unique<juce::AudioParameterChoice> (
+            "fscale" + num + "Interval", "Frequency Scale " + num + " Interval",
+            juce::StringArray { "None", "Octave up", "Octave down", "Fifth up",
+                                "Fifth down", "Fourth up", "Fourth down",
+                                "Minor third up", "Major third up",
+                                "Semitone up", "Semitone down" }, 0));
     }
 
     // -- ADSR pool ----------------------------------------------------------
@@ -453,16 +466,37 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 
     // -- Gain pool ----------------------------------------------------------
     // One transparent-by-default gain factor per instance (0-10, 1.0 = unity).
-    // The knob is skewed (1.0 at 12 o'clock) so the attenuation half — the
-    // usual mix case, e.g. ducking a noise layer to 0.12 — gets half the
-    // travel instead of 1/10.  The raw factor stays linear: .smolfm files
-    // store 0.12 and read back 0.12 regardless of the skew.
+    // The knob is bipolar: unity sits at the centre of the travel, the left
+    // half covers attenuation 0..1 linearly (the usual mix case, e.g. ducking
+    // a noise layer to 0.12) and the right half maps 1..10 on a soft
+    // quadratic curve (2.0 at two thirds of the travel) so loud values keep
+    // fine resolution too.  The raw factor stays a plain 0..10 value:
+    // .smolfm files store 0.12 and read back 0.12 with no UI mapping applied.
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxGains; ++i)
     {
         const juce::String num (i);
 
-        juce::NormalisableRange<float> gainRange (0.0f, 10.0f);
-        gainRange.setSkewForCentre (1.0f);
+        auto gainTo0To1 = [] (float, float, float gain)
+        {
+            if (gain <= 1.0f)
+                return gain * 0.5f;
+
+            return 0.5f + 0.5f * std::sqrt ((gain - 1.0f) / 9.0f);
+        };
+        auto gainFrom0To1 = [] (float, float, float proportion)
+        {
+            if (proportion <= 0.5f)
+                return proportion * 2.0f;
+
+            const auto x = (proportion - 0.5f) * 2.0f;
+            return 1.0f + 9.0f * x * x;
+        };
+
+        // The piecewise conversion functions ride on the parameter's
+        // NormalisableRange via its (start, end, from0to1, to0to1, snap)
+        // constructor; the SliderAttachment forwards them to the knob.
+        juce::NormalisableRange<float> gainRange (0.0f, 10.0f,
+                                                  gainFrom0To1, gainTo0To1);
 
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "gain" + num + "Factor", "Gain " + num + " Factor",

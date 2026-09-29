@@ -87,8 +87,10 @@ namespace
                 }
         else if (baseId == "fscale")
         {
-            const auto factorId = GraphNodeRegistry::amountParameterIdFor (nodeId);
-            if (factorId.isNotEmpty()) specs.add ({ "factor", factorId });
+            const auto factorId   = GraphNodeRegistry::amountParameterIdFor (nodeId);
+            const auto intervalId = GraphNodeRegistry::freqScaleIntervalParameterIdFor (nodeId);
+            if (factorId.isNotEmpty())   specs.add ({ "factor",   factorId });
+            if (intervalId.isNotEmpty()) specs.add ({ "interval", intervalId });
         }
         else if (baseId == "adsr")
         {

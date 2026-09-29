@@ -86,6 +86,11 @@ OscillatorPanel::OscillatorPanel (juce::AudioProcessorValueTreeState& apvts,
                                                                                        lfoRateSlider));
 
     updateFrequencyRows();
+
+    // Compact content size: DraggableComponent sizes the node box from this
+    // so the oscillator box matches this panel (title, waveform/mode combos,
+    // one frequency row) instead of the 220x260 default.
+    setSize (220, 190);
 }
 
 OscillatorPanel::~OscillatorPanel()

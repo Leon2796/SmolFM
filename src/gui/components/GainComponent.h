@@ -1,7 +1,8 @@
 /*
     GainComponent is the UI for one gain node: a single rotary bound to the
-    gain factor APVTS parameter (0-10, 1.0 = transparent; the range is skewed
-    so unity sits at 12 o'clock and fine attenuation values stay reachable).
+    gain factor APVTS parameter (0-10, 1.0 = unity) with a bipolar mapping:
+    the knob centre shows unity, turning left attenuates (0..1), turning
+    right boosts (1..10); the raw value stored in .smolfm stays linear.
 */
 
 #pragma once

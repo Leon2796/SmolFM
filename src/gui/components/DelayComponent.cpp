@@ -63,6 +63,10 @@ DelayComponent::DelayComponent (juce::AudioProcessorValueTreeState& apvts,
     // Listen for sync changes to disable the time slider.
     syncButton.onClick = [this] { updateTimeEnabled(); };
     updateTimeEnabled();
+
+    // Compact content size: keeps the delay node box small (three knobs +
+    // the sync/division strip render inside these bounds).
+    setSize (220, 180);
 }
 
 void DelayComponent::resized()

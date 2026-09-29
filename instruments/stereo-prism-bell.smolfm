@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3" name="Prism Bell">
+<SmolFM version="3" name="Prism Bell" description="" techniques="">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -86,7 +86,7 @@
       <Box id="fm0" x="780" y="300" />
       <Box id="fm1" x="780" y="540" />
       <Box id="osc1" x="1020" y="300" />
-      <Box id="osc2" x="1020" y="540" />
+      <Box id="osc2" x="1020" y="542" />
       <Box id="merge0" x="1260" y="420" />
       <Box id="adsr0" x="1500" y="420" />
       <Box id="output" x="1740" y="420" />

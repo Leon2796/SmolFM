@@ -23,7 +23,7 @@ namespace
     // as "1" etc.; getDoubleAttribute reads both spellings.
     const char* knownAttributes[] =
     {
-        "waveform", "mode", "shape", "sync", "division",
+        "waveform", "mode", "shape", "sync", "division", "interval",
         "staticfreq", "lforate", "attack", "decay", "sustain", "release",
         "up", "down", "factor", "amount", "drive", "cutoff", "resonance",
         "time", "feedback", "mix", "level"

@@ -62,14 +62,14 @@
   </Graph>
   <Layout>
     <Boxes>
-      <Box id="note" x="60" y="260" />
+      <Box id="note" x="60" y="302" />
       <Box id="osc0" x="60" y="60" />
       <Box id="fscale0" x="380" y="260" />
-      <Box id="fscale1" x="380" y="460" />
-      <Box id="fscale2" x="380" y="660" />
+      <Box id="fscale1" x="380" y="468" />
+      <Box id="fscale2" x="380" y="676" />
       <Box id="osc1" x="700" y="260" />
-      <Box id="osc2" x="700" y="460" />
-      <Box id="osc3" x="700" y="660" />
+      <Box id="osc2" x="700" y="502" />
+      <Box id="osc3" x="700" y="744" />
       <Box id="gain0" x="1020" y="60" />
       <Box id="gain1" x="1020" y="260" />
       <Box id="gain2" x="1020" y="460" />

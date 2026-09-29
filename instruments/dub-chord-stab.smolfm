@@ -1,4 +1,4 @@
-<SmolFM version="3" name="Dub Chord Stab">
+<SmolFM version="3" name="Dub Chord Stab" description="" techniques="">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -51,8 +51,8 @@
       <Box id="osc0" x="440" y="60" />
       <Box id="fm0" x="620" y="60" />
       <Box id="osc1" x="800" y="60" />
-      <Box id="adsr0" x="620" y="260" />
-      <Box id="delay0" x="800" y="260" />
+      <Box id="adsr0" x="620" y="534" />
+      <Box id="delay0" x="800" y="302" />
       <Box id="output" x="980" y="260" />
     </Boxes>
   </Layout>

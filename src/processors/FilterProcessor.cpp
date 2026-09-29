@@ -20,6 +20,7 @@ FilterProcessor::FilterProcessor (std::atomic<float>* cutoffParameter,
     // connected).
     input.setDefaultValue (0.0f);
     cutoffMod.setDefaultValue (440.0f);
+    resonanceMod.setDefaultValue (0.0f);
 }
 
 void FilterProcessor::prepare (double newSampleRate)
@@ -56,10 +57,22 @@ StereoFrame FilterProcessor::processSample()
         ? juce::jlimit (20.0f, 20000.0f, cutoffMod.getSample().l)
         : juce::jlimit (20.0f, 20000.0f, cutoff != nullptr ? cutoff->load() : 1000.0f);
 
-    const float res = resonance != nullptr ? juce::jlimit (0.0f, 1.0f, resonance->load()) : 0.0f;
+    const float resBase = resonance != nullptr ? resonance->load() : 0.0f;
     const int modeIndex = mode != nullptr
         ? juce::jlimit (0, 3, static_cast<int> (std::round (mode->load())))
         : 0;
+
+    // Resonance modulation: the signal input multiplies the static value by
+    // (1 + m) with m clamped to [-1, +1] (stereo mean), so an LFO, a noise
+    // source or an ADSR-shaped constant can open and close the Q.  Unwired:
+    // static resonance, fully transparent.
+    float res = juce::jlimit (0.0f, 1.0f, resBase);
+    if (resonanceMod.isConnected())
+    {
+        const StereoFrame pair = resonanceMod.getSample();
+        const float m = juce::jlimit (-1.0f, 1.0f, 0.5f * (pair.l + pair.r));
+        res = juce::jlimit (0.0f, 1.0f, resBase * (1.0f + m));
+    }
 
     // Trapezoidal state-variable filter (Simper SVF), re-derived per sample.
     // The coefficients depend only on the cutoff and are shared by both

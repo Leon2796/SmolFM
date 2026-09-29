@@ -51,7 +51,9 @@ namespace
                                                                 juce::AudioProcessorValueTreeState& apvts)
     {
         return std::make_unique<gui::FrequencyScaleComponent> (
-            apvts, smolfm::GraphNodeRegistry::amountParameterIdFor (instanceId));
+            apvts,
+            smolfm::GraphNodeRegistry::amountParameterIdFor (instanceId),
+            smolfm::GraphNodeRegistry::freqScaleIntervalParameterIdFor (instanceId));
     }
 
     std::unique_ptr<juce::Component> makeAdsrContent (const juce::String& instanceId,

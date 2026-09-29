@@ -1,0 +1,89 @@
+technique:
+  name: spectral-tremolo-fm
+
+  idea: |
+    A low-frequency oscillator drives the FM stage's amount_mod_in with a
+    slow ±1 swing while carrier and modulator stay locked: the sidebands
+    swell and recede in place — spectral tremolo.  Unlike vibrato (which
+    moves the carrier pitch) nothing here changes the perceived note; only
+    the modulation depth pumps, so the tone breathes between hollow sine
+    and bright clangorous richness at the rate of the index oscillator.  In
+    Synth One terms this is exactly the fmLFO destination: the LFO targets
+    the FM index, not the pitch.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; pitches the carrier.
+    - type: osc
+      role: Breathing oscillator in lfo mode; index depth source.
+    - type: fm
+      role: FM stage; amount_mod_in receives the breathing swing.
+    - type: osc
+      role: Modulator oscillator tracking the key.
+    - type: osc
+      role: Carrier oscillator rendering the note.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Carrier frequency into fm.freq_in (frequency).
+    - node_role: Breathing oscillator
+      port: out
+      role: Depth swing into amount_mod_in (signal).
+    - node_role: FM stage
+      port: amount_mod_in
+      role: Multiplies the static amount by (1 + m) (signal).
+    - node_role: Modulator oscillator
+      port: out
+      role: Modulation signal into fm.modulator_in (signal).
+    - node_role: Carrier oscillator
+      port: note_in
+      role: Renders the modulated instant frequency (frequency).
+
+  topology:
+    description: |
+      note.out -> fm.freq_in (frequency).  lfo-osc.out (lfo mode, sine,
+      slow lfoRate) -> fm.amount_mod_in (signal).  modulator-osc.out ->
+      fm.modulator_in (signal).  fm.out -> carrier-osc.note_in (frequency),
+      carrier-osc.out -> output.in1 (signal).  The index wobble rides only
+      on amount_mod_in; carrier and modulator ratios stay static.
+
+  parameters:
+    - name: breathing rate
+      role: |
+        lfoRate 0.01..50 Hz: 0.2..1 Hz reads as a slow timbre swell, 5..8 Hz
+        as nervous spectral tremolo; audio-rate adds sideband shimmer.
+    - name: base fm amount
+      role: |
+        Amount 0..10 sets the centre; the ±1 LFO reaches 0..2x the centre,
+        so a base of 1.2 swings the index from silent to full-bloom.
+    - name: lfo amplitude scaling
+      role: |
+        The oscillator's LFO amplitude trims the effective ±1 window —
+        smaller amplitude narrows the index swing without re-tuning
+        anything else.
+
+  relationships:
+    - name: depth-not-pitch
+      description: |
+        The carrier centre f_in and the modulator ratio are constant; only
+        amount * (1 + m) moves — sideband richness pumps at the LFO rate
+        while the perceived pitch stays exact.
+    - name: socket-siblings
+      description: |
+        lvo-vibrato-fm feeds the LFO into the frequency via a second small
+        FM stage (pitch moves); perlin-drift-modulation detunes organically
+        through the modulator.  Here the LFO targets amount_mod_in instead:
+        depth motion at fixed pitch is the sole purpose.  index-envelope-fm
+        is the envelope-shaped sibling of this socket.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8 (three used: lfo, modulator,
+        carrier), fm <= 4 (one used), output = 1.
+
+  perceptual_effects:
+    - breathing FM timbre with zero pitch movement
+    - slow spectral swells on pads; fast spectral tremolo shimmer
+    - clang-to-clean oscillation when the swing crosses amount 0

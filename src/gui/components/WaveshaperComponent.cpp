@@ -30,6 +30,9 @@ WaveshaperComponent::WaveshaperComponent (juce::AudioProcessorValueTreeState& ap
 
     driveAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (apvts, driveParameterID, driveSlider);
     shapeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (apvts, shapeParameterID, shapeBox);
+
+    // Compact content size: keeps the waveshaper node box small.
+    setSize (200, 150);
 }
 
 void WaveshaperComponent::resized()

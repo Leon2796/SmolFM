@@ -10,7 +10,7 @@ freie Millisekunden oder Sync an die Host-Tempo.
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
 | Max. Instanzen | 8 | `GraphNodeRegistry::maxDelays` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `in` (`PortType::signal`) | `InputPort input` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
+| Input-Ports | `in` (`PortType::signal`), `time_mod_in` (`PortType::signal`) | `InputPort input`, `InputPort timeMod` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
 | Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
 
 | Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
@@ -101,4 +101,19 @@ Sonderfälle:
 | $w_n$ | `writePos` | [DelayProcessor.cpp](../../src/processors/DelayProcessor.cpp) | Ring-Puffer modulo `buffer.size()` |
 | $b[\cdot]$ | `buffer[...]` | [DelayProcessor.cpp](../../src/processors/DelayProcessor.cpp) | `std::vector<float>` allokiert in `prepare()`; keine Realzeit-Allokation |
 | $y$ | `result` → `output.setSample(result)` | [DelayProcessor.cpp](../../src/processors/DelayProcessor.cpp) | Dry/Wet-Mischung |
+| $L_{\text{eff}}$ | `ds` nach dem `timeMod`-Zweig | [DelayProcessor.cpp](../../src/processors/DelayProcessor.cpp) | `time_mod_in` verbunden: $L_{\text{eff}} = L\cdot(1+m_{\text{tm}})$, $m_{\text{tm}}$ = Stereo-Mittelwert geclampt $[-1,+1]$; `jlimit(1, M-2, …)` deckelt die Linienlänge |
+
+### Abschnitt 3b — Modulations-Input `time_mod_in`
+
+Optionaler Mod-Eingang für die **Verzögerungszeit** (PortType `signal`). Der
+Stereo-Mittelwert wird auf $[-1,+1]$ geclampt und multipliziert die
+effektive Verzögerungslänge in beiden Modi (freie Millisekunden und
+Host-Sync): $L_{\text{eff}} = L\cdot(1+m)$, anschließend per
+`jlimit(1, M-2, …)` in den Puffer gezwungen. Unverbunden ($m = 0$) liefert
+exakt die statische Zeit. Klangeffekte: schneller Sinus bei kurzer
+Grundzeit = **Flanger** (die Linie taucht in die Minimallänge); langsames
+Perlin im Sync-Modus = menschliches Dub-Wobble; schneller Sinus auf langen
+Zeiten = Vibrato auf den Echos (die Zeit IST die Echo-Pitch-Skala).
+Port-ID-Sync: `GraphNodes`-Spec, XSD-Annotation (`delay`-complexType) und
+`SynthVoice::resolveInput` tragen denselben Namen `time_mod_in`.
 | — (Observation) | `tailPeak` | [DelayProcessor.cpp](../../src/processors/DelayProcessor.cpp) | `jmax(tailPeak * 0.99998, abs(written))`; nur für Voice-Lifetime, kein Audio-Pfad |

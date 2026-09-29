@@ -1,4 +1,4 @@
-<SmolFM version="3" name="Ping-Pong Pluck">
+<SmolFM version="3" name="Ping-Pong Pluck" description="" techniques="">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -58,9 +58,9 @@
       <Box id="osc0" x="420" y="80" />
       <Box id="fm0" x="600" y="80" />
       <Box id="osc1" x="780" y="80" />
-      <Box id="adsr0" x="600" y="240" />
-      <Box id="delay0" x="780" y="220" />
-      <Box id="delay1" x="780" y="340" />
+      <Box id="adsr0" x="600" y="554" />
+      <Box id="delay0" x="780" y="322" />
+      <Box id="delay1" x="780" y="866" />
       <Box id="output" x="980" y="240" />
     </Boxes>
   </Layout>

@@ -315,6 +315,35 @@ int main()
         CHECK (loaded > 0);
     }
 
+    // fscale interval enum: the writer emits names, the reader accepts names
+    // (case-insensitive) and the numeric legacy spelling.  Index order must
+    // match the APVTS choices in PluginProcessor::createParameterLayout().
+    CHECK (enumOrNumber ("interval", "fscale", "octave_up") == 1.0f);
+    CHECK (enumOrNumber ("interval", "fscale", "Fifth_up") == 3.0f);
+    CHECK (enumOrNumber ("interval", "fscale", "3") == 3.0f);
+    CHECK (enumValueText ("interval", "fscale", 3.0f) == "fifth_up");
+    CHECK (enumValueText ("interval", "fscale", 0.0f) == "none");
+
+    // The XML flavour parses the v3 attribute spelling into the enum index;
+    // the fscale factor still loads alongside it.
+    const auto fscaleXml = writeTemp ("fscale_interval.smolfm",
+        "<SmolFM version=\"3\" name=\"Demo\">\n"
+        "  <Graph>\n"
+        "    <Nodes>\n"
+        "      <Node id=\"fscale0\" factor=\"1.5\" interval=\"octave_up\"/>\n"
+        "    </Nodes>\n"
+        "  </Graph>\n"
+        "</SmolFM>\n");
+    SmolFmData fscaleData;
+    CHECK (xmlParser.parse (fscaleXml, fscaleData));
+    CHECK (fscaleData.nodes.size() == 1);
+    if (fscaleData.nodes.size() == 1)
+    {
+        auto& n = fscaleData.nodes[0];
+        CHECK (n.parameters["interval"] == 1.0f);
+        CHECK (n.parameters["factor"] == 1.5f);
+    }
+
     if (failures == 0)
         std::cout << "SmolFM_ParserTests: all checks passed\n";
 

@@ -15,6 +15,9 @@ DelayProcessor::DelayProcessor()
 {
     // No input wired → silence; feedback and mix default to safe values via APVTS.
     input.setDefaultValue (0.0f);
+
+    // Unwired time_mod_in contributes no scaling: (1 + 0) = base time.
+    timeMod.setDefaultValue (0.0f);
 }
 
 DelayProcessor::DelayProcessor (std::atomic<float>* timeMsP,
@@ -84,7 +87,20 @@ StereoFrame DelayProcessor::processSample()
         return input.getSample();
 
     const int maxSamples = static_cast<int> (buffer.size());
-    const float ds = getDelaySamples();
+    float ds = getDelaySamples();
+
+    // Time modulation: the connected value's stereo mean, clamped to
+    // [-1, +1], multiplies the base delay time (free or synced).  With an
+    // LFO this sweeps the line around the base time (flanger/wobble); m = 0
+    // (unwired) keeps the base time untouched.  processSample's own clamp
+    // below keeps the effective length inside the pre-allocated buffer.
+    if (timeMod.isConnected())
+    {
+        const StereoFrame pair = timeMod.getSample();
+        const float m = juce::jlimit (-1.0f, 1.0f, 0.5f * (pair.l + pair.r));
+        ds *= (1.0f + m);
+    }
+
     const int delayInt = juce::jlimit (1, maxSamples - 2, static_cast<int> (ds));
 
     // Read the delayed sample with a fractional-step-free lookup: simply read

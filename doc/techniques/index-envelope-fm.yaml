@@ -1,0 +1,100 @@
+technique:
+  name: index-envelope-fm
+
+  idea: |
+    An ADSR-shaped constant drives the FM stage's amount_mod_in, so the
+    modulation index itself follows an envelope instead of the pitch: the
+    note starts with a closed index (clear sine) and blooms into full
+    sideband richness as the envelope opens — or opens bright and decays
+    into a pure tone.  This is the DX-classic index envelope, reproduced in
+    the frequency domain: the user sets a base FM amount, the envelope
+    multiplies it (1 + m) sample by sample, and the spectrum evolves while
+    the pitch stays locked.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; pitches the FM centre through the carrier path.
+    - type: osc
+      role: Constant source in static mode; feeds the index envelope.
+    - type: adsr
+      role: Envelope generator; output drives amount_mod_in.
+    - type: osc
+      role: Modulator oscillator rendering the modulation signal.
+    - type: fm
+      role: FM stage whose amount rides the envelope.
+    - type: osc
+      role: Carrier oscillator rendering the modulated note.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Carrier frequency into fm.freq_in (frequency).
+    - node_role: Constant source
+      port: out
+      role: Steady ±1 carrier into the index envelope (signal).
+    - node_role: Envelope generator
+      port: in
+      role: Receives the constant (signal).
+    - node_role: Envelope generator
+      port: out
+      role: Index ramp into amount_mod_in (signal).
+    - node_role: FM stage
+      port: amount_mod_in
+      role: Multiplies the static amount by (1 + m), clamped [-1,+1] (signal).
+    - node_role: Modulator oscillator
+      port: out
+      role: Modulation signal into fm.modulator_in (signal).
+
+  topology:
+    description: |
+      note.out -> fm.freq_in (frequency).  constant-osc.out (static mode) ->
+      adsr.in (signal), adsr.out -> fm.amount_mod_in (signal).
+      modulator-osc.out -> fm.modulator_in (signal).  fm.out ->
+      carrier-osc.note_in (frequency), carrier-osc.out -> output.in1
+      (signal).  The envelope is a patch: a static oscillator provides the
+      constant the ADSR needs as input, and that shaped constant becomes
+      the per-sample multiplier on the index.
+
+  parameters:
+    - name: base fm amount
+      role: |
+        Amount 0..10, the pitch-centred mid value of the bloom; the
+        envelope swings it between 0 and 2x (clamped 0..10).
+    - name: index envelope
+      role: |
+        adsr attack/decay shape the bloom: slow attack + long decay = brass
+        swell into bright; zero attack + long decay = bell brightness
+        fading into purity; sustain 0 lets the tone end clean.
+    - name: index envelope depth
+      role: |
+        The static osc's amplitude is 1; the envelope's sustain level and
+        the (1 + m) scaling set how far past the base amount the index
+        rises — sustain 0.5 halves the depth window for subtler colouring.
+
+  relationships:
+    - name: index-vs-pitch
+      description: |
+        The effective amount is amount * (1 + m) per sample: pitch and
+        modulation stay independent — the modulator still bends frequency
+        proportionally to the carrier, only its depth moves.  This is the
+        classic FM index envelope, expressible without a dedicated
+        amount-input because static oscillator + ADSR act as the envelope
+        generator.
+    - name: socket-siblings
+      description: |
+        shaped-modulator-fm envelopes the modulator SIGNAL (amplitude into
+        the fold/clip curve); fadsr-fm-spectrum-sweep sweeps the carrier
+        centre.  This technique moves only the INDEX — sideband count and
+        brightness breathe while the centre and the modulator stay put.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8 (three used), adsr <= 8 (one
+        used), fm <= 4 (one used), output = 1.
+
+  perceptual_effects:
+    - DX-style timbre bloom: clean attack into brass-bright decay
+    - bell spectra that start clangorous and settle into a pure octave
+    - evolving FM pads whose brightness never repeats (combine with perlin
+      into the SAME amount_mod_in for non-repeating bloom)

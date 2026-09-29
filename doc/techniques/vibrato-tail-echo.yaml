@@ -1,0 +1,92 @@
+technique:
+  name: vibrato-tail-echo
+
+  idea: |
+    A moderately fast sine drives the delay's time_mod_in with feedback high:
+    every repeat of the echo is read from a slightly different point of the
+    moving line, so the TAIL vibratos and choruses on its own — the note
+    itself stays steady while its echoes shimmer like tape.  The longer the
+    note holds, the more repeats accumulate the wobble; release into an
+    echoing tail and the shimmer blooms purely in the delay.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; pitches the held voice.
+    - type: osc
+      role: Tail oscillator in lfo mode; sine at repeat-wobble rate.
+    - type: delay
+      role: Echo line; time_mod_in receives the tail wobble, feedback high.
+    - type: adsr
+      role: Amplitude envelope of the held note (optional).
+    - type: osc
+      role: Voice feeding the delay.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Pitch of the echoed voice (frequency).
+    - node_role: Tail oscillator
+      port: out
+      role: Wobble signal into time_mod_in (signal).
+    - node_role: Echo line
+      port: time_mod_in
+      role: Multiplies the base echo time by (1 + m) per sample (signal).
+    - node_role: Voice oscillator
+      port: out
+      role: Audio into the delay (signal).
+
+  topology:
+    description: |
+      note.out -> voice-osc.note_in (frequency).  voice-osc.out ->
+      adsr.in (signal), adsr.out -> delay.in (signal).  lfo-osc.out (lfo
+      mode, sine, lfoRate 1..6 Hz) -> delay.time_mod_in (signal).
+      delay.out -> output.in1 (signal).  The base delay sits at 120..400 ms
+      so the moving read point adds small pitch excursions to each
+      successive repeat while feedback stacks them.
+
+  parameters:
+    - name: tail wobble rate
+      role: |
+        lfoRate 1..6 Hz: tape-flutter territory; the sine rewrites each
+        repeat's position at the same rate as classic vibrato.
+    - name: base echo time
+      role: |
+        delay time 1..2000 ms: 120..400 ms positions the repeats in the
+        wobble's sweet spot; shorter = tighter shimmer, longer = deeper
+        smear per repeat.
+    - name: feedback and mix
+      role: |
+        Feedback 0..0.95: 0.7..0.85 accumulates the wobble across repeats;
+        mix 0.4..0.6 keeps the dry note stable against the shimmering tail.
+
+  relationships:
+    - name: smear-per-repeat
+      description: |
+        While the note holds, its dry signal writes fresh copies into the
+        line; after release the repeats are read from a line whose length
+        wobbles by (1 + m) — each successive repeat inherits a slightly
+        different position, so the shimmer compounds: tape wow built from
+        wiring.
+    - name: dry-stays-steady
+      description: |
+        The mix path passes the dry note untouched; the modulation lives
+        only in the wet reading of the line.  A dry/wet balance therefore
+        morphs between exact pitch and shimmering tail without any pitch
+        change at the source.
+    - name: socket-siblings
+      description: |
+        lvo-vibrato-fm vibratos the NOTE's pitch through an FM stage; this
+        technique vibratos only the delay repeats — the source stays
+        exact.  flanger-delay-line is the fast small-time sibling;
+        dub-wobble-echo-drift is its perlin cousin.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8 (two used), delay <= 8 (one
+        used), adsr <= 8 (one used), output = 1.
+
+  perceptual_effects:
+    - echoes that shimmer like vintage tape while the note stays exact
+    - accumulating wow across feedback repeats
+    - chorused tails that bloom after the dry note has ended

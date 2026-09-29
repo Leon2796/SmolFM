@@ -1,4 +1,4 @@
-<SmolFM version="3" name="Acid Reactor">
+<SmolFM version="3" name="Acid Reactor" description="" techniques="">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -82,18 +82,18 @@
   <Layout>
     <Boxes>
       <Box id="note" x="60" y="60" />
-      <Box id="osc0" x="240" y="60" />
+      <Box id="osc0" x="240" y="172" />
       <Box id="fm0" x="420" y="60" />
       <Box id="osc1" x="600" y="60" />
-      <Box id="fscale0" x="240" y="260" />
-      <Box id="osc2" x="420" y="260" />
-      <Box id="fm1" x="600" y="260" />
-      <Box id="osc3" x="780" y="260" />
-      <Box id="ring0" x="780" y="160" />
-      <Box id="fscale1" x="240" y="440" />
-      <Box id="osc4" x="420" y="440" />
-      <Box id="am0" x="960" y="160" />
-      <Box id="adsr0" x="1140" y="160" />
+      <Box id="fscale0" x="240" y="414" />
+      <Box id="osc2" x="420" y="414" />
+      <Box id="fm1" x="600" y="302" />
+      <Box id="osc3" x="780" y="576" />
+      <Box id="ring0" x="780" y="302" />
+      <Box id="fscale1" x="240" y="622" />
+      <Box id="osc4" x="420" y="656" />
+      <Box id="am0" x="960" y="414" />
+      <Box id="adsr0" x="1140" y="576" />
       <Box id="output" x="1320" y="160" />
     </Boxes>
   </Layout>

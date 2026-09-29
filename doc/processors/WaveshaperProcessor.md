@@ -11,7 +11,7 @@ ist nahezu transparent (Identität bei kleinen Amplituden).
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
 | Max. Instanzen | 8 | `GraphNodeRegistry::maxWaveshapers` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `in` (`PortType::signal`) | `InputPort input` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
+| Input-Ports | `in` (`PortType::signal`), `drive_mod_in` (`PortType::signal`) | `InputPort input`, `InputPort driveMod` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
 | Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
 
 | Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
@@ -60,11 +60,23 @@ Spezialfälle:
 - Fold bei hohem Drive: Wellenfaltung erzeugt inharmonische Sidebands (metallisch).
 - Hard bei hohem Drive: schnelle Harmonische-Zerfallsrate, digital-hart.
 
+### Abschnitt 3b — Modulations-Input `drive_mod_in`
+
+Optionaler Mod-Eingang für den **Drive** (PortType `signal`). Der
+Stereo-Mittelwert wird auf $[-1,+1]$ geclampt und multipliziert den
+statischen Drive: $d_{\text{eff}} = \mathrm{clamp}(d\cdot(1+m), 0, 1)$.
+Unverbunden ($m = 0$) ist der Port vollständig transparent. Damit ist die
+Transferkurve selbst enveloppierbar: statischer Osc → ADSR →
+`drive_mod_in` = Klangfarben-Envelope (clean→growl), Perlin → driftende
+Saturation, Square-LFO → Timbre-Stepper.
+Port-ID-Sync: `GraphNodes`-Spec, XSD-Annotation (`shape`-complexType) und
+`SynthVoice::resolveInput` tragen denselben Namen `drive_mod_in`.
+
 ## Abschnitt 4 — Symbol ↔ Code
 
 | Formales Symbol | C++-Symbol / Aufruf | Datei | Berechnungsschritt |
 |---|---|---|---|
-| $d$ | `drive->load()` → `d` | [WaveshaperProcessor.cpp](../../src/processors/WaveshaperProcessor.cpp) | jlimit 0–1 in `processSample()` |
+| $d$ | `drive->load()` → `dBase` → `d` | [WaveshaperProcessor.cpp](../../src/processors/WaveshaperProcessor.cpp) | Basis jlimit 0–1; `drive_mod_in` verbunden: $d = \mathrm{clamp}(d_{\text{base}}\cdot(1+m), 0, 1)$, $m$ = Stereo-Mittel geclampt $[-1,+1]$ |
 | Shape-Auswahl | `shape->load()` → `shapeIndex` | [WaveshaperProcessor.cpp](../../src/processors/WaveshaperProcessor.cpp) | round + jlimit 0–2 |
 | $x_n$ | `input.getSample()` → `x` | [WaveshaperProcessor.cpp](../../src/processors/WaveshaperProcessor.cpp) | Port lesen (Default 0.0f unverbunden) |
 | $x'_n$ | `x * (1 + k*d)` → `driven` | [WaveshaperProcessor.cpp](../../src/processors/WaveshaperProcessor.cpp) | pro Shape-Case |

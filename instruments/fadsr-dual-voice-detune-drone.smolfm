@@ -1,4 +1,4 @@
-<SmolFM version="3" name="fadsr-dual-voice-detune-drone">
+<SmolFM version="3" name="fadsr-dual-voice-detune-drone" description="" techniques="">
   <Graph>
     <Nodes>
       <Node id="note">

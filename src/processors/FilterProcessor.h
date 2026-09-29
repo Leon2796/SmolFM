@@ -3,11 +3,15 @@
     filter (Chamberlin/TPT style, trapezoidal integration).
 
     Ports:
-        - in             (signal)   : incoming audio.
-        - cutoff_mod_in  (frequency): optional live cutoff in Hertz.  When
+        - in               (signal):   incoming audio.
+        - cutoff_mod_in    (frequency): optional live cutoff in Hertz.  When
           connected it OVERRIDES the static cutoff parameter; when left
           unconnected the filter runs at the static cutoff value.
-        - out            (signal)   : the filtered audio.
+        - resonance_mod_in (signal):   optional multiplier on the resonance.
+          The connected value's stereo mean is clamped to [-1, +1] and the
+          effective resonance becomes resonance * (1 + m), clamped to 0..1.
+          Unconnected: the static resonance runs as-is.
+        - out              (signal)   : the filtered audio.
 
     Parameters:
         - cutoff    20-20000 Hz (log), the static base cutoff.
@@ -79,17 +83,19 @@ public:
     */
     void reset() noexcept;
 
-    InputPort& getInput() noexcept          { return input; }
-    InputPort& getCutoffModInput() noexcept { return cutoffMod; }
-    OutputPort& getOutput() noexcept        { return output; }
+    InputPort& getInput() noexcept            { return input; }
+    InputPort& getCutoffModInput() noexcept   { return cutoffMod; }
+    InputPort& getResonanceModInput() noexcept { return resonanceMod; }
+    OutputPort& getOutput() noexcept          { return output; }
 
 private:
     std::atomic<float>* cutoff;
     std::atomic<float>* resonance;
     std::atomic<float>* mode;
 
-    InputPort input     { PortType::signal };
-    InputPort cutoffMod { PortType::frequency };
+    InputPort input       { PortType::signal };
+    InputPort cutoffMod   { PortType::frequency };
+    InputPort resonanceMod { PortType::signal };
     OutputPort output   { PortType::signal, *this };
 
     double sampleRate = 44100.0;

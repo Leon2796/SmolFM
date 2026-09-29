@@ -80,6 +80,8 @@ namespace
                 {
                     if (portId == "in")
                         return &delays[static_cast<size_t> (index)]->getInput();
+                    if (portId == "time_mod_in")
+                        return &delays[static_cast<size_t> (index)]->getTimeModInput();
                     return nullptr;
                 }
 
@@ -92,6 +94,9 @@ namespace
 
             if (portId == "modulator_in")
                 return &fmProcessors[static_cast<size_t> (index)]->getModulatorInput();
+
+            if (portId == "amount_mod_in")
+                return &fmProcessors[static_cast<size_t> (index)]->getAmountModInput();
 
             return nullptr;
         }
@@ -120,22 +125,29 @@ namespace
 
         if (type == NodeType::gain
          && index >= 0 && index < GraphNodeRegistry::maxGains
-         && gainProcessors[static_cast<size_t> (index)] != nullptr
-         && portId == "in")
-            return &gainProcessors[static_cast<size_t> (index)]->getInput();
+         && gainProcessors[static_cast<size_t> (index)] != nullptr)
+        {
+            if (portId == "in")           return &gainProcessors[static_cast<size_t> (index)]->getInput();
+            if (portId == "factor_mod_in") return &gainProcessors[static_cast<size_t> (index)]->getModInput();
+            return nullptr;
+        }
 
         if (type == NodeType::waveshaper
          && index >= 0 && index < GraphNodeRegistry::maxWaveshapers
-         && waveshapers[static_cast<size_t> (index)] != nullptr
-         && portId == "in")
-            return &waveshapers[static_cast<size_t> (index)]->getInput();
+         && waveshapers[static_cast<size_t> (index)] != nullptr)
+        {
+            if (portId == "in")            return &waveshapers[static_cast<size_t> (index)]->getInput();
+            if (portId == "drive_mod_in")  return &waveshapers[static_cast<size_t> (index)]->getDriveModInput();
+            return nullptr;
+        }
 
         if (type == NodeType::filter
          && index >= 0 && index < GraphNodeRegistry::maxFilters
          && filters[static_cast<size_t> (index)] != nullptr)
         {
-            if (portId == "in")            return &filters[static_cast<size_t> (index)]->getInput();
-            if (portId == "cutoff_mod_in") return &filters[static_cast<size_t> (index)]->getCutoffModInput();
+            if (portId == "in")             return &filters[static_cast<size_t> (index)]->getInput();
+            if (portId == "cutoff_mod_in")  return &filters[static_cast<size_t> (index)]->getCutoffModInput();
+            if (portId == "resonance_mod_in") return &filters[static_cast<size_t> (index)]->getResonanceModInput();
             return nullptr;
         }
 
@@ -328,7 +340,8 @@ void SynthVoice::buildGraph()
     // Frequency scale pool.
     for (int i = 0; i < GraphNodeRegistry::maxFrequencyScales; ++i)
     {
-        auto fscale = std::make_unique<FrequencyScaleProcessor> (parameters.freqScaleFactor[static_cast<size_t> (i)]);
+        auto fscale = std::make_unique<FrequencyScaleProcessor> (parameters.freqScaleFactor [static_cast<size_t> (i)],
+                                                                 parameters.freqScaleInterval[static_cast<size_t> (i)]);
         frequencyScalers[static_cast<size_t> (i)] = fscale.get();
         graph.addProcessor (std::move (fscale));
     }
@@ -603,6 +616,7 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
         {
             fm->getFreqInput().disconnect();
             fm->getModulatorInput().disconnect();
+            fm->getAmountModInput().disconnect();
         }
 
     for (auto* fscale : frequencyScalers)
@@ -632,6 +646,7 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
         if (d != nullptr)
         {
             d->getInput().disconnect();
+            d->getTimeModInput().disconnect();
             // A new patch must not inherit the previous patch's delay tail:
             // clear the line so no stale signal survives an instrument change.
             d->reset();
@@ -652,16 +667,25 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
         if (f != nullptr)  f->reset();
 
         for (auto* g : gainProcessors)
-        if (g != nullptr)  g->getInput().disconnect();
+        if (g != nullptr)
+        {
+            g->getInput().disconnect();
+            g->getModInput().disconnect();
+        }
 
         for (auto* ws : waveshapers)
-        if (ws != nullptr)  ws->getInput().disconnect();
+        if (ws != nullptr)
+        {
+            ws->getInput().disconnect();
+            ws->getDriveModInput().disconnect();
+        }
 
         for (auto* f : filters)
         if (f != nullptr)
         {
             f->getInput().disconnect();
             f->getCutoffModInput().disconnect();
+            f->getResonanceModInput().disconnect();
         }
 
         for (auto* s : splitters)
