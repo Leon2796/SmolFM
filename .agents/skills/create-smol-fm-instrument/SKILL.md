@@ -162,6 +162,8 @@ Signal kinds: `frequency` and `signal` only; a wire connects like with like.
 | `ring`    | `in1`, `in2` (signal)           | `out` (signal)       | 4 |
 | `am`      | `carrier_in`, `modulator_in` (signal) | `out` (signal) | 4 |
 | `output`  | `in1`…`in8` (signal)            | —                    | 1 |
+| `split`   | `in` (signal)                   | `outL` (signal), `outR` (signal) | 4 |
+| `merge`   | `in1`, `in2` (signal)           | `out` (signal)       | 4 |
 
 Attribute ranges live in the xsd simpleTypes (FM/AM amounts, envelope times,
 cutoff 20–20000 Hz, delay 1–2000 ms, feedback ≤ 0.95, master level 0–1) —

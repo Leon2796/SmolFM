@@ -49,8 +49,10 @@ Inherits `Processor`. Contract:
 - `startNote()` — reset any per-note state (phases, envelopes). Called from
   `SynthVoice::startNote`.
 - `processSample()` — **must be real-time safe**: no allocations, no locks,
-  no atomics beyond the port reads. Read inputs via `inputN.getSample()`,
-  write via `output.setSample(x)`, return `x`.
+  no atomics beyond the port reads. Read inputs via `inputN.getSample()`
+  (returns a `StereoFrame` L/R pair), write via `output.setSample(frame)`,
+  return `frame`. Frequency ports keep their scalar semantics and travel as
+  centered pairs (read the `.l` channel).
 - Ports are plain members: `InputPort {PortType::signal}` /
   `OutputPort {PortType::..., *this}`.
 - Constructor: pass the role to `Processor(role)` and set per-port default
