@@ -1,0 +1,125 @@
+technique:
+  name: stereo-dual-delay-field
+
+  idea: |
+    The splitter divides the voice into its two pure side branches and each
+    branch runs through its own delay line with its own time, feedback and
+    mix.  The merger packs the two independent echo lines into one stereo
+    frame, so the channels can carry completely different echo rhythms and
+    decay states — a spatially separated echo field instead of one shared
+    summing bus.  The merged frame stays a single signal, so it can still
+    be trimmed or filtered downstream as one wire.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send driving the voice.
+    - type: osc
+      role: Voice oscillator; the centered source that is split.
+    - type: split
+      role: Divides the voice into the left and right delay branch.
+    - type: delay
+      role: Left delay line; its own time, feedback and mix.
+    - type: delay
+      role: Right delay line; independent of the left line.
+    - type: merge
+      role: Recombines the two echo lines into one stereo frame.
+    - type: output
+      role: Master endpoint for the merged frame.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the voice (frequency).
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the played note (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Centered signal into the splitter (signal).
+    - node_role: Splitter
+      port: in
+      role: Receives the voice signal (signal).
+    - node_role: Splitter
+      port: outL
+      role: Left branch into the left delay (signal).
+    - node_role: Splitter
+      port: outR
+      role: Right branch into the right delay (signal).
+    - node_role: Left delay
+      port: in
+      role: Receives the left branch (signal).
+    - node_role: Left delay
+      port: out
+      role: Left echo line into merger in1 (signal).
+    - node_role: Right delay
+      port: in
+      role: Receives the right branch (signal).
+    - node_role: Right delay
+      port: out
+      role: Right echo line into merger in2 (signal).
+    - node_role: Merger
+      port: in1
+      role: Contributes the left echo line (signal).
+    - node_role: Merger
+      port: in2
+      role: Contributes the right echo line (signal).
+    - node_role: Merger
+      port: out
+      role: Combined stereo echo field towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the merged frame (signal); a free input may
+        carry the dry voice.
+
+  topology:
+    description: |
+      note.out -> osc.note_in (frequency).  osc.out -> split.in (signal).
+      split.outL -> delay-left.in (signal), split.outR -> delay-right.in
+      (signal).  delay-left.out -> merge.in1 (signal), delay-right.out ->
+      merge.in2 (signal).  merge.out -> output (signal).  Each channel
+      keeps its own delay state and the lines never exchange content.  A
+      dry copy of osc.out may fan out to a free output input as a centered
+      anchor.
+
+  parameters:
+    - name: left delay time
+      role: |
+        1..2000 ms, free or synced.  The left channel's own echo rhythm.
+    - name: right delay time
+      role: |
+        1..2000 ms.  Independent of the left time; unequal, non-harmonic
+        times give the widest field, exact multiples give per-side
+        subdivisions of one rhythm.
+    - name: delay feedback
+      role: |
+        0..0.95 per line.  Different feedback per side decays the two
+        echo fields at different rates.
+    - name: delay mix
+      role: |
+        0..1 per line.  At 1.0 a branch is fully delayed; lower mixes keep
+        part of that side dry and centered.
+    - name: delay sync mode
+      role: |
+        Off for free-floating fields; on with different divisions (e.g.
+        eighth left, sixteenth right) for tempo-locked per-side rhythms.
+
+  relationships:
+    - name: independent-lines
+      description: |
+        The two delay lines share no state; time, feedback and mix are set
+        freely per side.  The stereo image is the difference of the two
+        echo patterns, not two copies of one pattern.
+    - name: comb-free-cross-meet
+      description: |
+        The branches meet only cross-channel at the merger (in1.l with
+        in2.r), so no per-channel summing comb filter appears even when
+        both times coincide.
+    - name: budget
+      description: |
+        Registry budgets: osc <= 8, delay <= 8 (two used), split <= 4,
+        merge <= 4, output = 1.
+
+  perceptual_effects:
+    - spatially separated echo fields, one rhythm per ear
+    - wide decaying stereo space from a single mono voice
+    - off-beat echo textures when the per-side times diverge

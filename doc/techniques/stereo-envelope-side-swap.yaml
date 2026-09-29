@@ -1,0 +1,116 @@
+technique:
+  name: stereo-envelope-side-swap
+
+  idea: |
+    The splitter divides one voice into its two side branches and each branch
+    runs through its own ADSR before the merger recombines them into one
+    stereo frame.  The two envelopes follow complementary settings, so the
+    amplitude balance between left and right rotates over the note — the
+    sound enters from one side, migrates towards the other and exits
+    accordingly.  The merged frame stays a single signal, so the whole
+    rotating image can still pass one further serial stage.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send driving the voice and triggering both envelopes.
+    - type: osc
+      role: Voice oscillator; the centered source that is split.
+    - type: split
+      role: Splits the voice into the pure left and right branches.
+    - type: adsr
+      role: Left-side envelope; shapes only the left branch.
+    - type: adsr
+      role: Right-side envelope; shapes only the right branch.
+    - type: merge
+      role: Combines enveloped-left and enveloped-right into one frame.
+    - type: output
+      role: Master endpoint for the merged frame.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the voice (frequency).
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the played note (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Centered signal into the splitter (signal).
+    - node_role: Splitter
+      port: in
+      role: Receives the voice signal (signal).
+    - node_role: Splitter
+      port: outL
+      role: Left-only branch into the left envelope (signal).
+    - node_role: Splitter
+      port: outR
+      role: Right-only branch into the right envelope (signal).
+    - node_role: Left-side envelope
+      port: in
+      role: Receives the left branch (signal).
+    - node_role: Left-side envelope
+      port: out
+      role: Enveloped left branch into merger in1 (signal).
+    - node_role: Right-side envelope
+      port: in
+      role: Receives the right branch (signal).
+    - node_role: Right-side envelope
+      port: out
+      role: Enveloped right branch into merger in2 (signal).
+    - node_role: Merger
+      port: in1
+      role: Contributes the left channel (signal).
+    - node_role: Merger
+      port: in2
+      role: Contributes the right channel (signal).
+    - node_role: Merger
+      port: out
+      role: Combined stereo frame towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the merged stereo frame (signal).
+
+  topology:
+    description: |
+      note.out -> osc.note_in (frequency).  osc.out -> split.in (signal).
+      split.outL -> adsr-left.in (signal), split.outR -> adsr-right.in
+      (signal).  adsr-left.out -> merge.in1, adsr-right.out -> merge.in2
+      (signal).  merge.out -> output (signal).  Both envelopes are
+      note-triggered and run side-specific attack/decay/sustain/release.
+
+  parameters:
+    - name: left envelope
+      role: |
+        Attack/decay/sustain/release of the left branch; the left shape
+        alone controls the left channel's loudness contour.
+    - name: right envelope
+      role: |
+        Attack/decay/sustain/release of the right branch; complementing the
+        left settings drives the rotation of the image.
+    - name: common release
+      role: |
+        Keep both releases similar so the tail ends balanced; a lopsided
+        release leaves the note collapsing into one channel.
+
+  relationships:
+    - name: complementary-contours
+      description: |
+        A mirrored pair (long attack left / short attack right, sustain
+        left high / sustain right low) makes the channel balance sweep
+        across the note; equal envelopes collapse the pattern back to the
+        exact centered frame.
+    - name: note-wide-scalars
+      description: |
+        Both envelopes are note-wide scalars per branch, so the rotation is
+        deterministic per note and independent of audio-rate modulation;
+        velocity still scales the whole voice.
+    - name: budget
+      description: |
+        Registry budgets: osc <= 8, adsr <= 8, split <= 4, merge <= 4,
+        output = 1.  Two envelopes and one splitter/merger pair per
+        instance.
+
+  perceptual_effects:
+    - amplitude migration of a note from one channel to the other
+    - call-and-response stereo contour on repeated notes
+    - asymmetric decays that let notes dissolve to one side

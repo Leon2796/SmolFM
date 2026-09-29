@@ -77,4 +77,5 @@ exponentiellen Decay/Release-Segmente.
 | $f_n$ | `freqInput.getSample()` → `sourceFrequency` | [FAdsrProcessor.cpp](../../src/processors/FAdsrProcessor.cpp) | Port lesen (Default 440 Hz unverbunden) |
 | $f'_n$ | `sourceFrequency * F(E)` → `output.setSample()` | [FAdsrProcessor.cpp](../../src/processors/FAdsrProcessor.cpp) | Ergebnis in den Port |
 | Note-Off | `noteOff()` → `envelope.noteOff()` | [FAdsrProcessor.cpp](../../src/processors/FAdsrProcessor.cpp) | aus `SynthVoice::stopNote` bei `allowTailOff` |
+| Still-Reset | `reset()` → `envelope.reset()` | [FAdsrProcessor.cpp](../../src/processors/FAdsrProcessor.cpp) | aus `SynthVoice::applyConnectionPatch` — ein neues Patch erbt keinen hängenden Sustain |
 | Aktiv-Flag | `isActive()` → `envelope.isActive()` | [FAdsrProcessor.cpp](../../src/processors/FAdsrProcessor.cpp) | Voice wird freigegeben, wenn Hüllkurve endet |

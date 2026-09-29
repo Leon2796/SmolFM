@@ -1,0 +1,113 @@
+technique:
+  name: stereo-haas-branch-delay
+
+  idea: |
+    The splitter divides the voice into two pure side branches; the left
+    branch feeds the merger directly while the right branch passes through
+    a short free-running delay first.  The inter-channel delay difference
+    of a few milliseconds creates the Haas (precedence) effect — a single
+    dry wire becomes a wide phantom source whose apparent position follows
+    the delay time.  The whole stereo image then runs through the merger's
+    single output, so it can still be trimmed or filtered as one frame.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send driving the voice.
+    - type: osc
+      role: Voice oscillator; the centered source that is split.
+    - type: split
+      role: Splits the voice into the direct left branch and the delayed
+        right branch.
+    - type: delay
+      role: Short free-running delay on the right branch only; sync off.
+    - type: merge
+      role: Recombines direct-left and delayed-right into one stereo frame.
+    - type: output
+      role: Master endpoint for the merged frame.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the voice (frequency).
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the played note (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Centered signal into the splitter (signal).
+    - node_role: Splitter
+      port: in
+      role: Receives the voice signal (signal).
+    - node_role: Splitter
+      port: outL
+      role: Direct left branch into merger in1 (signal).
+    - node_role: Splitter
+      port: outR
+      role: Right branch into the delay (signal).
+    - node_role: Right-side delay
+      port: in
+      role: Receives the right branch (signal).
+    - node_role: Right-side delay
+      port: out
+      role: Delayed right branch into merger in2 (signal).
+    - node_role: Merger
+      port: in1
+      role: Contributes the direct left channel (signal).
+    - node_role: Merger
+      port: in2
+      role: Contributes the delayed right channel (signal).
+    - node_role: Merger
+      port: out
+      role: Combined stereo frame towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the merged stereo frame (signal).
+
+  topology:
+    description: |
+      note.out -> osc.note_in (frequency).  osc.out -> split.in (signal).
+      split.outL -> merge.in1 (signal, direct).  split.outR -> delay.in
+      (signal).  delay.out -> merge.in2 (signal).  merge.out -> output
+      (signal).  Only the right branch carries delay state; the left
+      branch stays sample-exact.
+
+  parameters:
+    - name: delay time
+      role: |
+        1..2000 ms with sync off.  1..20 ms stays inside the precedence
+        region where the ear localises the source towards the direct side;
+        20..50 ms starts separating into a discrete echo.
+    - name: delay feedback
+      role: |
+        0..1.  Keep it at 0 for a clean single-tap Haas image; small values
+        add filtered repetition only on the right channel.
+    - name: delay mix
+      role: |
+        0..1.  1.0 makes the right branch fully delayed; lower mixes pull
+        an early copy of the right branch towards center.
+    - name: delay sync mode
+      role: |
+        Off — the precedence effect needs a constant, beat-independent
+        offset; tempo-sync would pulse the image.
+
+  relationships:
+    - name: precedence-window
+      description: |
+        Below roughly 30 ms the first-arriving channel dominates localisation,
+        so delay time acts as a position control: 0 ms recentres, ~20 ms pushes
+        the image firmly to the left (direct) side.
+    - name: comb-free-direct
+      description: |
+        Because the two branches only meet across channels (in1.l with
+        in2.r), no summing comb filter appears in either channel — the
+        left channel carries the dry signal, the right only the delayed one.
+    - name: budget
+      description: |
+        Registry budgets: osc <= 8, delay <= 8, split <= 4, merge <= 4,
+        output = 1.  One delay per side extends the pattern to two-sided
+        Haas pairs.
+
+  perceptual_effects:
+    - wide phantom source from a single mono voice
+    - image position controlled by the millisecond offset
+    - discrete double tap once the offset leaves the precedence window

@@ -48,12 +48,12 @@ void AdsrProcessor::startNote()
     envelope.noteOn();
 }
 
-float AdsrProcessor::processSample()
+StereoFrame AdsrProcessor::processSample()
 {
-    float sourceSample = input.getSample();
-    float env = envelope.getNextSample();
+    const StereoFrame sourceSample = input.getSample();
+    const float env = envelope.getNextSample();
 
-    float sample = sourceSample * env;
+    const StereoFrame sample { sourceSample.l * env, sourceSample.r * env };
     output.setSample (sample);
 
     return sample;
@@ -62,6 +62,11 @@ float AdsrProcessor::processSample()
 void AdsrProcessor::noteOff()
 {
     envelope.noteOff();
+}
+
+void AdsrProcessor::reset() noexcept
+{
+    envelope.reset();
 }
 
 bool AdsrProcessor::isActive() const noexcept

@@ -1,0 +1,83 @@
+technique:
+  name: fadsr-swing-phrase
+
+  idea: |
+    The F-ADSR shapes the pitch with a two-sided factor band: up sits above
+    1 and down below 1, so the voice leans sharp while the envelope rises
+    and settles flat-below when it falls.  A quick attack with a short
+    decay stamps a bluesy pitch lean onto every keypress, and the release
+    time draws the tail back down to the lower edge of the band.
+
+  involved_nodes:
+    - type: note
+      role: MIDI note source; base frequency of the phrase.
+    - type: fadsr
+      role: Pitch envelope; swings the note between its up and down factors.
+    - type: osc
+      role: Voice oscillator in pitch mode; renders the swinging frequency.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: MIDI note source
+      port: out
+      role: Note frequency into the pitch envelope (frequency).
+    - node_role: Pitch envelope
+      port: freq_in
+      role: Receives the note frequency (frequency).
+    - node_role: Pitch envelope
+      port: out
+      role: Swung frequency towards the voice (frequency).
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the swung frequency (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Rendered signal towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the swinging voice (signal).
+
+  topology:
+    description: |
+      note -> fadsr.freq_in (frequency).  fadsr.out -> osc.note_in
+      (frequency).  osc.out -> output (signal).  The envelope lives alone
+      in the frequency path; its factor band defines the swing.
+
+  parameters:
+    - name: fadsr up
+      role: |
+        Factor at E = 1, above 1.  1.02..1.12 leans the peak a quarter to
+        two semitones sharp.
+    - name: fadsr down
+      role: |
+        Factor at E = 0, below 1.  0.89..0.98 settles the release flat to
+        two semitones under the key.
+    - name: fadsr attack, decay, release
+      role: |
+        Envelope times, 0.001..5 s for attack and decay, 0.001..10 s for
+        release.  0.02..0.15 s attack leans quickly, a decay of 0.1..0.4 s
+        lets the note fall back towards the middle of the band.
+    - name: oscillator waveform
+      role: |
+        Rendered waveform of the swinging voice.
+
+  relationships:
+    - name: two-sided-band
+      description: |
+        Up and down enclose the played pitch from both sides, so the phrase
+        leans over the key and settles under it - unlike the one-sided
+        pitch drop of fadsr-pitch-drop, which only falls.
+    - name: single-lean-sibling
+      description: |
+        lfo-vibrato-fm oscillates the pitch periodically; this technique
+        leans once per note and returns with the envelope, so the motion
+        follows the phrase, not a clock.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, fadsr <= 4, osc <= 8, output = 1.
+
+  perceptual_effects:
+    - bluesy pitch leans onto every note
+    - quick sharp attack settling into the key
+    - release tails that slide flat under the pitch

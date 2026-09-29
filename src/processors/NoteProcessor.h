@@ -28,7 +28,7 @@ public:
 
     void prepare (double newSampleRate) override;
     void startNote() override;
-    float processSample() override;
+    StereoFrame processSample() override;
 
     /**
         Set the current MIDI note number.

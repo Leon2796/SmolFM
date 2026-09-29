@@ -6,7 +6,8 @@
         - modulator_in (signal): bipolar modulator (oscillator / LFO-style source).
         - out (signal): amplitude-modulated audio.
 
-    Per sample:
+    Per sample (per channel — a stereo modulator over a mono carrier yields
+    stereo AM):
 
         out = carrier * (1.0 - amount + amount * modulator)
 
@@ -41,7 +42,7 @@ public:
 
     void prepare (double newSampleRate) override;
     void startNote() override;
-    float processSample() override;
+    StereoFrame processSample() override;
 
     void setAmountParameter (std::atomic<float>* param) noexcept { amount = param; }
 

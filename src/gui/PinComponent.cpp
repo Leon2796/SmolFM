@@ -12,12 +12,14 @@ PinComponent::PinComponent (DraggablePanel& ownerPanel,
                             const juce::String& boxIdIn,
                             const juce::String& pinIdIn,
                             bool isOutputIn,
-                            smolfm::PortType typeIn)
+                            smolfm::PortType typeIn,
+                            smolfm::ChannelSide sideIn)
     : panel (ownerPanel),
       boxId (boxIdIn),
       pinId (pinIdIn),
       output (isOutputIn),
-      type (typeIn)
+      type (typeIn),
+      side (sideIn)
 {
     setSize (diameter, diameter);
 }

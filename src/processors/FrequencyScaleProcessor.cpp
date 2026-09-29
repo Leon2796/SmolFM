@@ -27,15 +27,16 @@ void FrequencyScaleProcessor::startNote()
     // No state to reset.
 }
 
-float FrequencyScaleProcessor::processSample()
+StereoFrame FrequencyScaleProcessor::processSample()
 {
-    const float inputHz  = freqInput.getSample();
+    const float inputHz  = freqInput.getSample().l;
     const float scale    = factor->load();
 
     const float scaledHz = inputHz * scale;
 
-    output.setSample (scaledHz);
-    return scaledHz;
+    const StereoFrame result = StereoFrame::centered (scaledHz);
+    output.setSample (result);
+    return result;
 }
 
 } // namespace smolfm

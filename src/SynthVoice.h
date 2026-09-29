@@ -33,6 +33,8 @@
 #include "processors/GainProcessor.h"
 #include "processors/WaveshaperProcessor.h"
 #include "processors/FilterProcessor.h"
+#include "processors/SplitterProcessor.h"
+#include "processors/MergerProcessor.h"
 #include "processors/MasterOutputProcessor.h"
 #include "processors/RingModulatorProcessor.h"
 #include "processors/AmProcessor.h"
@@ -170,6 +172,8 @@ private:
     std::array<DelayProcessor*, GraphNodeRegistry::maxDelays> delays {};    std::array<GainProcessor*, GraphNodeRegistry::maxGains> gainProcessors {};
     std::array<WaveshaperProcessor*, GraphNodeRegistry::maxWaveshapers> waveshapers {};
     std::array<FilterProcessor*, GraphNodeRegistry::maxFilters> filters {};
+    std::array<SplitterProcessor*, GraphNodeRegistry::maxSplitters> splitters {};
+    std::array<MergerProcessor*, GraphNodeRegistry::maxMergers> mergers {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynthVoice)
 };

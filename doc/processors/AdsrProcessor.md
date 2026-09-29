@@ -62,4 +62,5 @@ $$y_n = x_n \cdot g_n$$
 | $x_n$ | `input.getSample()` → `sourceSample` | [AdsrProcessor.cpp](../../src/processors/AdsrProcessor.cpp) | Port lesen (Default 0.0f unverbunden) |
 | $y_n$ | `sourceSample * env` → `output.setSample()` | [AdsrProcessor.cpp](../../src/processors/AdsrProcessor.cpp) | Multiplikation, Ergebnis in den Port |
 | Note-Off | `noteOff()` → `envelope.noteOff()` | [AdsrProcessor.cpp](../../src/processors/AdsrProcessor.cpp) | aus `SynthVoice::stopNote` bei `allowTailOff` |
+| Still-Reset | `reset()` → `envelope.reset()` | [AdsrProcessor.cpp](../../src/processors/AdsrProcessor.cpp) | aus `SynthVoice::applyConnectionPatch` — ein neues Patch erbt keinen hängenden Sustain (verlorenes Note-Off / gehaltenes Sustain-Pedal) |
 | Aktiv-Flag | `isActive()` → `envelope.isActive()` | [AdsrProcessor.cpp](../../src/processors/AdsrProcessor.cpp) | Voice wird freigegeben, wenn Hüllkurve endet |

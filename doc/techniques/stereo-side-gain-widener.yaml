@@ -1,0 +1,122 @@
+technique:
+  name: stereo-side-gain-widener
+
+  idea: |
+    One voice is divided by the splitter into its two side branches, each
+    branch runs through its own gain stage, and the merger recombines them
+    into one stereo frame that lands on a single output input.  With equal
+    gains the pattern is bit-transparent (identical left and right); with
+    unbalanced gains the voice acquires an inter-channel level difference —
+    the classic level-based stereo widener — while the two branches stay a
+    single mixed stream that can still be processed serially after the merge.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send driving the voice.
+    - type: osc
+      role: Voice oscillator; the centered source that is split.
+    - type: split
+      role: Divides the voice into the pure left branch (outL) and pure
+        right branch (outR).
+    - type: gain
+      role: Left-branch trim; scales the side that carries only L.
+    - type: gain
+      role: Right-branch trim; scales the side that carries only R.
+    - type: merge
+      role: Recombines the two processed side branches into one stereo
+        frame (in1 contributes L, in2 contributes R).
+    - type: output
+      role: Master summing endpoint; one input for the whole stereo frame.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the voice (frequency).
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the played note (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Centered signal into the splitter input (signal).
+    - node_role: Splitter
+      port: in
+      role: Receives the voice signal (signal).
+    - node_role: Splitter
+      port: outL
+      role: Left-only branch (in.l, 0) into the left trim (signal).
+    - node_role: Splitter
+      port: outR
+      role: Right-only branch (0, in.r) into the right trim (signal).
+    - node_role: Left trim
+      port: in
+      role: Receives the left branch (signal).
+    - node_role: Left trim
+      port: out
+      role: Scaled left branch into merger in1 (signal).
+    - node_role: Right trim
+      port: in
+      role: Receives the right branch (signal).
+    - node_role: Right trim
+      port: out
+      role: Scaled right branch into merger in2 (signal).
+    - node_role: Merger
+      port: in1
+      role: Contributes the left channel of the output (signal).
+    - node_role: Merger
+      port: in2
+      role: Contributes the right channel of the output (signal).
+    - node_role: Merger
+      port: out
+      role: Combined stereo frame towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the whole merged stereo frame (signal).
+
+  topology:
+    description: |
+      note.out -> osc.note_in (frequency).  osc.out -> split.in (signal).
+      split.outL -> left trim.in, split.outR -> right trim.in (signal).
+      left trim.out -> merge.in1, right trim.out -> merge.in2 (signal).
+      merge.out -> output.in1 (signal).  Each branch carries exactly one
+      channel, so the trims act per side; nothing crosses channels between
+      the splitter and the merger.
+
+  parameters:
+    - name: left trim
+      role: |
+        Gain factor 0..10 on the left branch.  1.0 keeps the side at full
+        level; 0 mutes the left side entirely.
+    - name: right trim
+      role: |
+        Gain factor 0..10 on the right branch.  Balancing against the left
+        trim is the core width control of the technique.
+    - name: voice waveform
+      role: |
+        Shared waveform of the source; branches differ only in level, so
+        the timbre stays identical on both channels.
+
+  relationships:
+    - name: balance-position
+      description: |
+        With trimL == trimR the merger returns the exact centered input
+        frame (bit-identical left and right).  The ratio trimL / trimR
+        places the phantom source along the left-right axis; equal
+        products at different ratios keep roughly constant perceived level
+        only when the product stays in the loudness sweet spot, so tune the
+        ratio first and rescale both trims together.
+    - name: one-wire-stereo
+      description: |
+        Unlike fanning two strands to two separate output inputs, the
+        merged frame is a single signal that can still run through one
+        further serial stage (another gain, a filter, a delay) before the
+        output without splitting the stereo pair again.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8, split <= 4, gain <= 8,
+        merge <= 4, output = 1.  The pattern costs one splitter, two gains
+        and one merger.
+
+  perceptual_effects:
+    - level-difference stereo widening of a mono voice
+    - soft phantom-source shift off center at moderate ratios
+    - hard side focus when one trim goes to zero

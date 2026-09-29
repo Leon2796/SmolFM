@@ -17,6 +17,8 @@
 #include "OscillatorProcessor.h"
 #include "FMModulationProcessor.h"
 #include "AdsrProcessor.h"
+#include "SplitterProcessor.h"
+#include "MergerProcessor.h"
 #include "SignalGraph.h"
 
 namespace
@@ -91,8 +93,8 @@ namespace
         float sum = 0.0f;
         for (int i = 0; i < 1000; ++i)
         {
-            float sample = graph.processSample();
-            float absSample = std::abs (sample);
+            const smolfm::StereoFrame frame = graph.processSample();
+            const float absSample = std::max (std::abs (frame.l), std::abs (frame.r));
             peak = std::max (peak, absSample);
             sum += absSample;
         }
@@ -148,8 +150,8 @@ namespace
         float peak = 0.0f;
         for (int i = 0; i < 1000; ++i)
         {
-            const float sample = graph.processSample();
-            peak = std::max (peak, std::abs (sample));
+            const smolfm::StereoFrame frame = graph.processSample();
+            peak = std::max (peak, std::max (std::abs (frame.l), std::abs (frame.r)));
         }
 
         if (peak > 0.0001f)
@@ -228,7 +230,7 @@ namespace
         // (1) Both amounts at 0: 440 Hz must pass through both stages unchanged.
         graph.processSample();
         graph.processSample();
-        const float passthroughHz = fmBPtr->getOutput().getSample();
+        const float passthroughHz = fmBPtr->getOutput().getSample().l;
         if (std::abs (passthroughHz - 440.0f) > 0.001f)
             return { false, "Idle FM chain is not transparent (got " + std::to_string (passthroughHz) + " Hz)" };
 
@@ -241,7 +243,7 @@ namespace
         for (int i = 0; i < 48000; ++i)
         {
             graph.processSample();
-            const float hz = fmBPtr->getOutput().getSample();
+            const float hz = fmBPtr->getOutput().getSample().l;
             minHz = std::min (minHz, hz);
             maxHz = std::max (maxHz, hz);
         }
@@ -252,6 +254,95 @@ namespace
 
         return { true, "Chained FM: transparent when idle, deviation "
                      + std::to_string (minHz) + ".." + std::to_string (maxHz) + " Hz when active" };
+    }
+
+    TestResult runStereoSplitMergeTest()
+    {
+        smolfm::SignalGraph graph;
+
+        std::atomic<float> waveform { 0.0f };   // sine
+
+        auto note = std::make_unique<smolfm::NoteProcessor>();
+        smolfm::NoteProcessor* notePtr = note.get();
+
+        auto osc = std::make_unique<smolfm::OscillatorProcessor> (
+            &waveform, nullptr, nullptr, nullptr);
+        smolfm::OscillatorProcessor* oscPtr = osc.get();
+
+        auto splitter = std::make_unique<smolfm::SplitterProcessor>();
+        smolfm::SplitterProcessor* splitPtr = splitter.get();
+
+        auto merger = std::make_unique<smolfm::MergerProcessor>();
+        smolfm::MergerProcessor* mergePtr = merger.get();
+
+        // Chain: note -> osc -> splitter -> (outL, outR) -> merger.
+        if (! oscPtr->getNoteInput().connect (notePtr->getOutput()))
+            return { false, "Failed to connect note to osc note_in" };
+
+        if (! splitPtr->getInput().connect (oscPtr->getOutput()))
+            return { false, "Failed to connect osc to splitter in" };
+
+        if (! mergePtr->getLeftInput().connect (splitPtr->getLeftOutput()))
+            return { false, "Failed to connect splitter outL to merger in1" };
+
+        if (! mergePtr->getRightInput().connect (splitPtr->getRightOutput()))
+            return { false, "Failed to connect splitter outR to merger in2" };
+
+        graph.addProcessor (std::move (note));
+        graph.addProcessor (std::move (osc));
+        graph.addProcessor (std::move (splitter));
+        graph.addProcessor (std::move (merger));
+
+        graph.prepare (48000.0);
+        notePtr->setMidiNoteNumber (69);   // A4 = 440 Hz
+        graph.startNote();
+
+        for (int i = 0; i < 1000; ++i)
+        {
+            graph.processSample();
+
+            const smolfm::StereoFrame oscFrame = oscPtr->getOutput().getSample();
+            const smolfm::StereoFrame left  = splitPtr->getLeftOutput().getSample();
+            const smolfm::StereoFrame right = splitPtr->getRightOutput().getSample();
+            const smolfm::StereoFrame merged = mergePtr->getOutput().getSample();
+
+            // Splitter: each branch carries exactly one side, the other is 0.
+            if (left.l != oscFrame.l || left.r != 0.0f)
+                return { false, "outL must be (osc.l, 0) — got ("
+                              + std::to_string (left.l) + ", " + std::to_string (left.r) + ")" };
+
+            if (right.r != oscFrame.r || right.l != 0.0f)
+                return { false, "outR must be (0, osc.r) — got ("
+                              + std::to_string (right.l) + ", " + std::to_string (right.r) + ")" };
+
+            // Merger: exact recombination of the two side branches.
+            if (merged.l != oscFrame.l || merged.r != oscFrame.r)
+                return { false, "merger must reconstruct (osc.l, osc.r) — got ("
+                              + std::to_string (merged.l) + ", " + std::to_string (merged.r) + ")" };
+        }
+
+        // Sanity: the source actually produced audio (test is not vacuous).
+        float peak = 0.0f;
+        for (int i = 0; i < 1000; ++i)
+        {
+            graph.processSample();
+            peak = std::max (peak, std::abs (oscPtr->getOutput().getSample().l));
+        }
+
+        if (peak < 0.001f)
+            return { false, "Source was silent; split/merge checks are vacuous" };
+
+        // Side hints: display-only metadata, set by the processors.
+        if (splitPtr->getLeftOutput().getChannelSide()  != smolfm::ChannelSide::left
+         || splitPtr->getRightOutput().getChannelSide() != smolfm::ChannelSide::right)
+            return { false, "Splitter ports must hint left/right" };
+
+        if (mergePtr->getLeftInput().getChannelSide()  != smolfm::ChannelSide::left
+         || mergePtr->getRightInput().getChannelSide() != smolfm::ChannelSide::right)
+            return { false, "Merger ports must hint left/right" };
+
+        return { true, "Splitter emits pure sides, merger recombines exactly (peak "
+                     + std::to_string (peak) + ")" };
     }
 }
 
@@ -270,6 +361,7 @@ int main()
     runTest ("Note-driven graph", runNoteDrivenGraphTest);
     runTest ("Hz-only graph", runHzOnlyGraphTest);
     runTest ("Chained FM stages", runChainedFmTest);
+    runTest ("Stereo split & merge", runStereoSplitMergeTest);
 
     return failures;
 }

@@ -31,18 +31,21 @@ void AmProcessor::startNote()
     // Nothing to reset.
 }
 
-float AmProcessor::processSample()
+StereoFrame AmProcessor::processSample()
 {
     const float depth = amount != nullptr ? amount->load() : 0.0f;
-    const float mod   = modulatorIn.getSample();   // expected in [-1, 1]
-    const float car   = carrierIn  .getSample();
+    const StereoFrame mod = modulatorIn.getSample();   // expected in [-1, 1]
+    const StereoFrame car = carrierIn.getSample();
 
     // Bias modulator into a positive-only gain factor:
     //   depth = 0   → gain = 1 (dry)
     //   depth = 1   → gain in [0, 2]
-    const float gain = 1.0f - depth + depth * (mod * 0.5f + 0.5f) * 2.0f;
+    // Per channel: a stereo modulator times a mono carrier yields stereo AM
+    // for free; a centered modulator reproduces the previous mono behaviour.
+    const float gainL = 1.0f - depth + depth * (mod.l * 0.5f + 0.5f) * 2.0f;
+    const float gainR = 1.0f - depth + depth * (mod.r * 0.5f + 0.5f) * 2.0f;
 
-    const float result = car * gain;
+    const StereoFrame result { car.l * gainL, car.r * gainR };
     output.setSample (result);
     return result;
 }

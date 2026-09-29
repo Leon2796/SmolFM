@@ -6,6 +6,12 @@ entgegen und einen Modulator als Audiosignal, und gibt die momentan modulierte
 Frequenz wieder in Hertz aus. Zustandslos; die Phasenintegration liegt im
 Oszillator am Ende der Kette.
 
+Stereo-Kompatibilität: seit der impliziten Stereo-Umstellung trägt der
+Signaltyp ein L/R-Paar pro Sample. Der Modulatoreingang kollabiert das Paar
+über den Mittelwert $(L+R)\cdot 0{,}5$ zu genau einem Skalar (siehe
+Abschnitt 3) — zentrierte Modulatoren behalten dadurch exakt die bisherige
+Modulationstiefe.
+
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
 | Eigenschaft | Wert | Symbol / Typ | Datei |
@@ -33,7 +39,7 @@ Oszillator am Ende der Kette.
 | $n$ | Index des gerade berechneten Samples | — |
 | $f_{in,n}$ | eingehende Carrier-Frequenz im Sample $n$ | Hz |
 | $a$ | FM Amount aus dem Slider | — |
-| $m_n$ | Modulatorsample am Eingang `modulator_in` im Sample $n$ | normalerweise -1 bis 1 |
+| $m_n$ | Modulator-Stereopaar $(L_n, R_n)$ am Eingang `modulator_in` im Sample $n$ | normalerweise -1 bis 1 |
 | $c$ | Modulator ist verbunden | bool |
 | $\widetilde{m}_n$ | wirksames Modulatorsample im Sample $n$ | normalerweise -1 bis 1 |
 | $f_{out,n}$ | momentane Ausgangsfrequenz im Sample $n$ | Hz |
@@ -49,7 +55,7 @@ Dabei ist $\widetilde{m}_n$ das wirksame Modulatorsample:
 $$
 \widetilde{m}_n =
 \begin{cases}
-m_n, & a > 0 \land c \\
+\dfrac{L_n + R_n}{2}, & a > 0 \land c \\
 0, & \neg(a > 0 \land c)
 \end{cases}
 $$
@@ -62,8 +68,9 @@ Kurz erklärt:
 
 - $f_{in,n}$ ist die Frequenz, die vom vorherigen Knoten kommt, zum Beispiel
   440 Hz von einer gespielten Note.
-- $m_n$ ist der aktuelle Ausschlag des angeschlossenen Audiosignals. Bei einer
-  Sinuswelle bewegt er sich normalerweise zwischen $-1$ und $1$.
+- $m_n$ ist das Stereopaar $(L_n, R_n)$ des angeschlossenen Audiosignals; das
+  wirksame Modulatorsample ist sein Mittelwert. Bei einer Sinuswelle bewegt er
+  sich normalerweise zwischen $-1$ und $1$.
 - $a \widetilde{m}_n$ bestimmt die relative Abweichung. Der Term
   $1 + a \widetilde{m}_n$ ist der Faktor, mit dem $f_{in,n}$ multipliziert wird.
 - Bei $a = 0$ oder wenn $c$ falsch ist, setzt der Prozessor
@@ -86,6 +93,17 @@ sein Phasen-Increment und integriert sie über die Zeit. Das ist
 Frequenzmodulation in diesem Signalfluss, nicht ein direkter Eingriff dieser
 Stufe in die Phase.
 
+**Stereo-Kompatibilität (Kollaps-Regel)**: Seit der Stereo-Umstellung ist der
+Signaltyp ein L/R-Paar, aber der Oszillator besitzt eine einzige Phase — die
+Stufe muss daher aus dem Paar genau einen Skalar machen. Die Regel ist der
+**Mittelwert** $(L_n + R_n) \cdot 0{,}5$: Ein zentriertes Modulatorsignal
+(alles, was vor Stereo existierte) ergibt exakt das bisherige
+Modulatorsample — gleicher Klang, gleiche Modulationstiefe. Eine einfache
+Summe $L_n + R_n$ würde die Tiefe bei zentrierten Inhalten verdoppeln und ist
+deshalb bewusst nicht verwendet. Seitlich getrennte Signale (z. B. über einen
+künftigen Splitter) und hart gepannte Modulatoren liefern entsprechend ihre
+gemittelte Tiefe.
+
 **Stabilität bei nicht-sinusförmigen Wellenformen**: Der Oszillator begrenzt
 die Momentanfrequenz auf den Bereich [0, Nyquist] (siehe
 [OscillatorProcessor.md](OscillatorProcessor.md)).  Bei Sinus-Carriern sind
@@ -107,8 +125,8 @@ $$
 
 | Formales Symbol | C++-Symbol / Aufruf | Datei | Berechnungsschritt |
 |---|---|---|---|
-| $f_{in}$ | `freqInput.getSample()` → `carrierHz` | [FMModulationProcessor.cpp](../../src/processors/FMModulationProcessor.cpp) | Port lesen; Default 0 Hz wenn unverbunden (`setDefaultValue(0.0f)`) |
+| $f_{in}$ | `freqInput.getSample().l` → `carrierHz` | [FMModulationProcessor.cpp](../../src/processors/FMModulationProcessor.cpp) | Port lesen (zentriertes Paar, `.l` = Hz); Default 0 Hz wenn unverbunden (`setDefaultValue(0.0f)`) |
 | $a$ | `fmAmount->load()` → `amount` | [FMModulationProcessor.cpp](../../src/processors/FMModulationProcessor.cpp) | atomarer Read des APVTS-Werts, pro Sample |
 | $c$ | `modulatorInput.isConnected()` | [FMModulationProcessor.cpp](../../src/processors/FMModulationProcessor.cpp) | atomarer Pointer-Check (`std::atomic<OutputPort*>`) |
-| $\tilde{m}$ | `modulator` (lokal, ternär) | [FMModulationProcessor.cpp](../../src/processors/FMModulationProcessor.cpp) | `modulatorInput.getSample()` nur wenn `amount > 0 && isConnected()`, sonst `0.0f` |
-| $f_{out}$ | `instantHz` → `output.setSample(instantHz)` | [FMModulationProcessor.cpp](../../src/processors/FMModulationProcessor.cpp) | `carrierHz * (1.0f + amount * modulator)`; float-Multiplikation |
+| $\tilde{m}$ | `modulator` (lokal) | [FMModulationProcessor.cpp](../../src/processors/FMModulationProcessor.cpp) | Paar lesen nur wenn `amount > 0 && isConnected()` (sonst `{0, 0}`), dann Mean-Collapse `0.5f * (pair.l + pair.r)` — dient der Stereokompatibilität |
+| $f_{out}$ | `instantHz` → `output.setSample (StereoFrame::centered (instantHz))` | [FMModulationProcessor.cpp](../../src/processors/FMModulationProcessor.cpp) | `carrierHz * (1.0f + amount * modulator)`; Frequenz als zentriertes Paar in den Port |

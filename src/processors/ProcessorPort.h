@@ -1,11 +1,13 @@
 /*
     ProcessorPort.h defines the connection points between processors.
 
-    An OutputPort belongs to a processor and provides one sample per tick.
-    An InputPort points (atomically) to exactly one OutputPort and reads its
-    sample, or a user-supplied default if no source is connected.
+    An OutputPort belongs to a processor and provides one StereoFrame per
+    tick.  An InputPort points (atomically) to exactly one OutputPort and
+    reads its frame, or a user-supplied default if no source is connected.
 
     Ports are typed so that invalid connections can be rejected at setup time.
+    Frequency ports transport their scalar Hertz value as a centered frame;
+    consumers read the .l channel.
 */
 
 #pragma once
@@ -19,7 +21,7 @@ namespace smolfm
 {
 
 /**
-    A source of one sample per tick.
+    A source of one StereoFrame per tick.
 
     Processors expose OutputPorts so that downstream nodes can read from them.
 */
@@ -32,24 +34,24 @@ public:
     }
 
     /**
-        Read the current sample from this port.
+        Read the current frame from this port.
 
         The owning processor must have produced its output for this tick before
         this is called.
     */
-    float getSample() const noexcept
+    StereoFrame getSample() const noexcept
     {
         return currentSample;
     }
 
     /**
-        Update the cached sample for the current tick.
+        Update the cached frame for the current tick.
 
         Called by the owning processor after processSample().
     */
-    void setSample (float sample) noexcept
+    void setSample (StereoFrame frame) noexcept
     {
-        currentSample = sample;
+        currentSample = frame;
     }
 
     /**
@@ -58,6 +60,20 @@ public:
     PortType getType() const noexcept
     {
         return type;
+    }
+
+    /**
+        Display-only stereo side hint (see ChannelSide).  Does not affect the
+        audio path or connect(); the UI reads it to label a wire as L/R.
+    */
+    ChannelSide getChannelSide() const noexcept
+    {
+        return channelSide;
+    }
+
+    void setChannelSide (ChannelSide side) noexcept
+    {
+        channelSide = side;
     }
 
     /**
@@ -71,7 +87,8 @@ public:
 private:
     PortType type;
     Processor& owner;
-    float currentSample = 0.0f;
+    StereoFrame currentSample { 0.0f, 0.0f };
+    ChannelSide channelSide = ChannelSide::none;
 };
 
 /**
@@ -79,7 +96,7 @@ private:
 
     The connection pointer is atomic so the UI thread can rewire the graph
     without stopping audio.  Audio-thread consumers only need the relaxed
-    "current source + its latest sample" pair; with one writer (the message
+    "current source + its latest frame" pair; with one writer (the message
     thread), release/acquire on the pointer is sufficient.
 */
 class InputPort
@@ -117,20 +134,21 @@ public:
     /**
         Default value used when no output is connected (or after disconnect).
 
-        Signal inputs default to 0.0f, frequency inputs to 440.0f.
+        The value applies to both channels (mono default): signal inputs
+        default to 0, frequency inputs to 440.0 Hz.
     */
     void setDefaultValue (float value) noexcept
     {
-        defaultValue = value;
+        defaultValue = StereoFrame::centered (value);
     }
 
     /**
-        Read the current sample from the connected output.
+        Read the current frame from the connected output.
 
         Returns the default value if nothing is connected.  Used by processor
         code inside processSample().
     */
-    float getSample() const noexcept
+    StereoFrame getSample() const noexcept
     {
         OutputPort* src = connection.load (std::memory_order_acquire);
         return src != nullptr ? src->getSample() : defaultValue;
@@ -162,10 +180,25 @@ public:
         return type;
     }
 
+    /**
+        Display-only stereo side hint (see ChannelSide).  Does not affect the
+        audio path or connect(); the UI reads it to label a wire as L/R.
+    */
+    ChannelSide getChannelSide() const noexcept
+    {
+        return channelSide;
+    }
+
+    void setChannelSide (ChannelSide side) noexcept
+    {
+        channelSide = side;
+    }
+
 private:
     PortType type;
     std::atomic<OutputPort*> connection { nullptr };
-    float defaultValue = 0.0f;
+    StereoFrame defaultValue { 0.0f, 0.0f };
+    ChannelSide channelSide = ChannelSide::none;
 };
 
 } // namespace smolfm

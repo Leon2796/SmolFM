@@ -1,0 +1,109 @@
+technique:
+  name: parallel-echo-blend
+
+  idea: |
+    One wire from the voice fans out into two parallel strands: a dry strand
+    through a gain trim and an echo strand through a delay and its own trim,
+    both landing on separate output inputs.  The trims set the balance
+    independently, so the voice stays forward while the echo layer breathes
+    behind it - a spatial blend built from the mix, not from the delay mix
+    knob alone.
+
+  involved_nodes:
+    - type: osc
+      role: Voice oscillator in pitch mode; the shared source of both
+        strands.
+    - type: delay
+      role: Delay stage in free time mode; the echo layer.
+    - type: gain
+      role: Dry trim; keeps the voice forward.
+    - type: gain
+      role: Echo trim; sets the echo layer width.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the played note frequency (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Voice signal fanned out to both strands (signal).
+    - node_role: Delay stage
+      port: in
+      role: Receives the echo strand source (signal).
+    - node_role: Delay stage
+      port: out
+      role: Echo signal into the echo trim (signal).
+    - node_role: Dry trim
+      port: in
+      role: Receives the dry strand (signal).
+    - node_role: Dry trim
+      port: out
+      role: Trimmed dry voice towards the output (signal).
+    - node_role: Echo trim
+      port: in
+      role: Receives the echo strand (signal).
+    - node_role: Echo trim
+      port: out
+      role: Trimmed echo layer towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: Two separate mix inputs, one per strand (signal).
+
+  topology:
+    description: |
+      note -> osc.note_in (frequency).  osc.out -> dry trim.in (signal)
+      and osc.out -> delay.in (signal); one wire fans out to both strands.
+      delay.out -> echo trim.in (signal).  dry trim.out -> output.in1,
+      echo trim.out -> output.in2 (signal).  The strands never touch: the
+      dry path bypasses the delay entirely.
+
+  parameters:
+    - name: delay time
+      role: |
+        1..2000 ms, sync off.  80..400 ms reads as a spatial echo; short
+        times thicken, long times detach the layer.
+    - name: delay feedback
+      role: |
+        0..1.  0.2..0.5 keeps the layer sparse, higher values stack the
+        repeats into a wash.
+    - name: delay mix
+      role: |
+        0..1.  Low mixes keep the echo layer soft behind the trims.
+    - name: dry trim
+      role: |
+        Gain factor, 0..10.  The forward presence of the voice.
+    - name: echo trim
+      role: |
+        Gain factor, 0..10.  The spatial width of the echo layer;
+        balancing the two trims is the core control of the technique.
+
+  relationships:
+    - name: parallel-fan-out
+      description: |
+        tempo-synced-delay-tail runs a single serial voice-to-delay-to-
+        output path with sync on and no separate dry strand; this
+        technique fans the voice out, keeps the echo free of the beat and
+        balances the two strands with independent trims.
+    - name: single-delay-sibling
+      description: |
+        double-delay-space cascades two delay stages for one space;
+        here a single delay forms the echo layer and the depth comes from
+        the parallel balance, not from the cascade.
+    - name: crossover-sibling
+      description: |
+        parallel-band-split fans one voice into complementary frequency
+        bands for tone shaping; the fan-out here splits dry and echo copies
+        of the same full-band signal, so the balance is spatial, not
+        spectral.
+    - name: budget
+      description: |
+        Registry budgets: osc <= 8, delay <= 8, gain <= 8, output = 1.
+        More echo layers extend the pattern with further delays and
+        mix inputs.
+
+  perceptual_effects:
+    - voice clearly in front, echo layer breathing behind
+    - spatial depth controlled by the strand balance
+    - detached echo wash at long times and higher feedback

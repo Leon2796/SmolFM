@@ -1,0 +1,98 @@
+technique:
+  name: tuned-noise-percussion
+
+  idea: |
+    A noise oscillator runs through a band-pass filter whose static cutoff
+    tunes the drum head, and the filter output is shaped by a hard ADSR
+    envelope: near-zero attack, short decay, zero sustain.  The filter sits
+    before the envelope, so the resonance ring of the band pass is the
+    sounding body and the envelope only gates it - every keypress fires a
+    synthetic membrane hit pitched by the static cutoff, not by the note.
+
+  involved_nodes:
+    - type: osc
+      role: Noise oscillator; the excitation source of the drum.
+    - type: filter
+      role: Band-pass stage; its static cutoff is the drum pitch, its
+        resonance is the membrane ring.
+    - type: adsr
+      role: Percussion envelope; gates the filtered ring with a fast hit.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Noise oscillator
+      port: out
+      role: Noise excitation into the filter (signal).
+    - node_role: Band-pass filter
+      port: in
+      role: Receives the noise excitation (signal).
+    - node_role: Band-pass filter
+      port: out
+      role: Tuned ring into the envelope (signal).
+    - node_role: Percussion envelope
+      port: in
+      role: Receives the tuned ring (signal).
+    - node_role: Percussion envelope
+      port: out
+      role: Gated hit towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the drum voice (signal).
+
+  topology:
+    description: |
+      osc (noise) -> filter.in (signal).  filter.out -> adsr.in (signal).
+      adsr.out -> output (signal).  The note events drive the envelope
+      internally; the oscillator carries no note connection, the drum
+      pitch lives in the static filter cutoff.
+
+  parameters:
+    - name: filter mode and cutoff
+      role: |
+        bp with 80..2000 Hz tunes the body: low centres give toms and
+        membranes, high centres give cowbells and claves.
+    - name: filter resonance
+      role: |
+        0..1.  0.5..0.9 rings the membrane audibly above 0.8 the drum
+        howls on a narrow head.
+    - name: adsr attack and decay
+      role: |
+        0.001..5 s.  0.001..0.01 s attack snaps the hit on, 0.05..0.4 s
+        decay sets the drum length.
+    - name: adsr sustain and release
+      role: |
+        Sustain 0 ends the body with the decay; release 0.01..0.1 s
+        catches the final tail without a click.
+    - name: oscillator waveform
+      role: |
+        Noise gives the classic membrane excitation; a pitched waveform
+        turns the same chain into a tuned electronic drum voice.
+
+  relationships:
+    - name: filter-before-envelope
+      description: |
+        subtractive-voice-chain renders first and filters after the
+        envelope; here the filter is tuned first and the envelope gates
+        the resulting ring, so the resonance tail is cut by the decay, not
+        filtered away.
+    - name: drum-family
+      description: |
+        comb-resonator-delay resonates noise with a comb; this technique
+        resonates it with a band pass and gates the ring percussively.
+    - name: shaper-sibling
+      description: |
+        noise-drive-percussion forms the spectrum with a waveshaper drive
+        on the noise before the envelope; this technique forms it with a
+        resonant band pass whose static cutoff tunes the body, so the drum
+        pitch is a filter frequency, not a drive curve.
+    - name: budget
+      description: |
+        Registry budgets: osc <= 8, filter <= 8, adsr <= 8, output = 1.
+        Several tuned drums can share one output through separate mix
+        inputs.
+
+  perceptual_effects:
+    - synthetic toms, cowbells and claves keyed by the static cutoff
+    - snare-like noise bursts with short decay
+    - key-tuned drum kits from one chain

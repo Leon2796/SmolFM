@@ -1,0 +1,117 @@
+technique:
+  name: stereo-micropitch-spread
+
+  idea: |
+    The played note fans out into two frequency scalers tuned a fraction of
+    a percent apart, each driving its own carrier oscillator; the merger
+    assigns the slightly detuned carriers to opposite sides of one stereo
+    frame.  The channels drift in and out of phase over seconds, producing
+    a wide, vocal pitch-drift image — the manual two-voice form of the
+    MicroPitch effect, built without delay lines and without modulators.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; feeds both scaler branches.
+    - type: fscale
+      role: Left scaler; factor slightly above 1.
+    - type: fscale
+      role: Right scaler; factor slightly below 1.
+    - type: osc
+      role: Left carrier in pitch mode.
+    - type: osc
+      role: Right carrier in pitch mode.
+    - type: merge
+      role: Assigns the detuned carriers to the left and right side of one
+        stereo frame.
+    - type: output
+      role: Master endpoint for the merged frame.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into both scalers (frequency).
+    - node_role: Left scaler
+      port: freq_in
+      role: Receives the played note (frequency).
+    - node_role: Left scaler
+      port: out
+      role: Sharpened frequency into the left carrier (frequency).
+    - node_role: Right scaler
+      port: freq_in
+      role: Receives the played note (frequency).
+    - node_role: Right scaler
+      port: out
+      role: Flattened frequency into the right carrier (frequency).
+    - node_role: Left carrier
+      port: note_in
+      role: Renders the left waveform from the sharpened note (frequency).
+    - node_role: Left carrier
+      port: out
+      role: Left carrier signal into merger in1 (signal).
+    - node_role: Right carrier
+      port: note_in
+      role: Renders the right waveform from the flattened note (frequency).
+    - node_role: Right carrier
+      port: out
+      role: Right carrier signal into merger in2 (signal).
+    - node_role: Merger
+      port: in1
+      role: Contributes the sharpened left channel (signal).
+    - node_role: Merger
+      port: in2
+      role: Contributes the flattened right channel (signal).
+    - node_role: Merger
+      port: out
+      role: Combined drifting stereo frame towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the merged frame (signal).
+
+  topology:
+    description: |
+      note.out -> fscale-left.freq_in and fscale-right.freq_in (frequency).
+      fscale-left.out -> osc-left.note_in (frequency), fscale-right.out ->
+      osc-right.note_in (frequency).  osc-left.out -> merge.in1 (signal),
+      osc-right.out -> merge.in2 (signal).  merge.out -> output (signal).
+      No splitter is needed: the merger alone assigns two independent
+      carriers to their sides.  Processors after the merger act on both
+      sides jointly.
+
+  parameters:
+    - name: left factor
+      role: |
+        0..10, e.g. 1.0015.  The sharpening offset above the played note.
+    - name: right factor
+      role: |
+        0..10, e.g. 0.9985.  The flattening offset below the played note;
+        the total detune is the sum of both offsets.
+    - name: carrier waveforms
+      role: |
+        Identical waveforms drift in clean unison; different waveforms add
+        a timbre difference to the pitch drift.
+    - name: master level
+      role: |
+        0..1.  Two summed carriers raise the level; keep headroom for the
+        in-phase moments of the drift.
+
+  relationships:
+    - name: drift-rate
+      description: |
+        The channels pass through phase alignment at the frequency
+        difference f * (epsilon-left + epsilon-right); at 220 Hz and
+        +-0.15 % this is about 0.7 Hz, which reads as slow drift rather
+        than warble.
+    - name: cross-channel-drift
+      description: |
+        Inside the graph the carriers never sum, so no comb filter appears
+        on either side.  A mono downmix does beat at the drift rate, so
+        keep the offsets small when mono compatibility matters.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, fscale <= 8 (two used), osc <= 8 (two
+        used), merge <= 4, output = 1.
+
+  perceptual_effects:
+    - wide, slowly breathing pitch-drift image from a mono note
+    - warm, vocal chorus-like width without modulated delay lines
+    - gentle mono-safe beating when the offsets stay small

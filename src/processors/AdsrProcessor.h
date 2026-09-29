@@ -2,7 +2,8 @@
     AdsrProcessor applies an ADSR envelope to a signal.
 
     It has one signal input and one signal output.  The output is the input
-    sample multiplied by the current envelope value and the note velocity.
+    frame multiplied per channel by the current envelope value (the envelope
+    itself is one note-wide state, identical for L and R).
 */
 
 #pragma once
@@ -37,12 +38,22 @@ public:
 
     void prepare (double newSampleRate) override;
     void startNote() override;
-    float processSample() override;
+    StereoFrame processSample() override;
 
     /**
         Tell the envelope to enter the release phase.
     */
     void noteOff();
+
+    /**
+        Silences the envelope immediately (back to idle, value 0).
+
+        applyConnectionPatch calls this so a new patch never inherits a stuck
+        sustain: if a note-off was lost (or a held sustain pedal defers it
+        indefinitely), the previous patch's ADSR would otherwise keep sounding
+        at its sustain level through the next instrument.
+    */
+    void reset() noexcept;
 
     /**
         Return true if the envelope is still active.

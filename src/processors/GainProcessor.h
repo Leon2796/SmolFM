@@ -5,7 +5,7 @@
         - in  (signal): incoming audio.
         - out (signal): the scaled audio.
 
-    Per sample:
+    Per sample (per channel):
 
         y_n = gain * x_n
 
@@ -39,7 +39,7 @@ public:
 
     void prepare (double newSampleRate) override;
     void startNote() override;
-    float processSample() override;
+    StereoFrame processSample() override;
 
     InputPort& getInput() noexcept   { return input; }
     OutputPort& getOutput() noexcept { return output; }

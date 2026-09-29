@@ -1,0 +1,121 @@
+technique:
+  name: stereo-complementary-filter-pan
+
+  idea: |
+    The splitter divides one voice into its two side branches; the left
+    branch runs through a low-pass, the right branch through a high-pass,
+    and the merger recombines them into one stereo frame on a single output
+    input.  With both filters tracking the same cutoff, sweeping the cutoff
+    sweeps spectral energy from one channel to the other — a filter sweep
+    that reads as a panning motion without any pan control.  Unbalanced
+    resonances turn the same pattern into a stereo formant split.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send driving the voice.
+    - type: osc
+      role: Voice oscillator; the centered source that is split.
+    - type: split
+      role: Produces the pure left branch and the pure right branch.
+    - type: filter
+      role: Left-side low-pass; only its output's L channel survives.
+    - type: filter
+      role: Right-side high-pass; only its output's R passes the merger.
+    - type: merge
+      role: Combines filtered-left and filtered-right into one stereo frame.
+    - type: output
+      role: Master endpoint for the merged frame.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the voice (frequency).
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the played note (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Centered signal into the splitter (signal).
+    - node_role: Splitter
+      port: in
+      role: Receives the voice signal (signal).
+    - node_role: Splitter
+      port: outL
+      role: Left-only branch into the left filter (signal).
+    - node_role: Splitter
+      port: outR
+      role: Right-only branch into the right filter (signal).
+    - node_role: Left-side filter
+      port: in
+      role: Receives the left branch (signal).
+    - node_role: Left-side filter
+      port: out
+      role: Filtered left branch into merger in1 (signal).
+    - node_role: Right-side filter
+      port: in
+      role: Receives the right branch (signal).
+    - node_role: Right-side filter
+      port: out
+      role: Filtered right branch into merger in2 (signal).
+    - node_role: Merger
+      port: in1
+      role: Contributes the left channel (signal).
+    - node_role: Merger
+      port: in2
+      role: Contributes the right channel (signal).
+    - node_role: Merger
+      port: out
+      role: Combined stereo frame towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the merged stereo frame (signal).
+
+  topology:
+    description: |
+      note.out -> osc.note_in (frequency).  osc.out -> split.in (signal).
+      split.outL -> filter-left.in (signal), split.outR ->
+      filter-right.in (signal).  filter-left.out -> merge.in1,
+      filter-right.out -> merge.in2 (signal).  merge.out -> output
+      (signal).  The filters never cross channels: each processes one pure
+      side.
+
+  parameters:
+    - name: left cutoff
+      role: |
+        lp-mode cutoff 20..20000 Hz of the left branch.  High values keep
+        the left channel bright, low values dark only the left side.
+    - name: right cutoff
+      role: |
+        hp-mode cutoff 20..20000 Hz of the right branch.  Tracking the left
+        cutoff keeps the pattern complementary; diverging values decorrelate
+        the channels further.
+    - name: resonances
+      role: |
+        0..1 per filter.  Equal resonances give a symmetric sweep; a
+        resonant left against a dry right builds a stereo formant pair.
+    - name: filter modes
+      role: |
+        lp on the left and hp on the right is the complementary pair; lp/lp
+        or bp/bp variants pan band-limited colours instead.
+
+  relationships:
+    - name: sweep-as-pan
+      description: |
+        With complementary modes and a shared cutoff, a rising cutoff moves
+        low energy out of the left channel and low-passed warmth out of the
+        right channel: the spectral centre of gravity travels from left to
+        right without a panner.
+    - name: balance-rule
+      description: |
+        At identical cutoffs lp + hp approximately reconstitutes the source
+        energy, so the merged frame stays close to full width and full
+        level; pulling one cutoff away tilts the energy distribution.
+    - name: budget
+      description: |
+        Registry budgets: osc <= 8, filter <= 8, split <= 4, merge <= 4,
+        output = 1.  Two filters and one splitter/merger pair per instance.
+
+  perceptual_effects:
+    - cutoff sweep perceived as a stereo pan move without a panner
+    - asymmetric warmth vs. brightness across channels
+    - resonant stereo formants when the two filters diverge

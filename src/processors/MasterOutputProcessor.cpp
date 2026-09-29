@@ -28,16 +28,23 @@ void MasterOutputProcessor::startNote()
     peakLevel.store (0.0f, std::memory_order_release);
 }
 
-float MasterOutputProcessor::processSample()
+StereoFrame MasterOutputProcessor::processSample()
 {
-    float sum = 0.0f;
-    for (auto& in : inputs)
-        sum += in.getSample();
+    StereoFrame sum;
 
-    const float out = sum * level->load();
+    for (auto& in : inputs)
+    {
+        const StereoFrame inFrame = in.getSample();
+        sum.l += inFrame.l;
+        sum.r += inFrame.r;
+    }
+
+    const float gainValue = level->load();
+    const StereoFrame out { sum.l * gainValue, sum.r * gainValue };
 
     // Peak follower: instant attack, ~50 ms release at typical block rates.
-    const float magnitude = std::abs (out);
+    // The louder channel drives the UI meter.
+    const float magnitude = juce::jmax (std::abs (out.l), std::abs (out.r));
     smoothedPeak = magnitude > smoothedPeak ? magnitude : smoothedPeak * 0.9995f;
     peakLevel.store (smoothedPeak, std::memory_order_release);
 

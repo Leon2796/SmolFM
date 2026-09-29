@@ -1,0 +1,94 @@
+technique:
+  name: burst-delay-resonance
+
+  idea: |
+    The voice feeds a delay with mid-range free time and strong feedback,
+    and the delayed strand passes through a gain stage before the output:
+    the recirculated echo energy is lifted back up as it fades, so each
+    repeat returns as a punchy burst instead of dissolving.  The time
+    window between the slapback doublers and the beat-locked tail delays
+    turns the repeats into a rhythm of decaying bursts.
+
+  involved_nodes:
+    - type: osc
+      role: Voice oscillator in pitch mode; the burst source.
+    - type: delay
+      role: Delay stage in free time mode; the burst engine with feedback.
+    - type: gain
+      role: Burst trim; lifts the recirculated strand before the output.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the played note frequency (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Voice signal into the delay (signal).
+    - node_role: Delay stage
+      port: in
+      role: Receives the voice signal (signal).
+    - node_role: Delay stage
+      port: out
+      role: Burst strand into the trim stage (signal).
+    - node_role: Burst trim
+      port: in
+      role: Receives the burst strand (signal).
+    - node_role: Burst trim
+      port: out
+      role: Lifted bursts towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the burst strand (signal).
+
+  topology:
+    description: |
+      note -> osc.note_in (frequency).  osc.out -> delay.in (signal).
+      delay.out -> gain.in (signal).  gain.out -> output (signal).  A
+      single serial strand: the dry signal is folded into the delay mix,
+      the bursts carry the voice character out.
+
+  parameters:
+    - name: delay time
+      role: |
+        1..2000 ms.  150..450 ms spaces the bursts at an echo rate; below
+        100 ms the pattern merges into a thickened slap.
+    - name: delay feedback
+      role: |
+        0..1.  0.5..0.9 recirculates the bursts through a long decay;
+        near 1 the tail self-oscillates.
+    - name: delay mix
+      role: |
+        0..1.  0.4..0.8 keeps the strand echo-forward so the bursts, not
+        the dry voice, dominate the output.
+    - name: gain factor
+      role: |
+        0..10.  Values above 1 re-lift the fading bursts before the
+        output; the boost applies to the whole recirculated strand.
+
+  relationships:
+    - name: mid-time-band
+      description: |
+        comb-resonator-delay sits below 25 ms and reads as static
+        resonance, delay-slapback-doubler sits at 30..80 ms and reads as a
+        doubled voice, tempo-synced-delay-tail locks its tail to the beat
+        with sync on.  This technique stays in the free 150..450 ms window
+        where repeats are heard as discrete rhythm bursts.
+    - name: tail-boost
+      description: |
+        The gain stage is the distinguishing element against plain echo
+        delays: it re-lifts the recirculated strand, so the burst energy
+        stays forward instead of sinking under the dry voice.
+        serial-gain-staging stages its gain around a shaper for headroom;
+        the stage here follows a delay and serves the echo strand, not a
+        saturator.
+    - name: budget
+      description: |
+        Registry budgets: osc <= 8, delay <= 8, gain <= 8, output = 1.
+        Several burst strands can share the output on separate mix inputs.
+
+  perceptual_effects:
+    - repeating pulse bursts with a long decaying tail
+    - dub-tunnel rhythm from a single voice
+    - forward-pressed echo energy from the strand boost

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Formant Strings">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="sine" mode="lfo" lforate="5.5">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="fm0" amount="0.012">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="modulator_in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc1" waveform="saw">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="fscale0" factor="1.0035">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc2" waveform="saw">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="split0">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="outL" direction="out" type="signal" />
+        <Pin id="outR" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="4200" resonance="0.2" mode="lp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="cutoff_mod_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter1" cutoff="320" resonance="0.08" mode="hp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="fscale1" factor="6.0">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc3" waveform="sine" mode="lfo" lforate="0.35">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="fm1" amount="0.3">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="modulator_in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="merge0">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.35" decay="0.9" sustain="0.8" release="1.4">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr1" attack="0.5" decay="1.2" sustain="0.7" release="1.8">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.6">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+      </Node>
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fm0" toPort="freq_in" />
+      <Wire from="osc0" fromPort="out" to="fm0" toPort="modulator_in" />
+      <Wire from="fm0" fromPort="out" to="osc1" toPort="note_in" />
+      <Wire from="fm0" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="osc2" toPort="note_in" />
+      <Wire from="osc1" fromPort="out" to="split0" toPort="in" />
+      <Wire from="split0" fromPort="outL" to="filter0" toPort="in" />
+      <Wire from="split0" fromPort="outR" to="filter1" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="merge0" toPort="in1" />
+      <Wire from="filter1" fromPort="out" to="merge0" toPort="in2" />
+      <Wire from="note" fromPort="out" to="fscale1" toPort="freq_in" />
+      <Wire from="fscale1" fromPort="out" to="fm1" toPort="freq_in" />
+      <Wire from="osc3" fromPort="out" to="fm1" toPort="modulator_in" />
+      <Wire from="fm1" fromPort="out" to="filter0" toPort="cutoff_mod_in" />
+      <Wire from="merge0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="osc2" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="adsr1" fromPort="out" to="output" toPort="in2" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="240" />
+      <Box id="osc0" x="60" y="480" />
+      <Box id="fm0" x="240" y="240" />
+      <Box id="osc1" x="420" y="240" />
+      <Box id="fscale0" x="420" y="480" />
+      <Box id="osc2" x="600" y="480" />
+      <Box id="split0" x="600" y="240" />
+      <Box id="filter0" x="780" y="140" />
+      <Box id="filter1" x="780" y="340" />
+      <Box id="fscale1" x="240" y="700" />
+      <Box id="osc3" x="60" y="700" />
+      <Box id="fm1" x="420" y="700" />
+      <Box id="merge0" x="960" y="240" />
+      <Box id="adsr0" x="1140" y="240" />
+      <Box id="adsr1" x="1140" y="480" />
+      <Box id="output" x="1320" y="240" />
+    </Boxes>
+  </Layout>
+</SmolFM>

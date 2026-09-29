@@ -6,7 +6,7 @@
         - in  (signal): incoming audio.
         - out (signal): the shaped audio.
 
-    Per sample:
+    Per sample (per channel — standard stereo distortion behaviour):
 
         y_n = f(x_n)      with f one of three static transfer functions:
           0 soft clip:  x / (1 + |x|)                (tanh-like, warm)
@@ -44,7 +44,7 @@ public:
 
     void prepare (double newSampleRate) override;
     void startNote() override;
-    float processSample() override;
+    StereoFrame processSample() override;
 
     InputPort& getInput() noexcept   { return input; }
     OutputPort& getOutput() noexcept { return output; }

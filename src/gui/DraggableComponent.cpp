@@ -90,27 +90,29 @@ void DraggableComponent::layoutPins()
     distribute (outputPins, w - pinD / 2,  pinTop, pinBottom);
 }
 
-void DraggableComponent::addInputPin (const juce::String& pinId, smolfm::PortType type)
+void DraggableComponent::addInputPin (const juce::String& pinId, smolfm::PortType type,
+                                      smolfm::ChannelSide sideHint)
 {
     auto* parentPanel = dynamic_cast<DraggablePanel*> (getParentComponent());
     jassert (parentPanel != nullptr);
     if (parentPanel == nullptr)
         return;
 
-    auto* pin = new PinComponent (*parentPanel, boxId, pinId, false, type);
+    auto* pin = new PinComponent (*parentPanel, boxId, pinId, false, type, sideHint);
     inputPins.add (pin);
     addAndMakeVisible (*pin);
     layoutPins();
 }
 
-void DraggableComponent::addOutputPin (const juce::String& pinId, smolfm::PortType type)
+void DraggableComponent::addOutputPin (const juce::String& pinId, smolfm::PortType type,
+                                       smolfm::ChannelSide sideHint)
 {
     auto* parentPanel = dynamic_cast<DraggablePanel*> (getParentComponent());
     jassert (parentPanel != nullptr);
     if (parentPanel == nullptr)
         return;
 
-    auto* pin = new PinComponent (*parentPanel, boxId, pinId, true, type);
+    auto* pin = new PinComponent (*parentPanel, boxId, pinId, true, type, sideHint);
     outputPins.add (pin);
     addAndMakeVisible (*pin);
     layoutPins();

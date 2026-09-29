@@ -37,7 +37,9 @@ namespace
                                                                           std::array<DelayProcessor*, GraphNodeRegistry::maxDelays>& delays,
                                                                           std::array<GainProcessor*, GraphNodeRegistry::maxGains>& gainProcessors,
                                      std::array<WaveshaperProcessor*, GraphNodeRegistry::maxWaveshapers>& waveshapers,
-                                     std::array<FilterProcessor*, GraphNodeRegistry::maxFilters>& filters)
+                                     std::array<FilterProcessor*, GraphNodeRegistry::maxFilters>& filters,
+                                     std::array<SplitterProcessor*, GraphNodeRegistry::maxSplitters>& splitters,
+                                     std::array<MergerProcessor*, GraphNodeRegistry::maxMergers>& mergers)
     {
         juce::ignoreUnused (params, noteSources);
 
@@ -146,6 +148,24 @@ namespace
             return nullptr;
         }
 
+        if (type == NodeType::splitter
+         && index >= 0 && index < GraphNodeRegistry::maxSplitters
+         && splitters[static_cast<size_t> (index)] != nullptr)
+         {
+             if (portId == "in")
+                 return &splitters[static_cast<size_t> (index)]->getInput();
+             return nullptr;
+         }
+
+        if (type == NodeType::merger
+         && index >= 0 && index < GraphNodeRegistry::maxMergers
+         && mergers[static_cast<size_t> (index)] != nullptr)
+         {
+             if (portId == "in1") return &mergers[static_cast<size_t> (index)]->getLeftInput();
+             if (portId == "in2") return &mergers[static_cast<size_t> (index)]->getRightInput();
+             return nullptr;
+         }
+
         if (type == NodeType::masterOutput && masterOutput != nullptr)
         {
             if (portId.startsWith ("in"))
@@ -174,9 +194,11 @@ namespace
                                                                               std::array<DelayProcessor*, GraphNodeRegistry::maxDelays>& delays,
                                                                               std::array<GainProcessor*, GraphNodeRegistry::maxGains>& gainProcessors,
                                                                               std::array<WaveshaperProcessor*, GraphNodeRegistry::maxWaveshapers>& waveshapers,
-                                       std::array<FilterProcessor*, GraphNodeRegistry::maxFilters>& filters)
+                                       std::array<FilterProcessor*, GraphNodeRegistry::maxFilters>& filters,
+                                       std::array<SplitterProcessor*, GraphNodeRegistry::maxSplitters>& splitters,
+                                       std::array<MergerProcessor*, GraphNodeRegistry::maxMergers>& mergers)
     {
-        if (portId != "out")
+        if (portId != "out" && portId != "outL" && portId != "outR")
             return nullptr;
 
         const NodeType type = GraphNodeRegistry::typeOf (nodeId);
@@ -241,6 +263,20 @@ namespace
          && index >= 0 && index < GraphNodeRegistry::maxFilters
          && filters[static_cast<size_t> (index)] != nullptr)
             return &filters[static_cast<size_t> (index)]->getOutput();
+
+        if (type == NodeType::splitter
+         && index >= 0 && index < GraphNodeRegistry::maxSplitters
+         && splitters[static_cast<size_t> (index)] != nullptr)
+         {
+             if (portId == "outL") return &splitters[static_cast<size_t> (index)]->getLeftOutput();
+             if (portId == "outR") return &splitters[static_cast<size_t> (index)]->getRightOutput();
+             return nullptr;
+         }
+
+        if (type == NodeType::merger
+         && index >= 0 && index < GraphNodeRegistry::maxMergers
+         && mergers[static_cast<size_t> (index)] != nullptr)
+            return &mergers[static_cast<size_t> (index)]->getOutput();
 
         return nullptr;
     }
@@ -322,6 +358,27 @@ void SynthVoice::buildGraph()
         fAdsrProcessors[static_cast<size_t> (i)] = fadsr.get();
         graph.addProcessor (std::move (fadsr));
     }
+
+        // Splitter pool — stereo channel dividers with per-side outputs
+        // (outL = (L,0), outR = (0,R)).  Placed after every frequency
+        // producer and before the signal-domain stages so split branches
+        // feed ring/am/delay/gain/shape/filter and the master output in the
+        // same tick.  A producer from one of the later signal pools feeds
+        // the splitter/merger one tick late (inaudible; creates no feedback).
+        for (int i = 0; i < GraphNodeRegistry::maxSplitters; ++i)
+        {
+            auto split = std::make_unique<SplitterProcessor>();
+            splitters[static_cast<size_t> (i)] = split.get();
+            graph.addProcessor (std::move (split));
+        }
+
+        // Merger pool — stereo channel combiners (out = (in1.l, in2.r)).
+        for (int i = 0; i < GraphNodeRegistry::maxMergers; ++i)
+        {
+            auto merge = std::make_unique<MergerProcessor>();
+            mergers[static_cast<size_t> (i)] = merge.get();
+            graph.addProcessor (std::move (merge));
+        }
 
         // Ring modulator pool â€” pure signal multipliers, no parameters.
     for (int i = 0; i < GraphNodeRegistry::maxRingModulators; ++i)
@@ -466,10 +523,16 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
         {
             const float fade = 1.0f - static_cast<float> (sampleIndex)
                                     / static_cast<float> (numSamples);
-            const float outputSample = graph.processSample() * currentVelocity * fade;
 
-            for (int channel = 0; channel < outputBuffer.getNumChannels(); ++channel)
-                outputBuffer.getWritePointer (channel)[startSample + sampleIndex] += outputSample;
+            // The graph returns a stereo frame; L/R go to output channels 0/1.
+            const StereoFrame frame = graph.processSample();
+
+            auto* leftChannel  = outputBuffer.getWritePointer (0);
+            auto* rightChannel = outputBuffer.getWritePointer (
+                outputBuffer.getNumChannels() > 1 ? 1 : 0);
+
+            leftChannel[startSample + sampleIndex]  += frame.l * currentVelocity * fade;
+            rightChannel[startSample + sampleIndex] += frame.r * currentVelocity * fade;
         }
 
         clearCurrentNote();
@@ -479,14 +542,16 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
     for (int sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex)
     {
         // graph.processSample() runs the whole chain; the master output is
-        // added last, so its return value is the final sample.
-        const float outputSample = graph.processSample() * currentVelocity;
+        // added last, so its return value is the final stereo frame.  L/R go
+        // to the host's output channels 0 and 1.
+        const StereoFrame frame = graph.processSample();
 
-        for (int channel = 0; channel < outputBuffer.getNumChannels(); ++channel)
-        {
-            auto* channelData = outputBuffer.getWritePointer (channel);
-            channelData[startSample + sampleIndex] += outputSample;
-        }
+        auto* leftChannel  = outputBuffer.getWritePointer (0);
+        auto* rightChannel = outputBuffer.getWritePointer (
+            outputBuffer.getNumChannels() > 1 ? 1 : 0);
+
+        leftChannel[startSample + sampleIndex]  += frame.l * currentVelocity;
+        rightChannel[startSample + sampleIndex] += frame.r * currentVelocity;
     }
 }
 
@@ -572,6 +637,20 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
             d->reset();
         }
 
+        // A new patch must not inherit the previous patch's envelopes either:
+        // if a note-off was lost (or a held sustain pedal defers it forever),
+        // the old ADSR would keep sustaining at its sustain level and drone
+        // through the next instrument — the reported "stuck signal" bug.
+        for (auto* adsr : adsrProcessors)
+        if (adsr != nullptr)  adsr->reset();
+
+        for (auto* fadsr : fAdsrProcessors)
+        if (fadsr != nullptr)  fadsr->reset();
+
+        // Filters must not ring over from the previous patch either.
+        for (auto* f : filters)
+        if (f != nullptr)  f->reset();
+
         for (auto* g : gainProcessors)
         if (g != nullptr)  g->getInput().disconnect();
 
@@ -585,6 +664,16 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
             f->getCutoffModInput().disconnect();
         }
 
+        for (auto* s : splitters)
+        if (s != nullptr)  s->getInput().disconnect();
+
+        for (auto* m : mergers)
+        if (m != nullptr)
+        {
+            m->getLeftInput().disconnect();
+            m->getRightInput().disconnect();
+        }
+
     for (int i = 0; i < MasterOutputProcessor::numInputs; ++i)
         masterOutput->getInput (i).disconnect();
 
@@ -596,11 +685,13 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
     {
                 OutputPort* out = resolveOutput (conn.from.nodeId, conn.from.portId,
                                                    noteSources, adsrProcessors, fAdsrProcessors, masterOutput,
-                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors, waveshapers, filters);
+                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors, waveshapers, filters,
+                                                   splitters, mergers);
                 InputPort*  in  = resolveInput  (conn.to.nodeId,   conn.to.portId,
                                                    const_cast<SynthVoiceParameters&> (parameters),
                                                    noteSources, adsrProcessors, fAdsrProcessors, masterOutput,
-                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors, waveshapers, filters);
+                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors, waveshapers, filters,
+                                                   splitters, mergers);
 
         if (out == nullptr || in == nullptr)
             continue;

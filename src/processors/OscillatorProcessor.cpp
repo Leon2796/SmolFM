@@ -37,7 +37,7 @@ void OscillatorProcessor::startNote()
     oscillator.resetPhase();
 }
 
-float OscillatorProcessor::processSample()
+StereoFrame OscillatorProcessor::processSample()
 {
     // Three frequency sources, chosen by the mode parameter:
     //   Pitch:  the note_in port supplies Hz directly (no hidden fallback).
@@ -50,22 +50,25 @@ float OscillatorProcessor::processSample()
         : 0;
 
     float freq = 0.0f;
-    const bool noteActive = noteInput.isConnected() && noteInput.getSample() > 0.0f;
+    const bool noteActive = noteInput.isConnected() && noteInput.getSample().l > 0.0f;
 
     if (modeIndex == 1 && noteActive)
         freq = juce::jlimit (20.0f, 20000.0f, staticFreq != nullptr ? staticFreq->load() : 440.0f);
     else if (modeIndex == 2 && noteActive)
         freq = juce::jlimit (0.01f, 50.0f, lfoRate != nullptr ? lfoRate->load() : 1.0f);
     else if (modeIndex == 0 && noteInput.isConnected())
-        freq = noteInput.getSample();
+        freq = noteInput.getSample().l;
 
     oscillator.setFrequency (freq);
     oscillator.setWaveform (waveformFromIndex (static_cast<int> (std::round (waveform->load()))));
 
-    float sample = oscillator.getNextSample (0.0f);
-    output.setSample (sample);
+    // Mono phase: the oscillator produces one sample per tick; it is emitted
+    // as a centered pair so both output channels carry identical content.
+    const float sample = oscillator.getNextSample (0.0f);
+    const StereoFrame result = StereoFrame::centered (sample);
+    output.setSample (result);
 
-    return sample;
+    return result;
 }
 
 } // namespace smolfm

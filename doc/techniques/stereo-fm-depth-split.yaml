@@ -1,0 +1,145 @@
+technique:
+  name: stereo-fm-depth-split
+
+  idea: |
+    One modulator oscillator is split into its two side branches and each
+    branch drives its own FM stage; the two FM stages bend two identical
+    carriers, and the merger recombines the carriers into one stereo frame.
+    With different FM amounts per stage the two channels carry different
+    modulation depths — side-dependent spectral density, the stereo analogue
+    of an asymmetric two-operator patch.  Both carriers stay locked to the
+    same played note, so the channels stay tonally related.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; drives both carriers (and the modulator trace).
+    - type: osc
+      role: Modulator oscillator; the signal that is split.
+    - type: split
+      role: Divides the modulator into the left and right branch.
+    - type: fm
+      role: Left-side FM stage; modulates the left carrier.
+    - type: fm
+      role: Right-side FM stage; modulates the right carrier.
+    - type: osc
+      role: Left carrier; identical waveform to the right carrier.
+    - type: osc
+      role: Right carrier; identical waveform to the left carrier.
+    - type: merge
+      role: Combines the two carrier outputs into one stereo frame.
+    - type: output
+      role: Master endpoint for the merged frame.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into both carriers and the modulator (frequency).
+    - node_role: Modulator oscillator
+      port: note_in
+      role: Receives the played note so the ratio stays fixed (frequency).
+    - node_role: Modulator oscillator
+      port: out
+      role: Modulator signal into the splitter (signal).
+    - node_role: Splitter
+      port: in
+      role: Receives the modulator signal (signal).
+    - node_role: Splitter
+      port: outL
+      role: Left-only modulator branch into the left FM stage (signal).
+    - node_role: Splitter
+      port: outR
+      role: Right-only modulator branch into the right FM stage (signal).
+    - node_role: Left-side FM stage
+      port: freq_in
+      role: Receives the base frequency (frequency).
+    - node_role: Left-side FM stage
+      port: modulator_in
+      role: Receives the left modulator branch (signal).
+    - node_role: Left-side FM stage
+      port: out
+      role: Bent frequency into the left carrier (frequency).
+    - node_role: Right-side FM stage
+      port: freq_in
+      role: Receives the base frequency (frequency).
+    - node_role: Right-side FM stage
+      port: modulator_in
+      role: Receives the right modulator branch (signal).
+    - node_role: Right-side FM stage
+      port: out
+      role: Bent frequency into the right carrier (frequency).
+    - node_role: Left carrier
+      port: note_in
+      role: Renders the left-channel waveform from the bent frequency
+        (frequency).
+    - node_role: Left carrier
+      port: out
+      role: Left carrier signal into merger in1 (signal).
+    - node_role: Right carrier
+      port: note_in
+      role: Renders the right-channel waveform (frequency).
+    - node_role: Right carrier
+      port: out
+      role: Right carrier signal into merger in2 (signal).
+    - node_role: Merger
+      port: in1
+      role: Contributes the left channel (signal).
+    - node_role: Merger
+      port: in2
+      role: Contributes the right channel (signal).
+    - node_role: Merger
+      port: out
+      role: Combined stereo frame towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the merged stereo frame (signal).
+
+  topology:
+    description: |
+      note.out -> modulator.note_in, fm-left.freq_in, fm-right.freq_in and
+      both carrier note_in ports (frequency).  modulator.out -> split.in
+      (signal).  split.outL -> fm-left.modulator_in, split.outR ->
+      fm-right.modulator_in (signal).  fm-left.out -> left carrier.note_in,
+      fm-right.out -> right carrier.note_in (frequency).  carrier outputs
+      -> merge.in1 / merge.in2 (signal).  merge.out -> output (signal).
+      Two independent FM paths share one note and one modulator source.
+
+  parameters:
+    - name: left FM amount
+      role: |
+        Modulation depth of the left stage, 0..10.  Sets the spectral
+        brightness of the left channel only.
+    - name: right FM amount
+      role: |
+        Modulation depth of the right stage, 0..10.  The difference to the
+        left amount is the stereo spectrum control.
+    - name: modulator waveform
+      role: |
+        Shared modulator colour; both branches carry the same content, so
+        asymmetry comes from depth alone.
+    - name: carrier waveforms
+      role: |
+        Keep both carriers identical for a tonally related pair; different
+        waveforms split the timbre across channels.
+
+  relationships:
+    - name: collapse-rule
+      description: |
+        The FM stage collapses its modulator pair by the mean rule; a pure
+        side branch (v, 0) therefore delivers half the modulation depth of
+        a centered signal at the same amount.  Compensate by doubling the
+        per-side amounts, or use the halving deliberately as a fine-depth
+        range.
+    - name: depth-as-width
+      description: |
+        With amount-left == amount-right the merged frame is exactly the
+        classic centered FM tone; the delta of the two amounts opens a
+        channel-dependent spectrum that grows with the difference.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8 (one modulator + two carriers),
+        fm <= 4 (two stages), split <= 4, merge <= 4, output = 1.
+
+  perceptual_effects:
+    - channel-dependent spectral density from one modulator
+    - asymmetric FM brightness across the stereo field
+    - evolving shimmer when the two depths differ strongly

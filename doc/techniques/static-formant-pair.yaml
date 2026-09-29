@@ -1,0 +1,119 @@
+technique:
+  name: static-formant-pair
+
+  idea: |
+    One voice oscillator fans out into two parallel band-pass filters tuned
+    to fixed formant centres, and the two filtered bands are trimmed and
+    summed on separate output inputs.  The static cutoffs act like the
+    formants of a vowel: the pair colours every note with the same vocal
+    shade, and moving the two centres morphs the timbre between vowel
+    colours while the resonance parameter sharpens the formant peaks.
+
+  involved_nodes:
+    - type: note
+      role: MIDI note source; voice pitch.
+    - type: osc
+      role: Voice oscillator in pitch mode; the shared source of both bands.
+    - type: filter
+      role: First band-pass formant at the lower vowel centre.
+    - type: filter
+      role: Second band-pass formant at the higher vowel centre.
+    - type: gain
+      role: Trim stage balancing the lower formant band.
+    - type: gain
+      role: Trim stage balancing the upper formant band.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: MIDI note source
+      port: out
+      role: Voice pitch into the oscillator (frequency).
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the played note frequency (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Voice signal fanned out to both formant filters (signal).
+    - node_role: Lower formant filter
+      port: in
+      role: Receives the voice signal (signal).
+    - node_role: Lower formant filter
+      port: out
+      role: Lower band into its trim stage (signal).
+    - node_role: Upper formant filter
+      port: in
+      role: Receives the voice signal (signal).
+    - node_role: Upper formant filter
+      port: out
+      role: Upper band into its trim stage (signal).
+    - node_role: Lower band trim
+      port: in
+      role: Receives the lower band (signal).
+    - node_role: Lower band trim
+      port: out
+      role: Trimmed lower band towards the output (signal).
+    - node_role: Upper band trim
+      port: in
+      role: Receives the upper band (signal).
+    - node_role: Upper band trim
+      port: out
+      role: Trimmed upper band towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: Two separate mix inputs, one per formant band (signal).
+
+  topology:
+    description: |
+      note -> osc.note_in (frequency).  osc.out -> lower filter.in (signal)
+      and osc.out -> upper filter.in (signal); one wire fans out to two
+      parallel filters.  lower filter.out -> lower trim.in, upper
+      filter.out -> upper trim.in (signal).  Both trim outputs land on
+      separate output inputs (signal).  No serial chain: the two bands are
+      mixed, not cascaded.
+
+  parameters:
+    - name: lower cutoff
+      role: |
+        20..20000 Hz.  Around 700 Hz the pair reads as an open ah; lower
+        centres darken towards oo.
+    - name: upper cutoff
+      role: |
+        20..20000 Hz.  Around 1200 Hz the pair brightens the vowel; wider
+        spacing spreads the two formants apart.
+    - name: filter resonance
+      role: |
+        0..1 per filter.  0.5..0.9 sharpens each formant into an audible
+        vowel peak without howling.
+    - name: band trims
+      role: |
+        Gain factors, 0..10.  Independent levels for the two bands set the
+        vowel blend and the overall loudness.
+
+  relationships:
+    - name: parallel-not-serial
+      description: |
+        subtractive-voice-chain and serial-drive-filter-sculpt cascade
+        their stages; here both filters see the raw oscillator and their
+        outputs sum, so the bands never shape each other.
+    - name: band-split-sibling
+      description: |
+        parallel-band-split reconstitutes one voice from three
+        complementary crossover bands without gain stages; this technique
+        pairs two resonant formants and balances them with explicit trims,
+        so the sum is a vowel colour, not the original spectrum.
+    - name: vowel-morph
+      description: |
+        Moving both cutoffs together shifts the vowel colour, moving them
+        apart narrows the formant spread; the pair stays static while the
+        notes pass through the fixed vocal shade.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 8, filter <= 8, gain <= 8,
+        output = 1.  Extra filters can add further formants on further
+        mix inputs.
+
+  perceptual_effects:
+    - vowel-like colouring of pads and leads
+    - fixed vocal shade across the whole keyboard range
+    - two-band body with independently balanced formants

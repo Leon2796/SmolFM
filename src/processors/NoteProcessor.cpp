@@ -24,9 +24,9 @@ void NoteProcessor::startNote()
     // Frequency is set via setMidiNoteNumber(), which is called before startNote().
 }
 
-float NoteProcessor::processSample()
+StereoFrame NoteProcessor::processSample()
 {
-    const float f = isEnabled() ? currentFrequency : 0.0f;
+    const StereoFrame f = StereoFrame::centered (isEnabled() ? currentFrequency : 0.0f);
     output.setSample (f);
     return f;
 }

@@ -497,6 +497,48 @@
     </xs:complexContent>
   </xs:complexType>
 
+  <!-- Splitter (split): parameter-free topology node with two outputs. -->
+  <xs:complexType name="SplitterNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Teilt ein Stereo-Signal in seine Seitenzweige: outL = (L, 0), outR = (0, R). Jeder Zweig trÃ¤gt nur eine Seite (seitenrein) und bleibt PortType::signal, damit er direkt jeden Standardprozessor speist. Ein Zweig kann direkt in den Master geroutet werden, ohne Merger.</purpose>
+        <docReference>doc/processors/SplitterProcessor.md</docReference>
+        <inputs>
+          <port id="in" type="signal"/>
+        </inputs>
+        <outputs>
+          <port id="outL" type="signal"/>
+          <port id="outR" type="signal"/>
+        </outputs>
+        <maxInstances>4</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType"/>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- Merger (merge): parameter-free topology node with two inputs. -->
+  <xs:complexType name="MergerNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>FÃ¼hrt zwei Seitenzweige zu einem Stereo-Signal zusammen: out = (in1.L, in2.R). Eine unverbundene Seite trÃ¤gt 0 bei. Zentrierte Mono-Quellen dÃ¼rfen beide EingÃ¤nge speisen; der Ausgang ist dann wieder ein zentriertes Frame.</purpose>
+        <docReference>doc/processors/MergerProcessor.md</docReference>
+        <inputs>
+          <port id="in1" type="signal"/>
+          <port id="in2" type="signal"/>
+        </inputs>
+        <outputs>
+          <port id="out" type="signal"/>
+        </outputs>
+        <maxInstances>4</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType"/>
+    </xs:complexContent>
+  </xs:complexType>
+
   <!-- AM modulator (am) -->
   <xs:complexType name="AMNodeType">
     <xs:annotation>

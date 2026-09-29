@@ -59,8 +59,10 @@ public:
         Index controls vertical stacking; the component repositions pins in
         resized().
     */
-    void addInputPin  (const juce::String& pinId, smolfm::PortType type);
-    void addOutputPin (const juce::String& pinId, smolfm::PortType type);
+    void addInputPin  (const juce::String& pinId, smolfm::PortType type,
+                       smolfm::ChannelSide sideHint = smolfm::ChannelSide::none);
+    void addOutputPin (const juce::String& pinId, smolfm::PortType type,
+                       smolfm::ChannelSide sideHint = smolfm::ChannelSide::none);
 
     /** Get the pin centre in this component's own coordinates (for drawing). */
     juce::Point<float> getInputPinCentre  (int index) const noexcept;

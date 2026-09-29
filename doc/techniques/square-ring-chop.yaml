@@ -1,0 +1,98 @@
+technique:
+  name: square-ring-chop
+
+  idea: |
+    The voice signal and a square LFO are multiplied in the ring modulator,
+    so the voice is alternately passed and polarity-flipped on every edge of
+    the LFO: an unbiased hard chop instead of the biased smooth swell of a
+    tremolo.  At sub-audio rates the pattern reads as aggressive stuttering,
+    at audio rates the square wave smears the voice into a crunchy ring
+    timbre.
+
+  involved_nodes:
+    - type: osc
+      role: Voice oscillator in pitch mode; the chopped signal.
+    - type: osc
+      role: Chop oscillator in LFO mode with square waveform; the hard
+        gate source.
+    - type: ring
+      role: Ring modulator; multiplies voice and chop signal.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the played note frequency (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Voice signal into the ring modulator (signal).
+    - node_role: Chop oscillator
+      port: out
+      role: Square chop signal into the ring modulator (signal).
+    - node_role: Ring modulator
+      port: in1
+      role: Receives the voice signal (signal).
+    - node_role: Ring modulator
+      port: in2
+      role: Receives the chop signal (signal).
+    - node_role: Ring modulator
+      port: out
+      role: Chopped product towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the chopped voice (signal).
+
+  topology:
+    description: |
+      note -> voice osc.note_in (frequency).  voice osc.out -> ring.in1
+      (signal).  chop osc.out (LFO mode, square) -> ring.in2 (signal).
+      ring.out -> output (signal).  The chop source is free-running and
+      unsynced to the note.
+
+  parameters:
+    - name: chop rate
+      role: |
+        LFO rate, 0.01..50 Hz.  2..16 Hz stutters audibly, near 50 Hz the
+        chop blurs into a coarse grain, at audio rates it becomes a
+        crunchy timbre shift.
+    - name: chop waveform
+      role: |
+        Square is the hard gate; triangle softens the edges, sine turns
+        the pattern back towards a smooth swell.
+    - name: voice waveform
+      role: |
+        Rendered waveform of the chopped voice; richer waveforms keep the
+        chop more audible because the polarity flip is easier to hear on
+        dense harmonics.
+
+  relationships:
+    - name: unbiased-hard-chop
+      description: |
+        am-tremolo-lfo biases the carrier with an AM stage and swells it
+        smoothly; the ring product here alternates between the voice and
+        its polarity-flipped copy, so the edges cut hard instead of
+        dipping to silence.
+    - name: two-source-product
+      description: |
+        self-ring-octave-double multiplies a voice with itself for an
+        octave double and osc-ring-mod-cross multiplies two audio-rate
+        oscillators; here one input is a sub-audio LFO, so the product is
+        a time-domain gate pattern, not a sum-and-difference spectrum.
+    - name: sideband-sibling
+      description: |
+        ring-sideband-pickup multiplies two audio-rate pitch voices and
+        band-passes the sum sideband as a melodic partial; the sub-audio
+        LFO input here keeps the product a time-domain gate pattern and
+        needs no filter.
+    - name: budget
+      description: |
+        Registry budgets: osc <= 8, ring <= 4, output = 1.  One chop
+        source can fan out into several ring modulators for correlated
+        stutter across voices.
+
+  perceptual_effects:
+    - aggressive gated stutter on sustained notes
+    - clicky polarity punches at low chop rates
+    - crunchy coarse grain near the top of the LFO range
+    - metallic ring timbre when the chop rate reaches the audio band

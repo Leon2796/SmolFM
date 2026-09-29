@@ -64,4 +64,45 @@ Dabei soll die Anwendung der Techniken durch den Agent passenbd zur Beschreibung
 Dafür soll öffentliche Dokumentation, Synthsizer Tutorials, Techniken, Synthsizer Architekturen, Tutorials, etc. 
 und eigenes Wissen genutzt werden, um die korrekten Techniken auszuwählen um den Anforderungen entsprechende möglichst hochqualitative 
 Instrumente zu generieren. Sag dem Skill er ist ein Synthesizer Guru, der selbst unter härstesten DSP Bedingungen, den bestmöglichsten 
-Sound rausholt. 
+Sound rausholt.
+
+
+-------------------------------------------------------------------------------------------------
+
+
+## 3. Beeinflusst es das Modulationsverhalten (osc → Send in FM/AM)?
+
+Die Modulationswege im Code sind zwei Kategorien — und die brauchen unterschiedlich viel Aufmerksamkeit:
+
+__a) Audio-Domain-Modulation (AM, Ring):__ Beide lesen `signal`-Paare und multiplizieren __kanalweise__. Kein Verhaltensunterschied bei zentriertem Inhalt, Stereo-Fähigkeit kommt gratis dazu (Mono-Carrier × Stereo-Modulator → Stereo-Output). Keine Regel nötig.
+
+__FM (Frequenz-Domain) — hier liegt der eine echte Entscheidungspunkt:__ Die FM-Stage (`FMModulationProcessor.cpp:33–50`) berechnet `f_out = f_in * (1 + amount * modulator)`, gibt __einen Hz-Wert__ aus, und der Osc hat __eine Phase__ (SimpleOscillator). In Welt A kommt der Modulator als Paar — die Stage muss also 1 Skalar daraus machen. Zwei mögliche Regeln:
+
+- __Mittelwert `(L+R)·0.5`__ ✅ — zentrierter Modulator (alles, was es heute gibt) → __exakt heutiger Klang, exakt gleiche Modulationstiefe__. Stereo-Modulator (nach einem Panner) → FM folgt der Mitte. Empfehlung.
+- __Summe `L+R`__ ❌ — bei zentriertem Inhalt wäre der Modulatorwert verdoppelt → __Modulationstiefe ×2__. Das wäre der einzige echte Leveling-Bug im gesamten Konzept.
+
+Dazu die zweite Option als späterer Featuresprung statt Regression: Per-Kanal-FM (Osc mit zwei Phasen, `fL`/`fR` separat) → echtes Stereo-FM. Braucht eine 2-Phasen-Erweiterung im Osc, ist aber optional — die Mittelwert-Regel macht alles Bestehende korrekt.
+
+__Steuer-Domain bleibt komplett unberührt:__ `note_in`, `cutoff_mod_in`, FAdsr, FrequencyScale, LFO-Gate (`noteInput.getSample() > 0.0f`, OscillatorProcessor.cpp:53) — alles Frequency/Gate-Ports, bleiben Skalare. Kein Modulationspfad in der Steuer-Domain sieht ein Paa
+
+
+------------------------------------------------------------------------------------------------
+
+Okay,
+Implementiere auf Basis von Welt A einen möglichst minimalen Umbau, welcher den bisherigen Standardsignal typ implizit auf Stereo umstellt. Passe den Eingang des FM-Modulators entsprechend an, halte in der entsprechenden processor.md fest, dass dies der Stereokompatibilität dient.   
+
+Würdest du in Welt A eher den 
+
+
+splitter als processor der 1 Signal(bisheriger standardtyp) bekommt und 2 wieder rausgibt, 
+							aber wo Output1 -> input links kopiert aber rechts mutet
+							und wo Output 2 -> input rechts kopiert aber links mutet
+							
+merger als processor der 2 Signal(bisheriger standardtyp) bekommt und 1 wieder rausgibt, 
+							aber wo Output1 -> input links kopiert aber rechts mutet
+							und wo Output 2 -> input rechts kopiert aber links mutet
+
+
+als processor die 2 signal nehmen und 1 wieder rausgeben, und dann entsprechend links und rechts von den bisherigen doppelten Signalen verwerfen, 
+
+weil es links und rechts waren im bisherigen Signal, oder würdest du sogar noch einen extra Signaltype im xsd einführen wollen. 

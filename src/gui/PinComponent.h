@@ -25,7 +25,8 @@ public:
                   const juce::String& boxId,
                   const juce::String& pinId,
                   bool isOutput,
-                  smolfm::PortType type);
+                  smolfm::PortType type,
+                  smolfm::ChannelSide sideHint = smolfm::ChannelSide::none);
 
     void paint (juce::Graphics& g) override;
     void mouseDown (const juce::MouseEvent& e) override;
@@ -38,6 +39,12 @@ public:
     bool                isOutput()   const noexcept { return output; }
     smolfm::PortType    getType()    const noexcept { return type; }
 
+    /**
+        Display-only stereo side hint carried by the spec (L/R badge on
+        wires).  Does not affect connections; default is none.
+    */
+    smolfm::ChannelSide getChannelSide() const noexcept { return side; }
+
     /** Position of this pin's centre in PANEL coordinates. */
     juce::Point<float> getPinCentreInPanel() const;
 
@@ -49,6 +56,7 @@ private:
     juce::String    pinId;
     bool            output;
     smolfm::PortType type;
+    smolfm::ChannelSide side = smolfm::ChannelSide::none;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PinComponent)
 };

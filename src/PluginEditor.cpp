@@ -21,6 +21,8 @@
 #include "gui/components/RingModulatorComponent.h"
 #include "gui/components/AmComponent.h"
 #include "gui/components/DelayComponent.h"
+#include "gui/components/SplitterComponent.h"
+#include "gui/components/MergerComponent.h"
 
 namespace
 {
@@ -112,6 +114,18 @@ namespace
                                                                juce::AudioProcessorValueTreeState&)
     {
         return std::make_unique<gui::RingModulatorComponent>();
+    }
+
+    std::unique_ptr<juce::Component> makeSplitterContent (const juce::String&,
+                                                          juce::AudioProcessorValueTreeState&)
+    {
+        return std::make_unique<gui::SplitterComponent>();
+    }
+
+    std::unique_ptr<juce::Component> makeMergerContent (const juce::String&,
+                                                        juce::AudioProcessorValueTreeState&)
+    {
+        return std::make_unique<gui::MergerComponent>();
     }
 
         std::unique_ptr<juce::Component> makeAmContent (const juce::String& instanceId,
@@ -207,8 +221,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     amButton   .configure ("am",   "AM",   smolfm::GraphNodeRegistry::maxAmModulators);
     delayButton .configure ("delay", "DLY",  smolfm::GraphNodeRegistry::maxDelays);
     outputButton .configure ("output", "OUT", smolfm::GraphNodeRegistry::maxMasterOutputs);
+    splitButton .configure ("split", "SPL",  smolfm::GraphNodeRegistry::maxSplitters);
+    mergeButton .configure ("merge", "MRG",  smolfm::GraphNodeRegistry::maxMergers);
 
-        for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &fAdsrButton, &gainButton, &shapeButton, &filterButton, &noteButton, &ringButton, &amButton, &delayButton, &outputButton })
+        for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &fAdsrButton, &gainButton, &shapeButton, &filterButton, &noteButton, &ringButton, &amButton, &delayButton, &outputButton, &splitButton, &mergeButton })
     {
         addAndMakeVisible (*b);
                 b->onCountChanged = [this] (const juce::String& baseId, bool add)
@@ -262,6 +278,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             return graphPanel.addNodeOfType ("note", processorRef.getParameters(), makeNoteContent, nodeStartsHidden);
                 if (baseId == "ring")
             return graphPanel.addNodeOfType ("ring", processorRef.getParameters(), makeRingModulatorContent, nodeStartsHidden);
+        if (baseId == "split")
+            return graphPanel.addNodeOfType ("split", processorRef.getParameters(), makeSplitterContent, nodeStartsHidden);
+        if (baseId == "merge")
+            return graphPanel.addNodeOfType ("merge", processorRef.getParameters(), makeMergerContent, nodeStartsHidden);
                 if (baseId == "am")
             return graphPanel.addNodeOfType ("am", processorRef.getParameters(), makeAmContent, nodeStartsHidden);
         if (baseId == "delay")
@@ -310,7 +330,9 @@ void AudioPluginAudioProcessorEditor::addNodeFromToolbar (const juce::String& ba
         { "filter", makeFilterContent },
         { "ring",   makeRingModulatorContent },
                 { "am",     makeAmContent        },
-        { "delay",  makeDelayContent     }
+        { "delay",  makeDelayContent     },
+        { "split",  makeSplitterContent  },
+        { "merge",  makeMergerContent    }
     };
 
     if (baseId == "output")
@@ -343,6 +365,8 @@ void AudioPluginAudioProcessorEditor::refreshToolbarBadges()
     amButton    .setRemaining (smolfm::GraphNodeRegistry::maxAmModulators      - graphPanel.countBoxesOfType ("am"));
     delayButton .setRemaining (smolfm::GraphNodeRegistry::maxDelays            - graphPanel.countBoxesOfType ("delay"));
     outputButton.setRemaining (smolfm::GraphNodeRegistry::maxMasterOutputs   - graphPanel.countBoxesOfType ("output"));
+    splitButton .setRemaining (smolfm::GraphNodeRegistry::maxSplitters         - graphPanel.countBoxesOfType ("split"));
+    mergeButton .setRemaining (smolfm::GraphNodeRegistry::maxMergers           - graphPanel.countBoxesOfType ("merge"));
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -376,7 +400,7 @@ void AudioPluginAudioProcessorEditor::resized()
         const int tileSpacing = 8;
 
         // Arrange in two rows if space is tight
-        const bool twoRows = palette.getWidth() < (tileWidth + tileSpacing) * 13;
+        const bool twoRows = palette.getWidth() < (tileWidth + tileSpacing) * 15;
         int x = 0, y = 0;
 
         auto placeTile = [&] (gui::PaletteButton& b)
@@ -402,6 +426,8 @@ void AudioPluginAudioProcessorEditor::resized()
         placeTile (ringButton);
         placeTile (amButton);
         placeTile (delayButton);
+        placeTile (splitButton);
+        placeTile (mergeButton);
         placeTile (outputButton);
 
     bounds.removeFromTop (8);

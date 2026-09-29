@@ -1,13 +1,15 @@
 /*
     MasterOutputProcessor is the final stage of the per-voice graph.
 
-    It mixes up to eight signal inputs into one output sample and applies the
-    master volume.  The current output level is published via an atomic peak
-    value so the UI can show a meter without touching the audio thread.
+    It mixes up to eight signal inputs into one stereo output frame (per
+    channel) and applies the master volume.  The current output level is
+    published via an atomic peak value so the UI can show a meter without
+    touching the audio thread.
 
     Per sample:
 
-        out = masterLevel * sum(in1..in8)
+        outL = masterLevel * sum(in_k.L)
+        outR = masterLevel * sum(in_k.R)
 
     The ADSR envelopes are no longer the end of the chain — they shape their
     own input and pass the result on, typically into one of these inputs.
@@ -35,7 +37,7 @@ public:
 
     void prepare (double newSampleRate) override;
     void startNote() override;
-    float processSample() override;
+    StereoFrame processSample() override;
 
     InputPort& getInput (int index) noexcept
     {

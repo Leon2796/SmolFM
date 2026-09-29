@@ -63,12 +63,20 @@ public:
 
     void prepare (double newSampleRate) override;
     void startNote() override;
-    float processSample() override;
+    StereoFrame processSample() override;
 
     /**
         Tell the envelope to enter the release phase.
     */
     void noteOff();
+
+    /**
+        Silences the envelope immediately (back to idle, value 0).
+
+        Same purpose as AdsrProcessor::reset(): a new patch must not inherit
+        a stuck sustain from the previous one.
+    */
+    void reset() noexcept;
 
     /**
         Return true if the envelope is still active.

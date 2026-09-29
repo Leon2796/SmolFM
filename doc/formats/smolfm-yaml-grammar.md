@@ -142,6 +142,12 @@ for a node type are ignored by the parsers.
 ### Ring Modulator (ring)
 - No parameters (the node is parameter-free)
 
+### Splitter (split)
+- No parameters (the node is parameter-free); two outputs `outL`/`outR`
+
+### Merger (merge)
+- No parameters (the node is parameter-free); two inputs `in1`/`in2`
+
 ### Master Output (output)
 - `level`: float, 0..1 (default 0.8)
 

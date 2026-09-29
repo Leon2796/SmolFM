@@ -26,53 +26,54 @@ void WaveshaperProcessor::startNote()
     // Stateless: no per-note state.
 }
 
-float WaveshaperProcessor::processSample()
+StereoFrame WaveshaperProcessor::processSample()
 {
-    const float x = input.getSample();
+    const StereoFrame x = input.getSample();
 
     const float d = drive != nullptr ? juce::jlimit (0.0f, 1.0f, drive->load()) : 0.0f;
     const int shapeIndex = shape != nullptr
         ? juce::jlimit (0, 2, static_cast<int> (std::round (shape->load())))
         : 0;
 
-    float y = 0.0f;
-
-    switch (shapeIndex)
+    // The transfer function runs once per channel (standard stereo
+    // distortion).  Both channels are shaped independently; M/S processing
+    // would be a separate feature, not part of the stereo conversion.
+    const auto transfer = [d, shapeIndex] (float xChannel) -> float
     {
-        case 0:
+        switch (shapeIndex)
         {
-            // Soft clip: x / (1 + |x|) after driving the input.  Smooth,
-            // tube-like saturation; keeps a hint of the original dynamics.
-            const float driven = x * (1.0f + 9.0f * d);
-            y = driven / (1.0f + std::abs (driven));
-            break;
+            case 0:
+            {
+                // Soft clip: x / (1 + |x|) after driving the input.  Smooth,
+                // tube-like saturation; keeps a hint of the original dynamics.
+                const float driven = xChannel * (1.0f + 9.0f * d);
+                return driven / (1.0f + std::abs (driven));
+            }
+
+            case 1:
+            {
+                // Hard clip: brick-wall clamp at +/-1 after driving.  Aggressive,
+                // digital-sounding distortion; harmonics decay slowly.
+                const float driven = xChannel * (1.0f + 9.0f * d);
+                return juce::jlimit (-1.0f, 1.0f, driven);
+            }
+
+            case 2:
+            {
+                // Foldback: reflect the signal around +/-1 instead of clamping.
+                // Metallic, inharmonic character; extreme drive creates sidebands.
+                float yChannel = xChannel * (1.0f + 19.0f * d);
+                while (std::abs (yChannel) > 1.0f)
+                    yChannel = 2.0f * (yChannel > 0.0f ? 1.0f : -1.0f) - yChannel;
+                return yChannel;
+            }
+
+            default:
+                return xChannel;
         }
+    };
 
-        case 1:
-        {
-            // Hard clip: brick-wall clamp at +/-1 after driving.  Aggressive,
-            // digital-sounding distortion; harmonics decay slowly.
-            const float driven = x * (1.0f + 9.0f * d);
-            y = juce::jlimit (-1.0f, 1.0f, driven);
-            break;
-        }
-
-        case 2:
-        {
-            // Foldback: reflect the signal around +/-1 instead of clamping.
-            // Metallic, inharmonic character; extreme drive creates sidebands.
-            const float driven = x * (1.0f + 19.0f * d);
-            y = driven;
-            while (std::abs (y) > 1.0f)
-                y = 2.0f * (y > 0.0f ? 1.0f : -1.0f) - y;
-            break;
-        }
-
-        default:
-            y = x;
-            break;
-    }
-
+    const StereoFrame y { transfer (x.l), transfer (x.r) };
     output.setSample (y);
     return y;
 }

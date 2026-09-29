@@ -32,6 +32,10 @@
         HP    = x - k*v1 - v2
         Notch = HP + v2   (= x - k*v1)
 
+    Stereo: the coefficients depend only on the cutoff and are shared by
+    both channels; only the TPT state (ic1eq/ic2eq) is a left/right pair,
+    integrated per channel.
+
     Cutoff is re-derived every sample, so cutoff_mod_in can sweep freely
     (envelope, FM chain, keyboard tracking) without zipper artifacts.
 */
@@ -64,7 +68,16 @@ public:
 
     void prepare (double newSampleRate) override;
     void startNote() override;
-    float processSample() override;
+    StereoFrame processSample() override;
+
+    /**
+        Zero the TPT integrator state.
+
+        applyConnectionPatch calls this so a new patch cannot inherit a
+        ringing filter tail from the previous patch (mirrors the delay
+        reset there).
+    */
+    void reset() noexcept;
 
     InputPort& getInput() noexcept          { return input; }
     InputPort& getCutoffModInput() noexcept { return cutoffMod; }
@@ -80,8 +93,8 @@ private:
     OutputPort output   { PortType::signal, *this };
 
     double sampleRate = 44100.0;
-    float  ic1eq = 0.0f;   // TPT integrator state 1
-    float  ic2eq = 0.0f;   // TPT integrator state 2
+    StereoFrame ic1eq;   // TPT integrator state 1 (left/right pair)
+    StereoFrame ic2eq;   // TPT integrator state 2 (left/right pair)
 };
 
 } // namespace smolfm

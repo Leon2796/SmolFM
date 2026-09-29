@@ -224,6 +224,13 @@ bool SmolFmFile::save (gui::DraggablePanel& panel,
                 pinXml->setAttribute ("direction", "out");
                 pinXml->setAttribute ("type", typeToString (spec->outputType));
             }
+            for (const juce::String& extraPinId : spec->extraOutputPortIds)
+            {
+                auto* pinXml = nodeXml->createNewChildElement ("Pin");
+                pinXml->setAttribute ("id", extraPinId);
+                pinXml->setAttribute ("direction", "out");
+                pinXml->setAttribute ("type", typeToString (spec->outputType));
+            }
         }
 
         // Presentation: the canvas position lives in the layout part only.

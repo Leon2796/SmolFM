@@ -97,17 +97,30 @@ DraggableComponent* DraggablePanel::addNodeOfType (const juce::String& baseId,
     // hidden until updateVisibilityFromConnections() proves they're needed.
     raw->setVisible (makeVisible);
 
-    // Attach the pins declared by this node's spec.
+    // Attach the pins declared by this node's spec.  Side hints (L/R
+    // badges) come from the spec and are display-only.
+    auto sideFor = [] (const std::vector<smolfm::ChannelSide>& sides, int index)
+    {
+        return index >= 0 && index < static_cast<int> (sides.size())
+                   ? sides[static_cast<size_t> (index)]
+                   : smolfm::ChannelSide::none;
+    };
+
     for (int i = 0; i < spec->inputPortIds.size(); ++i)
     {
         const smolfm::PortType t = i < static_cast<int> (spec->inputTypes.size())
                                        ? spec->inputTypes[static_cast<size_t> (i)]
                                        : smolfm::PortType::signal;
-        raw->addInputPin (spec->inputPortIds[i], t);
+        raw->addInputPin (spec->inputPortIds[i], t, sideFor (spec->inputChannelSides, i));
     }
 
     if (spec->outputPortId.isNotEmpty())
-        raw->addOutputPin (spec->outputPortId, spec->outputType);
+        raw->addOutputPin (spec->outputPortId, spec->outputType,
+                           sideFor (spec->outputChannelSides, 0));
+
+    for (int i = 0; i < spec->extraOutputPortIds.size(); ++i)
+        raw->addOutputPin (spec->extraOutputPortIds[i], spec->outputType,
+                           sideFor (spec->outputChannelSides, i + 1));
 
     // Park the new box beside the previous ones so they don't stack exactly.
     raw->setTopLeftPosition ({ 16 + 24 * (boxes.size() - 1), 16 + 24 * (boxes.size() - 1) });
@@ -435,6 +448,28 @@ void DraggablePanel::paintOverChildren (juce::Graphics& g)
         g.strokePath (path, juce::PathStrokeType (2.0f));
     };
 
+    // Small "L"/"R" tag at the wire midpoint, read from the source pin's
+    // display-only side hint (splitter outputs, merger inputs).  Pure UI:
+    // connect() and the audio path ignore this metadata.
+    auto drawSideBadge = [&g] (juce::Point<float> from, juce::Point<float> to,
+                               smolfm::ChannelSide side)
+    {
+        if (side == smolfm::ChannelSide::none)
+            return;
+
+        const auto mid = (from + to) * 0.5f;
+        const auto badge = juce::Rectangle<float> (12.0f, 12.0f).withCentre (mid);
+
+        g.setColour (side == smolfm::ChannelSide::left ? juce::Colours::cyan
+                                                       : juce::Colours::pink);
+        g.fillRoundedRectangle (badge, 3.0f);
+
+        g.setColour (juce::Colours::black);
+        g.setFont (juce::FontOptions (10.0f, juce::Font::bold));
+        g.drawText (side == smolfm::ChannelSide::left ? "L" : "R", badge,
+                    juce::Justification::centred);
+    };
+
     // Paint every established connection.
     for (const auto& c : currentPatch.connections)
     {
@@ -444,11 +479,15 @@ void DraggablePanel::paintOverChildren (juce::Graphics& g)
             continue;
 
         juce::Point<float> p1, p2;
+        smolfm::ChannelSide side = smolfm::ChannelSide::none;
         for (int i = 0; i < fromBox->getNumOutputPins(); ++i)
         {
             auto* p = fromBox->getOutputPin (i);
             if (p->getPinId() == c.from.portId)
+            {
                 p1 = fromBox->getPosition().toFloat() + p->getBounds().getCentre().toFloat();
+                side = p->getChannelSide();
+            }
         }
         for (int i = 0; i < toBox->getNumInputPins(); ++i)
         {
@@ -462,6 +501,7 @@ void DraggablePanel::paintOverChildren (juce::Graphics& g)
 
         auto fromInfo = smolfm::GraphNodeRegistry::findPortInfo (c.from.nodeId, c.from.portId, true);
         drawWire (p1, p2, fromInfo.second, 0.9f);
+        drawSideBadge (p1, p2, side);
     }
 
     // Paint the in-flight drag wire on top.
@@ -481,6 +521,7 @@ void DraggablePanel::paintOverChildren (juce::Graphics& g)
                                                                              draggedFrom.portId,
                                                                              true);
                     drawWire (start, draggedToPosition, fromInfo.second, 0.6f);
+                    drawSideBadge (start, draggedToPosition, p->getChannelSide());
                     break;
                 }
             }

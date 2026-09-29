@@ -1,0 +1,128 @@
+technique:
+  name: stereo-pingpong-echo
+
+  idea: |
+    Four delay stages with staggered times t, 2t, 3t and 4t are fed from
+    the alternating side branches of one splitter and land on separate
+    master output inputs.  Because the output sums its inputs per channel,
+    the left channel carries the odd taps and the right channel the even
+    taps — the echo bounces between the sides like a ping-pong delay,
+    composed entirely from the standard delay node, without any feedback
+    wiring in the graph.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send driving the voice.
+    - type: osc
+      role: Voice oscillator; the shared source of all taps.
+    - type: split
+      role: Divides the voice into the left and right tap sources.
+    - type: delay
+      role: First left tap; time t, feedback 0, mix 1.
+    - type: delay
+      role: First right tap; time 2t, feedback 0, mix 1.
+    - type: delay
+      role: Second left tap; time 3t, feedback 0, mix 1.
+    - type: delay
+      role: Second right tap; time 4t, feedback 0, mix 1.
+    - type: output
+      role: Per-channel summer; its inputs sort the taps by side.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the voice (frequency).
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the played note (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Voice signal into the splitter and optionally a dry output
+        input (signal).
+    - node_role: Splitter
+      port: in
+      role: Receives the voice signal (signal).
+    - node_role: Splitter
+      port: outL
+      role: Left tap source; fans out to both left delays (signal).
+    - node_role: Splitter
+      port: outR
+      role: Right tap source; fans out to both right delays (signal).
+    - node_role: First left tap
+      port: in
+      role: Receives the left branch (signal).
+    - node_role: First left tap
+      port: out
+      role: Tap at t towards output in1 (signal).
+    - node_role: First right tap
+      port: in
+      role: Receives the right branch (signal).
+    - node_role: First right tap
+      port: out
+      role: Tap at 2t towards output in2 (signal).
+    - node_role: Second left tap
+      port: in
+      role: Receives the left branch (signal).
+    - node_role: Second left tap
+      port: out
+      role: Tap at 3t towards output in3 (signal).
+    - node_role: Second right tap
+      port: in
+      role: Receives the right branch (signal).
+    - node_role: Second right tap
+      port: out
+      role: Tap at 4t towards output in4 (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: Separate mix inputs per tap so the per-channel sums alternate
+        (signal).
+
+  topology:
+    description: |
+      note.out -> osc.note_in (frequency).  osc.out -> split.in (signal).
+      split.outL -> delay1.in and delay3.in (signal); split.outR ->
+      delay2.in and delay4.in (signal).  delay1 (t) -> output.in1,
+      delay2 (2t) -> output.in2, delay3 (3t) -> output.in3,
+      delay4 (4t) -> output.in4 (signal).  osc.out may also fan out to a
+      free output input as the dry signal.  No merger is needed: the
+      output's per-channel summing places the odd taps left and the even
+      taps right.
+
+  parameters:
+    - name: tap time t
+      role: |
+        1..2000 ms; all four times are integer multiples of t.  120..400 ms
+        reads as a walking bounce, shorter times thicken the voice.
+    - name: feedback
+      role: |
+        0..0.95, keep 0 for the clean bounce.  Feedback inside one tap
+        re-triggers that same side at multiples of its own time and blurs
+        the alternation; values below 0.2 add gentle per-side ringing.
+    - name: mix
+      role: |
+        0..1.  1.0 makes every branch fully delayed; lower values add dry
+        copies of that side into its own channel.
+    - name: delay sync mode
+      role: |
+        Off for free bounces; on with a fixed division gives tempo-locked
+        ping-pong windows.
+
+  relationships:
+    - name: alternation
+      description: |
+        Tap k lands on the left channel for odd k and on the right channel
+        for even k; the perceived bounce distance equals the base time t.
+    - name: window-limit
+      description: |
+        The pattern is a fixed four-tap window; repeats beyond 4t and the
+        true cross-feedback tail of a ping-pong delay need the pingpong
+        node mode, because an acyclic graph cannot wire a feedback loop.
+    - name: budget
+      description: |
+        Registry budgets: osc <= 8, delay <= 8 (four used), split <= 4,
+        output = 1.  Two more delays extend the window to six taps.
+
+  perceptual_effects:
+    - echo bouncing between the ears without phase artefacts
+    - dub-style movement from a single note hit
+    - clean, finite ping-pong window per note

@@ -59,13 +59,13 @@ public:
     }
 
     /**
-        Run one sample through the whole graph.
+        Run one frame through the whole graph.
 
         Returns the output of the last processor.
     */
-    float processSample()
+    StereoFrame processSample()
     {
-        float result = 0.0f;
+        StereoFrame result;
 
         for (Processor* proc : processors)
             result = proc->processSample();

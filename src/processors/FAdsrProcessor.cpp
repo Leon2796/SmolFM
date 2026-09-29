@@ -49,9 +49,9 @@ void FAdsrProcessor::startNote()
     envelope.noteOn();
 }
 
-float FAdsrProcessor::processSample()
+StereoFrame FAdsrProcessor::processSample()
 {
-    const float sourceFrequency = freqInput.getSample();
+    const float sourceFrequency = freqInput.getSample().l;
     const float env = envelope.getNextSample();
 
     // Interpolate the scaling factor between the down factor (E = 0) and
@@ -60,13 +60,19 @@ float FAdsrProcessor::processSample()
     const float downValue = down->load();
     const float scaled = sourceFrequency * (downValue + (upValue - downValue) * env);
 
-    output.setSample (scaled);
-    return scaled;
+    const StereoFrame result = StereoFrame::centered (scaled);
+    output.setSample (result);
+    return result;
 }
 
 void FAdsrProcessor::noteOff()
 {
     envelope.noteOff();
+}
+
+void FAdsrProcessor::reset() noexcept
+{
+    envelope.reset();
 }
 
 bool FAdsrProcessor::isActive() const noexcept

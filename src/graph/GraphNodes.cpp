@@ -291,6 +291,30 @@ namespace
 
 
 
+        {
+            NodeSpec split;
+            split.id = "split";
+            split.title = "Splitter";
+            split.outputPortId = "outL";
+            split.outputType = PortType::signal;
+            split.extraOutputPortIds = { "outR" };
+            split.outputChannelSides = { ChannelSide::left, ChannelSide::right };
+            split.inputPortIds = { "in" };
+            split.inputTypes = { PortType::signal };
+            specs.push_back (split);
+        }
+        {
+            NodeSpec merge;
+            merge.id = "merge";
+            merge.title = "Merger";
+            merge.outputPortId = "out";
+            merge.outputType = PortType::signal;
+            merge.inputPortIds = { "in1", "in2" };
+            merge.inputTypes = { PortType::signal, PortType::signal };
+            merge.inputChannelSides = { ChannelSide::left, ChannelSide::right };
+            specs.push_back (merge);
+        }
+
         return specs;
 
     }
@@ -369,6 +393,9 @@ NodeType GraphNodeRegistry::typeOf (const juce::String& nodeId)
     if (base == "filter") return NodeType::filter;
 
     if (base == "output") return NodeType::masterOutput;
+
+    if (base == "split")  return NodeType::splitter;
+    if (base == "merge")  return NodeType::merger;
 
     return NodeType::unknown;
 
@@ -466,6 +493,9 @@ int GraphNodeRegistry::maxInstancesOf (NodeType type)
         case NodeType::filter:         return maxFilters;
 
         case NodeType::masterOutput:   return maxMasterOutputs;
+
+        case NodeType::splitter:       return maxSplitters;
+        case NodeType::merger:         return maxMergers;
 
         case NodeType::unknown:        break;
 
@@ -776,6 +806,12 @@ std::pair<bool, PortType> GraphNodeRegistry::findPortInfo (const juce::String& n
     {
 
         if (spec->outputPortId.isNotEmpty() && spec->outputPortId == portId)
+
+            return { true, spec->outputType };
+
+        // Extra outputs (splitter outR): same type as the primary output.
+
+        if (spec->extraOutputPortIds.indexOf (portId) >= 0)
 
             return { true, spec->outputType };
 

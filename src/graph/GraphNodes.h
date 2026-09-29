@@ -67,6 +67,8 @@ enum class NodeType
     waveshaper,
     filter,
     masterOutput,
+    splitter,
+    merger,
     unknown
 };
 
@@ -85,6 +87,18 @@ struct NodeSpec
     juce::StringArray inputPortIds;
     PortType outputType = PortType::signal;
     std::vector<PortType> inputTypes;
+
+    // Optional additional outputs after outputPortId (used by the splitter).
+    // Every extra output carries outputType as well.
+    juce::StringArray extraOutputPortIds;
+
+    // Display-only stereo side hints for the pins (see ChannelSide).  Pure
+    // UI metadata: connect() and the audio path ignore them.  For outputs
+    // the first entry describes outputPortId and the rest follow
+    // extraOutputPortIds; for inputs they run parallel to inputPortIds.
+    // An empty vector means "no hint".
+    std::vector<ChannelSide> outputChannelSides;
+    std::vector<ChannelSide> inputChannelSides;
 
         // APVTS parameter ids (unindexed templates: "%" gets the instance index,
     // e.g. "osc%Frequency" -> "osc3Frequency").  Empty for note.
@@ -170,6 +184,8 @@ public:
     static constexpr int maxWaveshapers = 8;
     static constexpr int maxFilters     = 8;
     static constexpr int maxMasterOutputs = 1;
+    static constexpr int maxSplitters   = 4;
+    static constexpr int maxMergers     = 4;
 
     static const std::vector<NodeSpec>& getAllSpecs();
 

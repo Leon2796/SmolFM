@@ -30,23 +30,33 @@ void FMModulationProcessor::startNote()
     // No state to reset.
 }
 
-float FMModulationProcessor::processSample()
+StereoFrame FMModulationProcessor::processSample()
 {
-    const float carrierHz = freqInput.getSample();
+    const float carrierHz = freqInput.getSample().l;
     const float amount    = fmAmount->load();
 
     // True FM: the deviation is proportional to the carrier frequency, so
     // the modulation index (and therefore the timbre) stays the same on
     // every key.  amount = 0 or no modulator wired: the frequency passes
     // through unchanged and the stage is fully transparent.
-    const float modulator = (amount > 0.0f && modulatorInput.isConnected())
-                          ? modulatorInput.getSample()
-                          : 0.0f;
+    //
+    // Stereo compatibility: modulator_in carries a StereoFrame pair, but the
+    // stage emits exactly one instantaneous frequency (the oscillator owns a
+    // single phase).  The pair collapses through its mean (L + R) * 0.5:
+    // centered (mono) modulators — everything that existed before stereo —
+    // keep exactly the modulation depth they had before, and per-side or
+    // panned modulators contribute their averaged deviation.  (A plain sum
+    // would double the depth for centered content.)
+    const StereoFrame modulatorPair = (amount > 0.0f && modulatorInput.isConnected())
+                                    ? modulatorInput.getSample()
+                                    : StereoFrame { 0.0f, 0.0f };
+    const float modulator = 0.5f * (modulatorPair.l + modulatorPair.r);
 
     const float instantHz = carrierHz * (1.0f + amount * modulator);
 
-    output.setSample (instantHz);
-    return instantHz;
+    const StereoFrame result = StereoFrame::centered (instantHz);
+    output.setSample (result);
+    return result;
 }
 
 } // namespace smolfm

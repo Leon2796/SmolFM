@@ -15,8 +15,9 @@
           values close to 1.0 run for a long tail without oscillating.
 
     Per-sample processing is real-time safe: one buffer write, one read, one
-    linear interpolation.  The buffer is pre-allocated to maxDelay at
-    prepare() and never resized on the audio thread.
+    linear interpolation.  The buffer holds StereoFrames (2 channels), is
+    pre-allocated to maxDelay at prepare() and never resized on the audio
+    thread.
 */
 
 #pragma once
@@ -52,7 +53,7 @@ public:
 
     void prepare (double newSampleRate) override;
     void startNote() override;
-    float processSample() override;
+    StereoFrame processSample() override;
 
     /** Called from the processor's owner when the host playhead moves. */
     void setHostTempo (double bpm) noexcept { currentBpm = bpm; }
@@ -94,7 +95,7 @@ private:
     double currentBpm = 120.0;
 
     static constexpr double maxDelaySeconds = 2.0;
-    std::vector<float> buffer;
+    std::vector<StereoFrame> buffer;   // two channels, pre-allocated
     int writePos = 0;
 
     // O(1) tail-energy estimate: a peak follower over the samples written

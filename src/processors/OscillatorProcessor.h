@@ -27,7 +27,9 @@ namespace smolfm
 /**
     An oscillator node with one signal output.
 
-    The output port carries the raw oscillator sample for the current tick.
+    The output port carries the raw oscillator sample for the current tick as
+    a centered StereoFrame (the oscillator has a single phase, so both
+    channels are identical).
 */
 class OscillatorProcessor final : public Processor
 {
@@ -53,7 +55,7 @@ public:
 
     void prepare (double newSampleRate) override;
     void startNote() override;
-    float processSample() override;
+    StereoFrame processSample() override;
 
     /**
         Access the output port so that other nodes can connect to it.

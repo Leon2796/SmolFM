@@ -45,7 +45,7 @@ public:
 
     void prepare (double newSampleRate) override;
     void startNote() override;
-    float processSample() override;
+    StereoFrame processSample() override;
 
     InputPort& getFreqInput() noexcept      { return freqInput; }
     OutputPort& getOutput() noexcept        { return output; }

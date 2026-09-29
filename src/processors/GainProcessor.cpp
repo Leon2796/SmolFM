@@ -25,12 +25,12 @@ void GainProcessor::startNote()
     // Stateless: no per-note state.
 }
 
-float GainProcessor::processSample()
+StereoFrame GainProcessor::processSample()
 {
-    const float sourceSample = input.getSample();
+    const StereoFrame sourceSample = input.getSample();
     const float g = gain != nullptr ? gain->load() : 1.0f;
 
-    const float sample = sourceSample * g;
+    const StereoFrame sample { sourceSample.l * g, sourceSample.r * g };
     output.setSample (sample);
 
     return sample;

@@ -6,7 +6,7 @@
         - in2 (signal): second factor, typically a modulator oscillator.
         - out (signal): the product in1 * in2.
 
-    Per sample:
+    Per sample (per channel):
 
         out = in1 * in2
 
@@ -39,7 +39,7 @@ public:
 
     void prepare (double newSampleRate) override;
     void startNote() override;
-    float processSample() override;
+    StereoFrame processSample() override;
 
     InputPort& getInput1() noexcept { return input1; }
     InputPort& getInput2() noexcept { return input2; }

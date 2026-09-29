@@ -1,0 +1,99 @@
+technique:
+  name: fscale-fadsr-pitch-jump
+
+  idea: |
+    The scaler and the F-ADSR sit in series inside the frequency path, so a
+    static interval shift is combined with a per-note envelope swing.  The
+    scaler lifts every note by a fixed factor, the F-ADSR then scales that
+    shifted pitch between its down and up factors while the envelope runs,
+    and the voice articulates a stamped pitch jump that dives or settles
+    when the key is released.
+
+  involved_nodes:
+    - type: note
+      role: MIDI note source; base frequency for the chain.
+    - type: fscale
+      role: Frequency scaler; applies the static interval shift.
+    - type: fadsr
+      role: Pitch envelope; swings the shifted pitch between its factors.
+    - type: osc
+      role: Voice oscillator in pitch mode; renders the jumping frequency.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: MIDI note source
+      port: out
+      role: Note frequency into the scaler (frequency).
+    - node_role: Frequency scaler
+      port: freq_in
+      role: Receives the note frequency (frequency).
+    - node_role: Frequency scaler
+      port: out
+      role: Shifted frequency into the pitch envelope (frequency).
+    - node_role: Pitch envelope
+      port: freq_in
+      role: Receives the shifted frequency (frequency).
+    - node_role: Pitch envelope
+      port: out
+      role: Envelope-scaled frequency towards the voice (frequency).
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the jumping frequency (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Rendered signal towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the jumping voice (signal).
+
+  topology:
+    description: |
+      note -> fscale.freq_in (frequency).  fscale.out -> fadsr.freq_in
+      (frequency).  fadsr.out -> osc.note_in (frequency).  osc.out ->
+      output (signal).  Two serial stages in the frequency path: the static
+      shift first, the per-note envelope second.
+
+  parameters:
+    - name: fscale factor
+      role: |
+        0..10.  2 stamps the voice an octave above the key, 0.5 an octave
+        below, 3 an octave plus a fifth.
+    - name: fadsr up
+      role: |
+        Envelope factor at E = 1.  1 keeps the stamped pitch steady while
+        the envelope is high; values above 1 lean the sustain sharp.
+    - name: fadsr down
+      role: |
+        Envelope factor at E = 0.  0.5 lets the voice release an octave
+        below the stamped pitch; 1 keeps the release level.
+    - name: fadsr attack, decay, release
+      role: |
+        Envelope times, 0.001..5 s for attack and decay, 0.001..10 s for
+        release.  Fast attack and decay stamp the jump, long release draws
+        the dive.
+    - name: oscillator waveform
+      role: |
+        Rendered waveform of the jumping voice.
+
+  relationships:
+    - name: chain-order
+      description: |
+        The scaler shifts first, so the envelope factors act on the shifted
+        pitch: a down of 0.5 releases one octave under the stamped note,
+        not under the keyboard note.
+    - name: static-envelope-siblings
+      description: |
+        fadsr-pitch-drop swings an unshifted pitch one-sidedly down;
+        fscale-fm-harmonic-shift shifts the FM cluster without any
+        envelope.  This technique combines the static shift with the
+        per-note envelope in one frequency path.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, fscale <= 8, fadsr <= 4, osc <= 8,
+        output = 1.
+
+  perceptual_effects:
+    - percussive octave-up pitch stamps
+    - release dives that fall a fixed interval under the stamped note
+    - sharp lean during the sustain when up exceeds 1

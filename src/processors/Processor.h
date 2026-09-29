@@ -1,10 +1,12 @@
 /*
     Processor.h defines the base class for all signal-processing nodes in SmolFM.
 
-    The graph is deliberately simple: every node produces one scalar sample per
-    call to processSample().  Connections are explicit output->input ports, so
-    the graph can later be traversed, validated and visualised without touching
-    the audio math.
+    The graph is deliberately simple: every node produces one StereoFrame (a
+    left/right sample pair) per call to processSample().  Frequency-domain
+    ports keep their scalar semantics; their values travel as centered pairs
+    (both channels equal), so the scalar Hertz value is the .l channel.
+    Connections are explicit output->input ports, so the graph can later be
+    traversed, validated and visualised without touching the audio math.
 */
 
 #pragma once
@@ -17,7 +19,7 @@ namespace smolfm
 /**
     Semantic type tags for ports.
 
-    A port carries a single sample value.  Using an enum class prevents
+    A port carries one StereoFrame per tick.  Using an enum class prevents
     accidental connections between incompatible signal kinds.
 */
 enum class PortType
@@ -32,6 +34,40 @@ enum class PortType
         Hertz (NoteProcessor) into an oscillator's note_in port.
     */
     frequency
+};
+
+/**
+    Display-only stereo side hint for signal ports.
+
+    Pure UI metadata: it never influences connect() or the audio math.  A
+    splitter/merger can set it on its ports so the UI can label a wire with
+    the side it carries ("L" / "R" badge).  Defaults to none.
+*/
+enum class ChannelSide
+{
+    none,
+    left,
+    right
+};
+
+/**
+    One audio sample as a left/right pair.
+
+    Since the implicit stereo conversion (Welt A) the standard signal type
+    carries a pair per tick instead of a single float.  Mono sources emit a
+    centered pair (both channels equal), so all previous mono-style patches
+    are preserved: they simply produce identical L and R.
+*/
+struct StereoFrame
+{
+    float l = 0.0f;
+    float r = 0.0f;
+
+    /** Both channels carry the same value (mono content, frequencies). */
+    static StereoFrame centered (float value) noexcept
+    {
+        return { value, value };
+    }
 };
 
 /**
@@ -80,11 +116,13 @@ public:
     virtual void startNote() = 0;
 
     /**
-        Produce one output sample and advance internal state.
+        Produce one output frame and advance internal state.
 
         The processor reads its connected inputs before producing output.
+        Frequency-domain processors return a centered pair; the scalar Hertz
+        value is then the .l channel.
     */
-    virtual float processSample() = 0;
+    virtual StereoFrame processSample() = 0;
 
     /**
         Return the role of this processor in the graph.

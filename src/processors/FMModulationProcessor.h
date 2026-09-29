@@ -8,7 +8,7 @@
         - modulator_in  (signal):    the signal that bends the frequency.
         - out           (frequency): instantaneous carrier frequency.
 
-    Per sample:
+    Per sample (modulator collapsed to one scalar — see below):
 
         f_out = f_in * (1 + amount * modulator)
 
@@ -28,6 +28,12 @@
 
     amount = 0 or no modulator wired: f_out = f_in — the stage is fully
     transparent, so idle links in an FM chain cost nothing.
+
+    Stereo compatibility: modulator_in carries a StereoFrame pair, but the
+    stage emits exactly one instantaneous frequency (the oscillator owns a
+    single phase).  The pair is collapsed by averaging (L + R) * 0.5, so
+    centered (mono) modulators keep exactly the modulation depth they had
+    before the stereo conversion; a plain sum would double the deviation.
 */
 
 #pragma once
@@ -57,7 +63,7 @@ public:
 
     void prepare (double newSampleRate) override;
     void startNote() override;
-    float processSample() override;
+    StereoFrame processSample() override;
 
     InputPort& getFreqInput() noexcept      { return freqInput; }
     InputPort& getModulatorInput() noexcept { return modulatorInput; }

@@ -37,7 +37,7 @@ void DelayProcessor::prepare (double newSampleRate)
 
     const int maxSamples = static_cast<int> (maxDelaySeconds * sampleRate) + 2;
     if (static_cast<int> (buffer.size()) != maxSamples)
-        buffer.assign (static_cast<size_t> (maxSamples), 0.0f);
+        buffer.assign (static_cast<size_t> (maxSamples), StereoFrame {});
 
     writePos = 0;
 }
@@ -52,7 +52,7 @@ void DelayProcessor::reset() noexcept
 {
     // Only called when a new patch is loaded — never mid-note.  Notes are
     // still allowed to reuse an existing tail (see startNote).
-    std::fill (buffer.begin(), buffer.end(), 0.0f);
+    std::fill (buffer.begin(), buffer.end(), StereoFrame {});
     writePos = 0;
     tailPeak = 0.0f;
 }
@@ -78,7 +78,7 @@ float DelayProcessor::getDelaySamples() const noexcept
     return quarterMs * factor * 0.001f * static_cast<float> (sampleRate);
 }
 
-float DelayProcessor::processSample()
+StereoFrame DelayProcessor::processSample()
 {
     if (buffer.empty())
         return input.getSample();
@@ -91,21 +91,24 @@ float DelayProcessor::processSample()
     // the integer index behind writePos.  No interpolation — delay in this
     // range is musically fine without it.
     const int readPos = (writePos - delayInt + maxSamples) % maxSamples;
-    const float wet = buffer[static_cast<size_t> (readPos)];
+    const StereoFrame wet = buffer[static_cast<size_t> (readPos)];
 
     const float fb = feedback != nullptr ? juce::jlimit (0.0f, 0.95f, feedback->load()) : 0.3f;
     const float m  = mix      != nullptr ? juce::jlimit (0.0f, 1.0f,  mix->load())      : 0.3f;
 
-    const float dry = input.getSample();
-    const float written = dry + wet * fb;
+    const StereoFrame dry = input.getSample();
+    const StereoFrame written { dry.l + wet.l * fb, dry.r + wet.r * fb };
     buffer[static_cast<size_t> (writePos)] = written;
     writePos = (writePos + 1) % maxSamples;
 
     // Track tail energy (O(1)): the written value is exactly what remains in
-    // the line.  Decay is slow enough to follow even long delay repeats.
-    tailPeak = juce::jmax (tailPeak * 0.99998f, std::abs (written));
+    // the line.  The louder channel decides when the tail has run out.  Decay
+    // is slow enough to follow even long delay repeats.
+    const float writtenPeak = std::max (std::abs (written.l), std::abs (written.r));
+    tailPeak = juce::jmax (tailPeak * 0.99998f, writtenPeak);
 
-    const float result = dry * (1.0f - m) + wet * m;
+    const StereoFrame result { dry.l * (1.0f - m) + wet.l * m,
+                               dry.r * (1.0f - m) + wet.r * m };
     output.setSample (result);
     return result;
 }
