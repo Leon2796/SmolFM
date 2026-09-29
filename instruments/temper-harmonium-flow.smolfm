@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Temper Harmonium Flow" description="" techniques="">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="saw">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="fscale0" factor="1.5" />
+      <Node id="fscale1" factor="1" interval="fifth_up" />
+      <Node id="fscale2" factor="1.3333" />
+      <Node id="fscale3" factor="1" interval="fourth_up" />
+      <Node id="osc1" waveform="triangle">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc2" waveform="triangle">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc3" waveform="triangle">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc4" waveform="triangle">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.12" decay="0.5" sustain="0.8" release="1.3">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr1" attack="0.15" decay="0.5" sustain="0.65" release="1.3">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr2" attack="0.15" decay="0.5" sustain="0.65" release="1.3">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr3" attack="0.15" decay="0.5" sustain="0.5" release="1.3">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr4" attack="0.15" decay="0.5" sustain="0.5" release="1.3">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="fscale1" toPort="freq_in" />
+      <Wire from="fscale1" fromPort="out" to="osc2" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="fscale2" toPort="freq_in" />
+      <Wire from="fscale2" fromPort="out" to="osc3" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="fscale3" toPort="freq_in" />
+      <Wire from="fscale3" fromPort="out" to="osc4" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="osc1" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="osc2" fromPort="out" to="adsr2" toPort="in" />
+      <Wire from="osc3" fromPort="out" to="adsr3" toPort="in" />
+      <Wire from="osc4" fromPort="out" to="adsr4" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="adsr1" fromPort="out" to="output" toPort="in2" />
+      <Wire from="adsr2" fromPort="out" to="output" toPort="in3" />
+      <Wire from="adsr3" fromPort="out" to="output" toPort="in4" />
+      <Wire from="adsr4" fromPort="out" to="output" toPort="in5" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="460" />
+      <Box id="osc0" x="380" y="60" />
+      <Box id="fscale0" x="380" y="260" />
+      <Box id="fscale1" x="380" y="460" />
+      <Box id="fscale2" x="380" y="660" />
+      <Box id="fscale3" x="380" y="860" />
+      <Box id="osc1" x="700" y="260" />
+      <Box id="osc2" x="700" y="460" />
+      <Box id="osc3" x="700" y="660" />
+      <Box id="osc4" x="700" y="860" />
+      <Box id="adsr0" x="1020" y="60" />
+      <Box id="adsr1" x="1020" y="260" />
+      <Box id="adsr2" x="1020" y="460" />
+      <Box id="adsr3" x="1020" y="660" />
+      <Box id="adsr4" x="1020" y="860" />
+      <Box id="output" x="1340" y="460" />
+    </Boxes>
+  </Layout>
+</SmolFM>

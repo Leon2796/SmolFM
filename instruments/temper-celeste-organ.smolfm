@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Temper Celeste Organ" description="" techniques="">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="sine">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="fscale0" factor="1.5" />
+      <Node id="fscale1" factor="1" interval="fifth_up" />
+      <Node id="fscale2" factor="1" interval="octave_up" />
+      <Node id="osc1" waveform="sine">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc2" waveform="sine">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc3" waveform="sine">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.45">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain1" factor="0.5">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain2" factor="0.5">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain3" factor="0.35">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.8" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="osc1" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="fscale1" toPort="freq_in" />
+      <Wire from="fscale1" fromPort="out" to="osc2" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="fscale2" toPort="freq_in" />
+      <Wire from="fscale2" fromPort="out" to="osc3" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="osc1" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="osc2" fromPort="out" to="gain2" toPort="in" />
+      <Wire from="osc3" fromPort="out" to="gain3" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="gain1" fromPort="out" to="output" toPort="in2" />
+      <Wire from="gain2" fromPort="out" to="output" toPort="in3" />
+      <Wire from="gain3" fromPort="out" to="output" toPort="in4" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="260" />
+      <Box id="osc0" x="380" y="60" />
+      <Box id="fscale0" x="380" y="260" />
+      <Box id="fscale1" x="380" y="460" />
+      <Box id="fscale2" x="380" y="660" />
+      <Box id="osc1" x="700" y="260" />
+      <Box id="osc2" x="700" y="460" />
+      <Box id="osc3" x="700" y="660" />
+      <Box id="gain0" x="1020" y="60" />
+      <Box id="gain1" x="1020" y="260" />
+      <Box id="gain2" x="1020" y="460" />
+      <Box id="gain3" x="1020" y="660" />
+      <Box id="output" x="1340" y="260" />
+    </Boxes>
+  </Layout>
+</SmolFM>
