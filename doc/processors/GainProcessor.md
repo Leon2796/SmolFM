@@ -16,7 +16,7 @@ Stillstand (Default-Eingang 0.0).
 
 | Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
 |---|---|---|---|---|
-| Gain | `gain<N>Factor` | Float, 0–10, Default 1 | `std::atomic<float>* gain` | [src/processors/GainProcessor.h](../../src/processors/GainProcessor.h) |
+| Gain | `gain<N>Factor` | Float, 0–10, Default 1 (UI-Skew: 1.0 ≙ 12 Uhr — Dämpfungshälfte 0–1 bekommt ~50 % des Knobwegs; Rohwert bleibt linear) | `std::atomic<float>* gain` | [src/processors/GainProcessor.h](../../src/processors/GainProcessor.h) |
 
 `<N>` = Instanzindex 0–7.
 

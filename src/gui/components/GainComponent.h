@@ -1,6 +1,7 @@
 /*
     GainComponent is the UI for one gain node: a single rotary bound to the
-    gain factor APVTS parameter (0-10, 1.0 = transparent).
+    gain factor APVTS parameter (0-10, 1.0 = transparent; the range is skewed
+    so unity sits at 12 o'clock and fine attenuation values stay reachable).
 */
 
 #pragma once

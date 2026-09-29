@@ -453,13 +453,20 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 
     // -- Gain pool ----------------------------------------------------------
     // One transparent-by-default gain factor per instance (0-10, 1.0 = unity).
+    // The knob is skewed (1.0 at 12 o'clock) so the attenuation half — the
+    // usual mix case, e.g. ducking a noise layer to 0.12 — gets half the
+    // travel instead of 1/10.  The raw factor stays linear: .smolfm files
+    // store 0.12 and read back 0.12 regardless of the skew.
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxGains; ++i)
     {
         const juce::String num (i);
 
+        juce::NormalisableRange<float> gainRange (0.0f, 10.0f);
+        gainRange.setSkewForCentre (1.0f);
+
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "gain" + num + "Factor", "Gain " + num + " Factor",
-            juce::NormalisableRange<float> (0.0f, 10.0f), 1.0f));
+            gainRange, 1.0f));
     }
 
     // -- Waveshaper pool ----------------------------------------------------
