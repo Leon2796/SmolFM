@@ -10,6 +10,23 @@ every layer consistent.
 
 ---
 
+## Compatibility guard (signal processing changes)
+
+Adding a brand-new processor is additive by design: nothing in a saved patch
+depends on it. But when work changes the **signal processing** of an existing
+processor — its algorithm/behaviour, what a parameter does or its default,
+internal routing, port layout, or render order relative to other processors —
+do not apply it silently:
+
+1. Briefly check whether existing `.smolfm` instruments could break:
+   structurally (dangling connection ids, parameters silently dropped by
+   the read whitelist, xsd/grammar mismatch on reload) or audibly (the same
+   patch suddenly behaves or sounds differently, audio rerouted or silent).
+2. If breakage is plausible, briefly ask the user (name the concrete risk)
+   before applying the change.
+
+---
+
 ## Mental model (read first)
 
 SmolFM is a **per-voice graph**:
