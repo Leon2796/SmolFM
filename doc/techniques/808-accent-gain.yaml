@@ -1,0 +1,67 @@
+technique:
+  name: 808-accent-gain
+
+  idea: |
+    The TR-808's Accent as a real signal-flow wire: the note source emits the
+    played key's velocity (0-1) as its own domain "velocity", and a gain
+    stage multiplies its level by it.  Harder keystrokes sound louder per
+    layer; the wiring decides WHICH layer answers the accent.  Unwired
+    velocity pins leave the sound untouched, so layers opt in individually —
+    this is the loudness half of the 808 accent (the old central voice
+    velocity scaling is gone).
+
+  involved_nodes:
+    - type: note
+      role: MIDI source; emits pitch (out) and velocity (vel).
+    - type: osc
+      role: Sound source of the accented layer.
+    - type: gain
+      role: Accent VCA of that layer; vel receives the velocity.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: MIDI source
+      port: vel
+      role: Velocity (0-1) into the gain vel input (velocity).
+    - node_role: MIDI source
+      port: out
+      role: Pitch into the oscillator note_in (frequency).
+    - node_role: Accent VCA
+      port: vel
+      role: Scales the effective gain by the velocity mean (velocity).
+    - node_role: Sound source
+      port: out
+      role: Layer signal into gain in (signal).  gain out -> output (signal).
+
+  topology:
+    description: |
+      note.out -> osc.note_in (frequency).  osc.out -> gain.in (signal).
+      gain.out -> output.in1 (signal).  note.vel -> gain.vel (velocity).
+      The vel wire is a per-layer choice: several gains may share one note
+      node, each gain answering the accent only when wired.
+
+  parameters:
+    - name: base factor
+      role: |
+        Static gain 0..10 = the layer's normal level.  Velocity 1.0 plays
+        it unchanged; the wire only scales softer hits down (v < 1), never
+        above the set level.
+
+  relationships:
+    - name: accent-scaling
+      description: |
+        Effective gain = clamp(factor * v, 0, 10) with v = stereo mean of
+        the vel port.  Unconnected vel reads 1.0 (sound-invariance).  The
+        central velocity multiply in SynthVoice::renderNextBlock was
+        removed, so this wire IS the note's loudness dynamics.
+    - name: 808-role
+      description: |
+        Matches the TR-808 accent's loudness half.  In the original, accent
+        is also timbral (analog stages overdrive); that half lives in the
+        808-accent-drive-shaper / 808-accent-fm-brightness techniques.
+
+  perceptual_effects:
+    - per-note dynamics: soft hits duck, accented hits open
+    - ghost-note levels when only some layers are wired to note.vel
+    - replaces a global velocity fader with explicit wiring

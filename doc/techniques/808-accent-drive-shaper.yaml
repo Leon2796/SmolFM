@@ -1,0 +1,57 @@
+technique:
+  name: 808-accent-drive-shaper
+
+  idea: |
+    The timbre half of a drum hit's accent: the note's velocity scales a
+    waveshaper's drive, so hard hits push deeper into the transfer curve
+    and softer hits stay clean.  In the original TR-808 hard accents sound
+    brighter and harsher because the analog stages overdrive — a velocity
+    wire into shape.vel reproduces exactly that behaviour inside the graph.
+
+  involved_nodes:
+    - type: note
+      role: MIDI source; feeds pitch and the accent velocity.
+    - type: osc
+      role: Sound source feeding the shaper.
+    - type: shape
+      role: Saturation stage; vel scales its drive per note.
+    - type: output
+      role: Master endpoint (via further downstream stages as needed).
+
+  involved_ports:
+    - node_role: MIDI source
+      port: vel
+      role: Velocity (0-1) into the shaper vel input (velocity).
+    - node_role: Sound source
+      port: out
+      role: Layer signal into shape in (signal); drive_mod_in stays free for envelopes/LFOs.
+
+  topology:
+    description: |
+      osc.out (or a chain: filter/fm stages) -> shape.in (signal).
+      note.vel -> shape.vel (velocity).  shape.out carries the shaped
+      layer into whatever follows (output or tone stage).  Drive
+      modulation (envelope, LFO) composes multiplicatively with velocity.
+
+  parameters:
+    - name: base drive
+      role: |
+        Static drive 0..1 sets the accent's ceiling: velocity 1.0 plays the
+        configured drive; softer notes scale it toward clean.
+
+  relationships:
+    - name: accent-drive
+      description: |
+        Effective drive = clamp(drive * (1 + m) * v, 0, 1): the mod input
+        (m) shapes per sample, the vel input (v) shapes per note.  Both
+        unwired defaults are neutral (m=0, v=1).
+    - name: 808-role
+      description: |
+        The 808's accented voices enter analog nonlinearities harder.  Pair
+        with 808-accent-gain for the loudness half; both together emulate
+        the full accent behaviour.
+
+  perceptual_effects:
+    - hard hits crack and brighten, soft hits stay clean
+    - analog-sounding accent without an extra FX stage
+    - velocity-dependent saturation depth (analog compression flavour)

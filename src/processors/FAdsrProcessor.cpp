@@ -23,6 +23,10 @@ FAdsrProcessor::FAdsrProcessor (std::atomic<float>* attackParam,
       freqInput (PortType::frequency),
       output (PortType::frequency, *this)
 {
+    // Unwired vel input is neutral (v = 1.0): no anchor pull is applied and
+    // the sound stays exactly as before — the same rule as the other vel
+    // pins (gain, shape, fm, filter).
+    velIn.setDefaultValue (1.0f);
 }
 
 void FAdsrProcessor::prepare (double newSampleRate)
@@ -54,11 +58,27 @@ StereoFrame FAdsrProcessor::processSample()
     const float sourceFrequency = freqInput.getSample().l;
     const float env = envelope.getNextSample();
 
-    // Interpolate the scaling factor between the down factor (E = 0) and
-    // the up factor (E = 1).  Neutral when both equal 1.0.
-    const float upValue   = up->load();
-    const float downValue = down->load();
-    const float scaled = sourceFrequency * (downValue + (upValue - downValue) * env);
+    // Velocity (accent depth): the connected vel input's stereo mean (0-1)
+    // pulls both anchors from neutral 1.0 toward their configured values —
+    // soft notes play the pitch gesture flatter, hard notes with full depth.
+    // Depth only: A/D/S/R times and the anchor directions stay untouched.
+    // Unwired: fully sound-invariant (byte-identical to the old behaviour).
+    float upEffective   = up->load();
+    float downEffective = down->load();
+    if (velIn.isConnected())
+    {
+        const StereoFrame vp = velIn.getSample();
+        const float v = 0.5f * (vp.l + vp.r);
+
+        upEffective   = 1.0f + v * (upEffective   - 1.0f);
+        downEffective = 1.0f + v * (downEffective - 1.0f);
+    }
+
+    // Interpolate the scaling factor between the effective down factor
+    // (E = 0) and the effective up factor (E = 1).  Neutral when both
+    // equal 1.0.
+    const float scaled = sourceFrequency
+                       * (downEffective + (upEffective - downEffective) * env);
 
     const StereoFrame result = StereoFrame::centered (scaled);
     output.setSample (result);

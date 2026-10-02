@@ -280,7 +280,7 @@ fehlendes Konzept mit Klangwirkung und konkretem Processor-Vorschlag
 |---|---|---|---|---|
 | `mix`/Crossfade-Knoten | Mehrere Quellen mit modulierbaren Gewichten mischen und kreuzschwenken | Prophet VS (Vector), ARP/Buchla | **P1**: neuer `mix`-Knoten (2–4 signal-Eingänge, Modulationsport) | Vector-Morphing, Layering, Parallelkaskaden |
 | Modulierbare Delay-Zeit | LFO/Steuerquelle moduliert die Delaylänge im Millisekundenbereich | Juno-106, Solina | **P1**: `time_mod`-Port (Hertz-Domäne) am `delay` | Chorus, Ensemble, Flanger, Vibrato, Dub-Delay |
-| Velocity als Modulationsquelle | Anschlagsstärke erreicht den Noten-Graphen nicht | DX7, TB-303, Seaboard | **P1**: `velocity`-Port am `note`-Knoten als Skalierer | Dynamik, Accent, Ausdrucksstärke |
+| Velocity als Modulationsquelle | Anschlagsstärke erreicht den Noten-Graphen | DX7, TB-303, Seaboard | **P1 erledigt**: `velocity`-Port-Typ am `note`-Knoten (`vel`-Ausgang); Receive-Pins an `gain`, `shape`, `fm`, `filter`, `fadsr` (Accent-Tiefe); ADSR folgt | Dynamik, Accent, Ausdrucksstärke |
 | Operator-Feedback | Operator-Ausgang speist in den eigenen FM-Index oder den eines anderen zurück | DX7 | **P2**: Frequenz-Domänen-`delay` (n Samples) + FM-Index-Modulport | Metallisch, sägend, angereicherte Spektren |
 | PWM | Modulierbare Pulsbreite der Rechteckschwingung | Minimoog, Prophet-5 | **P2**: `duty`-Parameter + Modulport am `osc` | Wärme, Bewegung, Nasalität |
 | Oszillator-Sync | Slave-Oszillator wird vom Master per Reset gekoppelt | Minimoog | **P2**: `sync_in` (frequency-Domäne) am `osc` | Aggressive, brillante Lead-Sounds |
@@ -314,6 +314,15 @@ P1 — größter Expressivitätszuwachs, kleine XSD-Änderungen:
    Vibrato, Dub-Delay. Hebt 6, 15.
 3. **Velocity-Port am `note`-Knoten** als Skalierer auf FM-Index,
    Envelope-Level, Filter-Amount. Hebt 1, 4, 5, 18.
+   *Erledigt für Gain (`gain.vel` = Accent-Faktor), Waveshaper (`shape.vel`
+   = Accent-Drive), FM-Index (`fm.vel`), Filter-Cutoff (`filter.vel`) und
+   F-ADSR (`fadsr.vel` = Accent-Tiefe, Pull-to-Neutral: Velocity zieht beide
+   Anker von Neutral 1.0 zu den konfigurierten Faktoren, `F' = 1 + v·(F − 1)`;
+   Tiefe statt Kurvenform — Ankerabstand `gap = v·(up−down)`, A/D/S/R-Zeiten
+   unangetastet, `v = 0` byteidentisch zum unverdrahteten Verhalten);
+   Port-Typ `velocity`, Quelle `note.vel`. ADSR-Gain-Anker offen (Stufe 2:
+   `gain_up` am Attack-Peak, `gain_down` am Sustain, Notenstart/Release-Ende
+   hart null).*
 
 P2 — einzelne berühmte Algorithmen erreichbar machen:
 

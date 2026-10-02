@@ -12,7 +12,7 @@ Inputs).
 |---|---|---|---|
 | Max. Instanzen | 1 | `GraphNodeRegistry::maxNotes` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
 | Input-Ports | *(keine)* | — | — |
-| Output-Ports | `out` (`PortType::frequency`) | `OutputPort output` | [src/processors/NoteProcessor.h](../../src/processors/NoteProcessor.h) |
+| Output-Ports | `out` (`PortType::frequency`), `vel` (`PortType::velocity`) | `OutputPort output`, `OutputPort velOutput` | [src/processors/NoteProcessor.h](../../src/processors/NoteProcessor.h) |
 
 | Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
 |---|---|---|---|---|
@@ -31,6 +31,7 @@ Inputs).
 | $n$ | MIDI-Notennummer | — |
 | $f$ | Ausgangsfrequenz | Hz |
 | $e$ | Enable-Flag (Note verdrahtet?) | bool |
+| $v$ | Velocity (Anschlagstärke 0–1) der aktuellen Note | — |
 
 Funktionsablauf:
 
@@ -47,7 +48,10 @@ $e$ ist `false`, wenn im Patch keine Verbindung von `note<N>.out` dieser
 Instanz existiert — die Instanz ist dann abgeschaltet und liefert 0 Hz.
 
 Bei einem Notenanschlag setzt die Voice **alle** Instanzen auf dieselbe
-MIDI-Note (`SynthVoice::startNote`).
+MIDI-Note **und** dieselbe Velocity (`SynthVoice::startNote`). Der `vel`-
+Ausgang liefert die Anschlagstärke $v \in [0,1]$ der aktuellen Note als
+zentriertes Frame (Port-Typ `velocity`); unverbundene `vel`-Konsumenten
+skalieren mit 1.0 (sound-invariant).
 
 ## Abschnitt 4 — Symbol ↔ Code
 
@@ -57,3 +61,4 @@ MIDI-Note (`SynthVoice::startNote`).
 | $f$ | `currentFrequency` (`float`) | [NoteProcessor.cpp](../../src/processors/NoteProcessor.cpp) | `getMidiNoteInHertz(currentNote)`, Cast `double→float` |
 | $e$ | `enabled` (`std::atomic<bool>`) | [NoteProcessor.h](../../src/processors/NoteProcessor.h) | `setEnabled(bool)` aus `SynthVoice::applyConnectionPatch`; atomar, da UI-Thread schreibt |
 | $out$ | `processSample()` | [NoteProcessor.cpp](../../src/processors/NoteProcessor.cpp) | `isEnabled() ? currentFrequency : 0.0f`, dann `output.setSample(f)` |
+| $v$ | `setVelocity(float)` → `currentVelocity` (atomic) | [NoteProcessor.h](../../src/processors/NoteProcessor.h) | gesetzt aus `SynthVoice::startNote`; `velOutput.setSample(centered(v))` pro Sample |

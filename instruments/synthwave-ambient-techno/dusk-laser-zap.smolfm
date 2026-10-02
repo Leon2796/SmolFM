@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Dusk Laser Zap" description="Arcade laser: a diving sine pitch-drop body with a self-ring octaved sparkle layer, both slammed by one-shot envelopes." techniques="fadsr-pitch-drop,self-ring-octave-double,adsr-amp-envelope">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fadsr0" attack="0.004" decay="0.24" sustain="0.9" release="0.12" up="3.2" down="0.55">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="sine">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.001" decay="0.22" sustain="0.0" release="0.06">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="ring0">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="900" resonance="0.15" mode="hp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr1" attack="0.001" decay="0.1" sustain="0.0" release="0.03">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.6">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.8" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fadsr0" toPort="freq_in" />
+      <Wire from="fadsr0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="osc0" fromPort="out" to="ring0" toPort="in1" />
+      <Wire from="osc0" fromPort="out" to="ring0" toPort="in2" />
+      <Wire from="ring0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="adsr1" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in3" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="fadsr0" x="380" y="60" />
+      <Box id="osc0" x="700" y="60" />
+      <Box id="adsr0" x="1020" y="60" />
+      <Box id="ring0" x="700" y="380" />
+      <Box id="filter0" x="1020" y="380" />
+      <Box id="adsr1" x="1020" y="680" />
+      <Box id="gain0" x="1340" y="380" />
+      <Box id="output" x="1660" y="200" />
+    </Boxes>
+  </Layout>
+</SmolFM>

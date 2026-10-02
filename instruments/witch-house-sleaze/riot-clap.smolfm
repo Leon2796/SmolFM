@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Riot Clap" description="Riot clap: band-passed noise burst pushed through two serial micro-delays so repeats stack into bursts, gated short with a velocity-trimmed layer." techniques="multi-burst-clap,tuned-noise-percussion">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="vel" direction="out" type="velocity" />
+      </Node>
+      <Node id="osc0" waveform="noise" mode="static" staticfreq="1200">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="1080" resonance="0.34" mode="bp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay0" time="11" feedback="0.25" mix="0.6" sync="off">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay1" time="19" feedback="0.22" mix="0.55" sync="off">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.001" decay="0.16" sustain="0.0" release="0.05">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.75">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.8" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="delay0" toPort="in" />
+      <Wire from="delay0" fromPort="out" to="delay1" toPort="in" />
+      <Wire from="delay1" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="note" fromPort="vel" to="gain0" toPort="vel" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="osc0" x="380" y="60" />
+      <Box id="filter0" x="700" y="60" />
+      <Box id="delay0" x="1020" y="60" />
+      <Box id="delay1" x="1340" y="60" />
+      <Box id="adsr0" x="1020" y="380" />
+      <Box id="gain0" x="1340" y="380" />
+      <Box id="output" x="1660" y="200" />
+    </Boxes>
+  </Layout>
+</SmolFM>

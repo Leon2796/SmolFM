@@ -344,6 +344,47 @@ int main()
         CHECK (n.parameters["factor"] == 1.5f);
     }
 
+    // resonator/feedback nodes: the new node types and their attributes
+    // round-trip through both flavours' whitelists.
+    const auto resXml = writeTemp ("resonator_feedback.smolfm",
+        "<SmolFM version=\"3\" name=\"ResDemo\">\n"
+        "  <Graph>\n"
+        "    <Nodes>\n"
+        "      <Node id=\"resonator0\" tune=\"49.5\" q=\"0.8\" decay=\"0.35\" spread=\"2\"/>\n"
+        "      <Node id=\"feedback0\" amount=\"0.42\"/>\n"
+        "    </Nodes>\n"
+        "  </Graph>\n"
+        "</SmolFM>\n");
+    const auto resYaml = writeTemp ("resonator_feedback.yaml.smolfm",
+        "version: \"3\"\n"
+        "name: \"ResDemo\"\n"
+        "graph:\n"
+        "  nodes:\n"
+        "    - id: \"resonator0\"\n"
+        "      tune: 49.5\n"
+        "      q: 0.8\n"
+        "      decay: 0.35\n"
+        "      spread: 2\n"
+        "    - id: \"feedback0\"\n"
+        "      amount: 0.42\n");
+    SmolFmData resData;
+    CHECK (xmlParser.parse (resXml, resData) && resData.nodes.size() == 2);
+    SmolFmData resYData;
+    CHECK (yamlParser.parse (resYaml, resYData) && resYData.nodes.size() == 2);
+    if (resData.nodes.size() == 2)
+    {
+        auto& r = resData.nodes[0];
+        CHECK (r.parameters["tune"] == 49.5f);
+        CHECK (r.parameters["q"] == 0.8f);
+        CHECK (r.parameters["decay"] == 0.35f);
+        CHECK (r.parameters["spread"] == 2.0f);
+    }
+    if (resYData.nodes.size() == 2)
+    {
+        auto& f = resYData.nodes[1];
+        CHECK (f.id == "feedback0" && f.parameters["amount"] == 0.42f);
+    }
+
     if (failures == 0)
         std::cout << "SmolFM_ParserTests: all checks passed\n";
 

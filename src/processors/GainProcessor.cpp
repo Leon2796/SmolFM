@@ -16,6 +16,9 @@ GainProcessor::GainProcessor (std::atomic<float>* gainParameter)
 
     // Unwired factor_mod_in contributes no scaling: (1 + 0) = static gain.
     modInput.setDefaultValue (0.0f);
+
+    // Unwired vel input scales by 1.0: the sound stays exactly as before.
+    velIn.setDefaultValue (1.0f);
 }
 
 void GainProcessor::prepare (double /*newSampleRate*/)
@@ -43,6 +46,14 @@ StereoFrame GainProcessor::processSample()
         const StereoFrame pair = modInput.getSample();
         const float m = juce::jlimit (-1.0f, 1.0f, 0.5f * (pair.l + pair.r));
         g = juce::jlimit (0.0f, 10.0f, gBase * (1.0f + m));
+    }
+
+    // Velocity (accent): the connected vel input's stereo mean (0-1)
+    // scales the effective gain.  Unwired: fully sound-invariant.
+    if (velIn.isConnected())
+    {
+        const StereoFrame vp = velIn.getSample();
+        g = juce::jlimit (0.0f, 10.0f, g * 0.5f * (vp.l + vp.r));
     }
 
     const StereoFrame sample { sourceSample.l * g, sourceSample.r * g };

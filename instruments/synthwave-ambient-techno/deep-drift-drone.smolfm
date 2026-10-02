@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Deep Drift Drone" description="Perpetual dark drone: a micro-detuned saw pair low-passed to a rumble, its amplitude slowly swelling and sinking with a non-repeating simplex drift on the gain." techniques="fscale-detune-unison,gain-drift-swell">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fscale0" factor="0.9988">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fscale1" factor="1.0012">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="saw">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc1" waveform="saw">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="oscDrift" waveform="simplex" mode="lfo" lforate="0.045">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="merge0">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.9">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="factor_mod_in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="900" resonance="0.3" mode="lp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="4.2" decay="1.5" sustain="1.0" release="6.5">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="note" fromPort="out" to="fscale1" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="fscale1" fromPort="out" to="osc1" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="merge0" toPort="in1" />
+      <Wire from="osc1" fromPort="out" to="merge0" toPort="in2" />
+      <Wire from="merge0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="oscDrift" fromPort="out" to="gain0" toPort="factor_mod_in" />
+      <Wire from="gain0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="fscale0" x="60" y="380" />
+      <Box id="fscale1" x="60" y="700" />
+      <Box id="osc0" x="380" y="380" />
+      <Box id="osc1" x="380" y="700" />
+      <Box id="oscDrift" x="380" y="1020" />
+      <Box id="merge0" x="700" y="380" />
+      <Box id="gain0" x="1020" y="380" />
+      <Box id="filter0" x="1020" y="700" />
+      <Box id="adsr0" x="1340" y="380" />
+      <Box id="output" x="1660" y="500" />
+    </Boxes>
+  </Layout>
+</SmolFM>

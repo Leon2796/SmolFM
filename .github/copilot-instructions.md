@@ -26,6 +26,28 @@
   the check must be done with a regular `if` and a recoverable action (log,
   fallback, early return), with `jassert` added only as a debug-time hint.
 
+## Design Decisions: Instrument- und Effekt-Cases prüfen
+
+SmolFM hat keinen FX-Bus: der Graph ist der einzige Ort für Signalverarbeitung,
+`output` der einzige Summierer. Effektmodellierung (Delay, Flanger, Chorus, …)
+muss daher direkt im Instrument-Graphen ausdrückbar sein. Bei jeder
+Design-Betrachtung (z. B. welche Knoten einen Port-Typ wie Velocity empfangen,
+welche Ports ein neuer Knoten erhält, was das XSD-Format ausdrückt) sind
+**beide** Perspektiven verpflichtend zu prüfen:
+
+1. **Instrument-Case** — Voicing des Onsets (Anschlagdynamik,
+   Accent, Ghost-Notes, Pitch-Verläufe).
+2. **Effekt-Case** — dasselbe Element als Effektstufe im Graphen
+   (per-Note-Steuerung von Echo-/Modulationsverhalten, z. B. Velocity →
+   Delay-Zeit/Mix/Feedback).
+
+Ein Ausschluss nur mit „das ist ein Effekt-Case, kein Instrument-Case" ist
+**keine gültige Begründung**. Effekt-Cases werden entweder mitaufgenommen oder
+mit handfester technischer Begründung bewusst deferiert und in der Planung
+notiert (z. B.: Parameter ist bis zur Umstellung X statisch;
+Shared-Node-Problem bei Retrigger mitten im Nachhall einer Vornote;
+Slice-Scope).
+
 ## Skill Usage
 
 Use the cavemen skill to reduce token costs.

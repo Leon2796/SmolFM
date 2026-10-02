@@ -53,6 +53,9 @@ private:
     gui::PaletteButton outputButton;
     gui::PaletteButton splitButton;
     gui::PaletteButton mergeButton;
+    gui::PaletteButton addButton;
+    gui::PaletteButton resonatorButton;
+    gui::PaletteButton feedbackButton;
 
     juce::Viewport graphViewport;  ///< Scrollable container for the graph canvas
     gui::DraggablePanel graphPanel;

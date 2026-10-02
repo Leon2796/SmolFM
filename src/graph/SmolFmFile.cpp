@@ -41,7 +41,9 @@ namespace
 {
     const char* typeToString (PortType t)
     {
-        return t == PortType::frequency ? "frequency" : "signal";
+        return t == PortType::frequency ? "frequency"
+             : t == PortType::velocity  ? "velocity"
+                                        : "signal";
     }
 
     // Which APVTS parameter ids belong to a concrete instance ("osc3", "fm1").
@@ -133,6 +135,22 @@ namespace
         {
             const auto lvlId = GraphNodeRegistry::levelParameterIdFor (nodeId);
             if (lvlId.isNotEmpty()) specs.add ({ "level", lvlId });
+        }
+        else if (baseId == "resonator")
+        {
+            const auto tuneId   = GraphNodeRegistry::resonatorTuneParameterIdFor      (nodeId);
+            const auto qId      = GraphNodeRegistry::resonatorQParameterIdFor         (nodeId);
+            const auto decayId  = GraphNodeRegistry::resonatorDecayParameterIdFor     (nodeId);
+            const auto spreadId = GraphNodeRegistry::resonatorVelSpreadParameterIdFor (nodeId);
+            if (tuneId.isNotEmpty())   specs.add ({ "tune",   tuneId });
+            if (qId.isNotEmpty())      specs.add ({ "q",      qId });
+            if (decayId.isNotEmpty())  specs.add ({ "decay",  decayId });
+            if (spreadId.isNotEmpty()) specs.add ({ "spread", spreadId });
+        }
+        else if (baseId == "feedback")
+        {
+            const auto amtId = GraphNodeRegistry::amountParameterIdFor (nodeId);
+            if (amtId.isNotEmpty()) specs.add ({ "amount", amtId });
         }
 
         return specs;
@@ -226,12 +244,16 @@ bool SmolFmFile::save (gui::DraggablePanel& panel,
                 pinXml->setAttribute ("direction", "out");
                 pinXml->setAttribute ("type", typeToString (spec->outputType));
             }
-            for (const juce::String& extraPinId : spec->extraOutputPortIds)
+            const int numExtras = spec->extraOutputPortIds.size();
+            for (int i = 0; i < numExtras; ++i)
             {
+                const PortType extraType = i < static_cast<int> (spec->extraOutputTypes.size())
+                                               ? spec->extraOutputTypes[static_cast<size_t> (i)]
+                                               : spec->outputType;
                 auto* pinXml = nodeXml->createNewChildElement ("Pin");
-                pinXml->setAttribute ("id", extraPinId);
+                pinXml->setAttribute ("id", spec->extraOutputPortIds[i]);
                 pinXml->setAttribute ("direction", "out");
-                pinXml->setAttribute ("type", typeToString (spec->outputType));
+                pinXml->setAttribute ("type", typeToString (extraType));
             }
         }
 

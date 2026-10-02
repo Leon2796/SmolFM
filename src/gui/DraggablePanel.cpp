@@ -118,9 +118,16 @@ DraggableComponent* DraggablePanel::addNodeOfType (const juce::String& baseId,
         raw->addOutputPin (spec->outputPortId, spec->outputType,
                            sideFor (spec->outputChannelSides, 0));
 
+    // Extra outputs may carry their own type (note.vel is velocity while
+    // note.out is frequency); missing entries fall back to outputType.
     for (int i = 0; i < spec->extraOutputPortIds.size(); ++i)
-        raw->addOutputPin (spec->extraOutputPortIds[i], spec->outputType,
+    {
+        const smolfm::PortType t = i < static_cast<int> (spec->extraOutputTypes.size())
+                                       ? spec->extraOutputTypes[static_cast<size_t> (i)]
+                                       : spec->outputType;
+        raw->addOutputPin (spec->extraOutputPortIds[i], t,
                            sideFor (spec->outputChannelSides, i + 1));
+    }
 
     // Park the new box beside the previous ones so they don't stack exactly.
     raw->setTopLeftPosition ({ 16 + 24 * (boxes.size() - 1), 16 + 24 * (boxes.size() - 1) });
@@ -440,9 +447,13 @@ void DraggablePanel::paintOverChildren (juce::Graphics& g)
                       { to.x - dx, to.y },
                       to);
 
+        // Colour legend: cyan = signal, orange = frequency, indianred =
+        // velocity (connection bands of the per-note Anschlag send).
         const auto colour = type == smolfm::PortType::frequency
                                 ? juce::Colours::orange
-                                : juce::Colours::cyan;
+                                : (type == smolfm::PortType::velocity
+                                       ? juce::Colours::indianred
+                                       : juce::Colours::cyan);
 
         g.setColour (colour.withAlpha (alpha));
         g.strokePath (path, juce::PathStrokeType (2.0f));

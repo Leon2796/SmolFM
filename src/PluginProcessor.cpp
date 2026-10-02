@@ -126,6 +126,21 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
         voiceParameters.delayDivision[static_cast<size_t> (i)] = parameters.getRawParameterValue ("delay" + num + "Division");
     }
 
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxResonators; ++i)
+    {
+        const juce::String num (i);
+        voiceParameters.resonatorTune     [static_cast<size_t> (i)] = parameters.getRawParameterValue ("resonator" + num + "Tune");
+        voiceParameters.resonatorQ        [static_cast<size_t> (i)] = parameters.getRawParameterValue ("resonator" + num + "Q");
+        voiceParameters.resonatorDecay    [static_cast<size_t> (i)] = parameters.getRawParameterValue ("resonator" + num + "Decay");
+        voiceParameters.resonatorVelSpread[static_cast<size_t> (i)] = parameters.getRawParameterValue ("resonator" + num + "VelSpread");
+    }
+
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxFeedbacks; ++i)
+    {
+        const juce::String num (i);
+        voiceParameters.feedbackAmount[static_cast<size_t> (i)] = parameters.getRawParameterValue ("feedback" + num + "Amount");
+    }
+
     voiceParameters.masterLevel = parameters.getRawParameterValue ("masterLevel");
 
     for (int i = 0; i < numberOfVoices; ++i)
@@ -498,6 +513,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         juce::NormalisableRange<float> gainRange (0.0f, 10.0f,
                                                   gainFrom0To1, gainTo0To1);
 
+        // ID-drift guard: the registry template and this layout must produce
+        // the same id — a drift leaves the knob unattached (shows 0, no audio
+        // effect) and the .smolfm loader silently drops the factor value.
+        jassert (smolfm::GraphNodeRegistry::gainParameterIdFor ("gain" + num)
+                 == "gain" + num + "Factor");
+
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "gain" + num + "Factor", "Gain " + num + " Factor",
             gainRange, 1.0f));
@@ -576,6 +597,55 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         layout.add (std::make_unique<juce::AudioParameterChoice> (
             "delay" + num + "Division", "Delay " + num + " Division",
             juce::StringArray { "1/2", "1/4", "1/8", "1/16" }, 1));
+    }
+
+    // -- Resonator pool --------------------------------------------------------
+    // Four parameters per instance: static tune (20-8000 Hz, log), Q (0-1),
+    // decay (t60 in seconds, 0.01-10) and the vel spread (0.25-4, 1 =
+    // neutral).  The tune port overrides the static value when connected;
+    // vel scales the decay time per the plan's pull-to-neutral pattern
+    // t_eff = t * (1 + v * (spread - 1)) — accented hits ring longer.
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxResonators; ++i)
+    {
+        const juce::String num (i);
+
+        // ID-drift guard: the registry template and this layout must produce
+        // the same id — a drift leaves the knob unattached and the .smolfm
+        // loader silently drops the value.
+        jassert (smolfm::GraphNodeRegistry::resonatorTuneParameterIdFor  ("resonator" + num) == "resonator" + num + "Tune");
+        jassert (smolfm::GraphNodeRegistry::resonatorDecayParameterIdFor ("resonator" + num) == "resonator" + num + "Decay");
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "resonator" + num + "Tune", "Resonator " + num + " Tune",
+            juce::NormalisableRange<float> (20.0f, 8000.0f, 0.1f, 0.3f), 100.0f));
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "resonator" + num + "Q", "Resonator " + num + " Q",
+            juce::NormalisableRange<float> (0.0f, 1.0f), 0.5f));
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "resonator" + num + "Decay", "Resonator " + num + " Decay",
+            juce::NormalisableRange<float> (0.01f, 10.0f, 0.001f, 0.5f), 0.3f));
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "resonator" + num + "VelSpread", "Resonator " + num + " Vel Spread",
+            juce::NormalisableRange<float> (0.25f, 4.0f), 1.0f));
+    }
+
+    // -- Feedback pool (bounded cycle breakers) ---------------------------------
+    // One per-pass damping per instance (0-0.95): out = in + amount * fb_in.
+    // The cycle's 1-sample delay comes from the render order (the node reads
+    // its fb_in producer's previous-tick frame).
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxFeedbacks; ++i)
+    {
+        const juce::String num (i);
+
+        jassert (smolfm::GraphNodeRegistry::amountParameterIdFor ("feedback" + num)
+                 == "feedback" + num + "Amount");
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "feedback" + num + "Amount", "Feedback " + num + " Amount",
+            juce::NormalisableRange<float> (0.0f, 0.95f), 0.3f));
     }
 
     // -- Master output --------------------------------------------------------

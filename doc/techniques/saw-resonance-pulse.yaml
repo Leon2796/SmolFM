@@ -1,0 +1,87 @@
+technique:
+  name: saw-resonance-pulse
+
+  idea: |
+    A saw-shaped LFO oscillator drives the filter's resonance_mod_in, so the
+    static resonance climbs from collapse to full Q on every ramp and snaps
+    shut at the reset.  The cutoff itself stays static or key-tracked; only
+    the resonance pulses.  Near a base resonance of 0.5 each ramp crosses the
+    onset of self-oscillation exactly once per LFO cycle, so a steady voice
+    learns a cyclic whistle that rises into a zap and falls silent — a
+    self-oscillation ladder driven purely by the Q socket.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; anchors the voice pitch and optionally the cutoff.
+    - type: osc
+      role: Ramp source in lfo mode with saw waveform; the pulse generator.
+    - type: osc
+      role: Steady voice oscillator being filtered.
+    - type: filter
+      role: The resonant filter; resonance_mod_in receives the saw ramp.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the voice (frequency).
+    - node_role: Ramp source
+      port: out
+      role: Rising saw ramp into resonance_mod_in (signal).
+    - node_role: Resonant filter
+      port: resonance_mod_in
+      role: Multiplies the static resonance by (1 + m), clamped [-1,+1] (signal).
+    - node_role: Voice oscillator
+      port: out
+      role: Raw voice signal into the filter input (signal).
+
+  topology:
+    description: |
+      note.out -> voice-osc.note_in (frequency); optionally note.out ->
+      filter.cutoff_mod_in (frequency) for key tracking.  ramp-osc.out (lfo
+      mode, saw, lfoRate = pulse rate) -> filter.resonance_mod_in (signal).
+      voice-osc.out -> filter.in (signal).  filter.out -> output.in1
+      (signal).  The saw is the only moving node; every cycle rebuilds the
+      same Q path from zero.
+
+  parameters:
+    - name: ramp rate
+      role: |
+        lfoRate 0.01..50 Hz.  8..16 Hz reads as rhythmic zaps, 1..4 Hz as
+        arpeggiated swells, below 0.5 Hz as long re-breaths.
+    - name: static resonance
+      role: |
+        Resonance 0..1, the ramp target: r_eff sweeps from 0 up to 2r
+        (clamped at 1) per cycle.  0.4..0.6 keeps the crest inside or
+        briefly above self-oscillation.
+    - name: cutoff
+      role: |
+        Static or key-tracked via cutoff_mod_in; a low cutoff with a high
+        ramp reads as a whistle sweep inside a dark tone.
+    - name: filter mode
+      role: |
+        lp keeps the pulse as body resonance; bp focuses it to a whistle;
+        notch inverts the percept (a periodic scoop).
+
+  relationships:
+    - name: ramp-window
+      description: |
+        The saw swings m from -1 to +1, so r_eff = r * (1 + m) rebuilds from
+        zero to the clamp each cycle: the Q path (and any ring or self-
+        oscillation built on it) always starts from silence, never drifts.
+    - name: socket-siblings
+      description: |
+        resonance-breathing-filter drives the same resonance_mod_in with
+        perlin (non-cyclic breath); this technique uses the saw for exact
+        cycles.  auto-sweep-resonance moves the cutoff socket instead and
+        leaves Q static.  Combining all three couples ramp, cutoff and Q.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 16 (two used), filter <= 16 (one
+        used), output = 1.
+
+  perceptual_effects:
+    - cyclic whistle ramps that rise into a self-oscillating zap every beat
+    - arpeggiated resonance pulses over a completely steady core tone
+    - metallic breathing at the LFO rate with no pitch movement at all

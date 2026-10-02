@@ -11,7 +11,7 @@ ist nahezu transparent (Identität bei kleinen Amplituden).
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
 | Max. Instanzen | 16 | `GraphNodeRegistry::maxWaveshapers` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `in` (`PortType::signal`), `drive_mod_in` (`PortType::signal`) | `InputPort input`, `InputPort driveMod` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
+| Input-Ports | `in` (`PortType::signal`), `drive_mod_in` (`PortType::signal`), `vel` (`PortType::velocity`) | `InputPort input`, `InputPort driveMod`, `InputPort velIn` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
 | Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
 
 | Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
@@ -72,6 +72,17 @@ Saturation, Square-LFO → Timbre-Stepper.
 Port-ID-Sync: `GraphNodes`-Spec, XSD-Annotation (`shape`-complexType) und
 `SynthVoice::resolveInput` tragen denselben Namen `drive_mod_in`.
 
+### Abschnitt 3c — Velocity-Input `vel`
+
+Optionaler Velocity-Eingang (PortType `velocity`, 0–1, Anschlagstärke der
+aktuellen Note). Der Stereo-Mittelwert multipliziert den wirksamen Drive:
+$d_{\text{eff}} = \mathrm{clamp}(d \cdot v, 0, 1)$. Unverbunden (Default
+1.0) ist der Port vollständig sound-invariant. Rolle im 808-Schema:
+Accent-Drive — harte Anschläge drücken tiefer in die Kurve (die timbrale
+Hälfte des TR-808-Accents).
+Port-ID-Sync: `GraphNodes`-Spec, XSD-Annotation (`shape`-complexType) und
+`SynthVoice::resolveInput` tragen denselben Namen `vel`.
+
 ## Abschnitt 4 — Symbol ↔ Code
 
 | Formales Symbol | C++-Symbol / Aufruf | Datei | Berechnungsschritt |
@@ -84,3 +95,4 @@ Port-ID-Sync: `GraphNodes`-Spec, XSD-Annotation (`shape`-complexType) und
 | $f_{\text{hard}}$ | `jlimit(-1, 1, driven)` | [WaveshaperProcessor.cpp](../../src/processors/WaveshaperProcessor.cpp) | case 1 |
 | $f_{\text{fold}}$ | Foldback-While-Schleife | [WaveshaperProcessor.cpp](../../src/processors/WaveshaperProcessor.cpp) | case 2 |
 | $y_n$ | `output.setSample(y)` | [WaveshaperProcessor.cpp](../../src/processors/WaveshaperProcessor.cpp) | Ergebnis in den Port |
+| $v$ | `velIn.getSample()` → Stereo-Mittel | [WaveshaperProcessor.cpp](../../src/processors/WaveshaperProcessor.cpp) | `vel` verbunden: $d_{\text{eff}} = \mathrm{clamp}(d \cdot v, 0, 1)$; unverbunden: Default 1.0 (neutral) |

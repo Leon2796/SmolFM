@@ -1,0 +1,107 @@
+technique:
+  name: sine-dive-kick
+
+  idea: |
+    The played note passes through the F-ADSR, whose attack peak pitches
+    the carrier one to two octaves above the body register and whose decay
+    dives it back to the untransposed base, while an amplitude envelope
+    with zero sustain closes the hit: the classic drum-machine kick, where
+    the pitch dive itself carries both the beater click and the falling
+    body tone.  The body register is the played note, so the whole drum
+    stays playable across the low keyboard instead of living at one static
+    cutoff.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; provides the kick body register.
+    - type: fadsr
+      role: Pitch envelope; attack peak above the base, decay dives back to
+        the base factor.
+    - type: osc
+      role: Body oscillator in pitch mode with sine waveform; renders the
+        diving body tone.
+    - type: adsr
+      role: Kick envelope; near-zero attack, decay sets the drum length,
+        sustain 0.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base kick frequency into the F-ADSR (frequency).
+    - node_role: Pitch envelope
+      port: freq_in
+      role: Receives the base kick frequency (frequency).
+    - node_role: Pitch envelope
+      port: out
+      role: Diving frequency into the body oscillator (frequency).
+    - node_role: Body oscillator
+      port: note_in
+      role: Receives the diving frequency (frequency).
+    - node_role: Body oscillator
+      port: out
+      role: Body tone into the kick envelope (signal).
+    - node_role: Kick envelope
+      port: in
+      role: Receives the body tone (signal).
+    - node_role: Kick envelope
+      port: out
+      role: Gated kick towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the kick voice (signal).
+
+  topology:
+    description: |
+      note.out -> fadsr.freq_in (frequency).  fadsr.out -> osc.note_in
+      (frequency).  osc (pitch mode, sine) -> adsr.in (signal).
+      adsr.out -> output.in1 (signal).  Both envelopes re-trigger on every
+      keypress: the F-ADSR falls from the up-factor peak back to the
+      down-factor base while the amplitude envelope closes, so attack and
+      decay of both stages move together as one drum hit.
+
+  parameters:
+    - name: attack peak factor
+      role: |
+        up 1.5..4: a small factor snaps as a beater click, a larger one
+        dives through an audible octave into the body.
+    - name: tail factor
+      role: |
+        down 1.0 holds the sustain factor on the played body; values below
+        1 pull the tail into a sub drop under the fundamental.
+    - name: dive times
+      role: |
+        Attack 0.001..0.005 s snaps the click; decay 0.05..0.35 s is both
+        the pitch dive and the drum length.
+    - name: envelope shape
+      role: |
+        Sustain 0 ends the body with the decay; release 0.01..0.1 s
+        catches the last tail without an end click.  Optional stick layer:
+        a spare noise oscillator through a high pass, gated by its own
+        shorter envelope, layered into a free output input (budgets
+        allow it).
+
+  relationships:
+    - name: pitch-drop-sibling
+      description: |
+        fadsr-pitch-drop frames the same up/down mechanics as a melodic
+        start gesture on sustained voices — slides, sub drops, vocal bites.
+        This technique fixes the semantics to a one-shot drum voice:
+        sustain 0 on both envelopes, no expression tail, decay equals the
+        drum length and the base register is the played note.
+    - name: perc-family
+      description: |
+        tuned-noise-percussion builds membrane drums from filtered noise;
+        this technique synthesizes the whole body from a diving sine, the
+        analog kick recipe, and needs no filter at all.
+    - name: budget
+      description: |
+        Registry budgets (xsd maxInstances): note = 1 (used), fadsr <= 8
+        (one used), osc <= 16 (one used), adsr <= 16 (one used), output =
+        1.
+
+  perceptual_effects:
+    - drum-machine kick with a playable body register
+    - beater click from the attack peak without a second layer
+    - sub-dropping tails when the down factor dips below 1

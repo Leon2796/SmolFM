@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Acid Line 303" description="Classic acid line: note-tracked F-ADSR cutoff sweeps over a saw voice, sharpened by hard clip and a slow sine squirm on the pitch." techniques="fadsr-cutoff-sweep,lfo-vibrato-fm,serial-drive-filter-sculpt,subtractive-voice-chain">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="oscVib" waveform="sine" mode="lfo" lforate="6.4">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="fm0" amount="0.022">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="modulator_in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fadsr0" attack="0.002" decay="0.18" sustain="0.9" release="0.2" up="5.5" down="1.2">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="saw">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="400" resonance="0.78" mode="lp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="cutoff_mod_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="shape0" drive="0.22" shape="hard">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.002" decay="0.4" sustain="0.3" release="0.12">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.75" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fm0" toPort="freq_in" />
+      <Wire from="oscVib" fromPort="out" to="fm0" toPort="modulator_in" />
+      <Wire from="fm0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="fadsr0" toPort="freq_in" />
+      <Wire from="fadsr0" fromPort="out" to="filter0" toPort="cutoff_mod_in" />
+      <Wire from="osc0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="oscVib" x="60" y="380" />
+      <Box id="fm0" x="380" y="60" />
+      <Box id="fadsr0" x="380" y="380" />
+      <Box id="osc0" x="1020" y="60" />
+      <Box id="filter0" x="700" y="380" />
+      <Box id="shape0" x="1020" y="380" />
+      <Box id="adsr0" x="1340" y="380" />
+      <Box id="output" x="1660" y="380" />
+    </Boxes>
+  </Layout>
+</SmolFM>

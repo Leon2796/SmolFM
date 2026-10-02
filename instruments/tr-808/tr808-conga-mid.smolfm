@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="tr808-conga-mid" description="808-Style Mid Conga: Quadrat-Puls-Klick schwingt den Koerper-Resonator ein (statischer Anker 262 Hz, ca. C4); Dekay ist Pol-Radius statt Envelope-Dive, kompakter Ring, Velocity-Akzent waechst Dekay (spread 1.5) und Hit lauter." techniques="resonator-body-strike, 808-accent-gain">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+        <Pin id="vel" direction="out" type="velocity" />
+      </Node>
+      <Node id="osc0" waveform="square">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.001" decay="0.004" sustain="0.0" release="0.003">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain1" factor="2.0">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="resonator0" tune="262" q="0.8" decay="0.32" spread="1.5">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="tune" direction="in" type="frequency" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.95">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.9" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="resonator0" toPort="tune" />
+      <Wire from="note" fromPort="vel" to="resonator0" toPort="vel" />
+      <Wire from="note" fromPort="vel" to="gain0" toPort="vel" />
+      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="gain1" fromPort="out" to="resonator0" toPort="in" />
+      <Wire from="resonator0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="osc0" x="360" y="60" />
+      <Box id="adsr0" x="680" y="60" />
+      <Box id="gain1" x="1000" y="60" />
+      <Box id="resonator0" x="1320" y="60" />
+      <Box id="gain0" x="1640" y="60" />
+      <Box id="output" x="1960" y="60" />
+    </Boxes>
+  </Layout>
+</SmolFM>

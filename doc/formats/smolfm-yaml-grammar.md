@@ -17,6 +17,9 @@ graph:
         - id: "out"
           direction: out
           type: frequency
+        - id: "vel"
+          direction: out
+          type: velocity
     - id: "osc0"
       waveform: saw
       mode: pitch
@@ -67,7 +70,7 @@ layout:
 ### Pin Object
 - `id`: Required string (pin identifier)
 - `direction`: Required, `in` or `out`
-- `type`: Required, `frequency` or `signal`
+- `type`: Required, `frequency`, `signal` or `velocity`
 
 ### Wire Object
 - `from`: Required string (source node id)
@@ -144,6 +147,15 @@ for a node type are ignored by the parsers.
 - `sync`: off | on (on = tempo-synced, `time` is ignored)
 - `division`: half | quarter | eighth | sixteenth (delay length; default quarter)
 
+### Resonator (resonator)
+- `tune`: float, 20..8000 Hz (log scale; default 100; static fallback — a connected `tune` port overrides it entirely)
+- `q`: float, 0..1 (selectivity/bandwidth of the coupling stage; 0.5 ≙ Q ≈ 1)
+- `decay`: float, 0.01..10 s (t60 of the ring: the pole radius' decay to -60 dB; vel port scales it per `spread`)
+- `spread`: float, 0.25..4 (vel-to-decay spread, t_eff = t · (1 + v·(spread − 1)); default 1 = neutral, accented hits ring longer)
+
+### Feedback (feedback)
+- `amount`: float, 0..0.95 (per-pass damping of the recirculated loop, out = in + amount·fb_in; 0 = transparent pass-through; the cycle inherently carries 1 sample of delay)
+
 ### Ring Modulator (ring)
 - No parameters (the node is parameter-free)
 
@@ -152,6 +164,10 @@ for a node type are ignored by the parsers.
 
 ### Merger (merge)
 - No parameters (the node is parameter-free); two inputs `in1`/`in2`
+
+### Add (add)
+- No parameters (the node is parameter-free); two inputs `in1`/`in2`;
+  out = in1 + in2 channel-wise sum
 
 ### Master Output (output)
 - `level`: float, 0..1 (default 0.8)

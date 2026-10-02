@@ -11,6 +11,9 @@
           The connected value's stereo mean is clamped to [-1, +1] and the
           effective resonance becomes resonance * (1 + m), clamped to 0..1.
           Unconnected: the static resonance runs as-is.
+        - vel              (velocity): optional per-note velocity input
+          (0-1).  Connected: the stereo mean scales the cutoff (accented
+          hits sit brighter, soft hits darker).  Unconnected: transparent.
         - out              (signal)   : the filtered audio.
 
     Parameters:
@@ -86,6 +89,7 @@ public:
     InputPort& getInput() noexcept            { return input; }
     InputPort& getCutoffModInput() noexcept   { return cutoffMod; }
     InputPort& getResonanceModInput() noexcept { return resonanceMod; }
+    InputPort& getVelInput() noexcept         { return velIn; }
     OutputPort& getOutput() noexcept          { return output; }
 
 private:
@@ -96,6 +100,7 @@ private:
     InputPort input       { PortType::signal };
     InputPort cutoffMod   { PortType::frequency };
     InputPort resonanceMod { PortType::signal };
+    InputPort velIn        { PortType::velocity };
     OutputPort output   { PortType::signal, *this };
 
     double sampleRate = 44100.0;

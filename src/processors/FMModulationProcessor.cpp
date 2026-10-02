@@ -20,6 +20,9 @@ FMModulationProcessor::FMModulationProcessor (std::atomic<float>* amount)
 
     // Unwired amount_mod_in contributes no scaling: (1 + 0) = base amount.
     amountMod.setDefaultValue (0.0f);
+
+    // Unwired vel input scales by 1.0: the sound stays exactly as before.
+    velIn.setDefaultValue (1.0f);
 }
 
 void FMModulationProcessor::prepare (double newSampleRate)
@@ -48,6 +51,15 @@ StereoFrame FMModulationProcessor::processSample()
         const StereoFrame modPair = amountMod.getSample();
         const float m = juce::jlimit (-1.0f, 1.0f, 0.5f * (modPair.l + modPair.r));
         amountEff = juce::jlimit (0.0f, 10.0f, amount * (1.0f + m));
+    }
+
+    // Velocity (accent brightness): the connected vel input's stereo mean
+    // (0-1) scales the FM index - hard hits gain metallic sidebands.
+    // Unwired: fully sound-invariant.
+    if (velIn.isConnected())
+    {
+        const StereoFrame vp = velIn.getSample();
+        amountEff = juce::jlimit (0.0f, 10.0f, amountEff * 0.5f * (vp.l + vp.r));
     }
 
     // True FM: the deviation is proportional to the carrier frequency, so

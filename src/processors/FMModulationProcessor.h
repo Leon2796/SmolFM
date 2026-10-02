@@ -11,6 +11,9 @@
                           [-1, +1] and the effective index becomes
                           amount * (1 + m), clamped to 0..10.  Unconnected:
                           the static amount runs as-is.
+        - vel           (velocity): optional per-note velocity input (0-1).
+          Connected: the stereo mean scales the FM index (harder hits gain
+          brighter, more metallic sidebands).  Unconnected: transparent.
         - out           (frequency): instantaneous carrier frequency.
 
     Per sample (modulator collapsed to one scalar — see below):
@@ -73,6 +76,7 @@ public:
     InputPort& getFreqInput() noexcept      { return freqInput; }
     InputPort& getModulatorInput() noexcept { return modulatorInput; }
     InputPort& getAmountModInput() noexcept { return amountMod; }
+    InputPort& getVelInput() noexcept       { return velIn; }
     OutputPort& getOutput() noexcept        { return output; }
 
 private:
@@ -81,6 +85,7 @@ private:
     InputPort freqInput { PortType::frequency };
     InputPort modulatorInput { PortType::signal };
     InputPort amountMod { PortType::signal };
+    InputPort velIn      { PortType::velocity };
     OutputPort output { PortType::frequency, *this };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FMModulationProcessor)

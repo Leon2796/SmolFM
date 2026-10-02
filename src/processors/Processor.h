@@ -33,7 +33,19 @@ enum class PortType
         samples.  They only flow from sources that know how to produce
         Hertz (NoteProcessor) into an oscillator's note_in port.
     */
-    frequency
+    frequency,
+
+    /**
+        Carries the velocity (per-note attack strength, MIDI 0..1) as a
+        centered pair.
+
+        Velocity is its own domain, distinct from audio and Hertz: sources
+        emit it per note-on (NoteProcessor vel output), consumers use it to
+        scale a parameter (accent gain, drive, FM index, cutoff).  Velocity
+        inputs read 1.0 when unconnected, so an unwired vel pin keeps the
+        processor's sound exactly as before (sound-invariance).
+    */
+    velocity
 };
 
 /**

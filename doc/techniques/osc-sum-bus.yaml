@@ -1,0 +1,88 @@
+technique:
+  name: osc-sum-bus
+
+  idea: |
+    Two or more parallel signal chains end in adder stages that fold them
+    into ONE mono bus BEFORE the shared downstream domain (filter, shaper,
+    envelope, delay) consumes it.  The bus carries the whole cluster on a
+    single signal path, so one filter pair sculpts the entire stack — a
+    metallic multi-square swarm, layered detune voices or several
+    percussion chains share one resonant body instead of burning a filter
+    per chain.  The adder sums both stereo channels; merging is channel
+    routing (merger), balancing is gain — this technique only adds signals.
+
+  involved_nodes:
+    - type: osc
+      role: One parallel source per chain; each source may itself lead a
+        bigger chain (ring, am, delay) whose last output feeds the bus.
+    - type: add
+      role: Adder stage; folds one more chain into the running bus
+        (out = in1 + in2, channel-wise).
+    - type: filter
+      role: Shared downstream sculptor; the whole bus passes one filter
+        chain instead of one chain per source.
+
+  involved_ports:
+    - node_role: Each source chain
+      port: out
+      role: One chain into a free adder input (signal).
+    - node_role: Adder stage
+      port: in1
+      role: Running bus so far (signal).
+    - node_role: Adder stage
+      port: in2
+      role: Incoming chain to fold into the bus (signal).
+    - node_role: Adder stage
+      port: out
+      role: Widened bus into the next adder or the shared sculptor (signal).
+    - node_role: Shared sculptor
+      port: in
+      role: Receives the finished bus (signal).
+
+  topology:
+    description: |
+      Chain the adders pairwise: osc1.out -> add0.in1 (signal),
+      osc2.out -> add0.in2 (signal), add0.out -> add1.in1 (signal),
+      osc3.out -> add1.in2 (signal), ... last adder.out -> filter.in
+      (signal).  A cluster of N sources needs exactly N-1 adders; the
+      adder pool (8) leaves the output's eight inputs untouched for other
+      voices.  The merge node is NOT a substitute: merge routes channels
+      side-pure (in1 -> left, in2 -> right) and does not sum; only add
+      builds one audio-summing bus.
+
+  parameters:
+    - name: shared filter cutoff and resonance
+      role: |
+        One filter now sculpts the folded cluster; cutoff sweeps and
+        resonance breathing shape every chain at once, in one common
+        band.
+    - name: per-chain trims
+      role: |
+        The adder has no balance parameter: set each chain's balance
+        BEFORE its adder input with its own gain chain stage, so no
+        single source dominates the bus sum.
+
+  relationships:
+    - name: bus-versus-output
+      description: |
+        layer-gain-staging balances parallel chains directly at the
+        output's eight inputs and needs no adder; this technique sums
+        EARLIER, so one shared downstream stage (filter, envelope, delay)
+        can follow the bus while the output inputs stay free for
+        separate voices.
+    - name: dual-of-band-split
+      description: |
+        parallel-band-split sends ONE signal into two filter domains
+        (split, two sculptors); this technique is the dual motion — it
+        folds MANY signals into one domain (sum, one shared sculptor).
+    - name: budget
+      description: |
+        Registry budgets (xsd maxInstances): add <= 8 (N-1 stages used per
+        cluster, six sources cost five), osc <= 16 shared with all other
+        roles of the instrument, filter <= 16 freed for other voices by
+        the shared chain.
+
+  perceptual_effects:
+    - one thickened cluster sound from several sources behind one filter
+    - shared filter movement (sweeps, resonance) applied to the whole stack
+    - filter-slot savings that free chains for additional voices

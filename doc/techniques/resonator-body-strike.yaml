@@ -1,0 +1,139 @@
+technique:
+  name: resonator-body-strike
+
+  idea: |
+    A hard short-envelope click — broadband noise or a keyed square pulse —
+    strikes the resonator node: the exciter tips energy into the body's
+    complex pole pair and the node answers with its own decaying
+    near-sinusoid.  The ring length IS the resonator decay (the pole radius,
+    not a layered amplitude envelope), and the played key tracks the body
+    through the resonator's tune port (note -> resonator0.tune), so one
+    topology plays a whole register.  note.vel into the resonator's vel port
+    scales the decay by spread — accented hits ring longer, the 808 accent's
+    "decay over VIN" half — while a body gain keeps the loudness half.  A
+    bounded feedback node may wrap the body (exciter -> feedback.in,
+    feedback.out -> resonator.in, resonator.out -> feedback.fb_in) to
+    recirculate circuit-style damping, as in the 808's multi-feedback
+    Bridged-T bass-drum network.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; pitches the body via resonator.tune, carries velocity.
+    - type: osc
+      role: Exciter click — noise (static mode) for broadband strikes, square
+        (pitch mode) for the tuned pulse standing in for the hardware trigger.
+    - type: adsr
+      role: Strike gate behind the exciter; near-zero attack, 2-20 ms decay,
+        sustain 0.
+    - type: gain
+      role: Beater level ahead of the loop/body (exciter trim, no vel wire).
+    - type: feedback
+      role: Optional bounded cycle breaker recirculating the body's output
+        back into the strike with per-pass damping.
+    - type: resonator
+      role: The singing body — tune/q/decay are the instrument, vel spreads
+        the decay.
+    - type: gain
+      role: Accent VCA of the body layer (loudness half of the accent).
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Played frequency into the resonator's tune override (frequency);
+        the static tune attribute stays as the un-wired anchor only.
+    - node_role: Keyboard send
+      port: vel
+      role: Velocity into the resonator's vel input and the body gain vel
+        (velocity).
+    - node_role: Exciter click
+      port: out
+      role: Click signal into the strike gate (signal).
+    - node_role: Strike gate
+      port: out
+      role: Gated click into the beater gain and on into the loop entry or
+        the body (signal).
+    - node_role: Loop entry
+      port: in
+      role: Receives the gated exciter (signal).
+    - node_role: Loop entry
+      port: fb_in
+      role: Return of the body's previous-tick frame — the graph cycle's
+        inherent one-sample delay lives here (signal).
+    - node_role: Body
+      port: in
+      role: Excited by the loop exit or directly by the strike chain (signal).
+    - node_role: Body
+      port: vel
+      role: Decay spread by velocity, t_eff = t * (1 + v*(spread-1)) (velocity).
+    - node_role: Accent VCA
+      port: vel
+      role: Scales the body level by the velocity mean (velocity).
+
+  topology:
+    description: |
+      note.out -> resonator0.tune (frequency); note.vel -> resonator0.vel and
+      -> body-gain.vel.  osc.out (click) -> adsr.in; adsr.out ->
+      beater-gain.in.  Direct form: beater-gain.out -> resonator0.in.
+      Loop form (BD): beater-gain.out -> feedback0.in, feedback0.out ->
+      resonator0.in, and resonator0.out -> feedback0.fb_in in return — the
+      feedback node is added before the resonator pool, so the return edge
+      reads the body's previous tick.  resonator0.out -> gain0.in ->
+      output.in1.  No envelope on the body path: the voice stays alive only
+      as long as the tail rings (voice-lifetime tail estimate).
+
+  parameters:
+    - name: strike gate
+      role: |
+        adsr attack 0.001 s, decay 0.002..0.02 s, sustain 0, tiny release.
+        Hard short clicks excite broadband; longer gates start to colour the
+        hit themselves.
+    - name: body tune / q / decay
+      role: |
+        tune 20..8000 Hz is overridden per key through the port — the static
+        attribute anchors the un-wired state (e.g. the Bridged-T measured
+        49.5 Hz for the BD).  q 0..1 selects the coupling width; 0.75..0.9
+        sings cleanly over a click.  decay 0.01..10 s is the ring t60 — long
+        for booms/pings, short for body-filter duty (snare 185/330 pair).
+    - name: decay spread
+      role: |
+        0.25..4, default 1 (byte-identical un-wired).  1.5..2.5 grows
+        accented hits the way the 808 accent stretches the BD decay.
+    - name: loop amount
+      role: |
+        feedback amount 0..0.95; 0 is a transparent pass-through.  0.25..0.5
+        adds gentle Bridged-T-style recirculation without howl — every pass
+        is damped, the loop always empties.
+
+  relationships:
+    - name: replaces-the-dive
+      description: |
+        sine-dive-kick approximated the Bridged-T body with an F-ADSR pitch
+        dive plus an amplitude envelope; here the resonator's own pole pair
+        produces attack AND decay of the response.  A small fadsr onto
+        resonator.tune remains available as an opt-in for deliberately bendy
+        attack transients — on the hardware bodies there is none.
+    - name: siblings
+      description: |
+        tuned-noise-percussion rings a band-pass whose resonance is static —
+        the pitch is a filter cutoff.  modal-hammer-ping drives a filter's
+        resonance_mod_in with an envelope ramp.  This technique sings the
+        dedicated resonator pole pair and tracks it per key, with decay (not
+        resonance) as the time control.
+    - name: 808-role
+      description: |
+        Plan A1 (Bridged-T bodies: BD, toms, congas — snare bodies and
+        claves/rimshot follow the same recipe), A2 (accent time constants:
+        vel -> decay via spread) and A7 (bounded circuit feedback — the BD
+        loop).  Applied in instruments/tr-808: bass-drum (loop form),
+        tom-low/mid/high and conga-low/mid/high (direct form).
+    - name: budget
+      description: |
+        Registry budgets: osc <= 16, adsr <= 16, gain <= 16, resonator <= 8,
+        feedback <= 4, output = 1.
+
+  perceptual_effects:
+    - struck bodies that sing at the played key with a natural exponential tail
+    - accents ring longer (decay spread) and louder (gain vel) — both 808 accent halves
+    - loop damping option for circuit-flavoured recirculation instead of a detached envelope

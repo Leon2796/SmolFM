@@ -1,0 +1,113 @@
+technique:
+  name: metal-hat-squares
+
+  idea: |
+    Two static-mode square oscillators sit an inharmonic interval apart and
+    multiply in the ring modulator, producing only sidebands — a dense
+    metallic cluster with no fundamental of its own.  A high-pass filter
+    then carves away the body so only the sizzle band survives, and an
+    ultra-short amplitude envelope gates the result: a click-length decay
+    reads as a closed hat, a longer one as an open hat.  No note port is
+    involved; the hat is tuned by its static square frequencies and the
+    envelope re-fires on every keypress.
+
+  involved_nodes:
+    - type: osc
+      role: First metal square in static mode; the lower tone of the pair.
+    - type: osc
+      role: Second metal square in static mode; the inharmonic partner.
+    - type: ring
+      role: Ring modulator; multiplies both squares into sideband metal.
+    - type: filter
+      role: High-pass stage; rejects the low body, keeps the sizzle band.
+    - type: adsr
+      role: Percussion envelope; near-zero attack, decay sets closed or
+        open.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: First metal square
+      port: out
+      role: Lower square into the ring (signal).
+    - node_role: Second metal square
+      port: out
+      role: Upper square into the ring (signal).
+    - node_role: Ring modulator
+      port: in1
+      role: Receives the lower square (signal).
+    - node_role: Ring modulator
+      port: in2
+      role: Receives the upper square (signal).
+    - node_role: Ring modulator
+      port: out
+      role: Sideband metal into the high pass (signal).
+    - node_role: High-pass stage
+      port: in
+      role: Receives the sideband metal (signal).
+    - node_role: High-pass stage
+      port: out
+      role: Sizzle band into the envelope (signal).
+    - node_role: Percussion envelope
+      port: in
+      role: Receives the sizzle band (signal).
+    - node_role: Percussion envelope
+      port: out
+      role: Gated hat towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the hat voice (signal).
+
+  topology:
+    description: |
+      square-a.out -> ring.in1 (signal).  square-b.out -> ring.in2
+      (signal).  ring.out -> filter.in (signal).  filter.out -> adsr.in
+      (signal).  adsr.out -> output.in1 (signal).  Both squares run in
+      static mode with waveform square, so the pair carries no note
+      connection; the drum pitch lives in the static frequencies, the
+      envelope supplies the per-keypress trigger.
+
+  parameters:
+    - name: square pair frequencies
+      role: |
+        Two staticfreq values 400..900 Hz with an inharmonic spacing of
+        1.2..1.8 give the classic metal rasp; exact or near-octave
+        pairings chime instead.  A third or fourth spare square into the
+        same ring thickens the sizzle (osc budget 16 allows it).
+    - name: high-pass cutoff
+      role: |
+        4000..10000 Hz: low settings keep a clunky body, high settings
+        leave only the tick.  Resonance 0..0.4 sharpens the band edge.
+    - name: envelope decay
+      role: |
+        0.02..0.06 s reads as a closed hat, 0.2..0.5 s as an open hat.
+        Attack 0.001 s, sustain 0, release 0.01..0.05 s without a click.
+
+  relationships:
+    - name: ring-siblings
+      description: |
+        osc-ring-mod-cross rings two sustained oscillators into a pitched
+        dyad without filter or envelope; this technique rings an inharmonic
+        static pair through band reject and a micro-envelope, so the side-
+        bands become a percussion voice.  square-ring-chop multiplies a
+        played voice with a square LFO as a chop effect; here both inputs
+        are the sound source itself.
+    - name: perc-family
+      description: |
+        noise-drive-percussion shapes atonal noise with a waveshaper;
+        tuned-noise-percussion excites a resonant band pass.  This
+        technique needs no noise at all — the metal timbre is synthesized
+        from square sidebands alone.
+    - name: budget
+      description: |
+        Registry budgets (xsd maxInstances): osc <= 16 (two used), ring
+        <= 8 (one used), filter <= 16 (one used), adsr <= 16 (one used),
+        output = 1, note = 1 (unused).  Multiple sizzle chains of this shape
+        can be folded into ONE shared filter via the adder bus — see
+        osc-sum-bus (add <= 8) when a cluster voice needs more than one
+        ring pair behind the same filter.
+
+  perceptual_effects:
+    - closed hi-hat ticks and open hat washes from one chain
+    - cymbal sizzle when the decay is stretched past half a second
+    - metallic percussion that stays pitch-stable across a whole kit

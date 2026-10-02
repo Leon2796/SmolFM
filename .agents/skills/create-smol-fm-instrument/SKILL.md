@@ -212,25 +212,28 @@ description explicitly asks for chaos/experiment, the discipline relaxes:
 
 ## Node and port map (confirm against the xsd annotations)
 
-Signal kinds: `frequency` and `signal` only; a wire connects like with like.
+Signal kinds: `frequency`, `signal` and `velocity`; a wire connects like with like.
 
 | Node      | Inputs                          | Outputs              | Budget |
 |-----------|---------------------------------|----------------------|--------|
-| `note`    | —                               | `out` (frequency)    | 1 |
+| `note`    | —                               | `out` (frequency), `vel` (velocity) | 1 |
 | `osc`     | `note_in` (frequency)           | `out` (signal)       | 16 |
-| `fm`      | `freq_in` (frequency), `modulator_in`, `amount_mod_in` (signal) | `out` (frequency) | 8 |
+| `fm`      | `freq_in` (frequency), `modulator_in`, `amount_mod_in` (signal), `vel` (velocity) | `out` (frequency) | 8 |
 | `fscale`  | `freq_in` (frequency)           | `out` (frequency)    | 16 |
 | `adsr`    | `in` (signal)                   | `out` (signal)       | 16 |
-| `fadsr`   | `freq_in` (frequency)           | `out` (frequency)    | 8 |
-| `gain`    | `in`, `factor_mod_in` (signal)  | `out` (signal)       | 16 |
-| `shape`   | `in`, `drive_mod_in` (signal)   | `out` (signal)       | 16 |
-| `filter`  | `in` (signal), `cutoff_mod_in` (frequency), `resonance_mod_in` (signal) | `out` (signal) | 16 |
+| `fadsr`   | `freq_in` (frequency), `vel` (velocity) | `out` (frequency)    | 8 |
+| `gain`    | `in`, `factor_mod_in` (signal), `vel` (velocity)  | `out` (signal)       | 16 |
+| `shape`   | `in`, `drive_mod_in` (signal), `vel` (velocity)   | `out` (signal)       | 16 |
+| `filter`  | `in` (signal), `cutoff_mod_in` (frequency), `resonance_mod_in` (signal), `vel` (velocity) | `out` (signal) | 16 |
+| `resonator` | `in` (exciter, signal), `tune` (frequency, overrides static), `q_mod_in` (signal), `vel` (velocity → decay) | `out` (signal) | 8 |
+| `feedback` | `in`, `fb_in` (signal) | `out` (signal) | 4 |
 | `delay`   | `in`, `time_mod_in` (signal)    | `out` (signal)       | 16 |
 | `ring`    | `in1`, `in2` (signal)           | `out` (signal)       | 8 |
 | `am`      | `carrier_in`, `modulator_in` (signal) | `out` (signal) | 8 |
 | `output`  | `in1`…`in8` (signal)            | —                    | 1 |
 | `split`   | `in` (signal)                   | `outL` (signal), `outR` (signal) | 8 |
 | `merge`   | `in1`, `in2` (signal)           | `out` (signal)       | 8 |
+| `add`     | `in1`, `in2` (signal)           | `out` (signal)       | 8 |
 
 Attribute ranges live in the xsd simpleTypes (FM/AM amounts, envelope times,
 cutoff 20–20000 Hz, delay 1–2000 ms, feedback ≤ 0.95, master level 0–1) —

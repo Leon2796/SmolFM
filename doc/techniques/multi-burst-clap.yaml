@@ -1,0 +1,111 @@
+technique:
+  name: multi-burst-clap
+
+  idea: |
+    A noise oscillator feeds a resonant band pass tuned to the clap band,
+    and the tuned burst runs through two short serial delays whose echo
+    times land inside the same one-shot envelope: the ear hears the burst
+    at 0 ms, its echo at ~20 ms, a second re-articulation shifted again by
+    ~30 ms and every crossover — the multi-articulated stutter of a hand
+    clap.  The taps are tuned noise, not echoes around a played voice, so
+    the percussive instrument emerges from the delay geometry itself and
+    the hard envelope only bounds the hit.
+
+  involved_nodes:
+    - type: osc
+      role: Noise source in static mode; the excitation of the clap.
+    - type: filter
+      role: Band-pass stage; static cutoff tunes the clap band, resonance
+        brightens the slap.
+    - type: delay
+      role: First tap in free time mode; a short echo inside the burst.
+    - type: delay
+      role: Second tap in free time mode; re-articulates the first echo.
+    - type: adsr
+      role: Percussion envelope; bounds the whole tap cluster into one hit.
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Noise source
+      port: out
+      role: Noise into the clap band filter (signal).
+    - node_role: Clap band filter
+      port: in
+      role: Receives the noise excitation (signal).
+    - node_role: Clap band filter
+      port: out
+      role: Tuned burst into the first tap (signal).
+    - node_role: First tap
+      port: in
+      role: Receives the tuned burst (signal).
+    - node_role: First tap
+      port: out
+      role: Doubled burst into the second tap (signal).
+    - node_role: Second tap
+      port: in
+      role: Receives the doubled burst (signal).
+    - node_role: Second tap
+      port: out
+      role: Stuttered tap cluster into the envelope (signal).
+    - node_role: Percussion envelope
+      port: in
+      role: Receives the stuttered tap cluster (signal).
+    - node_role: Percussion envelope
+      port: out
+      role: Gated clap towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the clap voice (signal).
+
+  topology:
+    description: |
+      osc (noise, static mode) -> filter.in (signal).  filter.out ->
+      delay-a.in (signal).  delay-a.out -> delay-b.in (signal).
+      delay-b.out -> adsr.in (signal).  adsr.out -> output.in1 (signal).
+      Both delays run free time (sync off) with times that keep every echo
+      inside one envelope decay; the note events gate the envelope only,
+      the oscillator and filter carry no note connection.
+
+  parameters:
+    - name: band-pass cutoff and resonance
+      role: |
+        900..1600 Hz with resonance 0.4..0.7 centers the hand-clap band;
+        below 700 Hz reads as body percussion, above 2500 Hz as a
+        tambourine shake.
+    - name: first tap
+      role: |
+        time 12..25 ms, mix 0.5..0.9, feedback 0: the first articulated
+        repetition of the burst.
+    - name: second tap
+      role: |
+        time 25..50 ms, mix 0.4..0.7.  Feedback 0.1..0.35 thickens the
+        cluster; higher feedback turns flam into a ringing stutter.
+    - name: envelope shape
+      role: |
+        Attack 0.001..0.01 s, decay 0.15..0.4 s, sustain 0, release
+        0.01..0.1 s.  The decay must outlast both echo times so the taps
+        stutter inside one hit instead of leaking out.
+
+  relationships:
+    - name: taps-not-space
+      description: |
+        burst-delay-resonance recirculates a played voice as rhythmic echo
+        bursts and delay-slapback-doubler doubles a played voice; both are
+        space around a note.  Here serial micro-delays articulate tuned
+        noise before the envelope, so the taps are the instrument itself.
+    - name: perc-family
+      description: |
+        tuned-noise-percussion gates a single resonator as one shell hit;
+        this technique splits that hit through tuned echo times into a
+        multi-articulated slap without extra excitation.
+    - name: budget
+      description: |
+        Registry budgets (xsd maxInstances): osc <= 16 (one used), filter
+        <= 16 (one used), delay <= 16 (two used), adsr <= 16 (one used),
+        output = 1, note = 1 (unused).
+
+  perceptual_effects:
+    - hand-clap multi-burst pitched by the static band pass
+    - gated flam clusters for percussion tracks
+    - body percussion and tambourine shakes by moving the band

@@ -21,6 +21,9 @@ FilterProcessor::FilterProcessor (std::atomic<float>* cutoffParameter,
     input.setDefaultValue (0.0f);
     cutoffMod.setDefaultValue (440.0f);
     resonanceMod.setDefaultValue (0.0f);
+
+    // Unwired vel input scales by 1.0: the sound stays exactly as before.
+    velIn.setDefaultValue (1.0f);
 }
 
 void FilterProcessor::prepare (double newSampleRate)
@@ -53,9 +56,20 @@ StereoFrame FilterProcessor::processSample()
     // Cutoff: the modulation input (frequency domain) replaces the static
     // parameter entirely when connected — the static cutoff is the fallback,
     // not an offset.
-    const float fc = cutoffMod.isConnected()
-        ? juce::jlimit (20.0f, 20000.0f, cutoffMod.getSample().l)
-        : juce::jlimit (20.0f, 20000.0f, cutoff != nullptr ? cutoff->load() : 1000.0f);
+    float fc = cutoffMod.isConnected()
+        ? cutoffMod.getSample().l
+        : (cutoff != nullptr ? cutoff->load() : 1000.0f);
+
+    // Velocity (accent brightness): the connected vel input's stereo mean
+    // (0-1) scales the cutoff - accented hits sit brighter.  Unwired:
+    // fully sound-invariant.
+    if (velIn.isConnected())
+    {
+        const StereoFrame vp = velIn.getSample();
+        fc = fc * 0.5f * (vp.l + vp.r);
+    }
+
+    fc = juce::jlimit (20.0f, 20000.0f, fc);
 
     const float resBase = resonance != nullptr ? resonance->load() : 0.0f;
     const int modeIndex = mode != nullptr

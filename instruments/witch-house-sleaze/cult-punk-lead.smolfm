@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Cult Punk Lead" description="Cult punk square lead: high-passed then low-passed square through a hard clip, snappy sustained gate, echoed by a tempo-synced eighths tail." techniques="subtractive-voice-chain,tempo-synced-delay-tail">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="square">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="shape0" drive="0.28" shape="hard">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="380" resonance="0.18" mode="hp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter1" cutoff="3600" resonance="0.2" mode="lp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.002" decay="0.28" sustain="0.3" release="0.05">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.9">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay0" time="250" feedback="0.3" mix="0.25" sync="on" division="eighth">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.8" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="filter1" toPort="in" />
+      <Wire from="filter1" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="gain0" fromPort="out" to="delay0" toPort="in" />
+      <Wire from="delay0" fromPort="out" to="output" toPort="in2" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="osc0" x="380" y="60" />
+      <Box id="shape0" x="700" y="60" />
+      <Box id="filter0" x="1020" y="60" />
+      <Box id="filter1" x="1340" y="60" />
+      <Box id="adsr0" x="1020" y="380" />
+      <Box id="gain0" x="1340" y="380" />
+      <Box id="delay0" x="1340" y="680" />
+      <Box id="output" x="1660" y="240" />
+    </Boxes>
+  </Layout>
+</SmolFM>

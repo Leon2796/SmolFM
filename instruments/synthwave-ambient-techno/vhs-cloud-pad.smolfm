@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="VHS Cloud Pad" description="Dreamy drifting pad: a two-operator FM voice with a non-repeating perlin modulator on the FM index, drifted wide by a Haas split with a 38 ms right branch." techniques="classic-two-op-fm,index-envelope-fm,perlin-drift-modulation,stereo-haas-branch-delay">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fscale0" factor="1.9965">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="sine">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="oscDrift" waveform="perlin" mode="lfo" lforate="0.09">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="fm0" amount="1.6">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="modulator_in" direction="in" type="signal" />
+        <Pin id="amount_mod_in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc1" waveform="saw">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="2000" resonance="0.2" mode="lp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="2.4" decay="2.5" sustain="0.85" release="4.5">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="split0">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="outL" direction="out" type="signal" />
+        <Pin id="outR" direction="out" type="signal" />
+      </Node>
+      <Node id="delay0" time="38" feedback="0.0" mix="1.0">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="merge0">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.6" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fm0" toPort="freq_in" />
+      <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="fm0" toPort="modulator_in" />
+      <Wire from="oscDrift" fromPort="out" to="fm0" toPort="amount_mod_in" />
+      <Wire from="fm0" fromPort="out" to="osc1" toPort="note_in" />
+      <Wire from="osc1" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="split0" toPort="in" />
+      <Wire from="split0" fromPort="outL" to="merge0" toPort="in1" />
+      <Wire from="split0" fromPort="outR" to="delay0" toPort="in" />
+      <Wire from="delay0" fromPort="out" to="merge0" toPort="in2" />
+      <Wire from="merge0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="fscale0" x="60" y="380" />
+      <Box id="osc0" x="380" y="380" />
+      <Box id="oscDrift" x="380" y="700" />
+      <Box id="fm0" x="700" y="60" />
+      <Box id="osc1" x="1020" y="60" />
+      <Box id="filter0" x="1020" y="380" />
+      <Box id="adsr0" x="1340" y="60" />
+      <Box id="split0" x="1340" y="380" />
+      <Box id="delay0" x="1660" y="380" />
+      <Box id="merge0" x="1660" y="700" />
+      <Box id="output" x="1980" y="540" />
+    </Boxes>
+  </Layout>
+</SmolFM>

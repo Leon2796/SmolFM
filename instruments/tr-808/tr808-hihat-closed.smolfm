@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="tr808-hihat-closed" description="808-Style Closed Hi-Hat getreu der 6-Puls-Oszillator-Bank: sechs statische Squares exakt auf der Service-Notes-Bank (205,3/304,4/369,6/522,7/540/800 Hz, Square-Approximation der Pulswelle) auf dem Adder-Bus durch Bandpass 10 kHz mit 50-ms-Dekay; bewusst Phase-Lock-tonal statt Rausch-Wash, Velocity-Akzent nur lauter (gain.vel), Band-Centrum statisch, weil filter.vel den 10-kHz-Bandpass die Harmonik-Leiter hinunter zieht." techniques="pulse-oscillator-bank, osc-sum-bus, 808-accent-gain">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+        <Pin id="vel" direction="out" type="velocity" />
+      </Node>
+      <Node id="osc0" waveform="square" mode="static" staticfreq="205.3">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc1" waveform="square" mode="static" staticfreq="304.4">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc2" waveform="square" mode="static" staticfreq="369.6">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc3" waveform="square" mode="static" staticfreq="522.7">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc4" waveform="square" mode="static" staticfreq="540">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc5" waveform="square" mode="static" staticfreq="800">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="add0">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="add1">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="add2">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="add3">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="add4">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="10000" resonance="0.5" mode="bp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.001" decay="0.05" sustain="0.0" release="0.02">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="4.0">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.8" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="osc1" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="osc2" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="osc3" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="osc4" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="osc5" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="add0" toPort="in1" />
+      <Wire from="osc1" fromPort="out" to="add0" toPort="in2" />
+      <Wire from="add0" fromPort="out" to="add1" toPort="in1" />
+      <Wire from="osc2" fromPort="out" to="add1" toPort="in2" />
+      <Wire from="add1" fromPort="out" to="add2" toPort="in1" />
+      <Wire from="osc3" fromPort="out" to="add2" toPort="in2" />
+      <Wire from="add2" fromPort="out" to="add3" toPort="in1" />
+      <Wire from="osc4" fromPort="out" to="add3" toPort="in2" />
+      <Wire from="add3" fromPort="out" to="add4" toPort="in1" />
+      <Wire from="osc5" fromPort="out" to="add4" toPort="in2" />
+      <Wire from="add4" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="note" fromPort="vel" to="gain0" toPort="vel" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="700" />
+      <Box id="osc0" x="340" y="60" />
+      <Box id="osc1" x="340" y="380" />
+      <Box id="osc2" x="340" y="700" />
+      <Box id="osc3" x="340" y="1020" />
+      <Box id="osc4" x="340" y="1340" />
+      <Box id="osc5" x="340" y="1660" />
+      <Box id="add0" x="680" y="120" />
+      <Box id="add1" x="680" y="440" />
+      <Box id="add2" x="680" y="760" />
+      <Box id="add3" x="680" y="1080" />
+      <Box id="add4" x="680" y="1400" />
+      <Box id="filter0" x="1020" y="760" />
+      <Box id="adsr0" x="1360" y="760" />
+      <Box id="gain0" x="1700" y="760" />
+      <Box id="output" x="2040" y="760" />
+    </Boxes>
+  </Layout>
+</SmolFM>

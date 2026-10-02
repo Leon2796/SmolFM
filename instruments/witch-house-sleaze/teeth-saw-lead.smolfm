@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Teeth Saw Lead" description="Teeth saw lead: two microdetuned saws behind one 5.4 Hz proportional sine vibrato, hard-clipped into a low-passed bite with sustaining body." techniques="lfo-vibrato-fm,fscale-detune-unison,serial-drive-filter-sculpt">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc2" waveform="sine" mode="lfo" lforate="5.4">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="fm0" amount="0.045">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="modulator_in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fm1" amount="0.045">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="modulator_in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fscale0" factor="0.9968">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fscale1" factor="1.0032">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="saw">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc1" waveform="saw">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.55">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain1" factor="0.55">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="add0">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="shape0" drive="0.45" shape="hard">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="2900" resonance="0.25" mode="lp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.003" decay="0.35" sustain="0.6" release="0.09">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.8" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="note" fromPort="out" to="fscale1" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="fm0" toPort="freq_in" />
+      <Wire from="fscale1" fromPort="out" to="fm1" toPort="freq_in" />
+      <Wire from="osc2" fromPort="out" to="fm0" toPort="modulator_in" />
+      <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in" />
+      <Wire from="fm0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="fm1" fromPort="out" to="osc1" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="osc1" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="add0" toPort="in1" />
+      <Wire from="gain1" fromPort="out" to="add0" toPort="in2" />
+      <Wire from="add0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="240" />
+      <Box id="osc2" x="380" y="60" />
+      <Box id="fm0" x="700" y="60" />
+      <Box id="fm1" x="700" y="140" />
+      <Box id="fscale0" x="380" y="380" />
+      <Box id="fscale1" x="380" y="680" />
+      <Box id="osc0" x="1020" y="380" />
+      <Box id="osc1" x="1020" y="680" />
+      <Box id="gain0" x="1340" y="380" />
+      <Box id="gain1" x="1340" y="680" />
+      <Box id="add0" x="1020" y="140" />
+      <Box id="shape0" x="1340" y="140" />
+      <Box id="filter0" x="1660" y="240" />
+      <Box id="adsr0" x="1980" y="240" />
+      <Box id="output" x="2300" y="240" />
+    </Boxes>
+  </Layout>
+</SmolFM>

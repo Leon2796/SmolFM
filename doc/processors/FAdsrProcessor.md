@@ -13,7 +13,7 @@ bei Note-On gelesen (JUCE-Empfehlung) und wirken daher auf die nächste Note.
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
 | Max. Instanzen | 8 | `GraphNodeRegistry::maxFAdsr` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `freq_in` (`PortType::frequency`) | `InputPort freqInput` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
+| Input-Ports | `freq_in` (`PortType::frequency`), `vel` (`PortType::velocity`) | `InputPort freqInput`, `InputPort velIn` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
 | Output-Ports | `out` (`PortType::frequency`) | `OutputPort output` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
 
 | Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
@@ -60,6 +60,19 @@ Spezialfälle:
 - $F_{up} > 1$: Ton schwingt bei Envelope-Peak über die Spielpitch (Pitch-Bling), $F_{up} < 1$ darunter.
 - Sustain-Level steuert, welcher Faktor während der Haltephase dominiert.
 
+### Velocity-Port `vel` — Accent-Tiefe (Pull-to-Neutral)
+
+Die verbundene `note.vel`-Quelle (Stereo-Mittel $v \in [0,1]$) skaliert die
+**Ankertiefe**, nicht die Kurvenform: beide Anker gleiten auf eigener Schiene
+von Neutral 1.0 zum konfigurierten Wert.
+
+$$F_{up,v} = 1 + v \cdot (F_{up} - 1), \qquad F_{down,v} = 1 + v \cdot (F_{down} - 1)$$
+
+- $v = 0$: flache Hüllkurve (Faktor 1 über alle $E$) — byteidentisch zum unverdrahteten Verhalten.
+- $v = 1$: exakt die konfigurierten Anker ($F_{up}$, $F_{down}$).
+- Der Ankerabstand skaliert linear mit ($\text{gap} = v \cdot (F_{up} - F_{down})$); A/D/S/R-Zeiten und die Anker-Richtung (auch invertiert, $F_{down} > F_{up}$) bleiben unangetastet.
+- Unverbunden: Default 1.0 (neutral) — voll klanginvariant wie die Receive-Pins an `gain`, `shape`, `fm`, `filter`. Der Unterschied: dort multipliziert Velocity den Wert (Level-Duck), hier skaliert sie die Tiefe (Abweichung von Neutral).
+
 Funktionsablauf: Bei Note-On wird die Hüllkurve mit $(A, D, S, R)$ parametrisiert
 und gestartet (`noteOn`), bei Note-Off läuft die Release-Phase (`noteOff`).
 `juce::ADSR` liefert pro Sample den Wert $E_n$ entlang der linearen Attack- und
@@ -74,6 +87,8 @@ exponentiellen Decay/Release-Segmente.
 | $F_{up}$ | `up->load()` → `upValue` | [FAdsrProcessor.cpp](../../src/processors/FAdsrProcessor.cpp) | Faktor bei E = 1 |
 | $F_{down}$ | `down->load()` → `downValue` | [FAdsrProcessor.cpp](../../src/processors/FAdsrProcessor.cpp) | Faktor bei E = 0 |
 | $F(E_n)$ | `downValue + (upValue - downValue) * env` → `scaled`-Berechnung | [FAdsrProcessor.cpp](../../src/processors/FAdsrProcessor.cpp) | lineare Interpolation in `processSample()` |
+| $v$ | `velIn.getSample()` → Stereo-Mittel | [FAdsrProcessor.cpp](../../src/processors/FAdsrProcessor.cpp) | `vel` verbunden: Ankertiefe ($v \in [0,1]$); unverbunden: Default 1.0 (neutral) |
+| $F_{up,v}$, $F_{down,v}$ | `upEffective`, `downEffective` | [FAdsrProcessor.cpp](../../src/processors/FAdsrProcessor.cpp) | Pull-to-Neutral $1 + v \cdot (F - 1)$, nur bei verbundener `vel` |
 | $f_n$ | `freqInput.getSample()` → `sourceFrequency` | [FAdsrProcessor.cpp](../../src/processors/FAdsrProcessor.cpp) | Port lesen (Default 440 Hz unverbunden) |
 | $f'_n$ | `sourceFrequency * F(E)` → `output.setSample()` | [FAdsrProcessor.cpp](../../src/processors/FAdsrProcessor.cpp) | Ergebnis in den Port |
 | Note-Off | `noteOff()` → `envelope.noteOff()` | [FAdsrProcessor.cpp](../../src/processors/FAdsrProcessor.cpp) | aus `SynthVoice::stopNote` bei `allowTailOff` |

@@ -39,7 +39,10 @@ namespace
                                      std::array<WaveshaperProcessor*, GraphNodeRegistry::maxWaveshapers>& waveshapers,
                                      std::array<FilterProcessor*, GraphNodeRegistry::maxFilters>& filters,
                                      std::array<SplitterProcessor*, GraphNodeRegistry::maxSplitters>& splitters,
-                                     std::array<MergerProcessor*, GraphNodeRegistry::maxMergers>& mergers)
+                                     std::array<MergerProcessor*, GraphNodeRegistry::maxMergers>& mergers,
+                                     std::array<AdderProcessor*, GraphNodeRegistry::maxAdds>& adders,
+                                      std::array<FeedbackProcessor*, GraphNodeRegistry::maxFeedbacks>& feedbackProcessors,
+                                      std::array<ResonatorProcessor*, GraphNodeRegistry::maxResonators>& resonators)
     {
         juce::ignoreUnused (params, noteSources);
 
@@ -98,6 +101,9 @@ namespace
             if (portId == "amount_mod_in")
                 return &fmProcessors[static_cast<size_t> (index)]->getAmountModInput();
 
+            if (portId == "vel")
+                return &fmProcessors[static_cast<size_t> (index)]->getVelInput();
+
             return nullptr;
         }
 
@@ -119,9 +125,12 @@ namespace
 
         if (type == NodeType::fAdsr
          && index >= 0 && index < GraphNodeRegistry::maxFAdsr
-         && fAdsrProcessors[static_cast<size_t> (index)] != nullptr
-         && portId == "freq_in")
-            return &fAdsrProcessors[static_cast<size_t> (index)]->getFreqInput();
+         && fAdsrProcessors[static_cast<size_t> (index)] != nullptr)
+        {
+            if (portId == "freq_in") return &fAdsrProcessors[static_cast<size_t> (index)]->getFreqInput();
+            if (portId == "vel")     return &fAdsrProcessors[static_cast<size_t> (index)]->getVelInput();
+            return nullptr;
+        }
 
         if (type == NodeType::gain
          && index >= 0 && index < GraphNodeRegistry::maxGains
@@ -129,6 +138,7 @@ namespace
         {
             if (portId == "in")           return &gainProcessors[static_cast<size_t> (index)]->getInput();
             if (portId == "factor_mod_in") return &gainProcessors[static_cast<size_t> (index)]->getModInput();
+            if (portId == "vel")           return &gainProcessors[static_cast<size_t> (index)]->getVelInput();
             return nullptr;
         }
 
@@ -138,6 +148,7 @@ namespace
         {
             if (portId == "in")            return &waveshapers[static_cast<size_t> (index)]->getInput();
             if (portId == "drive_mod_in")  return &waveshapers[static_cast<size_t> (index)]->getDriveModInput();
+            if (portId == "vel")           return &waveshapers[static_cast<size_t> (index)]->getVelInput();
             return nullptr;
         }
 
@@ -148,6 +159,7 @@ namespace
             if (portId == "in")             return &filters[static_cast<size_t> (index)]->getInput();
             if (portId == "cutoff_mod_in")  return &filters[static_cast<size_t> (index)]->getCutoffModInput();
             if (portId == "resonance_mod_in") return &filters[static_cast<size_t> (index)]->getResonanceModInput();
+            if (portId == "vel")            return &filters[static_cast<size_t> (index)]->getVelInput();
             return nullptr;
         }
 
@@ -175,6 +187,35 @@ namespace
          {
              if (portId == "in1") return &mergers[static_cast<size_t> (index)]->getLeftInput();
              if (portId == "in2") return &mergers[static_cast<size_t> (index)]->getRightInput();
+             return nullptr;
+         }
+
+        if (type == NodeType::adder
+         && index >= 0 && index < GraphNodeRegistry::maxAdds
+         && adders[static_cast<size_t> (index)] != nullptr)
+         {
+             if (portId == "in1") return &adders[static_cast<size_t> (index)]->getInput1();
+             if (portId == "in2") return &adders[static_cast<size_t> (index)]->getInput2();
+             return nullptr;
+         }
+
+        if (type == NodeType::resonator
+         && index >= 0 && index < GraphNodeRegistry::maxResonators
+         && resonators[static_cast<size_t> (index)] != nullptr)
+         {
+             if (portId == "in")        return &resonators[static_cast<size_t> (index)]->getInput();
+             if (portId == "tune")      return &resonators[static_cast<size_t> (index)]->getTuneInput();
+             if (portId == "q_mod_in")  return &resonators[static_cast<size_t> (index)]->getQModInput();
+             if (portId == "vel")       return &resonators[static_cast<size_t> (index)]->getVelInput();
+             return nullptr;
+         }
+
+        if (type == NodeType::feedback
+         && index >= 0 && index < GraphNodeRegistry::maxFeedbacks
+         && feedbackProcessors[static_cast<size_t> (index)] != nullptr)
+         {
+             if (portId == "in")    return &feedbackProcessors[static_cast<size_t> (index)]->getInput();
+             if (portId == "fb_in") return &feedbackProcessors[static_cast<size_t> (index)]->getFeedbackInput();
              return nullptr;
          }
 
@@ -208,9 +249,12 @@ namespace
                                                                               std::array<WaveshaperProcessor*, GraphNodeRegistry::maxWaveshapers>& waveshapers,
                                        std::array<FilterProcessor*, GraphNodeRegistry::maxFilters>& filters,
                                        std::array<SplitterProcessor*, GraphNodeRegistry::maxSplitters>& splitters,
-                                       std::array<MergerProcessor*, GraphNodeRegistry::maxMergers>& mergers)
+                                       std::array<MergerProcessor*, GraphNodeRegistry::maxMergers>& mergers,
+                                       std::array<AdderProcessor*, GraphNodeRegistry::maxAdds>& adders,
+                                        std::array<FeedbackProcessor*, GraphNodeRegistry::maxFeedbacks>& feedbackProcessors,
+                                        std::array<ResonatorProcessor*, GraphNodeRegistry::maxResonators>& resonators)
     {
-        if (portId != "out" && portId != "outL" && portId != "outR")
+        if (portId != "out" && portId != "outL" && portId != "outR" && portId != "vel")
             return nullptr;
 
         const NodeType type = GraphNodeRegistry::typeOf (nodeId);
@@ -219,7 +263,12 @@ namespace
         if (type == NodeType::note
          && index >= 0 && index < GraphNodeRegistry::maxNotes
          && noteSources[static_cast<size_t> (index)] != nullptr)
+        {
+            if (portId == "vel")   // velocity send: separate domain
+                return &noteSources[static_cast<size_t> (index)]->getVelOutput();
+
             return &noteSources[static_cast<size_t> (index)]->getOutput();
+        }
 
         if (type == NodeType::oscillator
          && index >= 0 && index < GraphNodeRegistry::maxOscillators
@@ -276,6 +325,16 @@ namespace
          && filters[static_cast<size_t> (index)] != nullptr)
             return &filters[static_cast<size_t> (index)]->getOutput();
 
+        if (type == NodeType::resonator
+         && index >= 0 && index < GraphNodeRegistry::maxResonators
+         && resonators[static_cast<size_t> (index)] != nullptr)
+            return &resonators[static_cast<size_t> (index)]->getOutput();
+
+        if (type == NodeType::feedback
+         && index >= 0 && index < GraphNodeRegistry::maxFeedbacks
+         && feedbackProcessors[static_cast<size_t> (index)] != nullptr)
+            return &feedbackProcessors[static_cast<size_t> (index)]->getOutput();
+
         if (type == NodeType::splitter
          && index >= 0 && index < GraphNodeRegistry::maxSplitters
          && splitters[static_cast<size_t> (index)] != nullptr)
@@ -289,6 +348,11 @@ namespace
          && index >= 0 && index < GraphNodeRegistry::maxMergers
          && mergers[static_cast<size_t> (index)] != nullptr)
             return &mergers[static_cast<size_t> (index)]->getOutput();
+
+        if (type == NodeType::adder
+         && index >= 0 && index < GraphNodeRegistry::maxAdds
+         && adders[static_cast<size_t> (index)] != nullptr)
+            return &adders[static_cast<size_t> (index)]->getOutput();
 
         return nullptr;
     }
@@ -393,6 +457,20 @@ void SynthVoice::buildGraph()
             graph.addProcessor (std::move (merge));
         }
 
+        // Adder pool — samplewise signal sum (out = in1 + in2).  The bus
+        // builder: folds parallel signal sources into one mono/stereo signal
+        // BEFORE the shared filters/shapers/envelopes consume it.  Positioned
+        // after the splitter/merger topology group and before the signal
+        // stages, so osc->add and add->downstream stay in the same tick;
+        // feeding the splitter from an adder costs one tick (same concession
+        // as every other later signal pool).
+        for (int i = 0; i < GraphNodeRegistry::maxAdds; ++i)
+        {
+            auto add = std::make_unique<AdderProcessor>();
+            adders[static_cast<size_t> (i)] = add.get();
+            graph.addProcessor (std::move (add));
+        }
+
         // Ring modulator pool â€” pure signal multipliers, no parameters.
     for (int i = 0; i < GraphNodeRegistry::maxRingModulators; ++i)
     {
@@ -449,6 +527,31 @@ void SynthVoice::buildGraph()
             graph.addProcessor (std::move (f));
         }
 
+        // Feedback pool — bounded cycle breakers (plan P3.6).  They sit
+        // BEFORE the resonator pool: the node's `out` carries the loop entry
+        // value fresh into its downstream body, while its `fb_in` return
+        // wire points back to a node added later, whose frame is read with
+        // the inherent one-sample delay that makes the cycle legal.  The
+        // `in` producers (exciters upstream of the loop) live earlier.
+        for (int i = 0; i < GraphNodeRegistry::maxFeedbacks; ++i)
+        {
+            auto fb = std::make_unique<FeedbackProcessor> (parameters.feedbackAmount[static_cast<size_t> (i)]);
+            feedbackProcessors[static_cast<size_t> (i)] = fb.get();
+            graph.addProcessor (std::move (fb));
+        }
+
+        // Resonator pool — excited damped second-order bodies (plan P2.2);
+        // fed directly by earlier exciter chains or by a feedback entry.
+        for (int i = 0; i < GraphNodeRegistry::maxResonators; ++i)
+        {
+            auto r = std::make_unique<ResonatorProcessor> (parameters.resonatorTune     [static_cast<size_t> (i)],
+                                                           parameters.resonatorQ        [static_cast<size_t> (i)],
+                                                           parameters.resonatorDecay    [static_cast<size_t> (i)],
+                                                           parameters.resonatorVelSpread[static_cast<size_t> (i)]);
+            resonators[static_cast<size_t> (i)] = r.get();
+            graph.addProcessor (std::move (r));
+        }
+
         // Master output (singleton).
     auto master = std::make_unique<MasterOutputProcessor> (parameters.masterLevel);
     masterOutput = master.get();
@@ -466,12 +569,14 @@ void SynthVoice::startNote (int midiNoteNumber,
                             juce::SynthesiserSound* /*sound*/,
                             int /*currentPitchWheelPosition*/)
 {
-    currentVelocity = velocity;
     keyHeld = true;
 
     for (auto* note : noteSources)
         if (note != nullptr)
+        {
             note->setMidiNoteNumber (midiNoteNumber);
+            note->setVelocity (velocity);   // vel sources emit per note-on
+        }
 
     graph.startNote();
 }
@@ -544,8 +649,11 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
             auto* rightChannel = outputBuffer.getWritePointer (
                 outputBuffer.getNumChannels() > 1 ? 1 : 0);
 
-            leftChannel[startSample + sampleIndex]  += frame.l * currentVelocity * fade;
-            rightChannel[startSample + sampleIndex] += frame.r * currentVelocity * fade;
+            // Velocity no longer scales here: it flows through the graph
+            // as PortType::velocity from note.vel into the consumers' vel
+            // pins (removing this central multiply avoids double scaling).
+            leftChannel[startSample + sampleIndex]  += frame.l * fade;
+            rightChannel[startSample + sampleIndex] += frame.r * fade;
         }
 
         clearCurrentNote();
@@ -563,8 +671,8 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer,
         auto* rightChannel = outputBuffer.getWritePointer (
             outputBuffer.getNumChannels() > 1 ? 1 : 0);
 
-        leftChannel[startSample + sampleIndex]  += frame.l * currentVelocity;
-        rightChannel[startSample + sampleIndex] += frame.r * currentVelocity;
+        leftChannel[startSample + sampleIndex]  += frame.l;
+        rightChannel[startSample + sampleIndex] += frame.r;
     }
 }
 
@@ -599,6 +707,19 @@ bool SynthVoice::hasReasonToLive() const noexcept
         if (d != nullptr && d->getInput().isConnected() && d->hasEnergy())
             return true;
 
+    // Resonator tails ring out after note-off as well — a pure exciter ->
+    // resonator -> output patch has no envelope to hold the voice alive,
+    // so the tail estimate must carry it (same contract as the delay).
+    for (auto* r : resonators)
+        if (r != nullptr && r->getInput().isConnected() && r->hasEnergy())
+            return true;
+
+    // Feedback loops circulate their energy; the voice lives while a wired
+    // loop still carries audio (the amount ceiling guarantees it decays).
+    for (auto* fb : feedbackProcessors)
+        if (fb != nullptr && fb->hasEnergy())
+            return true;
+
     return false;
 }
 
@@ -617,6 +738,7 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
             fm->getFreqInput().disconnect();
             fm->getModulatorInput().disconnect();
             fm->getAmountModInput().disconnect();
+            fm->getVelInput().disconnect();
         }
 
     for (auto* fscale : frequencyScalers)
@@ -626,7 +748,11 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
         if (adsr != nullptr)  adsr->getInput().disconnect();
 
         for (auto* fadsr : fAdsrProcessors)
-        if (fadsr != nullptr)  fadsr->getFreqInput().disconnect();
+        if (fadsr != nullptr)
+        {
+            fadsr->getFreqInput().disconnect();
+            fadsr->getVelInput().disconnect();
+        }
 
         for (auto* ring : ringModulators)
         if (ring != nullptr)
@@ -671,6 +797,7 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
         {
             g->getInput().disconnect();
             g->getModInput().disconnect();
+            g->getVelInput().disconnect();
         }
 
         for (auto* ws : waveshapers)
@@ -678,6 +805,7 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
         {
             ws->getInput().disconnect();
             ws->getDriveModInput().disconnect();
+            ws->getVelInput().disconnect();
         }
 
         for (auto* f : filters)
@@ -686,6 +814,29 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
             f->getInput().disconnect();
             f->getCutoffModInput().disconnect();
             f->getResonanceModInput().disconnect();
+            f->getVelInput().disconnect();
+        }
+
+        // Feedback nodes: clear the loop entry/return and the tail estimate
+        // so no previous patch's circulation survives an instrument change.
+        for (auto* fb : feedbackProcessors)
+        if (fb != nullptr)
+        {
+            fb->getInput().disconnect();
+            fb->getFeedbackInput().disconnect();
+            fb->reset();
+        }
+
+        // Resonators must not ring over from the previous patch either
+        // (their state IS the sound — clear the whole tail).
+        for (auto* r : resonators)
+        if (r != nullptr)
+        {
+            r->getInput().disconnect();
+            r->getTuneInput().disconnect();
+            r->getQModInput().disconnect();
+            r->getVelInput().disconnect();
+            r->reset();
         }
 
         for (auto* s : splitters)
@@ -696,6 +847,13 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
         {
             m->getLeftInput().disconnect();
             m->getRightInput().disconnect();
+        }
+
+        for (auto* a : adders)
+        if (a != nullptr)
+        {
+            a->getInput1().disconnect();
+            a->getInput2().disconnect();
         }
 
     for (int i = 0; i < MasterOutputProcessor::numInputs; ++i)
@@ -710,12 +868,12 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
                 OutputPort* out = resolveOutput (conn.from.nodeId, conn.from.portId,
                                                    noteSources, adsrProcessors, fAdsrProcessors, masterOutput,
                                                    oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors, waveshapers, filters,
-                                                   splitters, mergers);
+                                                   splitters, mergers, adders, feedbackProcessors, resonators);
                 InputPort*  in  = resolveInput  (conn.to.nodeId,   conn.to.portId,
                                                    const_cast<SynthVoiceParameters&> (parameters),
                                                    noteSources, adsrProcessors, fAdsrProcessors, masterOutput,
                                                    oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors, waveshapers, filters,
-                                                   splitters, mergers);
+                                                   splitters, mergers, adders, feedbackProcessors, resonators);
 
         if (out == nullptr || in == nullptr)
             continue;

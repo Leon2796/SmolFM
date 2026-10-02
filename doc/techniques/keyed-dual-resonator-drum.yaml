@@ -1,0 +1,164 @@
+technique:
+  name: keyed-dual-resonator-drum
+
+  idea: |
+    Two sine voices run as the drum's tone bodies, both tracking the played
+    key through separate scale stages whose factors sit at a slightly
+    inharmonic ratio (the 808 snare's 185/330 Hz body pair generalized to
+    any key), each gated by its own short-decay envelope, while a third
+    static noise layer through a resonant band pass supplies the carpet.
+    All three layers land on separate output inputs with per-layer velocity
+    wires, so one key press renders a complete two-body-plus-snap drum that
+    keeps its body interval constant across the whole keyboard — snare,
+    tom pairs, congas and clave-like shells become a playable, pitched
+    instrument family instead of fixed one-shots.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; body register for both tone layers and accent velocity.
+    - type: fscale
+      role: First body scale stage, factor 1; body one stays on the raw key.
+    - type: fscale
+      role: Second body scale stage; its factor places body two at the
+        inharmonic interval.
+    - type: osc
+      role: Body one in pitch mode (sine); the lower drum body.
+    - type: osc
+      role: Body two in pitch mode (sine); the detuned upper body.
+    - type: osc
+      role: Carpet excitation in static mode; waveform noise, untracked.
+    - type: filter
+      role: Band-pass stage; its cutoff tunes the carpet, its resonance the snap.
+    - type: adsr
+      role: Body-one percussion gate; near-zero attack, short decay, sustain 0.
+    - type: adsr
+      role: Body-two percussion gate; its own decay length.
+    - type: adsr
+      role: Carpet percussion gate; the snappiest of the three.
+    - type: gain
+      role: Layer trim and accent VCA per layer (vel wired).
+    - type: output
+      role: Master merge; one dedicated input per layer.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency fan-out into both scale stages (frequency).
+    - node_role: Keyboard send
+      port: vel
+      role: Velocity into every layer's gain.vel (velocity).
+    - node_role: Scale stages
+      port: freq_in
+      role: Receive the played key (frequency).
+    - node_role: Scale stages
+      port: out
+      role: Tracked body frequencies into the body voices (frequency).
+    - node_role: Body voices
+      port: note_in
+      role: Render the bodies from the tracked keys (frequency).
+    - node_role: Carpet excitation
+      port: out
+      role: Noise into the band pass (signal).
+    - node_role: Band pass
+      port: in
+      role: Receives the noise excitation (signal).
+    - node_role: Band pass
+      port: out
+      role: Tuned carpet ring into its gate (signal).
+    - node_role: Percussion gates
+      port: in
+      role: Receive their layer signal (signal).
+    - node_role: Percussion gates
+      port: out
+      role: Gated layers into their trims (signal).
+    - node_role: Accent VCAs
+      port: vel
+      role: Multiply the layer level by note.vel (velocity).
+    - node_role: Accent VCAs
+      port: out
+      role: Trimmed, accented layers onto dedicated output inputs (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input per layer, three inputs for the drum (signal).
+
+  topology:
+    description: |
+      note.out -> fscale-a.freq_in (frequency), fscale-a.out ->
+      body-a.note_in (frequency).  note.out -> fscale-b.freq_in
+      (frequency), fscale-b.out (inharmonic factor) -> body-b.note_in
+      (frequency).  body-a.out -> adsr-a.in (signal), adsr-a.out ->
+      gain-a.in (signal), note.vel -> gain-a.vel (velocity), gain-a.out ->
+      output.in1 (signal); same pattern for body two on output.in2.
+      Carpet chain: noise-osc.out (static mode) -> filter.in (signal),
+      filter.out -> adsr-c.in (signal), adsr-c.out -> gain-c.in (signal),
+      note.vel -> gain-c.vel (velocity), gain-c.out -> output.in3
+      (signal).  The three layers stay parallel and meet only at the
+      master output's summing point.
+
+  parameters:
+    - name: body ratio
+      role: |
+        Scale factors, 0..10 each.  The perceived body interval is
+        factor-b / factor-a; 1.7838 reproduces the 808 snare pair, values
+        near integers read as tonal tom pairs, irrational ones as broken,
+        wooden shells.  Because the factors multiply the played key, the
+        interval stays exact on every note.
+    - name: body decays
+      role: |
+        adsr attack/decay 0.001..5 s, sustain 0..1, release 0.001..10 s
+        per body: attack 0.001..0.01 s snaps, decay 0.05..0.4 s sets each
+        body's length, sustain 0 ends it percussively.
+    - name: carpet band
+      role: |
+        bp cutoff 800..3500 Hz with resonance 0.3..0.7; decay
+        0.08..0.25 s keeps the carpet inside the bodies.  Untuned by the
+        note — the tuned-noise-percussion convention, kept unchanged.
+    - name: layer trims
+      role: |
+        Gain factors 0..10 per layer.  The body-to-carpet balance defines
+        the drum: a dominant carpet reads as a snare, dominant bodies as
+        congas or clave-like shells.
+    - name: velocity accents
+      role: |
+        note.vel into each layer's gain.vel multiplies the factor by v
+        (clamped 0..10); ghost notes sink all three layers together,
+        unwired pins leave that layer velocity-neutral.
+    - name: optional diving bodies
+      role: |
+        An fadsr between note and a body scale stage (note -> fadsr ->
+        fscale -> osc) turns that static body into a diving one;
+        fadsr.vel slides the anchor depth so accented hits sweep more —
+        the sine-dive-kick socket applied to a dual-body drum.
+
+  relationships:
+    - name: keyed-versus-static-bodies
+      description: |
+        The static 808 snare recipe (fixed 185/330 Hz bodies beside a
+        tuned carpet) is this technique's static variant; the keyed
+        factor pair instead tracks the keyboard, so the whole drum
+        follows the played key.
+    - name: carpet-sibling
+      description: |
+        The carpet chain is tuned-noise-percussion unchanged (filter
+        before envelope, ring gated by the decay); the new content is the
+        key-tracked dual tone body beside it.
+    - name: body-family
+      description: |
+        sine-dive-kick synthesizes one diving body per hit; this
+        technique keeps the bodies pitched and static, inharmonically
+        paired.  static-formant-pair filters ONE signal through two bands
+        as a vowel colour; here two independent pitched sources render
+        the bodies — the interval is a source ratio, not a filter pair.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, fscale <= 8 (two used), osc <= 16
+        (three used), filter <= 16 (one used), adsr <= 16 (three used),
+        gain <= 16 (three used), output = 1.  Three of the eight output
+        inputs carry the drum; further layers (stick, rim) add one
+        envelope-plus-gain chain and one output input each.
+
+  perceptual_effects:
+    - snare and conga families that transpose with the keyboard
+    - shell timbre stays fixed while the register moves everywhere
+    - accent dynamics shared by bodies and carpet through the vel wires
+    - inharmonic two-body colour, wooden or metallic by the ratio choice

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Choreo Perc" description="Spectral-choreography percussion: one static noise excitation fans into four band-passes tuned body/knock/crack/air, each gated by its own decay ladder so the hit migrates through its spectrum." techniques="band-envelope-choreography">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="vel" direction="out" type="velocity" />
+      </Node>
+      <Node id="osc0" waveform="noise" mode="static" staticfreq="2000">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="175" resonance="0.5" mode="bp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter1" cutoff="640" resonance="0.55" mode="bp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter2" cutoff="2750" resonance="0.6" mode="bp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter3" cutoff="7800" resonance="0.5" mode="bp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.001" decay="0.18" sustain="0.0" release="0.06">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr1" attack="0.001" decay="0.06" sustain="0.0" release="0.03">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr2" attack="0.001" decay="0.02" sustain="0.0" release="0.01">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr3" attack="0.001" decay="0.5" sustain="0.0" release="0.12">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.8" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="osc0" fromPort="out" to="filter1" toPort="in" />
+      <Wire from="osc0" fromPort="out" to="filter2" toPort="in" />
+      <Wire from="osc0" fromPort="out" to="filter3" toPort="in" />
+      <Wire from="note" fromPort="vel" to="filter0" toPort="vel" />
+      <Wire from="note" fromPort="vel" to="filter1" toPort="vel" />
+      <Wire from="note" fromPort="vel" to="filter2" toPort="vel" />
+      <Wire from="note" fromPort="vel" to="filter3" toPort="vel" />
+      <Wire from="filter0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="filter1" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="filter2" fromPort="out" to="adsr2" toPort="in" />
+      <Wire from="filter3" fromPort="out" to="adsr3" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="adsr1" fromPort="out" to="output" toPort="in2" />
+      <Wire from="adsr2" fromPort="out" to="output" toPort="in3" />
+      <Wire from="adsr3" fromPort="out" to="output" toPort="in4" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="240" />
+      <Box id="osc0" x="380" y="240" />
+      <Box id="filter0" x="700" y="60" />
+      <Box id="filter1" x="700" y="380" />
+      <Box id="filter2" x="700" y="680" />
+      <Box id="filter3" x="700" y="960" />
+      <Box id="adsr0" x="1020" y="60" />
+      <Box id="adsr1" x="1020" y="380" />
+      <Box id="adsr2" x="1020" y="680" />
+      <Box id="adsr3" x="1020" y="960" />
+      <Box id="output" x="1340" y="240" />
+    </Boxes>
+  </Layout>
+</SmolFM>

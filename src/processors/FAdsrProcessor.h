@@ -5,16 +5,36 @@
     Ports:
         - freq_in (frequency): incoming frequency in Hertz, wired from
                                note.out, an FM stage or another scaler.
+        - vel     (velocity):  optional per-note velocity input (0-1).
+                               Connected: it scales the ANCHOR DEPTH — each
+                               anchor slides from neutral 1.0 toward its
+                               configured value (pull-to-neutral, below).
+                               Unconnected: fully transparent.
         - out     (frequency): the pitch-enveloped frequency in Hertz.
 
     Per sample:
 
-        f_out = f_in * f(E)
+        f_out = f_in * f_v(E)
 
     where E is the ADSR envelope value (0..1) and the scaling factor is
-    interpolated between upFactor (at E = 1) and downFactor (at E = 0):
+    interpolated between the effective up and down factors:
 
-        f(E) = downFactor + (upFactor - downFactor) * E
+        f(E) = downEff + (upEff - downEff) * E
+
+    Velocity pull-to-neutral (accent depth): velocity does not stretch the
+    anchors arbitrarily — each anchor depth slides on its own rail from the
+    neutral factor 1.0 to the configured value:
+
+        upEff   = 1 + v * (upValue   - 1)
+        downEff = 1 + v * (downValue - 1)
+
+    So v = 0 flattens the envelope to factor 1 (byte-identical to the
+    unwired behaviour), v = 1 sits exactly on the configured anchors, and v
+    linearly scales how far both anchors deviate from neutral — the anchor
+    gap shrinks proportionally (gap = v * (upValue - downValue)), while the
+    envelope's shape (A/D/S/R times) and the anchor directions stay exactly
+    as configured.  Example: up = 3, down = 0.5 at half velocity swings only
+    up 2.0 / down 0.75 — a soft "hint" of the same pitch gesture.
 
     Neutral state: upFactor = downFactor = 1.0 makes the node transparent —
     the envelope value has no influence on the pitch.
@@ -88,6 +108,11 @@ public:
         return freqInput;
     }
 
+    InputPort& getVelInput() noexcept
+    {
+        return velIn;
+    }
+
     OutputPort& getOutput() noexcept
     {
         return output;
@@ -105,7 +130,8 @@ private:
     std::atomic<float>* down;
 
     InputPort freqInput { PortType::frequency };
-    OutputPort output { PortType::frequency, *this };
+    InputPort velIn     { PortType::velocity };
+    OutputPort output   { PortType::frequency, *this };
 };
 
 } // namespace smolfm

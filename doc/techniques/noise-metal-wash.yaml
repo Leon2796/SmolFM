@@ -1,0 +1,125 @@
+technique:
+  name: noise-metal-wash
+
+  idea: |
+    One continuous white-noise source is split into two parallel band passes
+    - a bright sizzle band and a lower body band - each closed by its own
+    hard ADSR, while one or two inharmonic resonator pings, excited by
+    millisecond noise clicks, ride on top with exponential t60 tails.  The
+    bands deliver the diffuse wash that reads as struck metal; the resonators
+    add the metallic ring without forcing a single tonal band pass to carry
+    the whole voice.  Band centres and ping pitches are static, the envelope
+    decays alone decide closed tick against open wash against crash, and
+    velocity only scales levels and ring length - never the filter cutoff.
+    Deliberately no note wire reaches the oscillator (phase-free noise runs
+    ungated); the envelopes are the only note-dependent elements, so short
+    host gates cannot clip a wash.
+
+  involved_nodes:
+    - type: osc
+      role: White noise in static mode without note wire; the shared excitation.
+    - type: filter
+      role: Sizzle band pass; static cutoff fixes the bright wash band.
+    - type: filter
+      role: Body band pass; the lower, faster-decaying partial of the wash.
+    - type: adsr
+      role: Sizzle envelope; its decay is the voice length (tick, wash, crash).
+    - type: adsr
+      role: Body envelope; decays faster so the wash evolves downward.
+    - type: adsr
+      role: Click gate; shapes the noise excitation of a resonator ping.
+    - type: resonator
+      role: Inharmonic metal ring; exponential t60 decay, vel grows the ring.
+    - type: gain
+      role: Per-layer level trim; with vel wired it scales dynamically.
+    - type: output
+      role: Summing endpoint, one input per layer.
+
+  involved_ports:
+    - node_role: Noise source
+      port: out
+      role: Shared noise into both wash filters and the click gates (signal).
+    - node_role: Sizzle filter
+      port: in
+      role: Receives the noise excitation (signal).
+    - node_role: Sizzle filter
+      port: out
+      role: Wash band into its envelope (signal).
+    - node_role: Body filter
+      port: in, out
+      role: Same shape as the sizzle filter, lower band (signal).
+    - node_role: Wash envelopes
+      port: in, out
+      role: Gate and decay each band before its level trim (signal).
+    - node_role: Click gates
+      port: in, out
+      role: Millisecond bursts as resonator excitation (signal).
+    - node_role: Resonators
+      port: in
+      role: Receive the click excitation (signal).
+    - node_role: Resonators
+      port: vel
+      role: Velocity grows the ring length through spread (velocity).
+    - node_role: Level gains
+      port: vel
+      role: Velocity scales layer loudness - never a filter cutoff (velocity).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input per layer (signal).
+
+  topology:
+    description: |
+      osc (noise, static mode, no note wire) -> filter-a.in, filter-b.in,
+      click-adsr.in (all signal).  filter-a.out -> wash-adsr-a.in ->
+      gain-a.in -> output.in1.  filter-b.out -> wash-adsr-b.in -> gain-b.in
+      -> output.in2.  click-adsr.out -> resonator.in, resonator.out ->
+      gain-ping.in -> output.in3; a second click-adsr/resonator pair
+      occupies output.in4 when the voice needs two inharmonic pings.
+      note.vel wires to every gain.vel and resonator.vel; no wire ever
+      reaches a filter.vel.
+
+  parameters:
+    - name: band centres
+      role: |
+        Two bp cuts set the wash: sizzle 7..10 kHz, body 3..6 kHz;
+        resonance 0.2..0.45 keeps every band diffuse - above 0.5 a band
+        starts ringing audibly and steals the ping's job.
+
+    - name: envelope decays
+      role: |
+        Closed tick: sizzle 0.04..0.08 s, body 0.02..0.05 s.  Open wash:
+        sizzle 0.3..0.6 s, body around 0.1 s.  Crash: sizzle 1..1.6 s, body
+        about half of it.  Attack 0.001..0.002 s, sustain 0 everywhere.
+
+    - name: pings
+      role: |
+        Static tune up to 8 kHz (xsd resonator budget), inharmonic against
+        each other (ratios around 1.5-1.7), q 0.8..0.9, decay 0.03..0.15 s
+        t60, spread 1.3..1.8 so accents ring longer.  Exciter click 4..8 ms.
+
+  relationships:
+    - name: wash-not-square-bank
+      description: |
+        metal-hat-squares synthesizes metal from static square sidebands.
+        Phase-locked static squares render a deterministic line spectrum
+        that reads as a chime rather than a wash, and a vel-wired band pass
+        drags the centre down the harmonic ladder at softer dynamics.  Any
+        voice that must sound like diffuse struck metal belongs to this
+        noise family; the square family keeps the voices that are tonal by
+        design (cowbell, rimshot).
+    - name: ping-sibling
+      description: |
+        resonator-body-strike tracks the played note in resonator.tune and
+        strikes a drum body; here the resonator is a static inharmonic ring
+        whose pitch belongs to the instrument, not to the performance.
+    - name: percussion-family
+      description: |
+        tuned-noise-percussion rings one band pass as the whole drum; this
+        technique layers two diffuse bands plus resonator pings, so no
+        single resonant band defines the voice and nothing rings linearly
+        through the envelope decay.
+
+  perceptual_effects:
+    - closed hi-hat tick, open hat wash and crash from one topology
+    - noisy diffuse struck-metal without a tonal chime
+    - velocity accents louder while the spectrum stays put

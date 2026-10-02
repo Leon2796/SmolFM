@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="VHS Graveyard Pad" description="Graveyard tape pad: microdetuned squares through a perlin-drifted key-tracking low pass, soft-clipped for tape warmth, then drifting twin delays on the split sides as decayed graveyard space." techniques="fscale-detune-unison,perlin-cutoff-drift,serial-drive-filter-sculpt,double-delay-space">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fscale0" factor="0.9981">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fscale1" factor="1.0019">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="square">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc1" waveform="square">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.5">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain1" factor="0.5">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="add0">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="fscale2" factor="2.6">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc2" waveform="perlin" mode="lfo" lforate="0.07">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="fm0" amount="0.35">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="modulator_in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="filter0" cutoff="720" resonance="0.25" mode="lp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="cutoff_mod_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="shape0" drive="0.22" shape="soft">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.8" decay="1.4" sustain="0.7" release="1.6">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="split0">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="outL" direction="out" type="signal" />
+        <Pin id="outR" direction="out" type="signal" />
+      </Node>
+      <Node id="delay0" time="333" feedback="0.42" mix="0.35" sync="off">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay1" time="421" feedback="0.37" mix="0.3" sync="off">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="merge0">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.8" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="note" fromPort="out" to="fscale1" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="fscale1" fromPort="out" to="osc1" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="osc1" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="add0" toPort="in1" />
+      <Wire from="gain1" fromPort="out" to="add0" toPort="in2" />
+      <Wire from="add0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="note" fromPort="out" to="fscale2" toPort="freq_in" />
+      <Wire from="fscale2" fromPort="out" to="fm0" toPort="freq_in" />
+      <Wire from="osc2" fromPort="out" to="fm0" toPort="modulator_in" />
+      <Wire from="fm0" fromPort="out" to="filter0" toPort="cutoff_mod_in" />
+      <Wire from="filter0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="split0" toPort="in" />
+      <Wire from="split0" fromPort="outL" to="delay0" toPort="in" />
+      <Wire from="split0" fromPort="outR" to="delay1" toPort="in" />
+      <Wire from="delay0" fromPort="out" to="merge0" toPort="in1" />
+      <Wire from="delay1" fromPort="out" to="merge0" toPort="in2" />
+      <Wire from="merge0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="240" />
+      <Box id="fscale0" x="380" y="60" />
+      <Box id="fscale1" x="380" y="380" />
+      <Box id="osc0" x="700" y="60" />
+      <Box id="osc1" x="700" y="380" />
+      <Box id="gain0" x="1020" y="60" />
+      <Box id="gain1" x="1020" y="380" />
+      <Box id="add0" x="1020" y="240" />
+      <Box id="fscale2" x="380" y="680" />
+      <Box id="osc2" x="700" y="680" />
+      <Box id="fm0" x="1340" y="680" />
+      <Box id="filter0" x="1340" y="240" />
+      <Box id="shape0" x="1660" y="60" />
+      <Box id="adsr0" x="1660" y="240" />
+      <Box id="split0" x="1980" y="240" />
+      <Box id="delay0" x="1980" y="60" />
+      <Box id="delay1" x="1980" y="380" />
+      <Box id="merge0" x="2300" y="240" />
+      <Box id="output" x="2620" y="240" />
+    </Boxes>
+  </Layout>
+</SmolFM>

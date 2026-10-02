@@ -1,0 +1,60 @@
+technique:
+  name: 808-accent-fm-brightness
+
+  idea: |
+    Velocity opens the FM index, so accented hits sweep brighter and softer
+    hits stay tame.  This stands in for the level-dependent analog
+    coloration of cowbell/clave/conga-type voices: the metallic brightness
+    grows exactly with the attack strength, driven purely by note.vel into
+    fm.vel — no envelope clone, no FX bus.
+
+  involved_nodes:
+    - type: note
+      role: MIDI source; supplies carrier frequency and accent velocity.
+    - type: fm
+      role: FM stage whose index scales by velocity.
+    - type: osc
+      role: Modulator (and carrier at the end of the chain).
+    - type: output
+      role: Master endpoint (via the carrier and downstream stages).
+
+  involved_ports:
+    - node_role: MIDI source
+      port: out
+      role: Base frequency into fm.freq_in (frequency).
+    - node_role: MIDI source
+      port: vel
+      role: Velocity (0-1) into fm.vel (velocity).
+    - node_role: Modulator oscillator
+      port: out
+      role: Bending signal into fm.modulator_in (signal).
+
+  topology:
+    description: |
+      note.out -> fm.freq_in (frequency).  note.vel -> fm.vel (velocity).
+      mod-osc.out -> fm.modulator_in (signal).  fm.out -> carrier note_in
+      (frequency).  amount_mod_in stays available for spectral envelopes —
+      it multiplies with velocity.
+
+  parameters:
+    - name: base amount
+      role: |
+        Static FM index 0..10 = the brightness ceiling: velocity 1.0 keeps
+        the configured timbre, softer notes scale toward clean sine.
+
+  relationships:
+    - name: accent-index
+      description: |
+        Effective index = clamp(amount * (1 + m) * v, 0, 10): envelopes/LFOs
+        (m) work per sample, velocity (v) per note.  Unwired defaults are
+        neutral (m=0, v=1) — sound stays unchanged without wiring.
+    - name: 808-role
+      description: |
+        Digital stand-in for the 808's level-dependent metallic coloration
+        on its tunable percussive voices.  Combine with 808-accent-gain so
+        loudness and brightness accent together.
+
+  perceptual_effects:
+    - accented cowbell/clave hits ring brighter and more aggressive
+    - soft hits collapse toward a clean sine (dynamic timbre)
+    - velocity-gated spectral richness without FX-bus tricks

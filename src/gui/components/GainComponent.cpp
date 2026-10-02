@@ -20,6 +20,17 @@ GainComponent::GainComponent (juce::AudioProcessorValueTreeState& apvts,
 
     gainAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (apvts, gainParameterID, gainSlider);
 
+    // The param's NormalisableRange is lambda-based (interval == 0), so the
+    // default text conversion prints 7 decimals ("0.4500000x").  Show the raw
+    // factor with 2 decimals instead.  Typing and the bipolar drag mapping
+    // (centre = 1.0x unity, left attenuates, right boosts) stay untouched:
+    // valueFromTextFunction and the piecewise range are the attachment's.
+    gainSlider.textFromValueFunction = [] (double value)
+    {
+        return juce::String (value, 2);
+    };
+    gainSlider.updateText();
+
     // Compact content size: DraggableComponent reads this to size the node
     // box, so a single gain knob does not fall back to the 220x260 default.
     setSize (100, 114);

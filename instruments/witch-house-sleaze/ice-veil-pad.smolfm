@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Ice Veil Pad" description="Ice-veil pad: two microdetuned saws summed through a series low-pass plus notch, slow tremolo breathing, then channel-true Haas split with a 19 ms pure shift for froth width." techniques="fscale-detune-unison,serial-drive-filter-sculpt,am-tremolo-lfo,stereo-haas-branch-delay">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fscale0" factor="0.9983">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fscale1" factor="1.0017">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="saw">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc1" waveform="saw">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.6">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain1" factor="0.6">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="add0">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="3400" resonance="0.2" mode="lp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter1" cutoff="950" resonance="0.45" mode="notch">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.9" decay="1.5" sustain="0.85" release="1.4">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc2" waveform="sine" mode="lfo" lforate="0.53">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="am0" amount="0.22">
+        <Pin id="carrier_in" direction="in" type="signal" />
+        <Pin id="modulator_in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="split0">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="outL" direction="out" type="signal" />
+        <Pin id="outR" direction="out" type="signal" />
+      </Node>
+      <Node id="delay0" time="19" feedback="0.0" mix="1.0" sync="off">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="merge0">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.8" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="note" fromPort="out" to="fscale1" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="fscale1" fromPort="out" to="osc1" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="osc1" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="add0" toPort="in1" />
+      <Wire from="gain1" fromPort="out" to="add0" toPort="in2" />
+      <Wire from="add0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="filter1" toPort="in" />
+      <Wire from="filter1" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="am0" toPort="carrier_in" />
+      <Wire from="osc2" fromPort="out" to="am0" toPort="modulator_in" />
+      <Wire from="am0" fromPort="out" to="split0" toPort="in" />
+      <Wire from="split0" fromPort="outL" to="delay0" toPort="in" />
+      <Wire from="split0" fromPort="outR" to="merge0" toPort="in2" />
+      <Wire from="delay0" fromPort="out" to="merge0" toPort="in1" />
+      <Wire from="merge0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="240" />
+      <Box id="fscale0" x="380" y="60" />
+      <Box id="fscale1" x="380" y="380" />
+      <Box id="osc0" x="700" y="60" />
+      <Box id="osc1" x="700" y="380" />
+      <Box id="gain0" x="1020" y="60" />
+      <Box id="gain1" x="1020" y="380" />
+      <Box id="add0" x="1020" y="240" />
+      <Box id="filter0" x="1340" y="60" />
+      <Box id="filter1" x="1340" y="380" />
+      <Box id="adsr0" x="1660" y="60" />
+      <Box id="osc2" x="380" y="680" />
+      <Box id="am0" x="1340" y="680" />
+      <Box id="split0" x="1660" y="680" />
+      <Box id="delay0" x="1980" y="380" />
+      <Box id="merge0" x="1980" y="680" />
+      <Box id="output" x="2300" y="380" />
+    </Boxes>
+  </Layout>
+</SmolFM>

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Warehouse Riser" description="Four-second riser: noise and a detuned saw share one note-tracked F-ADSR cutoff sweeping up to ten octaves of centre, folded and gated into a long swell." techniques="fadsr-cutoff-sweep,sub-instrument-layering,fold-wave-oscillator">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fscale0" factor="3.0">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fscale1" factor="0.995">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fadsr0" attack="4.0" decay="0.5" sustain="0.95" release="2.5" up="9.0" down="1.0">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="noise" mode="static" staticfreq="800">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc1" waveform="saw">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="1320" resonance="0.6" mode="bp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="cutoff_mod_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter1" cutoff="660" resonance="0.6" mode="bp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="cutoff_mod_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="merge0">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="shape0" drive="0.5" shape="fold">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.6">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="4.2" decay="0.4" sustain="0.9" release="1.8">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.75" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="fadsr0" toPort="freq_in" />
+      <Wire from="fadsr0" fromPort="out" to="filter0" toPort="cutoff_mod_in" />
+      <Wire from="fadsr0" fromPort="out" to="filter1" toPort="cutoff_mod_in" />
+      <Wire from="osc0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="note" fromPort="out" to="fscale1" toPort="freq_in" />
+      <Wire from="fscale1" fromPort="out" to="osc1" toPort="note_in" />
+      <Wire from="osc1" fromPort="out" to="filter1" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="merge0" toPort="in1" />
+      <Wire from="filter1" fromPort="out" to="merge0" toPort="in2" />
+      <Wire from="merge0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="fscale0" x="60" y="380" />
+      <Box id="fscale1" x="60" y="700" />
+      <Box id="fadsr0" x="380" y="380" />
+      <Box id="osc0" x="380" y="60" />
+      <Box id="osc1" x="380" y="700" />
+      <Box id="filter0" x="700" y="60" />
+      <Box id="filter1" x="700" y="700" />
+      <Box id="merge0" x="1020" y="380" />
+      <Box id="shape0" x="1020" y="720" />
+      <Box id="gain0" x="1340" y="380" />
+      <Box id="adsr0" x="1340" y="720" />
+      <Box id="output" x="1660" y="500" />
+    </Boxes>
+  </Layout>
+</SmolFM>

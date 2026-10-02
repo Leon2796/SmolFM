@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Silver Hat" description="Closed hi-hat synthesized from two inharmonic static squares multiplied in the ring modulator, high-passed into the sizzle band and gated by an ultra-short envelope." techniques="metal-hat-squares">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="square" mode="static" staticfreq="612">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc1" waveform="square" mode="static" staticfreq="869">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="ring0">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="6800" resonance="0.22" mode="hp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.001" decay="0.048" sustain="0.0" release="0.03">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.6" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="ring0" toPort="in1" />
+      <Wire from="osc1" fromPort="out" to="ring0" toPort="in2" />
+      <Wire from="ring0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="osc0" x="380" y="60" />
+      <Box id="osc1" x="380" y="380" />
+      <Box id="ring0" x="700" y="200" />
+      <Box id="filter0" x="1020" y="200" />
+      <Box id="adsr0" x="1340" y="200" />
+      <Box id="output" x="1660" y="200" />
+    </Boxes>
+  </Layout>
+</SmolFM>

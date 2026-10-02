@@ -17,6 +17,9 @@ WaveshaperProcessor::WaveshaperProcessor (std::atomic<float>* driveParameter,
 
     // Unwired drive_mod_in contributes no scaling: (1 + 0) = static drive.
     driveMod.setDefaultValue (0.0f);
+
+    // Unwired vel input scales by 1.0: the sound stays exactly as before.
+    velIn.setDefaultValue (1.0f);
 }
 
 void WaveshaperProcessor::prepare (double /*newSampleRate*/)
@@ -48,6 +51,15 @@ StereoFrame WaveshaperProcessor::processSample()
         const StereoFrame pair = driveMod.getSample();
         const float m = juce::jlimit (-1.0f, 1.0f, 0.5f * (pair.l + pair.r));
         d = juce::jlimit (0.0f, 1.0f, dBase * (1.0f + m));
+    }
+
+    // Velocity (accent drive): the connected vel input's stereo mean (0-1)
+    // scales the effective drive - harder hits enter the curve harder.
+    // Unwired: fully sound-invariant.
+    if (velIn.isConnected())
+    {
+        const StereoFrame vp = velIn.getSample();
+        d = juce::jlimit (0.0f, 1.0f, d * 0.5f * (vp.l + vp.r));
     }
 
     // The transfer function runs once per channel (standard stereo

@@ -1,0 +1,86 @@
+technique:
+  name: division-polyrhythm-echo
+
+  idea: |
+    Two tempo-synced delay lines run in parallel, each locked to a different
+    note division (half, quarter, eighth or sixteenth) and each keeping its
+    own feedback and mix.  The dry voice plus both tails reach the output in
+    parallel, so the repeats stack into an integer metrical grid — a
+    quarter-distance tail under a sixteenth-distance tail reads as one
+    polyrhythmic echo mesh that always stays locked to the tempo.
+
+  involved_nodes:
+    - type: osc
+      role: Dry voice source in pitch or static mode.
+    - type: delay
+      role: First tail; sync on, coarse division (e.g. quarter).
+    - type: delay
+      role: Second tail; sync on, fine division (e.g. sixteenth).
+    - type: output
+      role: Sums the dry voice and both metrical tails.
+
+  involved_ports:
+    - node_role: Voice source
+      port: out
+      role: Dry signal, fanned out to both delay inputs (signal).
+    - node_role: Coarse division delay
+      port: in
+      role: Receives the dry signal (signal).
+    - node_role: Coarse division delay
+      port: out
+      role: Coarse metrical tail into one output input (signal).
+    - node_role: Fine division delay
+      port: in
+      role: Receives the dry signal (signal).
+    - node_role: Fine division delay
+      port: out
+      role: Fine metrical tail into another output input (signal).
+
+  topology:
+    description: |
+      osc.out -> delay-a.in and delay-b.in (signal, one wire per input).
+      delay-a.out -> output.in1 (signal), delay-b.out -> output.in2
+      (signal).  Both delays run sync on with different division indices;
+      neither line modulates the other — the polyrhythm lives in the
+      parallel fan-out, not in a feed chain.
+
+  parameters:
+    - name: division pair
+      role: |
+        half | quarter | eighth | sixteenth per line.  Choose powers of two
+        apart (quarter + sixteenth, half + eighth) so both tails fold into
+        one metrical grid instead of fighting.
+    - name: per-line feedback
+      role: |
+        0..0.95 each.  Give the fine line less feedback (0.2..0.35) than the
+        coarse line (0.45..0.6) so the grid stays audible under the wash.
+    - name: per-line mix
+      role: |
+        0..1 each.  Low mixes on the fine line (0.15..0.3) keep it a detail
+        layer; the coarse line carries the main groove.
+    - name: master level
+      role: |
+        0..1.  Three summed signals (dry + two tails); keep headroom for the
+        beats where all repeats strike together.
+
+  relationships:
+    - name: ratio-lock
+      description: |
+        Both lines derive their length from the same host BPM and division
+        factors {2, 1, 0.5, 0.25}, so every pair of divisions repeats on a
+        common grid: quarter + sixteenth overlap every four beats with no
+        drift.
+    - name: parallel-fan-out
+      description: |
+        The dry source feeds both lines directly; the engine sums per output
+        input, so the tails never interact inside a delay buffer — feedback
+        and mix per line are the only shaping controls.
+    - name: budget
+      description: |
+        Registry budgets: osc <= 16 (one used), delay <= 16 (two used),
+        output = 1.
+
+  perceptual_effects:
+    - layered groove tails: a slow echo frame filled with fine metrical dust
+    - dub-style polyrhythmic clouds that never leave the tempo grid
+    - tempo-locked complexity without any sequencer or modulation node

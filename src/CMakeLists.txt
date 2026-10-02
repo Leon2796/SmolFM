@@ -60,8 +60,14 @@ target_sources(${PROJECT_NAME}
         gui/components/DelayComponent.cpp
         processors/SplitterProcessor.cpp
         processors/MergerProcessor.cpp
+        processors/AdderProcessor.cpp
         gui/components/SplitterComponent.cpp
         gui/components/MergerComponent.cpp
+        gui/components/AdderComponent.cpp
+        gui/components/ResonatorComponent.cpp
+        gui/components/FeedbackComponent.cpp
+        processors/ResonatorProcessor.cpp
+        processors/FeedbackProcessor.cpp
         # JUMAKE_SOURCES_END
 )
 
@@ -93,8 +99,15 @@ add_executable(SmolFM_GraphTests
     processors/OscillatorProcessor.cpp
     processors/FMModulationProcessor.cpp
     processors/AdsrProcessor.cpp
+    processors/FAdsrProcessor.cpp
+    processors/GainProcessor.cpp
+    processors/WaveshaperProcessor.cpp
+    processors/FilterProcessor.cpp
     processors/SplitterProcessor.cpp
-    processors/MergerProcessor.cpp)
+    processors/MergerProcessor.cpp
+    processors/AdderProcessor.cpp
+    processors/ResonatorProcessor.cpp
+    processors/FeedbackProcessor.cpp)
 
 target_include_directories(SmolFM_GraphTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
 target_link_libraries(SmolFM_GraphTests PRIVATE juce::juce_audio_basics juce::juce_core juce::juce_graphics)

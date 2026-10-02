@@ -8,6 +8,9 @@
           connected value's stereo mean is clamped to [-1, +1] and the
           effective drive becomes drive * (1 + m), clamped to 0..1.
           Unconnected: the static drive runs as-is.
+        - vel          (velocity): optional per-note velocity input (0-1).
+          Connected: the stereo mean scales the effective drive (accent
+          hits push into the curve harder).  Unconnected: transparent.
         - out (signal): the shaped audio.
 
     Per sample (per channel — standard stereo distortion behaviour):
@@ -52,6 +55,7 @@ public:
 
     InputPort& getInput() noexcept   { return input; }
     InputPort& getDriveModInput() noexcept { return driveMod; }
+    InputPort& getVelInput() noexcept { return velIn; }
     OutputPort& getOutput() noexcept { return output; }
 
 private:
@@ -60,6 +64,7 @@ private:
 
     InputPort input  { PortType::signal };
     InputPort driveMod { PortType::signal };
+    InputPort velIn     { PortType::velocity };
     OutputPort output { PortType::signal, *this };
 };
 

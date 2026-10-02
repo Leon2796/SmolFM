@@ -111,6 +111,7 @@
     <xs:restriction base="xs:string">
       <xs:enumeration value="frequency"/>
       <xs:enumeration value="signal"/>
+      <xs:enumeration value="velocity"/>
     </xs:restriction>
   </xs:simpleType>
 
@@ -229,6 +230,41 @@
     </xs:restriction>
   </xs:simpleType>
 
+  <xs:simpleType name="ResonatorTuneRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="20"/>
+      <xs:maxInclusive value="8000"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ResonatorQRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="ResonatorDecayRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0.01"/>
+      <xs:maxInclusive value="10"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="VelSpreadRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0.25"/>
+      <xs:maxInclusive value="4"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="FeedbackAmountRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="0.95"/>
+    </xs:restriction>
+  </xs:simpleType>
+
   <xs:simpleType name="MasterLevelRangeType">
     <xs:restriction base="xs:float">
       <xs:minInclusive value="0"/>
@@ -271,10 +307,11 @@
   <xs:complexType name="NoteNodeType">
     <xs:annotation>
       <xs:appinfo xmlns="urn:smolfm:node-meta">
-        <purpose>Wandelt die aktuell gespielte MIDI-Note in eine Frequenz (Hz) um und stellt sie als Frequenzsignal bereit. Dient als MIDI-Quelle des Graphen ohne eigene Parameter.</purpose>
+        <purpose>Wandelt die aktuell gespielte MIDI-Note in eine Frequenz (Hz) um und stellt sie als Frequenzsignal bereit; der zusätzliche vel-Ausgang trägt die Anschlagsstärke (0-1) der Note als eigenständigen Port-Typ velocity (Accent). Dient als MIDI-Quelle des Graphen ohne eigene Parameter.</purpose>
         <docReference>doc/processors/NoteProcessor.md</docReference>
         <outputs>
           <port id="out" type="frequency"/>
+          <port id="vel" type="velocity"/>
         </outputs>
         <maxInstances>1</maxInstances>
       </xs:appinfo>
@@ -321,6 +358,7 @@
           <port id="freq_in" type="frequency"/>
           <port id="modulator_in" type="signal"/>
           <port id="amount_mod_in" type="signal"/>
+          <port id="vel" type="velocity"/>
         </inputs>
         <outputs>
           <port id="out" type="frequency"/>
@@ -391,6 +429,7 @@
         <docReference>doc/processors/FAdsrProcessor.md</docReference>
         <inputs>
           <port id="freq_in" type="frequency"/>
+          <port id="vel" type="velocity"/>
         </inputs>
         <outputs>
           <port id="out" type="frequency"/>
@@ -419,6 +458,7 @@
         <inputs>
           <port id="in" type="signal"/>
           <port id="factor_mod_in" type="signal"/>
+          <port id="vel" type="velocity"/>
         </inputs>
         <outputs>
           <port id="out" type="signal"/>
@@ -442,6 +482,7 @@
         <inputs>
           <port id="in" type="signal"/>
           <port id="drive_mod_in" type="signal"/>
+          <port id="vel" type="velocity"/>
         </inputs>
         <outputs>
           <port id="out" type="signal"/>
@@ -466,6 +507,7 @@
           <port id="in" type="signal"/>
           <port id="cutoff_mod_in" type="frequency"/>
           <port id="resonance_mod_in" type="signal"/>
+          <port id="vel" type="velocity"/>
         </inputs>
         <outputs>
           <port id="out" type="signal"/>
@@ -505,6 +547,57 @@
         <xs:attribute name="mix" type="DelayMixRangeType" use="optional"/>
         <xs:attribute name="sync" type="SyncType" use="optional"/>
         <xs:attribute name="division" type="DivisionType" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- Resonator (resonator) -->
+  <xs:complexType name="ResonatorNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Angeregter Resonator zweiter Ordnung (komplexes Polpaar): der Exciter-Eingang kippt Energie in den Resonanzmodus, das Netzwerk antwortet abklingend pseudo-sinusförmig mit tune als Resonanzfrequenz. Dekay ist die Polradius-Abklingzeit (keine überlagerte Hüllkurve); vel auf Dekay skaliert die Abklingzeit nach dem Spread-Muster. Lange Dekay = Ring-Quelle (BD/Toms/Congas/Claves), kurzer Dekay = Körperfilter (Snare-Bodies); derselbe Kern in zwei quantitativen Lagen. Die tune-Port-Verbindung überschreibt die statische tune (Key-Tracking bleibt patchbar: note -> fscale -> tune).</purpose>
+        <docReference>doc/processors/ResonatorProcessor.md</docReference>
+        <inputs>
+          <port id="in" type="signal"/>
+          <port id="tune" type="frequency"/>
+          <port id="q_mod_in" type="signal"/>
+          <port id="vel" type="velocity"/>
+        </inputs>
+        <outputs>
+          <port id="out" type="signal"/>
+        </outputs>
+        <maxInstances>8</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType">
+        <xs:attribute name="tune" type="ResonatorTuneRangeType" use="optional"/>
+        <xs:attribute name="q" type="ResonatorQRangeType" use="optional"/>
+        <xs:attribute name="decay" type="ResonatorDecayRangeType" use="optional"/>
+        <xs:attribute name="spread" type="VelSpreadRangeType" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- Feedback (feedback) -->
+  <xs:complexType name="FeedbackNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Begrenzter Zyklusbrecher für Schaltungs-Rückkopplungen: out = in + amount * fb_in. Jeder Graph-Zyklus trägt implizit 1 Sample Verzögerung (der Rückkanal liest den vorherigen Tick des später geordneten Erzeugers); amount begrenzt pro Durchlauf die Energie (Stabilität bis 0.95). amount = 0: transparenter Durchlass.</purpose>
+        <docReference>doc/processors/FeedbackProcessor.md</docReference>
+        <inputs>
+          <port id="in" type="signal"/>
+          <port id="fb_in" type="signal"/>
+        </inputs>
+        <outputs>
+          <port id="out" type="signal"/>
+        </outputs>
+        <maxInstances>4</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType">
+        <xs:attribute name="amount" type="FeedbackAmountRangeType" use="optional"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -557,6 +650,27 @@
       <xs:appinfo xmlns="urn:smolfm:node-meta">
         <purpose>FÃ¼hrt zwei Seitenzweige zu einem Stereo-Signal zusammen: out = (in1.L, in2.R). Eine unverbundene Seite trÃ¤gt 0 bei. Zentrierte Mono-Quellen dÃ¼rfen beide EingÃ¤nge speisen; der Ausgang ist dann wieder ein zentriertes Frame.</purpose>
         <docReference>doc/processors/MergerProcessor.md</docReference>
+        <inputs>
+          <port id="in1" type="signal"/>
+          <port id="in2" type="signal"/>
+        </inputs>
+        <outputs>
+          <port id="out" type="signal"/>
+        </outputs>
+        <maxInstances>8</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType"/>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- Adder (add): parameter-free summation node. -->
+  <xs:complexType name="AdderNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Summiert zwei Signale sampleweise kanalweise: out = in1 + in2. Der Bus-Builder des Graphen: parallele Quellen (Oszillator-Schwärme, Layer-Stacks) werden vor einer gemeinsamen Downstream-Stufe (Filter, Shaper, Hüllkurve) zu EINEM Signal zusammengelegt. Eine unverbundene Seite liest 0 und trägt Stille bei; der Typ bleibt PortType::signal (Welt A: EIN Audiotyp).</purpose>
+        <docReference>doc/processors/AdderProcessor.md</docReference>
         <inputs>
           <port id="in1" type="signal"/>
           <port id="in2" type="signal"/>
@@ -690,6 +804,24 @@
       <xs:extension base="PinBaseType">
         <xs:attribute name="direction" type="PortDirectionType" use="required" fixed="out"/>
         <xs:attribute name="type" type="PortKindType" use="required" fixed="signal"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="VelocityInPinType">
+    <xs:complexContent>
+      <xs:extension base="PinBaseType">
+        <xs:attribute name="direction" type="PortDirectionType" use="required" fixed="in"/>
+        <xs:attribute name="type" type="PortKindType" use="required" fixed="velocity"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="VelocityOutPinType">
+    <xs:complexContent>
+      <xs:extension base="PinBaseType">
+        <xs:attribute name="direction" type="PortDirectionType" use="required" fixed="out"/>
+        <xs:attribute name="type" type="PortKindType" use="required" fixed="velocity"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>

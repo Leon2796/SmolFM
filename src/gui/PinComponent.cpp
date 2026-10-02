@@ -28,10 +28,13 @@ void PinComponent::paint (juce::Graphics& g)
 {
     const auto r = getLocalBounds().toFloat().reduced (1.0f);
 
-    // Visual cue for the "kind" of value: orange = frequency, cyan = signal.
+    // Visual cue for the "kind" of value: orange = frequency, cyan = signal,
+    // indianred = velocity.
     const auto colour = type == smolfm::PortType::frequency
                             ? juce::Colours::orange
-                            : juce::Colours::cyan;
+                            : (type == smolfm::PortType::velocity
+                                   ? juce::Colours::indianred
+                                   : juce::Colours::cyan);
 
     g.setColour (colour);
     g.drawEllipse (r, 2.0f);

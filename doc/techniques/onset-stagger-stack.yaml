@@ -1,0 +1,148 @@
+technique:
+  name: onset-stagger-stack
+
+  idea: |
+    The components of one drum hit are released at deliberately staggered
+    micro-times so the onset order reproduces an acoustic strike: the
+    stick click first, the tonal body a few milliseconds later, the noise
+    carpet last.  Every layer runs its own envelope and then passes a
+    delay node set to sync off, mix 1.0 and zero feedback — a pure sample
+    shift rather than an echo, because at mix 1.0 the output becomes the
+    delayed layer only and zero feedback keeps no repetition.  The
+    staggering defuses the transient peak sum (layer peaks never coincide
+    fully, so the master keeps headroom the synchronous mix would burn)
+    and gives the hit an audible build-up — flam, tick-after-hit accents
+    and body-then-carpet depth that perfectly aligned layers cannot
+    produce.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; triggers every layer envelope and carries the
+        accent velocity.
+    - type: osc
+      role: Tick source in static mode; filtered noise becomes the earliest
+        component.
+    - type: filter
+      role: Band stage shaping one component (tick band or high pass).
+    - type: osc
+      role: Tonal body in pitch or static mode; the mid component.
+    - type: adsr
+      role: Tick gate near-zero attack; the first component's decay.
+    - type: adsr
+      role: Body gate; bounds the drum's length.
+    - type: adsr
+      role: Carpet gate; bounds the last-arriving component.
+    - type: delay
+      role: Onset offset of the body component; sync off, mix 1.0, feedback 0.
+    - type: delay
+      role: Onset offset of the carpet component; sync off, mix 1.0,
+        feedback 0.
+    - type: gain
+      role: Per-layer trim wired as accent VCA (vel input).
+    - type: output
+      role: Master merge; one dedicated input per layer.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Optional body pitch into the tonal layer (frequency).
+    - node_role: Keyboard send
+      port: vel
+      role: Velocity into every layer's gain.vel (velocity).
+    - node_role: Component filters
+      port: in
+      role: Receive their component signals (signal).
+    - node_role: Component filters
+      port: out
+      role: Shaped components into their gates (signal).
+    - node_role: Component gates
+      port: in
+      role: Receive their layer (signal).
+    - node_role: Component gates
+      port: out
+      role: Gated layer into its offset stage (signal).
+    - node_role: Offset stages
+      port: in
+      role: Receive the gated layer (signal).
+    - node_role: Offset stages
+      port: out
+      role: Shifted layer into its trim (signal).
+    - node_role: Accent VCAs
+      port: out
+      role: Trimmed, staggered layers onto dedicated output inputs (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input per layer (signal).
+
+  topology:
+    description: |
+      Per layer: osc.out -> filter.in (signal, optional tone stage),
+      filter.out -> adsr.in (signal), adsr.out -> delay.in (signal),
+      delay.out -> gain.in (signal), note.vel -> gain.vel (velocity),
+      gain.out -> output.inK (signal), one output input per layer.  Every
+      offset stage runs sync off, feedback 0 and mix 1.0 with its delay
+      time at the layer's onset offset (the 1..30 ms region of the
+      1..2000 ms time parameter).  The layer envelopes fire together at
+      note-on; the offsets order the audible onsets.  Layers share only
+      the note event — no cross-layer wires exist.
+
+  parameters:
+    - name: onset offsets
+      role: |
+        Delay time 1..2000 ms per stage, practical stagger window 1..30
+        ms: 1..3 ms keeps the tick first, 5..15 ms separates the body,
+        15..30 ms drops the carpet behind the body.  Mix 1.0 makes every
+        stage a pure shift; feedback stays 0 so nothing repeats.
+    - name: envelope ladder
+      role: |
+        adsr attack/decay 0.001..5 s, sustain 0..1, release 0.001..10 s
+        per layer, decays of deliberately different lengths per
+        component (tick 0.02 s, body 0.28 s, carpet 0.16 s).  The audible
+        part of a shifted layer is its decay minus the offset.
+    - name: tick band
+      role: |
+        hp (4..10 kHz) or bp cutoff with low resonance for the stick
+        click; the click needs its own band to stay distinct from the
+        carpet band.
+    - name: layer trims and accents
+      role: |
+        Gain factors 0..10 per layer with note.vel wired: accented hits
+        open all layers together at their shifted onsets; the trim
+        balance decides which component leads the hit.
+
+  relationships:
+    - name: offset-must-fit-decay
+      description: |
+        The envelope value depends on note-on time, not on the shift, so
+        a shifted layer stays audible for (decay - offset); keep the
+        offset below roughly 40 % of the layer's decay or the component
+        disappears into its expired gate.
+    - name: shift-not-echo
+      description: |
+        Feedback 0 and mix 1.0 reduce the delay node to a time shift —
+        the opposite mix regime of delay-slapback-doubler (mix around
+        0.5, one audible repeat) and of the feedback families
+        comb-resonator-delay and burst-delay-resonance.
+    - name: burst-sibling
+      description: |
+        multi-burst-clap serializes taps inside ONE band so repeats form
+        a clap; this technique offsets SEPARATE components of one strike
+        — the staggering orders materials, not repetitions of one band.
+    - name: stereo-sibling
+      description: |
+        stereo-haas-branch-delay shifts one SPLIT side by 1..20 ms to
+        localise the stereo image; here unsplit layers are shifted in
+        mono to order the hit's components — same delay geometry,
+        opposite purpose (articulation, not width).
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 16 (two or three used), filter
+        <= 16 (two used), adsr <= 16 (three used), delay <= 16 (two or
+        three used), gain <= 16 (three used), output = 1.  Two offsets
+        per drum are usually enough; spare delays add further components.
+
+  perceptual_effects:
+    - acoustic onset order (click, body, carpet) built from wiring alone
+    - transient headroom relief: staggered layer peaks never fully add
+    - flam-adjacent articulation without retriggering any element
+    - depth and build-up in short one-shots that sync-layering flattens

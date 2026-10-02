@@ -1,0 +1,384 @@
+Was ich für ein möglichst hardwaregetreues Modell gefunden habe
+
+Hier wird es wesentlich interessanter als bei meiner ersten Antwort.
+
+Es gibt eine hervorragende wissenschaftliche Arbeit von Kurt James Werner, Jonathan Abel und Julius Smith (CCRMA/Stanford):
+
+“A Physically-Informed, Circuit-Bendable, Digital Model of the Roland TR-808 Bass Drum Circuit”
+
+Die Autoren nehmen den originalen Roland-Schaltplan, zerlegen ihn in Subschaltungen und leiten daraus ein digitales Modell ab. Sie vergleichen das Modell sogar mit SPICE-Simulationen der Schaltung.
+
+Direktes PDF der Bass-Drum-Arbeit
+
+Und es gibt die entsprechende Arbeit für die Cymbal-Schaltung:
+
+“The TR-808 Cymbal: a Physically-Informed, Circuit-Bendable, Digital Model”
+
+Cymbal-Paper – frei verfügbar
+
+Dazu gibt es noch:
+
+“More Cowbell: a Physically-Informed, Circuit-Bendable, Digital Model of the TR-808 Cowbell”.
+
+Und eine Zusammenfassung aller drei Modelle.
+
+Das ist meines Wissens die wertvollste frei verfügbare wissenschaftliche Arbeit für genau dein Vorhaben.
+
+
+---------------------------------------------
+
+Was die tatsächliche Architektur der 808 ist
+
+Das Schöne ist: Die 808 ist wesentlich systematischer aufgebaut, als man zunächst denkt.
+
+Die Werner/Abel/Smith-Analyse fasst die Schaltung ungefähr so zusammen:
+
+BD, SD, Toms, Congas, Rimshot/Claves
+
+Diese Instrumente verwenden resonante Bridged-T-Netzwerke.
+
+Das Netzwerk wird durch einen Impuls angeregt und produziert eine abklingende pseudo-sinusförmige Schwingung.
+https://www.dafx.de/paper-archive/2014/dafx14_kurt_james_werner_a_physically_informed%2C_ci.pdf?utm_source=chatgpt.com
+Also nicht:
+
+digital sine oscillator
++
+pitch envelope
+
+sondern eher:
+
+             impulse
+                │
+                ▼
+        ┌────────────────┐
+        │ Bridged-T       │
+        │ resonator       │
+        └───────┬────────┘
+                │
+        feedback / damping
+                │
+                ▼
+             VCA / amp
+                │
+                ▼
+              AUDIO
+
+Das ist ein wichtiger Unterschied.
+
+Bass Drum
+https://manuals.plus/m/bcc712b79b6ab38bf4abe99162937bbd9311a0a65877df96c71e407c89b8b176?utm_source=chatgpt.com
+https://www.researchgate.net/figure/TR-808-bass-drum-schematic-blocks-marked-adapted-from-1_fig1_267629876?utm_source=chatgpt.com
+Hier lohnt sich die wissenschaftliche Arbeit besonders.
+
+Die BD basiert auf einem Multi-Feedback-Bridged-T-Resonator.
+
+Rolands Service Manual beschreibt:
+
+1/2 IC12
+Multi-feedback Bridged-T network
+Decay über VIN
+Accent verändert die Zeitkonstante
+Q41–Q43 steuern diese Veränderung.
+
+Die Werner/Abel/Smith-Analyse modelliert anschließend genau diese Blöcke.
+
+Interessant ist dabei ein Punkt, den man bei vereinfachten 808-Modellen häufig falsch macht:
+
+Der charakteristische „Pitch Drop“ der 808 ist nicht einfach dasselbe wie ein nachgeschalteter Pitch-Envelope.
+
+Die Autoren untersuchen ausdrücklich die Frequenzsprung-/Attack-Struktur und den charakteristischen Pitch-Sigh der BD.
+
+Ihre Modellierung kommt dabei auf eine Resonanzfrequenz um 49,5 Hz für den untersuchten Schaltungszustand, während Rolands typische/variable Tuning-Angabe ungefähr 56 Hz nennt.
+
+Das ist genau die Art von Detail, die du für einen Hardware-Abgleich brauchst.
+
+Snare
+
+Die Snare ist ebenfalls kein Sample.
+https://www.n8synth.co.uk/diy-eurorack/eurorack-808-snare/?utm_source=chatgpt.com
+https://manuals.plus/m/bcc712b79b6ab38bf4abe99162937bbd9311a0a65877df96c71e407c89b8b176?utm_source=chatgpt.com
+
+Rolands Service Manual beschreibt zwei Bridged-T-Netzwerke:
+
+                    ┌─ Resonator 1 ──┐
+Trigger ────────────┤                 ├── Mix
+                    └─ Resonator 2 ──┘
+                                         │
+                              + Noise ───┘
+                                         │
+                                         ▼
+                                       VCA
+
+Eines liefert die grundlegende Komponente, das andere eine harmonische Komponente; dazu kommt der Noise-/„Snappy“-Anteil. VR8 bestimmt das Verhältnis der tonalen Komponenten, VR9 den Snappy-Anteil.
+
+Der Noise ist ebenfalls physisch erzeugtes Analograuschen, nicht digital gespeichertes Rauschen. In der Schaltung wird eine rückwärts betriebene Transistorstrecke zur Avalanche-Noise-Erzeugung verwendet.
+
+Toms und Congas
+
+Die Toms/Congas verwenden wieder das Resonator-Prinzip:
+
+Trigger
+   │
+   ▼
+Bridged-T resonator
+   │
+   ▼
+VCA / damping
+   │
+   ▼
+output
+
+Die drei Stimmlagen werden durch unterschiedliche Komponentenwerte bzw. die entsprechende Schaltungsauswahl bestimmt.
+
+Die wissenschaftliche Analyse bestätigt ausdrücklich, dass Snare, Low/Mid/High Tom/Conga und Rimshot/Clave verwandte Bridged-T-Strukturen verwenden.
+https://www.dafx.de/paper-archive/2014/dafx14_kurt_james_werner_a_physically_informed%2C_ci.pdf?utm_source=chatgpt.com
+
+Cymbal + Hi-Hats
+
+https://pure.qub.ac.uk/en/publications/the-tr-808-cymbal-a-physically-informed-circuit-bendable-digital-/?utm_source=chatgpt.com
+https://scsynth.org/t/tr808-cymbal-hardware-accurate-modeling/13607?utm_source=chatgpt.com
+
+Hier wird die 808 richtig clever.
+
+Es gibt sechs gemeinsame Rechteck-/Pulsoszillatoren.
+
+Rolands Schaltung erzeugt daraus ein inhärent inharmonisches Spektrum.
+
+Osc 1 ─┐
+Osc 2 ─┤
+Osc 3 ─┤
+Osc 4 ─┼── MIX ── Filterbank ── Envelopes ── VCA
+Osc 5 ─┤
+Osc 6 ─┘
+
+Die sechs Oszillatoren werden mit einer Schmitt-Trigger-Schaltung realisiert. Die wissenschaftliche Cymbal-Arbeit analysiert anschließend die komplette Filter-/Envelope-/VCA-Struktur.
+
+Eine gute technische Zusammenfassung der Originalschaltung nennt die nominalen Frequenzen ungefähr:
+
+800 Hz
+540 Hz
+522.7 Hz
+369.6 Hz
+304.4 Hz
+205.3 Hz
+
+wobei zwei davon über interne Trimmer einstellbar sind.
+
+Wichtig: Diese sechs Oszillatoren werden nicht nur für die Cymbal verwendet. Die gleiche Oszillatorbank bildet die Grundlage für Cymbal, Open Hat, Closed Hat und Cowbell; unterschiedliche Filter, Envelopes und VCAs machen daraus die verschiedenen Instrumente.
+
+Das ist für einen DSP-Nachbau eine extrem wichtige Information.
+
+Cowbell
+
+https://www.soundonsound.com/techniques/synthesizing-cowbells-claves?utm_source=chatgpt.com
+https://michaelzfreeman.org/wp-content/uploads/2018/05/More-cowbell-a-physically-informed-circuit-bendable-digital-model-of-the-TR-808-cowbell.pdf?utm_source=chatgpt.com
+
+Die Cowbell benutzt zwei der sechs Oszillatoren.
+
+Danach:
+
+Osc A ─┐
+       ├── VCA ──┐
+Osc B ─┘         │
+                 ├── BPF ── amplifier
+                 │
+
+Beide Oszillatoren laufen durch eine gemeinsame Kontur; ein Bandpass entfernt die unerwünschten Partialkomponenten.
+
+Und genau diese Cowbell ist ebenfalls von Werner/Abel/Smith als physikalisches Schaltungsmodell untersucht worden.
+
+Cymbal ist noch komplexer
+https://www.soundonsound.com/techniques/practical-cymbal-synthesis?utm_source=chatgpt.com
+
+Die Cymbal-Synthese ist nicht einfach:
+
+6 oscillators → noise → envelope
+
+sondern ungefähr:
+
+                 6 pulse oscillators
+                         │
+                         ▼
+                       MIX
+                         │
+              ┌──────────┴──────────┐
+              ▼                     ▼
+          BPF / low              BPF / high
+              │                     │
+             VCA                   split
+              │                  ┌───┴───┐
+              │                  ▼       ▼
+              │                 VCA     VCA
+              │                  │       │
+              └──────────────────┴───────┘
+                         │
+                     HP filtering
+                         │
+                       MIX
+                         │
+                       TONE
+                         │
+                       OUT
+
+Die drei Frequenzbereiche haben unterschiedliche Decay-Zeiten.
+
+Dadurch verändert sich das Spektrum während des Abklingens.
+
+Das ist ein großer Teil des charakteristischen 808-Cymbal-Sounds.
+
+Die sechs Oszillatoren liefern also nicht einfach „Noise“. Sie liefern ein deterministisches, inhärent metallisches Spektrum.
+
+Hand Clap
+
+Der Clap ist wiederum völlig anders.
+
+Er verwendet Noise, aber die entscheidende Erfindung ist die Hüllkurve.
+
+Rolands Service Manual beschreibt eine spezielle Sawtooth-artige Envelope, die aus einer Quad-Comparator-Schaltung erzeugt wird. Trigger → 30-ms-Zyklus → mehrere schnelle Entladungen → daraus entsteht der typische Cluster von „Claps“.
+
+Vereinfacht:
+
+White Noise
+     │
+     ▼
+  ~1 kHz BPF
+     │
+     ├─────────────┐
+     │             │
+     ▼             ▼
+ VCA #1          VCA #2
+     ↑              ↑
+     │              │
+multi-burst       slow decay
+ envelope         envelope
+     │              │
+     └──────┬───────┘
+            ▼
+          MIX
+
+Also tatsächlich Synthese in Echtzeit.
+
+Und das ist wichtig für deine Frage nach „physikalischem Modell“
+
+Ich würde drei Ebenen unterscheiden:
+
+Ebene 1 – Original-Hardwaremodell
+
+Das ist das, was du willst:
+
+Bauteilwerte → Schaltung → elektrische Dynamik → Audio
+
+z. B.:
+
+R161
+R165
+R166
+R170
+C41
+C42
+Q43
+IC12
+...
+        ↓
+Bridged-T + Feedback
+        ↓
+Audio
+Ebene 2 – Circuit-Informed DSP
+
+Das ist, was Werner/Abel/Smith machen:
+
+Schaltung
+ ↓
+Subcircuits
+ ↓
+Differential-/Transfergleichungen
+ ↓
+diskrete Zeit
+ ↓
+DSP
+
+Sie reduzieren dabei bestimmte Schaltungsteile, wenn das die Wahrnehmung nicht relevant verändert. Die Modelle bleiben aber parameterisiert nach elektrischen Komponenten.
+
+Ebene 3 – „808-style synthesizer“
+
+Das wäre:
+
+Sine
+Pitch envelope
+Noise
+ADSR
+Filter
+
+Das kann sehr 808-artig klingen, ist aber kein hardwaregetreues Modell.
+
+Ein besonders wichtiger Befund
+
+Ich würde nicht versuchen, eine einzige „TR-808-Syntheseformel“ zu finden.
+
+Die 808 ist vielmehr ein Netzwerk aus mehreren unterschiedlichen analogen Syntheseprinzipien:
+
+Instrumentgruppe	Hardwareprinzip
+Bass Drum	resonantes Multi-Feedback Bridged-T
+Snare	2× resonantes Bridged-T + Noise
+Toms	resonantes Bridged-T
+Congas	resonantes Bridged-T
+Rimshot	resonante Netzwerke + VCA
+Claves	resonanter Impuls
+Clap	Noise + spezielle Multi-Burst-Envelope
+Maracas	Noise + Filter/Envelope
+Cowbell	2 aus 6 Pulsoszillatoren + BPF
+CH	6 Pulsoszillatoren + Filter/Envelope
+OH	gleiche Oszillatorbank + andere Envelope
+Cymbal	6 Pulsoszillatoren + mehrstufige Filter/Envelope-Struktur
+
+Diese Gruppierung wird durch die Roland-Unterlagen und die spätere Circuit-Analyse gestützt.
+
+Was ich an deiner Stelle für einen wirklich guten Nachbau machen würde
+
+Da du bereits den Schaltplan hast, würde ich nicht bei einem abstrakten „808 Synthesizer“ anfangen.
+
+Ich würde tatsächlich Voice für Voice den Schaltplan in ein physikalisches DSP-Modell übersetzen.
+
+Für die drei am besten dokumentierten Voices hast du dafür sogar schon fast eine fertige wissenschaftliche Grundlage:
+
+BD
+→ Werner/Abel/Smith 2014, inklusive SPICE-Vergleich und DSP-Modell.
+
+Cymbal/HH
+→ Werner/Abel/Smith 2014, inklusive Zerlegung der sechs Oszillatoren, Filter, VCAs und Envelopes.
+
+Cowbell
+→ Werner/Abel/Smith 2014.
+
+Für die übrigen Voices ist das Roland Service Manual selbst die primäre Grundlage. Eine vollständige, frei verfügbare wissenschaftliche DSP-Ableitung für alle 11 Voice-Schaltungen habe ich bei der Recherche nicht gefunden. Das ist ein wichtiger Unterschied: Es gibt eine sehr gute veröffentlichte physikalische Modellierung für BD/Cymbal/Cowbell, aber nicht das komplette „TR-808 SPICE → DSP“-Paket für jede Voice.
+
+Und genau deshalb würde ich bei deinem Projekt den Originalschaltplan als Ground Truth behandeln und die drei Werner/Abel/Smith-Arbeiten als Methodik/Referenz für die Diskretisierung. Roland selbst bestätigt inzwischen, dass auch die offizielle Software-808 anhand von Originalhardware, Schaltplänen und historischen Daten auf Schaltungsebene modelliert wurde.
+
+Originales Roland TR-808 Service Manual
+
+Werner/Abel/Smith – TR-808 Bass Drum DSP-Modell
+
+Werner/Abel/Smith – TR-808 Cymbal DSP-Modell
+
+Werner/Abel/Smith – More Cowbell
+
+Wenn dein Ziel wirklich ein möglichst 1:1 DSP-Modell ist, wäre der nächste sinnvolle Schritt, dass wir eine konkrete Voice nehmen – am besten BD oder Cymbal – und den Roland-Schaltplan Bauteil für Bauteil in ein diskretes mathematisches Modell übersetzen. Dann können wir auch explizit unterscheiden, was idealisiert werden darf und was für den charakteristischen Klang erhalten bleiben muss.
+
+
+https://dafx14.fau.de/papers/dafx14_kurt_james_werner_a_physically_informed%2C_ci.pdf?utm_source=chatgpt.com
+https://pure.qub.ac.uk/files/125044847/tr_808_cymbal_a_physically_informed_circuit_bendable_digital.pdf?utm_source=chatgpt.com
+https://dafx14.fau.de/papers/dafx14_kurt_james_werner_a_physically_informed%2C_ci.pdf?utm_source=chatgpt.com
+https://www.dafx.de/paper-archive/2014/dafx14_kurt_james_werner_a_physically_informed%2C_ci.pdf?utm_source=chatgpt.com
+https://www.florian-anwander.de/roland_tr808/roland_TR-808_service-manual.pdf?utm_source=chatgpt.com
+https://www.roland.com/de/products/rc_tr-808/?utm_source=chatgpt.com
+https://pure.qub.ac.uk/files/125044847/tr_808_cymbal_a_physically_informed_circuit_bendable_digital.pdf?utm_source=chatgpt.com
+https://michaelzfreeman.org/wp-content/uploads/2018/05/More-cowbell-a-physically-informed-circuit-bendable-digital-model-of-the-TR-808-cowbell.pdf?utm_source=chatgpt.com
+
+
+
+
+
+
+
+
+

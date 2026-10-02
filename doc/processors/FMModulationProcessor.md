@@ -17,7 +17,7 @@ Modulationstiefe.
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
 | Max. Instanzen | 8 | `GraphNodeRegistry::maxFmAmounts` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `freq_in` (`PortType::frequency`), `modulator_in` (`PortType::signal`), `amount_mod_in` (`PortType::signal`) | `InputPort freqInput`, `InputPort modulatorInput`, `InputPort amountMod` | [src/processors/FMModulationProcessor.h](../../src/processors/FMModulationProcessor.h) |
+| Input-Ports | `freq_in` (`PortType::frequency`), `modulator_in` (`PortType::signal`), `amount_mod_in` (`PortType::signal`), `vel` (`PortType::velocity`) | `InputPort freqInput`, `InputPort modulatorInput`, `InputPort amountMod`, `InputPort velIn` | [src/processors/FMModulationProcessor.h](../../src/processors/FMModulationProcessor.h) |
 | Output-Ports | `out` (`PortType::frequency`) | `OutputPort output` | [src/processors/FMModulationProcessor.h](../../src/processors/FMModulationProcessor.h) |
 
 | Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
@@ -130,7 +130,7 @@ $$
 | $c$ | `modulatorInput.isConnected()` | [FMModulationProcessor.cpp](../../src/processors/FMModulationProcessor.cpp) | atomarer Pointer-Check (`std::atomic<OutputPort*>`) |
 | $\tilde{m}$ | `modulator` (lokal) | [FMModulationProcessor.cpp](../../src/processors/FMModulationProcessor.cpp) | Paar lesen nur wenn `amount > 0 && isConnected()` (sonst `{0, 0}`), dann Mean-Collapse `0.5f * (pair.l + pair.r)` — dient der Stereokompatibilität |
 | $f_{out}$ | `instantHz` → `output.setSample (StereoFrame::centered (instantHz))` | [FMModulationProcessor.cpp](../../src/processors/FMModulationProcessor.cpp) | `carrierHz * (1.0f + amountEff * modulator)`; Frequenz als zentriertes Paar in den Port |
-| $a_{\text{eff}}$ | `amountEff` | [FMModulationProcessor.cpp](../../src/processors/FMModulationProcessor.cpp) | `amount_mod_in` verbunden: $a_{\text{eff}} = \mathrm{jmin}(10, \mathrm{jmax}(0,\ a\cdot(1+m)))$ mit $m$ = Stereo-Mittelwert des Ports, geclampt auf $[-1,+1]$; unverbunden: $a_{\text{eff}} = a$ |
+| $a_{\text{eff}}$ | `amountEff` | [FMModulationProcessor.cpp](../../src/processors/FMModulationProcessor.cpp) | `amount_mod_in` verbunden: $a_{\text{eff}} = \mathrm{jmin}(10, \mathrm{jmax}(0,\ a\cdot(1+m)))$ mit $m$ = Stereo-Mittelwert des Ports, geclampt auf $[-1,+1]$; `vel` verbunden zusätzlich: $\mathrm{clamp}(a_{\text{eff}} \cdot v, 0, 10)$; unverbunden: $a_{\text{eff}} = a$ |
 
 ### Abschnitt 3b — Modulations-Input `amount_mod_in`
 
@@ -143,3 +143,14 @@ FM-Index selbst modulierbar — Spektrum-Envelopes (statischer Osc → ADSR →
 Tiefe (Carrier-Signal → `amount_mod_in`). Port-ID-Sync: `GraphNodes`-Spec,
 XSD-Annotation (`fm`-complexType) und `SynthVoice::resolveInput` tragen
 denselben Namen `amount_mod_in`.
+
+### Abschnitt 3c — Velocity-Input `vel`
+
+Optionaler Velocity-Eingang (PortType `velocity`, 0–1, Anschlagstärke der
+aktuellen Note). Der Stereo-Mittelwert multipliziert den wirksamen FM-Index:
+$a_{\text{eff}} = \mathrm{clamp}(a_{\text{eff}} \cdot v, 0, 10)$. Unverbunden
+(Default 1.0) ist der Port vollständig sound-invariant. Rolle im 808-Schema:
+Accent-Helligkeit — harte Anschläge gewinnen metallische Sidebands
+(Cowbell/Clave/Conga-Charakter).
+Port-ID-Sync: `GraphNodes`-Spec, XSD-Annotation (`fm`-complexType) und
+`SynthVoice::resolveInput` tragen denselben Namen `vel`.

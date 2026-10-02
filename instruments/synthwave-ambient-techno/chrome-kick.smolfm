@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Chrome Kick" description="Drum-machine kick on a playable body register: a diving sine body through soft clip, plus a noise stick layer gated by its own micro envelope." techniques="sine-dive-kick,serial-drive-filter-sculpt,sub-instrument-layering">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fadsr0" attack="0.003" decay="0.32" sustain="0.9" release="0.1" up="2.6" down="0.85">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="sine">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="shape0" drive="0.3" shape="soft">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.001" decay="0.34" sustain="0.0" release="0.07">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc1" waveform="noise" mode="static" staticfreq="1000">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="2400" resonance="0.2" mode="hp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr1" attack="0.001" decay="0.02" sustain="0.0" release="0.01">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.5">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.85" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fadsr0" toPort="freq_in" />
+      <Wire from="fadsr0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="osc1" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="adsr1" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in3" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="fadsr0" x="380" y="60" />
+      <Box id="osc0" x="700" y="60" />
+      <Box id="shape0" x="700" y="380" />
+      <Box id="adsr0" x="1020" y="60" />
+      <Box id="osc1" x="380" y="680" />
+      <Box id="filter0" x="700" y="680" />
+      <Box id="adsr1" x="1020" y="680" />
+      <Box id="gain0" x="1020" y="960" />
+      <Box id="output" x="1660" y="460" />
+    </Boxes>
+  </Layout>
+</SmolFM>

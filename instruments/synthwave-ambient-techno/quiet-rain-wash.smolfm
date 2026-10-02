@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Quiet Rain Wash" description="Ambient rain-wash texture: static noise through a band-pass whose cutoff wanders with non-repeating perlin drift eight times above the key, widened by a 26 ms Haas branch." techniques="perlin-cutoff-drift,tuned-noise-percussion,stereo-haas-branch-delay">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="oscNoise" waveform="noise" mode="static" staticfreq="800">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="oscDrift" waveform="perlin" mode="lfo" lforate="0.12">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="fscale0" factor="6.0">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fm0" amount="0.4">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="modulator_in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="filter0" cutoff="1320" resonance="0.45" mode="bp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="cutoff_mod_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.55">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="3.2" decay="2.0" sustain="0.85" release="5.5">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="split0">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="outL" direction="out" type="signal" />
+        <Pin id="outR" direction="out" type="signal" />
+      </Node>
+      <Node id="delay0" time="26" feedback="0.0" mix="1.0">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="merge0">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.6" />
+    </Nodes>
+    <Connections>
+      <Wire from="oscNoise" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="fm0" toPort="freq_in" />
+      <Wire from="oscDrift" fromPort="out" to="fm0" toPort="modulator_in" />
+      <Wire from="fm0" fromPort="out" to="filter0" toPort="cutoff_mod_in" />
+      <Wire from="filter0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="split0" toPort="in" />
+      <Wire from="split0" fromPort="outL" to="merge0" toPort="in1" />
+      <Wire from="split0" fromPort="outR" to="delay0" toPort="in" />
+      <Wire from="delay0" fromPort="out" to="merge0" toPort="in2" />
+      <Wire from="merge0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="oscNoise" x="60" y="380" />
+      <Box id="oscDrift" x="60" y="700" />
+      <Box id="fscale0" x="380" y="420" />
+      <Box id="fm0" x="700" y="420" />
+      <Box id="filter0" x="1020" y="200" />
+      <Box id="gain0" x="1020" y="640" />
+      <Box id="adsr0" x="1340" y="420" />
+      <Box id="split0" x="1340" y="960" />
+      <Box id="delay0" x="1660" y="960" />
+      <Box id="merge0" x="1660" y="640" />
+      <Box id="output" x="1980" y="700" />
+    </Boxes>
+  </Layout>
+</SmolFM>

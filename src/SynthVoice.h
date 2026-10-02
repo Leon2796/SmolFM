@@ -35,10 +35,13 @@
 #include "processors/FilterProcessor.h"
 #include "processors/SplitterProcessor.h"
 #include "processors/MergerProcessor.h"
+#include "processors/AdderProcessor.h"
 #include "processors/MasterOutputProcessor.h"
 #include "processors/RingModulatorProcessor.h"
 #include "processors/AmProcessor.h"
 #include "processors/DelayProcessor.h"
+#include "processors/ResonatorProcessor.h"
+#include "processors/FeedbackProcessor.h"
 #include "graph/GraphNodes.h"
 
 namespace smolfm
@@ -93,6 +96,17 @@ struct SynthVoiceParameters
     std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delayMix;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delaySync;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delayDivision;
+
+    // Resonator parameters per instance (4 parameters per node): tune (Hz,
+    // static fallback), q (0..1), decay (t60 seconds) and the vel spread
+    // (0.25..4; 1 = neutral — accent scales the decay time per the plan's
+    // pull-to-neutral pattern).
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxResonators> resonatorTune;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxResonators> resonatorQ;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxResonators> resonatorDecay;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxResonators> resonatorVelSpread;
+    // Feedback (bounded cycle breaker) per instance (1 parameter per node).
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxFeedbacks> feedbackAmount;
 
     // Master output is a singleton.
     std::atomic<float>* masterLevel;
@@ -152,7 +166,6 @@ private:
     SynthVoiceParameters parameters;
 
     double sampleRate = 44100.0;
-    float  currentVelocity = 0.0f;
 
     SignalGraph graph;
 
@@ -175,6 +188,12 @@ private:
     std::array<FilterProcessor*, GraphNodeRegistry::maxFilters> filters {};
     std::array<SplitterProcessor*, GraphNodeRegistry::maxSplitters> splitters {};
     std::array<MergerProcessor*, GraphNodeRegistry::maxMergers> mergers {};
+    std::array<AdderProcessor*, GraphNodeRegistry::maxAdds> adders {};
+    // Feedback nodes sit before the resonators in render order so the loop
+    // entry (their out) reaches the body fresh and the return edge (into
+    // fb_in) is what contributes the 1-sample delay.
+    std::array<FeedbackProcessor*, GraphNodeRegistry::maxFeedbacks> feedbackProcessors {};
+    std::array<ResonatorProcessor*, GraphNodeRegistry::maxResonators> resonators {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SynthVoice)
 };

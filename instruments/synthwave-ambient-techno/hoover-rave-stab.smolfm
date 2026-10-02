@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Hoover Rave Stab" description="Rave hoover: a detuned hard-panned saw pair plus a fifth-ratio FM growl voice, unified at the output as one slowly breathing stab." techniques="classic-two-op-fm,fscale-detune-unison,fscale-interval-power-stack,sub-instrument-layering">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fscale0" factor="0.994">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fscale1" factor="1.006">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="fscale2" factor="1.497">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="oscMod" waveform="saw">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="oscA" waveform="saw">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="oscB" waveform="saw">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="fm0" amount="3.1">
+        <Pin id="freq_in" direction="in" type="frequency" />
+        <Pin id="modulator_in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="oscC" waveform="sine">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.03" decay="0.7" sustain="0.45" release="0.55">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr1" attack="0.03" decay="0.7" sustain="0.45" release="0.55">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr2" attack="0.03" decay="0.7" sustain="0.45" release="0.55">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="merge0">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.5">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain1" factor="0.55">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.75" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="note" fromPort="out" to="fscale1" toPort="freq_in" />
+      <Wire from="note" fromPort="out" to="fscale2" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="oscA" toPort="note_in" />
+      <Wire from="fscale1" fromPort="out" to="oscB" toPort="note_in" />
+      <Wire from="fscale2" fromPort="out" to="oscMod" toPort="note_in" />
+      <Wire from="oscMod" fromPort="out" to="fm0" toPort="modulator_in" />
+      <Wire from="note" fromPort="out" to="fm0" toPort="freq_in" />
+      <Wire from="fm0" fromPort="out" to="oscC" toPort="note_in" />
+      <Wire from="oscA" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="oscB" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="oscC" fromPort="out" to="adsr2" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="merge0" toPort="in1" />
+      <Wire from="adsr1" fromPort="out" to="merge0" toPort="in2" />
+      <Wire from="merge0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="adsr2" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="gain1" fromPort="out" to="output" toPort="in3" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="fscale0" x="60" y="380" />
+      <Box id="fscale1" x="60" y="700" />
+      <Box id="fscale2" x="60" y="1020" />
+      <Box id="oscMod" x="380" y="1020" />
+      <Box id="oscA" x="380" y="380" />
+      <Box id="oscB" x="380" y="700" />
+      <Box id="fm0" x="700" y="1020" />
+      <Box id="oscC" x="1020" y="1020" />
+      <Box id="adsr0" x="1020" y="380" />
+      <Box id="adsr1" x="1020" y="700" />
+      <Box id="adsr2" x="1340" y="1020" />
+      <Box id="merge0" x="1340" y="380" />
+      <Box id="gain0" x="1660" y="380" />
+      <Box id="gain1" x="1660" y="1020" />
+      <Box id="output" x="1980" y="700" />
+    </Boxes>
+  </Layout>
+</SmolFM>

@@ -17,6 +17,9 @@
             gain0 .. gain15     up to 16 gain stages
             shape0 .. shape15   up to 16 waveshapers
             filter0 .. filter15 up to 16 filters
+            resonator0 .. resonator7   up to 8 excited damped resonators (808 bodies)
+            feedback0 .. feedback3     up to 4 bounded cycle breakers (1-sample loop)
+            add0 .. add7        up to 8 adders (samplewise signal sums)
             output              exactly one master output (mixes up to 8 signal inputs)
 
     A connection is expressed from the input side, because an InputPort can
@@ -69,6 +72,9 @@ enum class NodeType
     masterOutput,
     splitter,
     merger,
+    adder,
+    resonator,
+    feedback,
     unknown
 };
 
@@ -91,6 +97,11 @@ struct NodeSpec
     // Optional additional outputs after outputPortId (used by the splitter).
     // Every extra output carries outputType as well.
     juce::StringArray extraOutputPortIds;
+
+    // Types for those extra outputs, parallel to extraOutputPortIds.  An
+    // entry may be missing: a listed extra output then carries outputType
+    // (splitter outR is signal like outL).  First velocity use: note.vel.
+    std::vector<PortType> extraOutputTypes;
 
     // Display-only stereo side hints for the pins (see ChannelSide).  Pure
     // UI metadata: connect() and the audio path ignore them.  For outputs
@@ -121,6 +132,13 @@ struct NodeSpec
     // Extra templates for the filter node.
     juce::String cutoffParameterTemplate;     // "filter%Cutoff" style prefix
     juce::String resonanceParameterTemplate;  // "filter%Resonance" style prefix
+
+    // Extra templates for the resonator node.  VelSpread shares the decay
+    // template prefix via the replace trick (freqScaleInterval precedent):
+    // "resonator%Decay" -> "resonator<N>VelSpread".
+    juce::String tuneParameterTemplate;       // "resonator%Tune" style prefix
+    juce::String qParameterTemplate;          // "resonator%Q" style prefix
+    juce::String decayParameterTemplate;      // "resonator%Decay" style prefix
 };
 
 //==============================================================================
@@ -186,6 +204,9 @@ public:
     static constexpr int maxMasterOutputs = 1;
     static constexpr int maxSplitters   = 8;
     static constexpr int maxMergers     = 8;
+    static constexpr int maxAdds        = 8;
+    static constexpr int maxResonators  = 8;
+    static constexpr int maxFeedbacks   = 4;
 
     static const std::vector<NodeSpec>& getAllSpecs();
 
@@ -230,6 +251,12 @@ public:
     static juce::String delayMixParameterIdFor       (const juce::String& nodeId);
     static juce::String delaySyncParameterIdFor      (const juce::String& nodeId);
     static juce::String delayDivisionParameterIdFor  (const juce::String& nodeId);
+
+    // Resonator-specific parameter ids (VelSpread shares the decay prefix)
+    static juce::String resonatorTuneParameterIdFor   (const juce::String& nodeId);
+    static juce::String resonatorQParameterIdFor      (const juce::String& nodeId);
+    static juce::String resonatorDecayParameterIdFor  (const juce::String& nodeId);
+    static juce::String resonatorVelSpreadParameterIdFor (const juce::String& nodeId);
 
     // -- Port info -----------------------------------------------------------
 

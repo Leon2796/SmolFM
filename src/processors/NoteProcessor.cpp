@@ -28,6 +28,11 @@ StereoFrame NoteProcessor::processSample()
 {
     const StereoFrame f = StereoFrame::centered (isEnabled() ? currentFrequency : 0.0f);
     output.setSample (f);
+
+    const StereoFrame v = StereoFrame::centered (isEnabled()
+        ? currentVelocity.load (std::memory_order_acquire) : 0.0f);
+    velOutput.setSample (v);
+
     return f;
 }
 

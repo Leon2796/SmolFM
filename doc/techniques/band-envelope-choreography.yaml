@@ -1,0 +1,133 @@
+technique:
+  name: band-envelope-choreography
+
+  idea: |
+    One static noise excitation fans out into several parallel band-pass
+    filters, each tuned to its own spectral region — body, knock, crack,
+    air — and each gated by its own short-decay ADSR with a deliberately
+    staggered decay ladder: the highest transient band dies first, ringing
+    bands outlast it.  A single hit therefore migrates through its
+    spectrum over time (crack at the onset, body breathing behind it, air
+    ring outliving both) without any moving filter cutoff.  Where
+    parallel-band-split rebuilds one voice from complementary level-only
+    bands and static-formant-pair colours static vowel formants, this
+    technique treats each band as its own percussion voice inside one
+    drum; the decay ladder is the sound-design core, not the balance.
+
+  involved_nodes:
+    - type: osc
+      role: Excitation in static mode with waveform noise; one source fans
+        out into every band.
+    - type: filter
+      role: Band-pass stage one; centres the lowest band (body).
+    - type: filter
+      role: Band-pass stage two; centres the knock band.
+    - type: filter
+      role: Band-pass stage three; centres the crack band.
+    - type: filter
+      role: Band-pass stage four; centres the air band.
+    - type: adsr
+      role: Band gate one; long decay for the ringing body band.
+    - type: adsr
+      role: Band gate two; mid decay for the knock band.
+    - type: adsr
+      role: Band gate three; shortest decay for the crack band.
+    - type: adsr
+      role: Band gate four; outlives them all as the air tail.
+    - type: output
+      role: Master merge; one dedicated input per band band-summing the
+        gated spectrum.
+
+  involved_ports:
+    - node_role: Excitation
+      port: out
+      role: Noise signal fanned out into every band filter (signal).
+    - node_role: Band filters
+      port: in
+      role: Receive the excitation (signal).
+    - node_role: Band filters
+      port: vel
+      role: Optional note.vel wired per band; accents open the band cutoff
+        (velocity).
+    - node_role: Band filters
+      port: out
+      role: Band ring into its gate envelope (signal).
+    - node_role: Band gates
+      port: in
+      role: Receive their band (signal).
+    - node_role: Band gates
+      port: out
+      role: Gated band onto its dedicated output input (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input per band; input levels trim the ladder (signal).
+
+  topology:
+    description: |
+      noise-osc.out -> filter-i.in (signal) for each band instance, one
+      fan-out wire per filter.  filter-i.out -> adsr-i.in (signal).
+      adsr-i.out -> output.inI (signal), one output input per band.  All
+      filters and gates live on the shared excitation; no band is serial
+      behind another.  note.vel -> filter-i.vel (velocity) keys the
+      accents per band; envelopes fire on note events while the exciter
+      runs free (static mode).
+
+  parameters:
+    - name: band centres
+      role: |
+        bp cutoffs 20..20000 Hz per filter; 100..200 Hz body, 400..800 Hz
+        knock, 2..4 kHz crack, 6..10 kHz air.  Static cutoffs keep the
+        drum pitch-stable across a whole kit.
+    - name: band resonances
+      role: |
+        Resonance 0..1 per filter, 0.4..0.8 rings each band audibly;
+        higher values turn a band into a formant-like ping inside the hit.
+    - name: decay ladder
+      role: |
+        adsr attack/decay 0.001..5 s, sustain 0..1, release 0.001..10 s
+        per band.  Attack 0.001 s keeps every band snappy; the decay
+        ladder (e.g. 0.02 / 0.06 / 0.18 / 0.5 s from crack to air) orders
+        the spectral evolution.  Sustain 0 turns each band into a
+        one-shot.
+    - name: band levels
+      role: |
+        Output input level 0..1 per band.  Pulling a band mutes that
+        spectral region of the hit without changing the ladder timing.
+    - name: velocity accent
+      role: |
+        note.vel into the filters' vel inputs scales their cutoff per
+        note (accents brighter, ghost notes darker); for level-only
+        accents wire note.vel into one gain per band before the output.
+
+  relationships:
+    - name: decay-ladder
+      description: |
+        Equal decays collapse the stack into a static colour; the
+        staggering orders which spectral region of the hit survives into
+        which part of the decay — the spectrum migrates, the filter
+        cutoffs never move.
+    - name: band-gate-siblings
+      description: |
+        parallel-band-split sums complementary bands to reconstitute one
+        voice with level trims; static-formant-pair sums two vowel
+        formants with level trims; metal-hat-squares gates ONE filtered
+        chain with one envelope.  Here four bands get four independent
+        gates — the time axis is the added dimension.
+    - name: static-excitation
+      description: |
+        The excitation stays untracked (no note port); every pitch anchor
+        lives in the band cutoffs, matching tuned-noise-percussion's
+        convention, so the whole morphing hit remains pitch-stable.
+    - name: budget
+      description: |
+        Registry budgets: osc <= 16 (one used), filter <= 16 per band
+        (four used), adsr <= 16 (four used), output = 1.  Four bands take
+        four of the eight output inputs; an add <= 8 ladder can fold
+        further bands into shared inputs when free output pins run out.
+
+  perceptual_effects:
+    - hits whose spectrum sweeps across time without a moving filter
+    - hat- and snare-like morphs with air ring, knock and crack bands
+      timed apart
+    - pitch-stable kits from one patch: cutoff tuning, no key tracking
+    - per-band accent wiring for velocity-opened brightness

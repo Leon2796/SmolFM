@@ -9,6 +9,10 @@
           Unconnected: the static gain runs as-is.  An LFO here turns the
           node into a clean VCA (linear tremolo/swells); a fast square is a
           rhythmic gate.
+        - vel          (velocity): optional per-note velocity input (0-1).
+          Connected: the stereo mean scales the effective gain (accent:
+          harder hit = louder).  Unconnected: the gain is unaffected
+          (sound-invariance).
         - out (signal): the scaled audio.
 
     Per sample (per channel):
@@ -49,6 +53,7 @@ public:
 
     InputPort& getInput() noexcept   { return input; }
     InputPort& getModInput() noexcept { return modInput; }
+    InputPort& getVelInput() noexcept { return velIn; }
     OutputPort& getOutput() noexcept { return output; }
 
 private:
@@ -56,6 +61,7 @@ private:
 
     InputPort input  { PortType::signal };
     InputPort modInput { PortType::signal };
+    InputPort velIn    { PortType::velocity };
     OutputPort output { PortType::signal, *this };
 };
 

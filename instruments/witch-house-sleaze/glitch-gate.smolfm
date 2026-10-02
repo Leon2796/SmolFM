@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Glitch Gate" description="Glitch percussion: tuned band-pass noise tremoloed by a square LFO, gated short, then hard-chopped by a second square-LFO gain gate for stutter rhythms on a single keypress." techniques="tuned-noise-percussion,am-tremolo-lfo,gain-gate-chops">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" waveform="noise" mode="static" staticfreq="900">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="1900" resonance="0.35" mode="bp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc1" waveform="square" mode="lfo" lforate="11">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="am0" amount="0.55">
+        <Pin id="carrier_in" direction="in" type="signal" />
+        <Pin id="modulator_in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.001" decay="0.3" sustain="0.0" release="0.08">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc2" waveform="square" mode="lfo" lforate="6.3">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.5">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="factor_mod_in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.8" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="am0" toPort="carrier_in" />
+      <Wire from="osc1" fromPort="out" to="am0" toPort="modulator_in" />
+      <Wire from="am0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="osc2" fromPort="out" to="gain0" toPort="factor_mod_in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="osc0" x="380" y="60" />
+      <Box id="filter0" x="700" y="60" />
+      <Box id="osc1" x="380" y="380" />
+      <Box id="am0" x="1020" y="60" />
+      <Box id="adsr0" x="1340" y="60" />
+      <Box id="osc2" x="380" y="680" />
+      <Box id="gain0" x="1340" y="380" />
+      <Box id="output" x="1660" y="140" />
+    </Boxes>
+  </Layout>
+</SmolFM>

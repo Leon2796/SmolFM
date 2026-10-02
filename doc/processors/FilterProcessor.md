@@ -11,7 +11,7 @@ stabil auch bei hoher Resonance, Cutoff wird pro Sample neu hergeleitet.
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
 | Max. Instanzen | 16 | `GraphNodeRegistry::maxFilters` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `in` (`PortType::signal`), `cutoff_mod_in` (`PortType::frequency`), `resonance_mod_in` (`PortType::signal`) | `InputPort input`, `InputPort cutoffMod`, `InputPort resonanceMod` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
+| Input-Ports | `in` (`PortType::signal`), `cutoff_mod_in` (`PortType::frequency`), `resonance_mod_in` (`PortType::signal`), `vel` (`PortType::velocity`) | `InputPort input`, `InputPort cutoffMod`, `InputPort resonanceMod`, `InputPort velIn` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
 | Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
 
 | Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
@@ -33,6 +33,14 @@ Q-Atmung, Saw-LFO → zyklische Selbstoszillations-Rampen, statischer Osc →
 ADSR → Hammer-Envelopes für modale Pings.
 Port-ID-Sync: `GraphNodes`-Spec, XSD-Annotation (`filter`-complexType) und
 `SynthVoice::resolveInput` tragen denselben Namen `resonance_mod_in`.
+
+`vel` unverbunden: statische Cutoff unverändert (Default 1.0). Verbunden:
+der Stereo-Mittelwert (0–1) multipliziert die wirksame Cutoff —
+$f_{c,\text{eff}} = \mathrm{clamp}(f_c \cdot v,\ 20..20000)$: akzentuierte
+Anschläge sitzen heller, zarte Anschläge dunkler (Noise-Snap der
+808-Snare). Port-ID-Sync: `GraphNodes`-Spec, XSD-Annotation
+(`filter`-complexType) und `SynthVoice::resolveInput` tragen denselben
+Namen `vel`.
 
 ## Abschnitt 2 — UI-Konfiguration
 
@@ -99,3 +107,4 @@ Spezialfälle:
 | $v_1, v_2, v_3$ | `v1`, `v2`, `v3` | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | TPT-Zwischengrößen |
 | $\mathrm{ic1eq}, \mathrm{ic2eq}$ | `ic1eq`, `ic2eq` | [FilterProcessor.h](../../src/processors/FilterProcessor.h) | Zustandsfelder, Reset in `startNote()` |
 | $y_n$ | `output.setSample(y)` | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | Mode-Switch auf `out` |
+| $v$ | `velIn.getSample()` → Stereo-Mittel | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | `vel` verbunden: $f_c \leftarrow f_c \cdot v$, dann jlimit 20–20000; unverbunden: Default 1.0 (neutral) |

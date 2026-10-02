@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Noir Snare" description="Noir snare built from staggered onset order: stick click at 1 ms, keyed sine body at 8 ms, band-passed noise carpet at 19 ms, each with its own gate, pure-shift delay and velocity accent." techniques="onset-stagger-stack,tuned-noise-percussion,sub-instrument-layering">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+        <Pin id="vel" direction="out" type="velocity" />
+      </Node>
+      <Node id="osc0" waveform="noise" mode="static" staticfreq="1400">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="8200" resonance="0.1" mode="hp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.001" decay="0.02" sustain="0.0" release="0.01">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay0" time="1" feedback="0.0" mix="1.0" sync="off">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.55">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc1" waveform="sine">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr1" attack="0.001" decay="0.22" sustain="0.0" release="0.06">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay1" time="8" feedback="0.0" mix="1.0" sync="off">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain1" factor="0.8">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc2" waveform="noise" mode="static" staticfreq="900">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter1" cutoff="1880" resonance="0.45" mode="bp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr2" attack="0.001" decay="0.09" sustain="0.0" release="0.03">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay2" time="19" feedback="0.0" mix="1.0" sync="off">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain2" factor="0.6">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.8" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="delay0" toPort="in" />
+      <Wire from="delay0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="note" fromPort="vel" to="gain0" toPort="vel" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="note" fromPort="out" to="osc1" toPort="note_in" />
+      <Wire from="osc1" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="adsr1" fromPort="out" to="delay1" toPort="in" />
+      <Wire from="delay1" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="note" fromPort="vel" to="gain1" toPort="vel" />
+      <Wire from="gain1" fromPort="out" to="output" toPort="in2" />
+      <Wire from="osc2" fromPort="out" to="filter1" toPort="in" />
+      <Wire from="filter1" fromPort="out" to="adsr2" toPort="in" />
+      <Wire from="adsr2" fromPort="out" to="delay2" toPort="in" />
+      <Wire from="delay2" fromPort="out" to="gain2" toPort="in" />
+      <Wire from="note" fromPort="vel" to="gain2" toPort="vel" />
+      <Wire from="gain2" fromPort="out" to="output" toPort="in3" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="osc0" x="380" y="60" />
+      <Box id="filter0" x="700" y="60" />
+      <Box id="adsr0" x="1020" y="60" />
+      <Box id="delay0" x="1340" y="60" />
+      <Box id="gain0" x="1660" y="60" />
+      <Box id="osc1" x="380" y="380" />
+      <Box id="adsr1" x="700" y="380" />
+      <Box id="delay1" x="1020" y="380" />
+      <Box id="gain1" x="1660" y="380" />
+      <Box id="osc2" x="380" y="680" />
+      <Box id="filter1" x="700" y="680" />
+      <Box id="adsr2" x="1020" y="680" />
+      <Box id="delay2" x="1340" y="680" />
+      <Box id="gain2" x="1660" y="680" />
+      <Box id="output" x="1960" y="240" />
+    </Boxes>
+  </Layout>
+</SmolFM>

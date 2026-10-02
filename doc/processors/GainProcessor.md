@@ -11,14 +11,15 @@ Stillstand (Default-Eingang 0.0).
 | Eigenschaft | Wert | Symbol / Typ | Datei |
 |---|---|---|---|
 | Max. Instanzen | 16 | `GraphNodeRegistry::maxGains` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `in` (`PortType::signal`), `factor_mod_in` (`PortType::signal`) | `InputPort input`, `InputPort modInput` | [src/processors/GainProcessor.h](../../src/processors/GainProcessor.h) |
+| Input-Ports | `in` (`PortType::signal`), `factor_mod_in` (`PortType::signal`), `vel` (`PortType::velocity`) | `InputPort input`, `InputPort modInput`, `InputPort velIn` | [src/processors/GainProcessor.h](../../src/processors/GainProcessor.h) |
 | Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/GainProcessor.h](../../src/processors/GainProcessor.h) |
 
 | Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
 |---|---|---|---|---|
 | Gain | `gain<N>Factor` | Float, 0–10, Default 1 (UI-Bipolar: Mitte ≙ 1.0/Unity — linke Hälfte linear 0–1, rechte Hälfte quadratisch 1–10; Rohwert bleibt 0–10) | `std::atomic<float>* gain` | [src/processors/GainProcessor.h](../../src/processors/GainProcessor.h) |
 
-`<N>` = Instanzindex 0–7.
+`<N>` = Instanzindex 0–15 (Budgets seit Commit ecfdef2 verdoppelt; der Code
+registriert die Parameter über `for (i < GraphNodeRegistry::maxGains)`).
 
 ## Abschnitt 2 — UI-Konfiguration
 
@@ -57,6 +58,17 @@ eigene Volume-Envelope pro Layer.
 Port-ID-Sync: `GraphNodes`-Spec, XSD-Annotation (`gain`-complexType) und
 `SynthVoice::resolveInput` tragen denselben Namen `factor_mod_in`.
 
+### Abschnitt 3c — Velocity-Input `vel`
+
+Optionaler Velocity-Eingang (PortType `velocity`, 0–1, Anschlagstärke der
+aktuellen Note). Der Stereo-Mittelwert multipliziert den wirksamen Gain:
+$G_{\text{eff}} = \mathrm{clamp}(G_{\text{eff}} \cdot v, 0, 10)$.
+Unverbunden (Default 1.0) ist der Port vollständig sound-invariant. Rolle
+im 808-Schema: Accent — die Lautheits-Hälfte des TR-808-Accents, pro Layer
+opt-in (nur verdrahtete Gains antworten auf die Anschlagstärke).
+Port-ID-Sync: `GraphNodes`-Spec, XSD-Annotation (`gain`-complexType) und
+`SynthVoice::resolveInput` tragen denselben Namen `vel`.
+
 ## Abschnitt 4 — Symbol ↔ Code
 
 | Formales Symbol | C++-Symbol / Aufruf | Datei | Berechnungsschritt |
@@ -64,3 +76,4 @@ Port-ID-Sync: `GraphNodes`-Spec, XSD-Annotation (`gain`-complexType) und
 | $G$ | `gain->load()` → `gBase` → `g` | [GainProcessor.cpp](../../src/processors/GainProcessor.cpp) | Basis gelesen; `factor_mod_in` verbunden: $G_{\text{eff}} = \mathrm{clamp}(G\cdot(1+m), 0, 10)$, $m$ = Stereo-Mittel geclampt $[-1,+1]$ |
 | $x_n$ | `input.getSample()` → `sourceSample` | [GainProcessor.cpp](../../src/processors/GainProcessor.cpp) | Port lesen (Default 0.0f unverbunden) |
 | $y_n$ | `sourceSample * g` → `output.setSample()` | [GainProcessor.cpp](../../src/processors/GainProcessor.cpp) | Multiplikation, Ergebnis in den Port |
+| $v$ | `velIn.getSample()` → Stereo-Mittel | [GainProcessor.cpp](../../src/processors/GainProcessor.cpp) | `vel` verbunden: $G_{\text{eff}} = \mathrm{clamp}(G_{\text{eff}} \cdot v, 0, 10)$; unverbunden: Default 1.0 (neutral) |

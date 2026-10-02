@@ -1,0 +1,115 @@
+technique:
+  name: stereo-tremolo-phase-drift
+
+  idea: |
+    The voice is split into pure sides and each side is amplitude-modulated
+    by its own tremolo oscillator whose rate differs from the other by a tiny
+    offset.  Both LFO phases reset on every note-on, so the contour starts
+    synchronised and the image opens dead-centred; over the following
+    seconds the two contours slide apart and the channel imbalance swells,
+    shrinks and drifts — tremolo that breathes into stereo instead of
+    pulsing in place.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; pitches the split voice.
+    - type: osc
+      role: Voice oscillator feeding the splitter.
+    - type: split
+      role: Slices the voice frame into side-pure left and right branches.
+    - type: osc
+      role: Left tremolo LFO in lfo mode (base rate).
+    - type: osc
+      role: Right tremolo LFO, same waveform, rate offset a hair higher.
+    - type: am
+      role: Left side tremolo; carrier_in takes the left branch.
+    - type: am
+      role: Right side tremolo; carrier_in takes the right branch.
+    - type: merge
+      role: Reunites the tremoloed sides into one stereo frame.
+    - type: output
+      role: Master endpoint for the merged frame.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the voice (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Centred voice frame into the splitter (signal).
+    - node_role: Splitter
+      port: outL
+      role: Side-pure left branch into the left AM carrier (signal).
+    - node_role: Splitter
+      port: outR
+      role: Side-pure right branch into the right AM carrier (signal).
+    - node_role: Left tremolo LFO
+      port: out
+      role: Left depth contour into am modulator_in (signal).
+    - node_role: Right tremolo LFO
+      port: out
+      role: Right depth contour into am modulator_in (signal).
+    - node_role: Left tremolo AM
+      port: out
+      role: Tremoloed left channel into merger in1 (signal).
+    - node_role: Right tremolo AM
+      port: out
+      role: Tremoloed right channel into merger in2 (signal).
+    - node_role: Merger
+      port: out
+      role: Reunited stereo frame towards the output (signal).
+
+  topology:
+    description: |
+      note.out -> voice-osc.note_in (frequency).  voice-osc.out ->
+      split.in (signal).  split.outL -> am-left.carrier_in, split.outR ->
+      am-right.carrier_in (signal).  lfo-left.out -> am-left.modulator_in,
+      lfo-right.out -> am-right.modulator_in (signal).  am-left.out ->
+      merge.in1, am-right.out -> merge.in2 (signal).  merge.out ->
+      output.in1 (signal).  Everything after the merger acts on both sides
+      jointly.
+
+  parameters:
+    - name: tremolo rate pair
+      role: |
+        lfoRate 0.01..50 Hz per side.  Base rate 1..8 Hz; keep the pair
+        within a few cents of each other so both sides tremble in chorus.
+    - name: rate detune
+      role: |
+        The offset between the two lfoRate values.  0.002..0.02 Hz gives
+        drift periods between minutes and a minute-fraction; larger
+        offsets flutter into obvious speed mismatch.
+    - name: am amount
+      role: |
+        Same depth on both AMs.  Shallow (0.3..0.5) keeps the drift gentle;
+        full depth lets one side fall near silence while the other rings.
+    - name: tremolo waveforms
+      role: |
+        Sine/sine gives smooth swirls; triangle/square adds an edge; two
+        different waveforms accelerate the perceived width motion.
+
+  relationships:
+    - name: phase-locked-start
+      description: |
+        Both LFO oscillators reset their phase on note-on, so the contour
+        pair opens aligned: the note starts centred and widens only as the
+        rate detune accumulates phase over the drift period.
+    - name: side-purity
+      description: |
+        Splitter and merger carry side-pure frames; the contours never sum
+        inside the graph.  The width lives purely in the per-channel
+        amplitude difference, so mono downmix folds to a plain tremolo.
+    - name: socket-siblings
+      description: |
+        am-tremolo-lfo tremolos one centred carrier; stereo-side-gain-
+        widener sets a static balance.  Here the AM depth pair moves over
+        time, so the width itself trembles — tremolo as motion, not trim.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 16 (three used), split <= 8 (one
+        used), am <= 8 (two used), merge <= 8 (one used), output = 1.
+
+  perceptual_effects:
+    - stereo tremolo whose centre of gravity wanders instead of pumping
+    - slow width swirl behind a stable centred core note
+    - mono-safe: collapsing the downmix returns a plain shared tremolo

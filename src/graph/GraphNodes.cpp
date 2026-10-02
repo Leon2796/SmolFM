@@ -48,6 +48,10 @@ namespace
 
             note.outputType = PortType::frequency;
 
+            note.extraOutputPortIds = { "vel" };
+
+            note.extraOutputTypes = { PortType::velocity };
+
             note.inputPortIds = {};
 
             specs.push_back (note);
@@ -88,9 +92,9 @@ namespace
 
             fm.outputType = PortType::frequency;
 
-            fm.inputPortIds = { "freq_in", "modulator_in", "amount_mod_in" };
+            fm.inputPortIds = { "freq_in", "modulator_in", "amount_mod_in", "vel" };
 
-            fm.inputTypes = { PortType::frequency, PortType::signal, PortType::signal };
+            fm.inputTypes = { PortType::frequency, PortType::signal, PortType::signal, PortType::velocity };
 
             fm.amountParameterTemplate = "fmAmount%";
 
@@ -192,9 +196,9 @@ namespace
 
             fadsr.outputType = PortType::frequency;
 
-            fadsr.inputPortIds = { "freq_in" };
+            fadsr.inputPortIds = { "freq_in", "vel" };
 
-            fadsr.inputTypes = { PortType::frequency };
+            fadsr.inputTypes = { PortType::frequency, PortType::velocity };
 
             fadsr.fAdsrParameterTemplate = "fadsr%";
 
@@ -213,11 +217,14 @@ namespace
 
             gain.outputType = PortType::signal;
 
-            gain.inputPortIds = { "in", "factor_mod_in" };
+            gain.inputPortIds = { "in", "factor_mod_in", "vel" };
 
-            gain.inputTypes = { PortType::signal, PortType::signal };
+            gain.inputTypes = { PortType::signal, PortType::signal, PortType::velocity };
 
-            gain.gainParameterTemplate = "gain%";
+            // Must match the APVTS id pattern "gain<N>Factor" used by
+            // createParameterLayout(), SynthVoice and the .smolfm loaders —
+            // a drift here leaves the knob unattached (shows 0, drags no audio).
+            gain.gainParameterTemplate = "gain%Factor";
 
             specs.push_back (gain);
 
@@ -234,9 +241,9 @@ namespace
 
             shaper.outputType = PortType::signal;
 
-            shaper.inputPortIds = { "in", "drive_mod_in" };
+            shaper.inputPortIds = { "in", "drive_mod_in", "vel" };
 
-            shaper.inputTypes = { PortType::signal, PortType::signal };
+            shaper.inputTypes = { PortType::signal, PortType::signal, PortType::velocity };
 
             shaper.driveParameterTemplate = "shape%";
 
@@ -255,15 +262,63 @@ namespace
 
             filt.outputType = PortType::signal;
 
-            filt.inputPortIds = { "in", "cutoff_mod_in", "resonance_mod_in" };
+            filt.inputPortIds = { "in", "cutoff_mod_in", "resonance_mod_in", "vel" };
 
-            filt.inputTypes = { PortType::signal, PortType::frequency, PortType::signal };
+            filt.inputTypes = { PortType::signal, PortType::frequency, PortType::signal, PortType::velocity };
 
             filt.cutoffParameterTemplate = "filter%Cutoff";
 
             filt.resonanceParameterTemplate = "filter%Resonance";
 
             specs.push_back (filt);
+
+        }
+
+        {
+
+            NodeSpec resonator;
+
+            resonator.id = "resonator";
+
+            resonator.title = "Resonator";
+
+            resonator.outputPortId = "out";
+
+            resonator.outputType = PortType::signal;
+
+            resonator.inputPortIds = { "in", "tune", "q_mod_in", "vel" };
+
+            resonator.inputTypes = { PortType::signal, PortType::frequency, PortType::signal, PortType::velocity };
+
+            resonator.tuneParameterTemplate  = "resonator%Tune";
+
+            resonator.qParameterTemplate     = "resonator%Q";
+
+            resonator.decayParameterTemplate = "resonator%Decay";
+
+            specs.push_back (resonator);
+
+        }
+
+        {
+
+            NodeSpec fb;
+
+            fb.id = "feedback";
+
+            fb.title = "Feedback";
+
+            fb.outputPortId = "out";
+
+            fb.outputType = PortType::signal;
+
+            fb.inputPortIds = { "in", "fb_in" };
+
+            fb.inputTypes = { PortType::signal, PortType::signal };
+
+            fb.amountParameterTemplate = "feedback%Amount";
+
+            specs.push_back (fb);
 
         }
 
@@ -313,6 +368,17 @@ namespace
             merge.inputTypes = { PortType::signal, PortType::signal };
             merge.inputChannelSides = { ChannelSide::left, ChannelSide::right };
             specs.push_back (merge);
+        }
+
+        {
+            NodeSpec add;
+            add.id = "add";
+            add.title = "Add";
+            add.outputPortId = "out";
+            add.outputType = PortType::signal;
+            add.inputPortIds = { "in1", "in2" };
+            add.inputTypes = { PortType::signal, PortType::signal };
+            specs.push_back (add);
         }
 
         return specs;
@@ -381,6 +447,7 @@ NodeType GraphNodeRegistry::typeOf (const juce::String& nodeId)
 
         if (base == "ring")    return NodeType::ringModulator;
     if (base == "am")      return NodeType::amModulator;
+    if (base == "add")    return NodeType::adder;
     if (base == "delay")   return NodeType::delay;
     if (base == "adsr")   return NodeType::adsr;
 
@@ -391,6 +458,9 @@ NodeType GraphNodeRegistry::typeOf (const juce::String& nodeId)
     if (base == "shape") return NodeType::waveshaper;
 
     if (base == "filter") return NodeType::filter;
+
+    if (base == "resonator") return NodeType::resonator;
+    if (base == "feedback") return NodeType::feedback;
 
     if (base == "output") return NodeType::masterOutput;
 
@@ -485,12 +555,16 @@ int GraphNodeRegistry::maxInstancesOf (NodeType type)
 
         case NodeType::ringModulator:  return maxRingModulators;
         case NodeType::amModulator:    return maxAmModulators;
+        case NodeType::adder:          return maxAdds;
         case NodeType::delay:          return maxDelays;
         case NodeType::adsr:           return maxAdsr;
         case NodeType::fAdsr:          return maxFAdsr;
         case NodeType::gain:           return maxGains;
         case NodeType::waveshaper:     return maxWaveshapers;
         case NodeType::filter:         return maxFilters;
+
+        case NodeType::resonator:      return maxResonators;
+        case NodeType::feedback:       return maxFeedbacks;
 
         case NodeType::masterOutput:   return maxMasterOutputs;
 
@@ -783,6 +857,40 @@ juce::String GraphNodeRegistry::delayDivisionParameterIdFor (const juce::String&
     return withIndex (spec->divisionParameterTemplate, indexOf (nodeId));
 }
 
+juce::String GraphNodeRegistry::resonatorTuneParameterIdFor (const juce::String& nodeId)
+{
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->tuneParameterTemplate.isEmpty())
+        return {};
+    return withIndex (spec->tuneParameterTemplate, indexOf (nodeId));
+}
+
+juce::String GraphNodeRegistry::resonatorQParameterIdFor (const juce::String& nodeId)
+{
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->qParameterTemplate.isEmpty())
+        return {};
+    return withIndex (spec->qParameterTemplate, indexOf (nodeId));
+}
+
+juce::String GraphNodeRegistry::resonatorDecayParameterIdFor (const juce::String& nodeId)
+{
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->decayParameterTemplate.isEmpty())
+        return {};
+    return withIndex (spec->decayParameterTemplate, indexOf (nodeId));
+}
+
+juce::String GraphNodeRegistry::resonatorVelSpreadParameterIdFor (const juce::String& nodeId)
+{
+    // VelSpread shares the decay template prefix ("resonator%Decay") via the
+    // replace trick — mirrors freqScaleInterval and the osc waveform family.
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->decayParameterTemplate.isEmpty())
+        return {};
+    return withIndex (spec->decayParameterTemplate, indexOf (nodeId)).replace ("Decay", "VelSpread");
+}
+
 juce::String GraphNodeRegistry::freqScaleIntervalParameterIdFor (const juce::String& nodeId)
 {
     // Interval shares the amount template prefix ("fscale%Factor"),
@@ -821,11 +929,25 @@ std::pair<bool, PortType> GraphNodeRegistry::findPortInfo (const juce::String& n
 
             return { true, spec->outputType };
 
-        // Extra outputs (splitter outR): same type as the primary output.
+        // Extra outputs: an entry in extraOutputTypes overrides (note.vel is
+        // velocity while note.out is frequency); otherwise the primary
+        // output's type applies (splitter outR is signal like outL).
 
         if (spec->extraOutputPortIds.indexOf (portId) >= 0)
 
-            return { true, spec->outputType };
+        {
+
+            const int extra = spec->extraOutputPortIds.indexOf (portId);
+
+            const PortType t = extra < static_cast<int> (spec->extraOutputTypes.size())
+
+                                   ? spec->extraOutputTypes[static_cast<size_t> (extra)]
+
+                                   : spec->outputType;
+
+            return { true, t };
+
+        }
 
         return { false, PortType::signal };
 

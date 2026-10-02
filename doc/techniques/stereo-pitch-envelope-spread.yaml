@@ -1,0 +1,111 @@
+technique:
+  name: stereo-pitch-envelope-spread
+
+  idea: |
+    One played note fans into two pitch envelopes with mirror-imaged peak
+    factors, each feeding its own carrier; the merger assigns the two
+    carriers to opposite sides of the frame.  While one envelope leans up
+    and the other leans down, the channels diverge by a singing interval and
+    fall back together on release — stereo width that blooms and collapses
+    with a pitch envelope instead of a static detune or a modulation LFO.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send; feeds both envelope branches.
+    - type: fadsr
+      role: Left pitch envelope; up leans above 1.
+    - type: fadsr
+      role: Right pitch envelope; up leans below 1.
+    - type: osc
+      role: Left carrier rendering the leaned note.
+    - type: osc
+      role: Right carrier rendering the dipped note.
+    - type: merge
+      role: Assigns the two envelope-tracked carriers to their sides.
+    - type: output
+      role: Master endpoint for the merged frame.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into both envelopes (frequency).
+    - node_role: Left pitch envelope
+      port: freq_in
+      role: Receives the played note (frequency).
+    - node_role: Left pitch envelope
+      port: out
+      role: Left leaned frequency into the left carrier (frequency).
+    - node_role: Right pitch envelope
+      port: freq_in
+      role: Receives the played note (frequency).
+    - node_role: Right pitch envelope
+      port: out
+      role: Right dipped frequency into the right carrier (frequency).
+    - node_role: Left carrier
+      port: note_in
+      role: Renders the left channel from its envelope (frequency).
+    - node_role: Left carrier
+      port: out
+      role: Left signal into merger in1 (signal).
+    - node_role: Right carrier
+      port: out
+      role: Right signal into merger in2 (signal).
+    - node_role: Merger
+      port: out
+      role: Widened frame towards the output (signal).
+
+  topology:
+    description: |
+      note.out -> fadsr-left.freq_in and fadsr-right.freq_in (frequency,
+      fan-out).  fadsr-left.out -> osc-left.note_in (frequency),
+      fadsr-right.out -> osc-right.note_in (frequency).  osc-left.out ->
+      merge.in1 (signal), osc-right.out -> merge.in2 (signal).  merge.out
+      -> output.in1 (signal).  No fscale, no splitter: the envelope pair is
+      the whole spread mechanism.
+
+  parameters:
+    - name: up pair
+      role: |
+        up 0..10 per branch, mirrored around 1 (e.g. left 1.06, right
+        0.94).  The opening distance at the envelope peak in semitones:
+        12*log2(up_left/up_right).
+    - name: down pair
+      role: |
+        down 0..10 per branch.  Keep both at 1 so the channels start and
+        end on the same pitch; moving them apart turns the bloom into a
+        glide.
+    - name: envelope times
+      role: |
+        Attack/decay/sustain/release per branch 0.001..5 s (release up to
+        10).  Asymmetric times open and close the width like a shutter.
+    - name: master level
+      role: |
+        0..1.  Two carriers sum; keep headroom for the centred release
+        moment where both re-converge.
+
+  relationships:
+    - name: divergence-rate
+      description: |
+        Channel separation follows the envelope: it opens during attack and
+        decay, holds at sustain and closes on release, so the drift speed is
+        the envelope's slope, not a free-running rate.
+    - name: bloom-and-collapse
+      description: |
+        Inside the graph the carriers never sum per channel, so no comb
+        filter forms; the width lives only in the frequency difference, and
+        the note ends centred because both envelopes return to down = 1.
+    - name: stereo-sibling
+      description: |
+        stereo-micropitch-spread builds the same image from static fscale
+        factors plus optional drift; stereo-fm-depth-split splits an FM
+        index.  Here the spread itself is an event-shaped pitch envelope,
+        tied to note-on like every other articulation.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, fadsr <= 8 (two used), osc <= 16 (two
+        used), merge <= 8 (one used), output = 1.
+
+  perceptual_effects:
+    - per-note width bloom: the image opens with the envelope and folds shut
+    - shimmering "harmonium pedal" spread that follows the key
+    - envelope-shaped stereo depth without chorus, delay or LFO nodes

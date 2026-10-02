@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="Neon Hex Clap" description="Hand-clap machine: tuned band-pass noise passed through two serial micro-delays whose taps stutter inside one hard one-shot envelope." techniques="multi-burst-clap">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+      </Node>
+      <Node id="osc0" waveform="noise" mode="static" staticfreq="1000">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="1380" resonance="0.55" mode="bp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay0" time="17" feedback="0.0" mix="0.75">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay1" time="33" feedback="0.22" mix="0.55">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.002" decay="0.27" sustain="0.0" release="0.06">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.8" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="delay0" toPort="in" />
+      <Wire from="delay0" fromPort="out" to="delay1" toPort="in" />
+      <Wire from="delay1" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="osc0" x="380" y="60" />
+      <Box id="filter0" x="700" y="60" />
+      <Box id="delay0" x="1020" y="60" />
+      <Box id="delay1" x="1020" y="380" />
+      <Box id="adsr0" x="1340" y="200" />
+      <Box id="output" x="1660" y="200" />
+    </Boxes>
+  </Layout>
+</SmolFM>

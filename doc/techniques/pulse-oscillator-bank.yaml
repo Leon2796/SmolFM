@@ -1,0 +1,159 @@
+technique:
+  name: pulse-oscillator-bank
+
+  idea: |
+    Six static square oscillators sit at the TR-808 Service-Notes bank
+    frequencies - 205.3 / 304.4 / 369.6 / 522.7 / 540 / 800 Hz - and fold
+    pairwise on the adder bus into ONE deterministic, inherently inharmonic
+    cluster.  This is the SmolFM approximation of the hardware's six shared
+    pulse oscillators (Werner/Abel/Smith cowbell and cymbal models, Roland
+    Service Notes): the true pulse waveform is not expressible yet (osc has
+    sine/saw/square/triangle/noise/perlin/simplex, no pulse or duty mode),
+    so squares stand in for pulses.  The bank is only the tone SOURCE; the
+    metallic voice identity comes from which subsets activate (cowbell
+    "2 of 6" at 800/540 Hz, hi-hats and cymbal all six) and which
+    filter/envelope chain consumes the bus.  Velocity wires gain stages
+    only - wiring note.vel into the downstream band pass's vel pin
+    multiplies the cutoff (fc x vel) and drags the ~10 kHz band down the
+    harmonic ladder into the tonal range; that regression is documented in
+    the 808 gap analysis and must not be repeated.  No oscillator drifts,
+    and every note re-derives the same phases - the phase-locked chime
+    coloration is the accepted trade-off of the square approximation until
+    a pulse/duty mode lands on osc.
+
+  involved_nodes:
+    - type: osc
+      role: One static-mode bank square per bank voice; the six roles sit
+        at 205.3 / 304.4 / 369.6 / 522.7 / 540 / 800 Hz.
+    - type: add
+      role: Pairwise folding stage, one per extra bank member (N-1 adders
+        for N bank voices; five for the full six-oscillator bank).
+    - type: filter
+      role: Voice-specific band pass (or band pair with decay ladder)
+        consuming the finished bus; cutoff stays static.
+    - type: adsr
+      role: Percussion gate behind the band pass; its decay separates
+        closed tick from open wash from cymbal tail.
+    - type: gain
+      role: Voice/level trim and the only velocity-answering stage.
+    - type: output
+      role: Master summing endpoint (one input per gated branch).
+
+  involved_ports:
+    - node_role: Bank squares
+      port: out
+      role: Square into a free adder input, first pair directly (signal).
+    - node_role: Bank squares
+      port: note_in
+      role: Static voices keep the note wire from the MIDI source, as in
+        the cowbell patch; it carries no dynamics (frequency).
+    - node_role: Adder stages
+      port: in1, in2
+      role: Running bus so far plus the incoming bank member (signal).
+    - node_role: Adder stages
+      port: out
+      role: Widened bus into the next adder or the shared band pass (signal).
+    - node_role: Band pass
+      port: in
+      role: Receives the folded bank bus (signal).  Its vel pin stays
+        unwired (see relationships).
+    - node_role: Percussion gate
+      port: in, out
+      role: Gates the band into its trim gain (signal).
+    - node_role: Voice gains
+      port: vel
+      role: Note velocity for the loudness half of the accent (velocity).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input per gated branch (signal).
+
+  topology:
+    description: |
+      note.out -> osc-i.note_in (frequency) for every bank square, one wire
+      each.  Fold pairwise (osc-sum-bus shape): osc0.out -> add0.in1,
+      osc1.out -> add0.in2, add0.out -> add1.in1, osc2.out -> add1.in2,
+      ... last adder.out -> filter.in (signal).  A six-voice bank costs
+      exactly five adders.  From the bus the voice chain is free: one band
+      pass plus ADSR for a hat, or a fan-out into several band passes with
+      their own ADSR decay ladder plus a final high pass for the cymbal.
+      Every gated branch -> gain.in -> output.in_i (signal); gain.vel and
+      only gain.vel takes note.vel.  Filters, oscillators and bus stay
+      static per note.
+
+  parameters:
+    - name: bank frequencies
+      role: |
+        staticfreq per bank square, the Service-Notes values 205.3, 304.4,
+        369.6, 522.7, 540, 800 Hz (two of them trimmable on hardware).
+        Keep the exact ratios - the inharmonic ladder IS the voice; a
+        generic detuned square stack belongs to fscale-detune-unison
+        instead.  Voice subsets: cowbell activates 800/540 Hz only,
+        hats and cymbal all six.
+
+    - name: square approximation
+      role: |
+        waveform square stands in for the pulse bank until an osc
+        pulse / duty mode exists (808 gap analysis A3/P2.4).  The
+        pulse's narrow duty cycles are replaced by 50% squares, so the
+        spectral balance shifts slightly harmonic-ward; the six centre
+        frequencies stay faithful.
+
+    - name: downstream band passes and decay ladder
+      role: |
+        Shared band pass ~10 kHz with a 0.05 s gate for the closed hat,
+        ~0.45 s for the open hat (same bank, another envelope).  Cymbal:
+        band passes around 5.2 kHz and 9.4 kHz fanned out into three
+        gated branches whose decays ladder 0.35 / 0.65 / 1.25 s (fast
+        tick, low ring, long tail), then one shared high pass as the
+        TONE stage.  Resonance 0.4..0.55 keeps bands audible without
+        howling.
+
+    - name: voice trims and master level
+      role: |
+        gain factor 0..10 per branch into the bus/output; cymbal branches
+        run 2..2.5, hats 4..5 (band passes on square harmonics are level
+        hungry).  Master level <= 0.8.
+
+  relationships:
+    - name: bus-parent
+      description: |
+        Osc-sum-bus defines the pairwise adder folding itself (any
+        sources, one shared downstream sculptor).  This technique pins
+        the sources to the exact six-member 808 pulse bank and its
+        metallic percussion purpose; metal-hat-squares is the
+        ring-modulated two-square sibling, noise-metal-wash the diffuse
+        noise alternative.
+
+    - name: vel-needs-gain-only
+      description: |
+        FilterProcessor folds note.vel multiplicatively into the cutoff
+        (fc x vel, FilterProcessor.cpp:66-70).  On a ~10 kHz band pass
+        that drags the band down the harmonic ladder into the tonal
+        range at soft dynamics (documented 2026-10-01 revert).  This
+        technique therefore wires note.vel into gains only; the accent
+        answers with 808-accent-gain loudness, never with cutoff
+        movement.
+
+    - name: phase-lock-caveat
+      description: |
+        The bank renders a deterministic line spectrum with per-note
+        static phases and no drift - it reads tonal-chimey next to a
+        physical pulse bank (the 2026-10-01 gap-analysis note).
+        Accepted deliberately per the faithful-rebuild decision of
+        2026-10-02; a pulse/duty waveform mode on osc (P2.4) is the
+        clean cure, a per-note phase randomiser does not exist in the
+        format.
+
+    - name: shared-bank-duplication
+      description: |
+        The hardware shares one bank across cymbal/hats/cowbell; the
+        graph format has no cross-instrument bus, so every voice file
+        instantiates its own copy (six osc + five add per voice, within
+        osc <= 16 and add <= 8).  A kit-level shared bank is a host task
+        (gap analysis A6/P3).
+
+  perceptual_effects:
+    - deterministic inharmonic metallic cluster, pitch-stable across the kit
+    - cowbell chime from the 2-of-6 subset behind a narrow band pass
+    - closed tick and open wash from one bank with different envelopes
+    - cymbal spectrum that migrates through the decay ladder of its bands

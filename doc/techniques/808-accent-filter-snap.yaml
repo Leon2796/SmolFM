@@ -1,0 +1,59 @@
+technique:
+  name: 808-accent-filter-snap
+
+  idea: |
+    Velocity scales the filter cutoff, so an accented hit snaps open while
+    softer hits sit darker.  On an 808-style snare the noise burst through
+    the velocity-wired filter reproduces the snap: full cut on accents,
+    duller thud on ghost notes — the accent decides the brightness, the
+    noise envelope decides the length.
+
+  involved_nodes:
+    - type: note
+      role: MIDI source; feeds pitch, the accent velocity and (via an osc)
+            the triggered noise/voice.
+    - type: osc
+      role: Noise or percussive source.
+    - type: filter
+      role: Tone shaping stage; vel scales its cutoff per note.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Noise source
+      port: out
+      role: Signal into filter in (signal) and on to the output.
+    - node_role: MIDI source
+      port: vel
+      role: Velocity (0-1) into the filter vel input (velocity).
+
+  topology:
+    description: |
+      osc.out (noise/percussive) -> filter.in (signal).  note.vel ->
+      filter.vel (velocity).  filter.out -> output.in1 (signal).
+      cutoff_mod_in remains available for a separate envelope/LFO sweep —
+      it replaces the base cutoff before velocity scales it.
+
+  parameters:
+    - name: base cutoff
+      role: |
+        Static cutoff 20..20000 Hz = the accent's ceiling: velocity 1.0
+        plays the configured brightness, softer notes scale darker (toward
+        the 20 Hz floor, effectively silence of the highs).
+
+  relationships:
+    - name: accent-cutoff
+      description: |
+        Effective cutoff = clamp(fc * v, 20, 20000): velocity multiplies
+        the (possibly modulated) cutoff.  Unwired vel reads 1.0 —
+        sound-invariance for existing patches.
+    - name: 808-role
+      description: |
+        Emulates the snare-noise snap of accented hits.  With
+        808-accent-gain on the same layer, loudness and brightness accent
+        together like on the hardware.
+
+  perceptual_effects:
+    - snare-like snap that follows how hard the pad is hit
+    - ghost notes lose brightness first, keeping the rhythm readable
+    - brightness dynamics inside one patch layer, no extra FX stage
