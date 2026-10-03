@@ -100,14 +100,18 @@ struct SynthVoiceParameters
     std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delaySync;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delayDivision;
 
-    // Resonator parameters per instance (4 parameters per node): tune (Hz,
-    // static fallback), q (0..1), decay (t60 seconds) and the vel spread
+    // Resonator parameters per instance (6 parameters per node): tune (Hz,
+    // static fallback), q (0..1), decay (t60 seconds), the vel spread
     // (0.25..4; 1 = neutral — accent scales the decay time per the plan's
-    // pull-to-neutral pattern).
+    // pull-to-neutral pattern) and the internal strike pair (strikeLevel
+    // 0..2, strikeTime seconds; both default 0 = strike off, the
+    // byte-identical old behaviour — plan Phase 2).
     std::array<std::atomic<float>*, GraphNodeRegistry::maxResonators> resonatorTune;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxResonators> resonatorQ;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxResonators> resonatorDecay;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxResonators> resonatorVelSpread;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxResonators> resonatorStrikeLevel;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxResonators> resonatorStrikeTime;
     // Feedback (bounded cycle breaker) per instance (1 parameter per node).
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFeedbacks> feedbackAmount;
 

@@ -214,10 +214,11 @@ namespace
          && index >= 0 && index < GraphNodeRegistry::maxResonators
          && resonators[static_cast<size_t> (index)] != nullptr)
          {
-             if (portId == "in")        return &resonators[static_cast<size_t> (index)]->getInput();
-             if (portId == "tune")      return &resonators[static_cast<size_t> (index)]->getTuneInput();
-             if (portId == "q_mod_in")  return &resonators[static_cast<size_t> (index)]->getQModInput();
-             if (portId == "vel")       return &resonators[static_cast<size_t> (index)]->getVelInput();
+             if (portId == "in")         return &resonators[static_cast<size_t> (index)]->getInput();
+             if (portId == "tune")       return &resonators[static_cast<size_t> (index)]->getTuneInput();
+             if (portId == "q_mod_in")   return &resonators[static_cast<size_t> (index)]->getQModInput();
+             if (portId == "vel")        return &resonators[static_cast<size_t> (index)]->getVelInput();
+             if (portId == "strike_vel") return &resonators[static_cast<size_t> (index)]->getStrikeVelInput();
              return nullptr;
          }
 
@@ -572,10 +573,12 @@ void SynthVoice::buildGraph()
         // fed directly by earlier exciter chains or by a feedback entry.
         for (int i = 0; i < GraphNodeRegistry::maxResonators; ++i)
         {
-            auto r = std::make_unique<ResonatorProcessor> (parameters.resonatorTune     [static_cast<size_t> (i)],
-                                                           parameters.resonatorQ        [static_cast<size_t> (i)],
-                                                           parameters.resonatorDecay    [static_cast<size_t> (i)],
-                                                           parameters.resonatorVelSpread[static_cast<size_t> (i)]);
+            auto r = std::make_unique<ResonatorProcessor> (parameters.resonatorTune        [static_cast<size_t> (i)],
+                                                           parameters.resonatorQ           [static_cast<size_t> (i)],
+                                                           parameters.resonatorDecay       [static_cast<size_t> (i)],
+                                                           parameters.resonatorVelSpread   [static_cast<size_t> (i)],
+                                                           parameters.resonatorStrikeLevel [static_cast<size_t> (i)],
+                                                           parameters.resonatorStrikeTime  [static_cast<size_t> (i)]);
             resonators[static_cast<size_t> (i)] = r.get();
             graph.addProcessor (std::move (r));
         }
@@ -864,6 +867,7 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
             r->getTuneInput().disconnect();
             r->getQModInput().disconnect();
             r->getVelInput().disconnect();
+            r->getStrikeVelInput().disconnect();
             r->reset();
         }
 

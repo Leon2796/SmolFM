@@ -258,6 +258,20 @@
     </xs:restriction>
   </xs:simpleType>
 
+  <xs:simpleType name="StrikeLevelRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="2"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="StrikeTimeRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="0.2"/>
+    </xs:restriction>
+  </xs:simpleType>
+
   <xs:simpleType name="FeedbackAmountRangeType">
     <xs:restriction base="xs:float">
       <xs:minInclusive value="0"/>
@@ -586,13 +600,15 @@
   <xs:complexType name="ResonatorNodeType">
     <xs:annotation>
       <xs:appinfo xmlns="urn:smolfm:node-meta">
-        <purpose>Angeregter Resonator zweiter Ordnung (komplexes Polpaar): der Exciter-Eingang kippt Energie in den Resonanzmodus, das Netzwerk antwortet abklingend pseudo-sinusförmig mit tune als Resonanzfrequenz. Dekay ist die Polradius-Abklingzeit (keine überlagerte Hüllkurve); vel auf Dekay skaliert die Abklingzeit nach dem Spread-Muster. Lange Dekay = Ring-Quelle (BD/Toms/Congas/Claves), kurzer Dekay = Körperfilter (Snare-Bodies); derselbe Kern in zwei quantitativen Lagen. Die tune-Port-Verbindung überschreibt die statische tune (Key-Tracking bleibt patchbar: note -> fscale -> tune).</purpose>
+        <purpose>Angeregter Resonator zweiter Ordnung (komplexes Polpaar): der Exciter-Eingang kippt Energie in den Resonanzmodus, das Netzwerk antwortet abklingend pseudo-sinusförmig mit tune als Resonanzfrequenz. Dekay ist die Polradius-Abklingzeit (keine überlagerte Hüllkurve); vel auf Dekay skaliert die Abklingzeit nach dem Spread-Muster. Lange Dekay = Ring-Quelle (BD/Toms/Congas/Claves), kurzer Dekay = Körperfilter (Snare-Bodies); derselbe Kern in zwei quantitativen Lagen. Die tune-Port-Verbindung überschreibt die statische tune (Key-Tracking bleibt patchbar: note -> fscale -> tune). Interne Hieb (strikelevel/striketime, beide 0 = neutrale
+          Abwesenheit = das alte Verhalten): die Note zaehlt den Koerper selbst; der Pegel folgt dem ROH-Anschluss strike_vel direkt (Kraftgesetz Energie vel^2).</purpose>
         <docReference>doc/processors/ResonatorProcessor.md</docReference>
         <inputs>
           <port id="in" type="signal"/>
           <port id="tune" type="frequency"/>
           <port id="q_mod_in" type="signal"/>
           <port id="vel" type="velocity"/>
+          <port id="strike_vel" type="velocity"/>
         </inputs>
         <outputs>
           <port id="out" type="signal"/>
@@ -605,6 +621,8 @@
         <xs:attribute name="tune" type="ResonatorTuneRangeType" use="optional"/>
         <xs:attribute name="q" type="ResonatorQRangeType" use="optional"/>
         <xs:attribute name="decay" type="ResonatorDecayRangeType" use="optional"/>
+        <xs:attribute name="strikelevel" type="StrikeLevelRangeType" use="optional"/>
+        <xs:attribute name="striketime" type="StrikeTimeRangeType" use="optional"/>
         <xs:attribute name="spread" type="VelSpreadRangeType" use="optional"/>
       </xs:extension>
     </xs:complexContent>

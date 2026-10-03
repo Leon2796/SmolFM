@@ -149,10 +149,14 @@ namespace
             const auto qId      = GraphNodeRegistry::resonatorQParameterIdFor         (nodeId);
             const auto decayId  = GraphNodeRegistry::resonatorDecayParameterIdFor     (nodeId);
             const auto spreadId = GraphNodeRegistry::resonatorVelSpreadParameterIdFor (nodeId);
-            if (tuneId.isNotEmpty())   specs.add ({ "tune",   tuneId });
-            if (qId.isNotEmpty())      specs.add ({ "q",      qId });
-            if (decayId.isNotEmpty())  specs.add ({ "decay",  decayId });
-            if (spreadId.isNotEmpty()) specs.add ({ "spread", spreadId });
+            const auto strikeLvlId = GraphNodeRegistry::resonatorStrikeLevelParameterIdFor (nodeId);
+            const auto strikeTmId  = GraphNodeRegistry::resonatorStrikeTimeParameterIdFor  (nodeId);
+            if (tuneId.isNotEmpty())      specs.add ({ "tune",        tuneId });
+            if (qId.isNotEmpty())         specs.add ({ "q",           qId });
+            if (decayId.isNotEmpty())     specs.add ({ "decay",       decayId });
+            if (spreadId.isNotEmpty())    specs.add ({ "spread",      spreadId });
+            if (strikeLvlId.isNotEmpty()) specs.add ({ "strikelevel", strikeLvlId });
+            if (strikeTmId.isNotEmpty())  specs.add ({ "striketime",  strikeTmId });
         }
         else if (baseId == "feedback")
         {

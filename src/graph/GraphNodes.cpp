@@ -312,9 +312,9 @@ namespace
 
             resonator.outputType = PortType::signal;
 
-            resonator.inputPortIds = { "in", "tune", "q_mod_in", "vel" };
+            resonator.inputPortIds = { "in", "tune", "q_mod_in", "vel", "strike_vel" };
 
-            resonator.inputTypes = { PortType::signal, PortType::frequency, PortType::signal, PortType::velocity };
+            resonator.inputTypes = { PortType::signal, PortType::frequency, PortType::signal, PortType::velocity, PortType::velocity };
 
             resonator.tuneParameterTemplate  = "resonator%Tune";
 
@@ -917,6 +917,24 @@ juce::String GraphNodeRegistry::resonatorVelSpreadParameterIdFor (const juce::St
     if (spec == nullptr || spec->decayParameterTemplate.isEmpty())
         return {};
     return withIndex (spec->decayParameterTemplate, indexOf (nodeId)).replace ("Decay", "VelSpread");
+}
+
+juce::String GraphNodeRegistry::resonatorStrikeLevelParameterIdFor (const juce::String& nodeId)
+{
+    // StrikeLevel shares the decay template prefix ("resonator%Decay") via
+    // the same replace trick as the VelSpread pair.
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->decayParameterTemplate.isEmpty())
+        return {};
+    return withIndex (spec->decayParameterTemplate, indexOf (nodeId)).replace ("Decay", "StrikeLevel");
+}
+
+juce::String GraphNodeRegistry::resonatorStrikeTimeParameterIdFor (const juce::String& nodeId)
+{
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->decayParameterTemplate.isEmpty())
+        return {};
+    return withIndex (spec->decayParameterTemplate, indexOf (nodeId)).replace ("Decay", "StrikeTime");
 }
 
 juce::String GraphNodeRegistry::freqScaleIntervalParameterIdFor (const juce::String& nodeId)

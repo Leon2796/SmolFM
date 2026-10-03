@@ -1,0 +1,27 @@
+Ja — **und zwar inzwischen ziemlich genau das, was du meinst: nicht einfach 808-Samples, sondern die einzelnen TR-808-Stimmen synthetisch bzw. schaltungsbasiert nachgebaut, mit veränderbaren Funktionen.**
+
+Ein paar interessante Projekte:
+
+* **NTR-808** – Open-Source-Versuch einer kompletten TR-808-Emulation. Die einzelnen Stimmen sind synthetisiert und haben eigene Parameter wie **Gain, Tone, Tuning, Decay**, bei Cowbell z. B. zusätzlich **Buzz und Phase**. ([GitHub][1])
+* **WDR-8** – besonders interessant, wenn du es **technisch/originalgetreu** meinst. Die Entwickler modellieren die 808-Schaltungen mit **Wave Digital Filters (WDF)**, also nicht einfach „Kick = Sinus + Pitch Envelope“. Bei der Snare werden beispielsweise die Resonatoren und die Noise-Schaltung separat modelliert. ([GitHub][2])
+* **Schwung 8W8** – geht noch stärker in Richtung **Circuit Modeling**. Die Entwickler bilden konkrete Schaltungsteile der 808 nach, einschließlich des gemeinsamen Metal-Oszillator-Banks für Cowbell, Hats und Cymbal. Dazu gibt es moderne Parameter wie Tune, Decay, Drive usw. ([GitHub][3])
+* **Voltage 80 / Voltage Drums** – ebenfalls sehr interessant: 16 Stimmen werden komponenten-/schaltungsbasiert modelliert. Beim Kick wird beispielsweise der originale Bridged-T-Resonator samt Pulse-Shaper nachgebildet; sogar die Pitch-Entwicklung während des Decays wird berücksichtigt. ([Voltage Drums][4])
+
+Und natürlich gibt es **Rolands eigene TR-808 Software**. Die verwendet Rolands **ACB (Analog Circuit Behavior)** und ist laut Roland anhand von Original-Hardware, Schaltplänen und historischen Daten auf Schaltungsebene modelliert. ([Roland][5])
+
+### Wenn du mit „originalgetreu“ wirklich das hier meinst:
+
+> **„Ich nehme z. B. die 808 Bassdrum und möchte nicht nur einen fertigen Sample-Sound haben, sondern die eigentliche Klangerzeugung mit ihren Oszillatoren, Transistoren, Filtern, Hüllkurven, Dioden usw. rekonstruieren und die Parameter verändern können.“**
+
+Dann sind **WDR-8, Schwung 8W8 und Voltage 80** genau in dieser Richtung. Das ist wesentlich interessanter als die üblichen „808 Synth“-Plugins.
+
+Die originale 808 ist nämlich selbst **kein Sample-ROM-Instrument**. Roland hat die Sounds analog erzeugt; z. B. besteht die Kick aus einem resonanten Bridged-T-Netzwerk plus Attack-/Pulse-Schaltung, die Hi-Hats aus einem Verbund mehrerer verstimmter Oszillatoren usw. ([Wikipedia][6])
+
+**Wenn du willst, kann ich dir auch gezielt die Projekte raussuchen, die wirklich *jede einzelne 808-Stimme aus der Originalschaltung* synthetisieren und als VST/CLAP/AU nutzbar sind – inklusive Download und welche Parameter jeweils editierbar sind.** Das wäre vermutlich genau das, was du suchst.
+
+[1]: https://github.com/NielsTriple/NTR-808?utm_source=chatgpt.com "GitHub - NielsTriple/NTR-808: A full emulation (or at least a well attempted try) of the infamous Roland TR-808. · GitHub"
+[2]: https://github.com/Simon-L/WDR-8-rack?utm_source=chatgpt.com "GitHub - Simon-L/WDR-8-rack: WDR-8: Wave digital filters models of the TR-808 instruments · GitHub"
+[3]: https://github.com/athousanddetails/schwung-8W8?utm_source=chatgpt.com "GitHub - athousanddetails/schwung-8W8 · GitHub"
+[4]: https://voltagedrums.com/?utm_source=chatgpt.com "Voltage Drums: Three circuit-modelled instruments"
+[5]: https://www.roland.com/de/products/rc_tr-808/?utm_source=chatgpt.com "Roland - TR-808 | Software Rhythm Composer"
+[6]: https://de.wikipedia.org/wiki/Roland_TR-808?utm_source=chatgpt.com "Roland TR-808"

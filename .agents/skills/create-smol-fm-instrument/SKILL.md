@@ -225,7 +225,7 @@ Signal kinds: `frequency`, `signal` and `velocity`; a wire connects like with li
 | `gain`    | `in`, `factor_mod_in` (signal), `vel` (velocity)  | `out` (signal)       | 16 |
 | `shape`   | `in`, `drive_mod_in` (signal), `vel` (velocity)   | `out` (signal)       | 16 |
 | `filter`  | `in` (signal), `cutoff_mod_in` (frequency), `resonance_mod_in` (signal), `vel` (velocity) | `out` (signal) | 16 |
-| `resonator` | `in` (exciter, signal), `tune` (frequency, overrides static), `q_mod_in` (signal), `vel` (velocity → decay) | `out` (signal) | 8 |
+| `resonator` | `in` (exciter, signal), `tune` (frequency, overrides static), `q_mod_in` (signal), `vel` (velocity → decay), `strike_vel` (velocity, raw accent for the internal strike) | `out` (signal) | 8 |
 | `feedback` | `in`, `fb_in` (signal) | `out` (signal) | 4 |
 | `delay`   | `in`, `time_mod_in` (signal)    | `out` (signal)       | 16 |
 | `ring`    | `in1`, `in2` (signal)           | `out` (signal)       | 8 |
@@ -236,7 +236,8 @@ Signal kinds: `frequency`, `signal` and `velocity`; a wire connects like with li
 | `add`     | `in1`, `in2` (signal)           | `out` (signal)       | 8 |
 
 Attribute ranges live in the xsd simpleTypes (FM/AM amounts, envelope times,
-cutoff 20–20000 Hz, delay 1–2000 ms, feedback ≤ 0.95, master level 0–1) —
+cutoff 20–20000 Hz, delay 1–2000 ms, feedback ≤ 0.95, master level 0–1,
+strike level 0–2, strike time 0–0.2 s) —
 never write a value outside them.
 
 ## Validation checklist (all must pass)

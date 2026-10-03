@@ -156,6 +156,8 @@ for a node type are ignored by the parsers.
 - `q`: float, 0..1 (selectivity/bandwidth of the coupling stage; 0.5 ≙ Q ≈ 1)
 - `decay`: float, 0.01..10 s (t60 of the ring: the pole radius' decay to -60 dB; vel port scales it per `spread`)
 - `spread`: float, 0.25..4 (vel-to-decay spread, t_eff = t · (1 + v·(spread − 1)); default 1 = neutral, accented hits ring longer)
+- `strikelevel`: float, 0..2 (peak factor of the internal body strike; default 0 = strike off = byte-identical to the old behaviour)
+- `striketime`: float, 0..0.2 s (window length of the internal strike; default 0 = off). The strike ignites the body at every note; its peak follows the RAW accent on the `strike_vel` port (no curve inside the node), so the injected energy scales with vel². The strike enters the coupling stage's input (x_eff = in + strike) and never the integrator states, so the retrigger contract (tail kept, energy adds) holds; unwired `strike_vel` defaults to 1.0 (neutral).
 
 ### Feedback (feedback)
 - `amount`: float, 0..0.95 (per-pass damping of the recirculated loop, out = in + amount·fb_in; 0 = transparent pass-through; the cycle inherently carries 1 sample of delay)

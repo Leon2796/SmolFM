@@ -35,12 +35,16 @@ namespace
 ResonatorProcessor::ResonatorProcessor (std::atomic<float>* tuneParameter,
                                         std::atomic<float>* qParameter,
                                         std::atomic<float>* decayParameter,
-                                        std::atomic<float>* velSpreadParameter)
+                                        std::atomic<float>* velSpreadParameter,
+                                        std::atomic<float>* strikeLevelParameter,
+                                        std::atomic<float>* strikeTimeParameter)
     : Processor (ProcessorRole::generic),
       tune (tuneParameter),
       q (qParameter),
       decay (decayParameter),
-      velSpread (velSpreadParameter)
+      velSpread (velSpreadParameter),
+      strikeLevel (strikeLevelParameter),
+      strikeTime (strikeTimeParameter)
 {
     input.setDefaultValue (0.0f);
 
@@ -53,6 +57,11 @@ ResonatorProcessor::ResonatorProcessor (std::atomic<float>* tuneParameter,
     // Unwired vel input is neutral: spread is multiplied by 1.0, the decay
     // stays exactly as configured (sound-invariance).
     velIn.setDefaultValue (1.0f);
+
+    // Unwired strike-accent line defaults to 1.0: the strike then scales
+    // with its captured knob alone (the same neutral default as the vel
+    // port; the accent stays optional).
+    strikeVel.setDefaultValue (1.0f);
 }
 
 void ResonatorProcessor::prepare (double newSampleRate)
@@ -66,6 +75,28 @@ void ResonatorProcessor::startNote()
     // Keep the tail: a real body retriggers while it still rings and the
     // new excitation adds onto the stored energy.  Only a new patch clears
     // the state (see reset()).
+
+    // Internal strike (plan Phase 2, "resonator-simplification idea.md"
+    // §9.2): capture the strike knobs at the hit — the AdsrProcessor
+    // precedent of reading parameters in startNote()
+    // (doc/processors/AdsrProcessor.md:69).  The accent value itself is
+    // read per sample in processSample(): at this exact call the vel-ports
+    // still carry the previous tick's frame, so a start-time capture would
+    // lag one hit behind.  The line is stable for the whole hit, so the
+    // per-sample read behaves like a capture at the hit.  With either knob
+    // at 0 (the defaults) the strike stays inactive and the node renders
+    // byte-identically to the pre-strike behaviour.
+    const float level = strikeLevel != nullptr ? strikeLevel->load() : 0.0f;
+    const float time  = strikeTime  != nullptr ? strikeTime->load()  : 0.0f;
+
+    strikeActive = level > 0.0f && time > 0.0f;
+    strikePeak = level;
+    strikeWindowSamples = strikeActive
+        ? juce::jlimit (1.0f, 0.2f * (float) sampleRate + 1.0f,
+                        std::round (time * (float) sampleRate))
+        : 0.0f;
+    strikeElapsed = 0.0f;
+    strikePhase = 0.0;
 }
 
 void ResonatorProcessor::reset() noexcept
@@ -77,6 +108,11 @@ void ResonatorProcessor::reset() noexcept
     ic2A = StereoFrame {};
     ic1B = StereoFrame {};
     ic2B = StereoFrame {};
+    strikeActive = false;
+    strikeWindowSamples = 0.0f;
+    strikeElapsed = 0.0f;
+    strikePhase = 0.0;
+    strikePeak = 0.0f;
     tailPeak = 0.0f;
 }
 
@@ -138,11 +174,38 @@ StereoFrame ResonatorProcessor::processSample()
 
     const StereoFrame x = input.getSample();
 
+    // Internal strike (plan Phase 2): enters Stage A's input
+    // (x_eff = in + strike) and never the integrator states, so the tail
+    // keeps decaying and a retrigger adds onto the stored energy.  The
+    // contribution is a sine at the running body rate f0 — the phase advances
+    // by the current f0 every tick, so a tune glide transfers coherently —
+    // under a linear window falling from full level to silence across the
+    // captured window.  Peak factor = captured knob times the RAW accent
+    // read per sample from the strike_vel line; no sqrt curve in here, so
+    // amplitude follows the accent directly and the injected energy scales
+    // with vel² (plan Phase 3 in the same move; the patch-side accent chain
+    // serves its own consumers and must not double-curve).  Both strike
+    // knobs at their defaults (0) keep this whole block dead: byte-identical
+    // output — the neutrality contract of the vel port applies unchanged.
+    StereoFrame xEff = x;
+    if (strikeActive && strikeElapsed < strikeWindowSamples)
+    {
+        const StereoFrame strikeAccent = strikeVel.getSample();
+        const float accent = juce::jlimit (0.0f, 1.0f, 0.5f * (strikeAccent.l + strikeAccent.r));
+        const float window = 1.0f - strikeElapsed / strikeWindowSamples;
+        const float strike = strikePeak * accent * window
+                           * (float) std::sin (strikePhase);
+        xEff.l += strike;
+        xEff.r += strike;
+        strikePhase += juce::MathConstants<double>::twoPi * (double) f0 / sampleRate;
+        strikeElapsed += 1.0f;
+    }
+
     // Stage A: the exciter couples into the mode (band-limited, tinted).
     const StereoFrame e
     {
-        tptBandpassStep (x.l, a1A, a2A, a3A, ic1A.l, ic2A.l),
-        tptBandpassStep (x.r, a1A, a2A, a3A, ic1A.r, ic2A.r)
+        tptBandpassStep (xEff.l, a1A, a2A, a3A, ic1A.l, ic2A.l),
+        tptBandpassStep (xEff.r, a1A, a2A, a3A, ic1A.r, ic2A.r)
     };
 
     // Stage B: the mode releases its stored energy as the decaying

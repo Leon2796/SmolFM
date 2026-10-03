@@ -10,6 +10,15 @@ die Ring-Quelle (BD, Toms, Congas, Claves), mit kurzem Dekay der Körperfilter
 Knoten mit einem `out` (die zweite Variante aus der Plan-Diskussion bleibt
 offen).
 
+Seit dem 03.10.2026 (Plan Phase 2, `resonator-simplification idea.md` §9.2) kann
+der Körper auch SELBST zünden: der interne Hieb (`strikeLevel`/`strikeTime`, beide
+Default 0 = byte-identisch zum alten Verhalten) kippt bei jedem Anschlag eine
+Sinus-Phase auf die laufende Körperfrequenz in die Kopplungsstufe (`x_eff = in +
+strike`) — niemals in die Integrator-Zustände, dadurch bleibt der
+Retrigger-Vertrag unverändert. Der Hieb liest seine Anschlagstärke ROH über den
+eigenen `strike_vel`-Anschluss (Amplitude ∝ vel → Energie ∝ vel²; Plan Phase 3
+im selben Zug).
+
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
 Tabelle 1a: Instanzen.
@@ -26,6 +35,7 @@ Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Para
 | `tune` | Input | `frequency` | unverbunden: der statische Tune-Regler gilt | **Live-Stimmung.** Verbunden IST der Hz-Wert die Resonanzfrequenz (20–8000 Hz, kein Offset) — Key-Tracking (note → fscale → tune) und F-ADSR-Dives gliden den Körper hoch/runter, ohne eigenen Quirk. | `InputPort tuneIn` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
 | `q_mod_in` | Input | `signal` | liest 0 → das statische q gilt (neutral) | **Live-Schärfe.** Multipliziert die eingestellte Resonanz-Q ($q\cdot(1+m)$, auf 0–1 geclampt) — wie eine Faust, die die Saite enger greift oder löst: eng = spitz-klingend, breit = hohl-dunkel. | `InputPort qMod` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
 | `vel` | Input | `velocity` | liest 1.0 (Port-Default) + Spread 1 → byteidentisch neutral | **Abklingzeit vom Anschlag.** Anschlagstärke dehnt die Dekay nach dem 808-Gesetz „Decay über VIN": $t_{\text{eff}} = t\cdot(1+v\cdot(\text{spread}-1))$ — harte Schläge klingen länger. | `InputPort velIn` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
+| `strike_vel` | Input | `velocity` | liest 1.0 (Port-Default) → der Hieb skaliert nur mit seinem Regler | **Roh-Anschlagskraft für den internen Hieb.** Direkt aus der Spielstärke, OHNE die vsc-Kurve davor — der Hieb rechnet Amplitude ∝ vel (Energie ∝ vel²); die geteilte sqrt-Akzentkette (Dekay-Streuung/Gain/Kurve) bleibt unangetastet, keine Doppelt-Krümmung (Plan §9.3). | `InputPort strikeVel` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
 | `out` | Output | `signal` | — | **Der abklingende Ring.** Die pseudo-sinusförmige Antwort des Körpers — der Klang, den BD, Toms, Congas und Claves singen; Retrigger kippt neue Energie in den noch klingenden Schwanz (kein Neustart, sondern Summierung). | `OutputPort output` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
 
 Tabelle 1c: Daraus folgende echte Parameter (APVTS).
@@ -36,6 +46,8 @@ Tabelle 1c: Daraus folgende echte Parameter (APVTS).
 | Q | `resonator<N>Q` | Float, 0–1, Default 0.5 (≙ $Q\approx1$) | Die Schärfe des Rings (Breite der Kopplungsstufe): hoher Wert singt wie eine scharf gestimmte Saite (schmal, spitzer Ton), niedriger vibriert wie ein hohler Holzkasten (breit, dumpf). | `std::atomic<float>* q` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
 | Decay | `resonator<N>Decay` | Float, 0.01–10 s (skew 0.5), Default 0.3 (t60) | Die Nachklingzeit (t60) — wie lange der Körper weiterschwingt, bevor Ruhe einkehrt; der Polradius, keine aufgelegte Hüllkurve. | `std::atomic<float>* decay` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
 | Vel Spread | `resonator<N>VelSpread` | Float, 0.25–4, Default 1 (neutral) | Der Dehnfaktor der Dekay für Anschläge: 1 = alle Anschläge klingen gleich lang, 4 = harte Anschläge klingen bis zu viermal länger nach (das Anschlags-Gesetz der 808-Maschine). | `std::atomic<float>* velSpread` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
+| Strike Level | `resonator<N>StrikeLevel` | Float, 0–2, Default 0 (Hieb aus) | Der Klangstoß des Körpers selbst: bei jedem Anschlag zündet der Körper seine Attack-Energie intern — der Peak-Faktor folgt DIREKT der Anschlagstärke auf `strike_vel` (keine Kurve im Knoten; Energie ∝ vel², Plan §9.3). 0 = Hieb aus = das alte, byte-identische Verhalten (Plan Phase 2, §9.2). | `std::atomic<float>* strikeLevel` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
+| Strike Time | `resonator<N>StrikeTime` | Float, 0–0.2 s, Default 0 (Hieb aus) | Die Fensterlänge des internen Hiebs — Sinus auf der laufenden Körperfrequenz, lineares Abklingfenster von vollem Pegel zu Stille; Phasenfortschritt folgt f0 pro Sample (koherent auch bei Tune-Glides). | `std::atomic<float>* strikeTime` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
 
 `<N>` = Instanzindex 0–7.
 
@@ -91,13 +103,28 @@ ein Dauerton bei $f_0$ passiert mit Gain ≈ 1). Mit $\tau = t_{60}/\ln 1000$
 gilt $A(t) = A_0 e^{-t/\tau}$ — Dekay ist der Polradius, und hohe Q und langer
 Ring sind dieselbe Zahl ($Q \approx \pi f_0 \tau$).
 
+Der interne Hieb (Plan Phase 2, §9.2) addiert pro Sample auf den
+Kopplungs-Eingang:
+
+$$x_{\text{eff}} = x_n + L\cdot a\cdot w\cdot\sin\varphi, \qquad w = 1 - \frac{n_i}{N_w}, \qquad \varphi \leftarrow \varphi + \frac{2\pi f_0}{f_s}$$
+
+mit $L$ = Strike-Level (beim Anschlag erfasst, `startNote()`), $a$ = roher
+Anschlagswert (`strike_vel`, per Sample, 0–1), $N_w$ = Fensterlänge in Samples
+(Strike-Time × $f_s$) und Fensterfortschritt $n_i\in[0,N_w]$ (Fenster $w$: 1 → 0).
+Amplitude ∝ vel heißt: die eingespeiste Energie skaliert mit vel² (Plan §9.3).
+
 Spezialfälle:
-- `in` unverbunden (0): beide Stufen bleiben still — der Knoten ist inert.
+- `in` unverbunden (0): beide Stufen bleiben still — der Knoten ist inert (mit
+  aktivem Hieb zündet der Körper trotzdem: die Note allein reicht).
 - `q = 1`: $k_A \to 0.02$, Kopplungsstufe nahe Selbstresonanz (stabil, wie
   `filter` bei Resonance 1).
+- `strikeLevel = 0` oder `strikeTime = 0` (beides Default): der Hieb-Zweig
+  bleibt toter Code — die Ausgabe ist byte-identisch (derselbe
+  Neutralitäts-Vertrag wie der `vel`-Port).
 - `startNote()` hält den Schwanz (Retrigger kippt Energie in den noch
-  schwingenden Körper); `reset()` (neuer Patch / Rate-Wechsel) löscht die
-  Zustände und `tailPeak`.
+  schwingenden Körper) und startet das Hieb-Fenster neu, sodass deren Energien
+  sich im Polpaar addieren; `reset()` (neuer Patch / Rate-Wechsel) löscht
+  die Zustände und den Hieb-Zustand.
 
 ## Abschnitt 4 — Symbol ↔ Code
 
@@ -112,3 +139,5 @@ Spezialfälle:
 | TPT-Schritt | `tptBandpassStep (x.l, a1A, a2A, a3A, ic1A.l, ic2A.l)` | [ResonatorProcessor.cpp](../../src/processors/ResonatorProcessor.cpp) | Stufe A je Kanal, dann Stufe B ×`kB` |
 | $y_n$ | `output.setSample(y)` | [ResonatorProcessor.cpp](../../src/processors/ResonatorProcessor.cpp) | Ring + getöntes Signal auf `out` |
 | Tail-Energie | `tailPeak`, `hasEnergy()` | [ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) | Peak-Follower; Voice-Lifetime (`SynthVoice::hasReasonToLive`) |
+| Hieb-Anschlag (erfassen) | `startNote()` → `strikeLevel->load()`, `strikeTime->load()` → `strikeActive`, `strikePeak`, `strikeWindowSamples` | [ResonatorProcessor.cpp](../../src/processors/ResonatorProcessor.cpp) | Parameter beim Anschlag gelesen (AdsrProcessor-Präzedenz); der Anschlagswert selbst läuft per Sample über `strikeVel.getSample()` — der Anschlags-Port hält beim Start-Zeittakt noch den Vorher-Tick |
+| Hieb-Sample | `sin(strikePhase) · Fenster · Peak · Anschlag` → `xEff` | [ResonatorProcessor.cpp](../../src/processors/ResonatorProcessor.cpp) | $x_{\text{eff}} = x + \text{Hieb}$ in Stufe A; Fenster 1→0; Phase folgt $f_0$ |

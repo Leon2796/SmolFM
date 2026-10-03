@@ -136,10 +136,12 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxResonators; ++i)
     {
         const juce::String num (i);
-        voiceParameters.resonatorTune     [static_cast<size_t> (i)] = parameters.getRawParameterValue ("resonator" + num + "Tune");
-        voiceParameters.resonatorQ        [static_cast<size_t> (i)] = parameters.getRawParameterValue ("resonator" + num + "Q");
-        voiceParameters.resonatorDecay    [static_cast<size_t> (i)] = parameters.getRawParameterValue ("resonator" + num + "Decay");
-        voiceParameters.resonatorVelSpread[static_cast<size_t> (i)] = parameters.getRawParameterValue ("resonator" + num + "VelSpread");
+        voiceParameters.resonatorTune        [static_cast<size_t> (i)] = parameters.getRawParameterValue ("resonator" + num + "Tune");
+        voiceParameters.resonatorQ           [static_cast<size_t> (i)] = parameters.getRawParameterValue ("resonator" + num + "Q");
+        voiceParameters.resonatorDecay       [static_cast<size_t> (i)] = parameters.getRawParameterValue ("resonator" + num + "Decay");
+        voiceParameters.resonatorVelSpread   [static_cast<size_t> (i)] = parameters.getRawParameterValue ("resonator" + num + "VelSpread");
+        voiceParameters.resonatorStrikeLevel [static_cast<size_t> (i)] = parameters.getRawParameterValue ("resonator" + num + "StrikeLevel");
+        voiceParameters.resonatorStrikeTime  [static_cast<size_t> (i)] = parameters.getRawParameterValue ("resonator" + num + "StrikeTime");
     }
 
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxFeedbacks; ++i)
@@ -629,10 +631,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     }
 
     // -- Resonator pool --------------------------------------------------------
-    // Four parameters per instance: static tune (20-8000 Hz, log), Q (0-1),
-    // decay (t60 in seconds, 0.01-10) and the vel spread (0.25-4, 1 =
-    // neutral).  The tune port overrides the static value when connected;
-    // vel scales the decay time per the plan's pull-to-neutral pattern
+    // Six parameters per instance: static tune (20-8000 Hz, log), Q (0-1),
+    // decay (t60 in seconds, 0.01-10), the vel spread (0.25-4, 1 =
+    // neutral) and the internal strike pair (strikeLevel 0-2 and
+    // strikeTime 0-0.2 s, both defaulting to 0 = strike off = the
+    // byte-identical old behaviour; plan Phase 2, §9.2).  The tune port
+    // overrides the static value when connected; vel scales the decay
+    // time per the plan's pull-to-neutral pattern
     // t_eff = t * (1 + v * (spread - 1)) — accented hits ring longer.
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxResonators; ++i)
     {
@@ -643,6 +648,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         // loader silently drops the value.
         jassert (smolfm::GraphNodeRegistry::resonatorTuneParameterIdFor  ("resonator" + num) == "resonator" + num + "Tune");
         jassert (smolfm::GraphNodeRegistry::resonatorDecayParameterIdFor ("resonator" + num) == "resonator" + num + "Decay");
+        jassert (smolfm::GraphNodeRegistry::resonatorStrikeLevelParameterIdFor ("resonator" + num) == "resonator" + num + "StrikeLevel");
+        jassert (smolfm::GraphNodeRegistry::resonatorStrikeTimeParameterIdFor ("resonator" + num) == "resonator" + num + "StrikeTime");
 
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "resonator" + num + "Tune", "Resonator " + num + " Tune",
@@ -659,6 +666,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "resonator" + num + "VelSpread", "Resonator " + num + " Vel Spread",
             juce::NormalisableRange<float> (0.25f, 4.0f), 1.0f));
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "resonator" + num + "StrikeLevel", "Resonator " + num + " Strike Level",
+            juce::NormalisableRange<float> (0.0f, 2.0f), 0.0f));
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "resonator" + num + "StrikeTime", "Resonator " + num + " Strike Time",
+            juce::NormalisableRange<float> (0.0f, 0.2f, 0.0005f), 0.0f));
     }
 
     // -- Feedback pool (bounded cycle breakers) ---------------------------------

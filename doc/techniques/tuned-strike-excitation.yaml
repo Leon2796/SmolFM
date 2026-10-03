@@ -123,6 +123,21 @@ technique:
         pair that scales randomness instead of abolishing it.  Not a
         duplicate: body-strike documents the body topology, this documents
         the strike.
+    - name: engine-side (03.10.2026)
+      description: |
+        Phase 2/3 landed IN the node: the internal body strike
+        (strikelevel/striketime, defaults 0 = byte-identical off) enters the
+        coupling stage's input (x_eff = in + strike, never the integrator
+        states), reads the raw accent on the new strike_vel port (amplitude
+        ∝ vel → energy ∝ vel², no curve inside the node, the shared vsc
+        chain untouched).  The tr808-bass-drum patch therefore dropped its
+        noise-click path (osc0/adsr0/gain1/add0) AND the blend pair: the
+        strike level was calibrated by the graph probe to 0.4077 (the old
+        x0.5 grain's ring share), strike window 8 ms mirrors the old gate.
+        The patches' sine impulse (osc1/adsr1/gain3 ×2) still rides the
+        bridge as the tuned-strike rute; this technique's blend pair
+        remains available patch-side wherever the noise garnish is wanted
+        (Farbe, never the energy channel).
     - name: reference-exciters
       description: |
         driftbox's tom/conga = sine body plus noise head (HP 600, 30 ms,

@@ -173,10 +173,12 @@ namespace
     {
         return std::make_unique<gui::ResonatorComponent> (
             apvts,
-            smolfm::GraphNodeRegistry::resonatorTuneParameterIdFor      (instanceId),
-            smolfm::GraphNodeRegistry::resonatorQParameterIdFor         (instanceId),
-            smolfm::GraphNodeRegistry::resonatorDecayParameterIdFor     (instanceId),
-            smolfm::GraphNodeRegistry::resonatorVelSpreadParameterIdFor (instanceId));
+            smolfm::GraphNodeRegistry::resonatorTuneParameterIdFor         (instanceId),
+            smolfm::GraphNodeRegistry::resonatorQParameterIdFor            (instanceId),
+            smolfm::GraphNodeRegistry::resonatorDecayParameterIdFor        (instanceId),
+            smolfm::GraphNodeRegistry::resonatorVelSpreadParameterIdFor    (instanceId),
+            smolfm::GraphNodeRegistry::resonatorStrikeLevelParameterIdFor  (instanceId),
+            smolfm::GraphNodeRegistry::resonatorStrikeTimeParameterIdFor   (instanceId));
     }
 
     std::unique_ptr<juce::Component> makeFeedbackContent (const juce::String& instanceId,

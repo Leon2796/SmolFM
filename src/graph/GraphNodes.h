@@ -134,9 +134,10 @@ struct NodeSpec
     juce::String cutoffParameterTemplate;     // "filter%Cutoff" style prefix
     juce::String resonanceParameterTemplate;  // "filter%Resonance" style prefix
 
-    // Extra templates for the resonator node.  VelSpread shares the decay
-    // template prefix via the replace trick (freqScaleInterval precedent):
-    // "resonator%Decay" -> "resonator<N>VelSpread".
+    // Extra templates for the resonator node.  VelSpread, StrikeLevel and
+    // StrikeTime share the decay template prefix via the replace trick
+    // (freqScaleInterval precedent):
+    // "resonator%Decay" -> "resonator<N>VelSpread" (and the Strike pair).
     juce::String tuneParameterTemplate;       // "resonator%Tune" style prefix
     juce::String qParameterTemplate;          // "resonator%Q" style prefix
     juce::String decayParameterTemplate;      // "resonator%Decay" style prefix
@@ -260,6 +261,8 @@ public:
     static juce::String resonatorQParameterIdFor      (const juce::String& nodeId);
     static juce::String resonatorDecayParameterIdFor  (const juce::String& nodeId);
     static juce::String resonatorVelSpreadParameterIdFor (const juce::String& nodeId);
+    static juce::String resonatorStrikeLevelParameterIdFor (const juce::String& nodeId);
+    static juce::String resonatorStrikeTimeParameterIdFor  (const juce::String& nodeId);
 
     // -- Port info -----------------------------------------------------------
 

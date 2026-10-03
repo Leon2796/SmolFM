@@ -901,7 +901,7 @@ namespace
         smolfm::OscillatorProcessor* oscPtr = osc.get();
         auto gain = std::make_unique<smolfm::GainProcessor> (&gate);
         smolfm::GainProcessor* gainPtr = gain.get();
-        auto res = std::make_unique<smolfm::ResonatorProcessor> (&tune, &q, &decay, &spread);
+        auto res = std::make_unique<smolfm::ResonatorProcessor> (&tune, &q, &decay, &spread, nullptr, nullptr);
         smolfm::ResonatorProcessor* resPtr = res.get();
 
         if (! oscPtr->getNoteInput().connect (notePtr->getOutput()))
@@ -1009,7 +1009,7 @@ namespace
             smolfm::OscillatorProcessor* oscPtr = osc.get();
             auto gain = std::make_unique<smolfm::GainProcessor> (&s.gate);
             smolfm::GainProcessor* gainPtr = gain.get();
-            auto res = std::make_unique<smolfm::ResonatorProcessor> (&s.tune, &s.q, &s.decay, &s.spread);
+            auto res = std::make_unique<smolfm::ResonatorProcessor> (&s.tune, &s.q, &s.decay, &s.spread, nullptr, nullptr);
             smolfm::ResonatorProcessor* resPtr = res.get();
 
             if (! oscPtr->getNoteInput().connect (notePtr->getOutput()))
@@ -1177,6 +1177,602 @@ namespace
 
         return { true, "filter mode id resolves to the APVTS id (filter0Mode)" };
     }
+
+    // TEMP diagnostic (user report: waveshaper shapes/drive feel unapplied,
+    // drive barely audible).  Measures the out peak of a 0.37-amplitude sine
+    // (the bass drum ring's measured level) through the waveshaper for a
+    // grid of shape x drive x velocity.  No assertions — the table IS the
+    // answer.
+    TestResult runWaveshaperTransferTable()
+    {
+        std::string table = "waveshaper transfer (0.37 sine, peak out):";
+        for (int shapeIndex : { 0, 1, 2 })
+        for (float driveValue : { 0.05f, 0.25f })
+        for (float v : { 1.0f, 0.3f })
+        {
+            std::atomic<float> wfm { 0.0f };   // sine
+            std::atomic<float> oscMode { 0.0f };   // pitch (needs the note gate)
+            std::atomic<float> oscFreq { 220.0f };
+            std::atomic<float> lfo { 1.0f };
+            std::atomic<float> level { 0.37f };
+            std::atomic<float> drive { driveValue };
+            std::atomic<float> shape { (float) shapeIndex };
+
+            smolfm::SignalGraph graph;
+            auto note = std::make_unique<smolfm::NoteProcessor>();
+            smolfm::NoteProcessor* notePtr = note.get();
+            auto osc = std::make_unique<smolfm::OscillatorProcessor> (&wfm, &oscMode, &oscFreq, &lfo);
+            smolfm::OscillatorProcessor* oscPtr = osc.get();
+            auto toneGain = std::make_unique<smolfm::GainProcessor> (&level);
+            smolfm::GainProcessor* toneGainPtr = toneGain.get();
+            auto shaper = std::make_unique<smolfm::WaveshaperProcessor> (&drive, &shape);
+            smolfm::WaveshaperProcessor* shaperPtr = shaper.get();
+
+            if (! oscPtr->getNoteInput().connect (notePtr->getOutput()))
+                return { false, "Failed to wire note to osc" };
+            if (! toneGainPtr->getInput().connect (oscPtr->getOutput()))
+                return { false, "Failed to wire osc to level gain" };
+            if (! shaperPtr->getInput().connect (toneGainPtr->getOutput()))
+                return { false, "Failed to wire level gain to shaper" };
+            if (! shaperPtr->getVelInput().connect (notePtr->getVelOutput()))
+                return { false, "Failed to wire vel to shaper" };
+
+            graph.addProcessor (std::move (note));
+            graph.addProcessor (std::move (osc));
+            graph.addProcessor (std::move (toneGain));
+            graph.addProcessor (std::move (shaper));
+
+            graph.prepare (48000.0);
+            notePtr->setMidiNoteNumber (57);    // A3 = 220 Hz
+            notePtr->setVelocity (v);
+            graph.startNote();
+
+            float peak = 0.0f;
+            for (int i = 0; i < 480; ++i)       // 10 ms, well inside attack+drive
+            {
+                const smolfm::StereoFrame y = graph.processSample();
+                peak = std::max (peak, std::abs (y.l));
+            }
+
+            const char* shapeName = shapeIndex == 0 ? "soft" : shapeIndex == 1 ? "hard" : "fold";
+            table += "\n  " + std::string (shapeName)
+                   + " drive=" + std::to_string (driveValue)
+                   + " vel=" + std::to_string (v)
+                   + " -> peak " + std::to_string (peak);
+        }
+        return { true, table };
+    }
+
+    // Phase-2 strike probe (03.10.2026, plan doc §9.2/§9.5): the internal
+    // body strike as its own measurement, in a bare chain — the note's
+    // velocity runs into a resonator whose EXCITER INPUT IS UNWIRED.
+    // Whatever rings after a hit came from the internal strike alone.
+    //   (a) neutrality: either strike knob at 0 (the defaults) = the body
+    //       stays dead; nothing is injected (the existing ring/vel/chain
+    //       probes still render the strike-off path — the regression
+    //       evidence that the old behaviour is untouched).
+    //   (b) determinism: two identical hits ring identically (no random
+    //       spread factor anywhere in the strike).
+    //   (c) the energy REALLY depends on velocity: the strike peak follows
+    //       the raw accent (no sqrt curve inside the resonator), so
+    //       RMS(vel 1.0) / RMS(vel 0.5) ≈ 2 — the Phase-3 level law,
+    //       folded into the strike path in the same move (plan §9.5).
+    TestResult runResonatorStrikeProbe()
+    {
+        std::atomic<float> tune  { 49.5f };
+        std::atomic<float> q     { 0.85f };
+        std::atomic<float> decay { 0.30f };
+        std::atomic<float> spread { 1.0f };   // 1 = the strike law alone
+        std::atomic<float> strikeLevelAtom { 0.4077f };   // the patch's strikelevel
+        std::atomic<float> strikeTimeAtom  { 0.008f };   // the old grain gate
+
+        smolfm::SignalGraph graph;
+        auto note = std::make_unique<smolfm::NoteProcessor>();
+        smolfm::NoteProcessor* notePtr = note.get();
+        auto res = std::make_unique<smolfm::ResonatorProcessor> (&tune, &q, &decay, &spread,
+                                                                 &strikeLevelAtom, &strikeTimeAtom);
+        smolfm::ResonatorProcessor* resPtr = res.get();
+        if (! resPtr->getStrikeVelInput().connect (notePtr->getVelOutput()))
+            return { false, "Failed to wire note vel to the strike accent line" };
+
+        graph.addProcessor (std::move (note));
+        graph.addProcessor (std::move (res));
+        graph.prepare (48000.0);
+        notePtr->setMidiNoteNumber (36);   // MIDI 36 = the GM bass drum key
+
+        auto ringRms1k = [&] (float vel)   // first 100 ms of the ring
+        {
+            resPtr->reset();
+            notePtr->setVelocity (vel);
+            graph.startNote();
+            double sum = 0.0;
+            for (int i = 0; i < 4800; ++i)
+            {
+                const smolfm::StereoFrame y = graph.processSample();
+                sum += double (y.l) * double (y.l) + double (y.r) * double (y.r);
+            }
+            return std::sqrt (sum / 9600.0);
+        };
+
+        // (a) both knobs out: an unwired body stays silent — the strike
+        // injects NOTHING when off; either knob alone gates.
+        strikeLevelAtom.store (0.0f);
+        const double rmsLevelOff = ringRms1k (1.0f);
+        if (rmsLevelOff > 0.0)
+            return { false, "strike-out must leave an unwired body silent (rms "
+                          + std::to_string (rmsLevelOff) + ")" };
+
+        strikeLevelAtom.store (0.4077f);
+        strikeTimeAtom.store (0.0f);
+        const double rmsTimeOff = ringRms1k (1.0f);
+        if (rmsTimeOff > 0.0)
+            return { false, "strikeTime 0 must keep the strike dead (rms "
+                          + std::to_string (rmsTimeOff) + ")" };
+
+        // (b) determinism: identical hits, identical rings — byte for byte.
+        strikeTimeAtom.store (0.008f);
+        const double rmsFull = ringRms1k (1.0f);
+        const double rmsFullB = ringRms1k (1.0f);
+        if (! (rmsFull > 0.0))
+            return { false, "strike body never rings (rms " + std::to_string (rmsFull) + ")" };
+        if (rmsFull != rmsFullB)
+            return { false, "identical hits must ring identically ("
+                          + std::to_string (rmsFull) + " vs "
+                          + std::to_string (rmsFullB) + ")" };
+
+        // (c) the velocity law: the peak follows the RAW accent (linear), so
+        // the ring RMS halves between vel 1.0 and vel 0.5 — ratio ≈ 2.
+        const double rmsHalf = ringRms1k (0.5f);
+        if (! (rmsHalf > 0.0))
+            return { false, "strike body silent at vel 0.5 (rms " + std::to_string (rmsHalf) + ")" };
+        const double ratio = rmsFull / rmsHalf;
+        if (! (ratio >= 1.8 && ratio <= 2.2))
+            return { false, "level law off: rms(1.0) " + std::to_string (rmsFull)
+                          + ", rms(0.5) " + std::to_string (rmsHalf)
+                          + ", ratio " + std::to_string (ratio) + " (expected ~2)" };
+
+        return { true, "strike probe: off stays silent, identical hits ring "
+                     + std::to_string (rmsFull) + " rms both times, vel 1.0/0.5 ratio "
+                     + std::to_string (ratio) + " (~2 — amplitude follows the raw accent)" };
+    }
+
+    // Bass drum chain probe, now on the Phase-2 topology (03.10.2026, plan
+    // doc §9.2): the internal strike replaced the noise burst as the
+    // velocity-driven ignition — the live tr808-bass-drum patch reads:
+    // tuned 25 ms sine impulse (x2) through the 0.22 feedback bridge, the
+    // 49.5 Hz body (decay 0.30, vel spread 2.5) with strikelevel/striketime
+    // carried on its own raw accent line (strike_vel: note vel directly, no
+    // vsc curve inside the strike), then the soft waveshaper (drive 0.25,
+    // vel-wired) into the 10.0 output gain.  The probe reports every
+    // stage's level, so a dead link between node stages can never hide
+    // behind a total.  It also renders the fb4d341-era chain (tuned sine
+    // x2 + noise x0.5 burst through the adder, no strike knobs = the old
+    // binary behaviour) as the level anchor: at vel 1.0 the exchanged body
+    // level must land within a band of the old grain's contribution, and
+    // the strike must be measurable against its own absence (level knob
+    // to 0).
+    TestResult runBassDrumChainTest()
+    {
+        // Calibration note (03.10.2026): this number and the patch file's
+        // strikelevel MUST stay in lockstep — the probe solved it from the
+        // old grain's early-ring RMS (0.328925 body-RMS legacy vs 0.032652
+        // sine-only floor): solved strikeLevel 0.407744 → rounded 0.4077.
+        constexpr float strikeLevelForProbe { 0.4077f };
+
+        // Internal strike knobs (Phase 2).
+        std::atomic<float> strikeLevelAtom { strikeLevelForProbe };
+        std::atomic<float> strikeTimeAtom  { 0.008f };   // the old grain gate length
+
+        // Legacy (fb4d341-era) exciter atoms: the noise burst the internal
+        // strike replaces, kept for the level anchor.
+        std::atomic<float> wfm     { 1.0f };   // noise
+        std::atomic<float> oscMode { 1.0f };   // static
+        std::atomic<float> oscFreq { 6000.0f };
+        std::atomic<float> lfo     { 1.0f };
+        std::atomic<float> excA  { 0.001f };   // grain gate attack
+        std::atomic<float> excD  { 0.008f };   // grain gate decay (8 ms burst)
+        std::atomic<float> excS  { 0.0f };
+        std::atomic<float> excR  { 0.005f };
+        std::atomic<float> excGainAmt { 0.5f };   // the old quiet grain level
+
+        // Tuned sine strike atoms (both graphs share the same knobs).
+        std::atomic<float> strikeWfm     { 0.0f };   // sine
+        std::atomic<float> strikeOscMode { 0.0f };   // pitch — follows the note
+        std::atomic<float> strikeOscFreq { 49.5f };  // static fallback
+        std::atomic<float> strikeLfo     { 1.0f };
+        std::atomic<float> strikeA  { 0.001f };   // tuned impulse (25 ms)
+        std::atomic<float> strikeD  { 0.025f };
+        std::atomic<float> strikeS  { 0.0f };
+        std::atomic<float> strikeR  { 0.005f };
+        std::atomic<float> strikeGainAmt { 2.0f };
+
+        // Shared body/exit atoms (both graphs read the same knobs).
+        std::atomic<float> fbAmount  { 0.22f };
+        std::atomic<float> tune   { 49.5f };
+        std::atomic<float> q      { 0.85f };
+        std::atomic<float> decay  { 0.30f };
+        std::atomic<float> spread { 2.5f };
+        std::atomic<float> drive  { 0.25f };
+        std::atomic<float> shape  { 0.0f };    // soft
+        std::atomic<float> outGainAmt { 10.0f };
+
+        smolfm::SignalGraph graph;         // live: post-Phase-2 topology
+        smolfm::SignalGraph legacyGraph;   // anchor: fb4d341-era topology
+
+        // Live graph: the tuned sine strike into the feedback bridge; the
+        // body carries the internal strike knobs on its raw accent line.
+        auto note = std::make_unique<smolfm::NoteProcessor>();
+        smolfm::NoteProcessor* notePtr = note.get();
+        auto osc = std::make_unique<smolfm::OscillatorProcessor> (&strikeWfm, &strikeOscMode, &strikeOscFreq, &strikeLfo);
+        smolfm::OscillatorProcessor* oscPtr = osc.get();   // the strike sine
+        auto strikeAdsr = std::make_unique<smolfm::AdsrProcessor> (&strikeA, &strikeD, &strikeS, &strikeR);
+        smolfm::AdsrProcessor* strikeAdsrPtr = strikeAdsr.get();
+        auto strikeGain = std::make_unique<smolfm::GainProcessor> (&strikeGainAmt);
+        smolfm::GainProcessor* strikeGainPtr = strikeGain.get();
+        auto fb = std::make_unique<smolfm::FeedbackProcessor> (&fbAmount);
+        smolfm::FeedbackProcessor* fbPtr = fb.get();
+        auto res = std::make_unique<smolfm::ResonatorProcessor> (&tune, &q, &decay, &spread,
+                                                                 &strikeLevelAtom, &strikeTimeAtom);
+        smolfm::ResonatorProcessor* resPtr = res.get();
+        auto shaper = std::make_unique<smolfm::WaveshaperProcessor> (&drive, &shape);
+        smolfm::WaveshaperProcessor* shaperPtr = shaper.get();
+        auto outGain = std::make_unique<smolfm::GainProcessor> (&outGainAmt);
+
+        if (! strikeAdsrPtr->getInput().connect (oscPtr->getOutput()))
+            return { false, "Failed to connect strike sine to its gate" };
+        if (! oscPtr->getNoteInput().connect (notePtr->getOutput()))
+            return { false, "Failed to wire note out to the strike sine" };
+        if (! strikeGainPtr->getInput().connect (strikeAdsrPtr->getOutput()))
+            return { false, "Failed to connect strike gate to strike gain" };
+        if (! fbPtr->getInput().connect (strikeGainPtr->getOutput()))
+            return { false, "Failed to connect strike gain to feedback bridge" };
+        if (! fbPtr->getFeedbackInput().connect (resPtr->getOutput()))
+            return { false, "Failed to wire resonator return into feedback bridge" };
+        if (! resPtr->getInput().connect (fbPtr->getOutput()))
+            return { false, "Failed to connect feedback bridge to resonator body" };
+        if (! resPtr->getVelInput().connect (notePtr->getVelOutput()))
+            return { false, "Failed to wire note vel to resonator vel" };
+        if (! resPtr->getStrikeVelInput().connect (notePtr->getVelOutput()))
+            return { false, "Failed to wire note vel to the RAW strike_vel line" };
+        if (! shaperPtr->getInput().connect (resPtr->getOutput()))
+            return { false, "Failed to connect resonator out to waveshaper" };
+        if (! shaperPtr->getVelInput().connect (notePtr->getVelOutput()))
+            return { false, "Failed to wire note vel to waveshaper vel" };
+        if (! outGain->getInput().connect (shaperPtr->getOutput()))
+            return { false, "Failed to connect waveshaper to output gain" };
+        graph.addProcessor (std::move (note));
+        graph.addProcessor (std::move (osc));
+        graph.addProcessor (std::move (strikeAdsr));
+        graph.addProcessor (std::move (strikeGain));
+        graph.addProcessor (std::move (fb));
+        graph.addProcessor (std::move (res));
+        graph.addProcessor (std::move (shaper));
+        graph.addProcessor (std::move (outGain));
+
+        // -- Legacy graph (fb4d341-era, the level anchor): both exciters wire
+        // through the adder (sine x2 + noise x0.5), and the resonator carries
+        // NO strike knobs at all (the nullptr pair = the old binary
+        // behaviour, the strike structurally absent).
+        auto legacyNote = std::make_unique<smolfm::NoteProcessor>();
+        smolfm::NoteProcessor* legacyNotePtr = legacyNote.get();
+        auto legacyNoiseOsc = std::make_unique<smolfm::OscillatorProcessor> (&wfm, &oscMode, &oscFreq, &lfo);
+        smolfm::OscillatorProcessor* legacyNoiseOscPtr = legacyNoiseOsc.get();
+        auto legacyStrikeOsc = std::make_unique<smolfm::OscillatorProcessor> (&strikeWfm, &strikeOscMode, &strikeOscFreq, &strikeLfo);
+        auto legacyGrainAdsr = std::make_unique<smolfm::AdsrProcessor> (&excA, &excD, &excS, &excR);
+        smolfm::AdsrProcessor* legacyGrainAdsrPtr = legacyGrainAdsr.get();
+        auto legacyGrainGain = std::make_unique<smolfm::GainProcessor> (&excGainAmt);
+        smolfm::GainProcessor* legacyGrainGainPtr = legacyGrainGain.get();
+        auto legacyStrikeAdsr = std::make_unique<smolfm::AdsrProcessor> (&strikeA, &strikeD, &strikeS, &strikeR);
+        smolfm::AdsrProcessor* legacyStrikeAdsrPtr = legacyStrikeAdsr.get();
+        auto legacyStrikeGain = std::make_unique<smolfm::GainProcessor> (&strikeGainAmt);
+        auto legacyAdd = std::make_unique<smolfm::AdderProcessor>();
+        auto legacyFb = std::make_unique<smolfm::FeedbackProcessor> (&fbAmount);
+        smolfm::FeedbackProcessor* legacyFbPtr = legacyFb.get();
+        auto legacyRes = std::make_unique<smolfm::ResonatorProcessor> (&tune, &q, &decay, &spread, nullptr, nullptr);
+        smolfm::ResonatorProcessor* legacyResPtr = legacyRes.get();
+        auto legacyShaper = std::make_unique<smolfm::WaveshaperProcessor> (&drive, &shape);
+        auto legacyOutGain = std::make_unique<smolfm::GainProcessor> (&outGainAmt);
+
+        if (! legacyGrainAdsrPtr->getInput().connect (legacyNoiseOscPtr->getOutput()))
+            return { false, "Failed to connect legacy noise to its gate" };
+        if (! legacyGrainGain->getInput().connect (legacyGrainAdsrPtr->getOutput()))
+            return { false, "Failed to connect legacy grain gate to gain" };
+        if (! legacyAdd->getInput2().connect (legacyGrainGain->getOutput()))
+            return { false, "Failed to connect legacy grain gain to add" };
+        if (! legacyStrikeAdsr->getInput().connect (legacyStrikeOsc->getOutput()))
+            return { false, "Failed to connect legacy strike sine to its gate" };
+        if (! legacyStrikeOsc->getNoteInput().connect (legacyNotePtr->getOutput()))
+            return { false, "Failed to wire legacy note out to the strike sine" };
+        if (! legacyStrikeGain->getInput().connect (legacyStrikeAdsr->getOutput()))
+            return { false, "Failed to connect legacy strike gate to gain" };
+        if (! legacyAdd->getInput1().connect (legacyStrikeGain->getOutput()))
+            return { false, "Failed to connect legacy strike gain to add" };
+        if (! legacyFbPtr->getInput().connect (legacyAdd->getOutput()))
+            return { false, "Failed to connect legacy adder to feedback bridge" };
+        if (! legacyFbPtr->getFeedbackInput().connect (legacyResPtr->getOutput()))
+            return { false, "Failed to wire legacy resonator return" };
+        if (! legacyResPtr->getInput().connect (legacyFbPtr->getOutput()))
+            return { false, "Failed to connect legacy bridge to body" };
+        if (! legacyResPtr->getVelInput().connect (legacyNotePtr->getVelOutput()))
+            return { false, "Failed to wire legacy note vel to resonator vel" };
+        if (! legacyShaper->getInput().connect (legacyResPtr->getOutput()))
+            return { false, "Failed to connect legacy body out to shaper" };
+        if (! legacyShaper->getVelInput().connect (legacyNotePtr->getVelOutput()))
+            return { false, "Failed to wire legacy note vel to shaper vel" };
+        if (! legacyOutGain->getInput().connect (legacyShaper->getOutput()))
+            return { false, "Failed to connect legacy shaper to output gain" };
+        legacyGraph.addProcessor (std::move (legacyNote));
+        legacyGraph.addProcessor (std::move (legacyNoiseOsc));
+        legacyGraph.addProcessor (std::move (legacyStrikeOsc));
+        legacyGraph.addProcessor (std::move (legacyGrainAdsr));
+        legacyGraph.addProcessor (std::move (legacyGrainGain));
+        legacyGraph.addProcessor (std::move (legacyStrikeAdsr));
+        legacyGraph.addProcessor (std::move (legacyStrikeGain));
+        legacyGraph.addProcessor (std::move (legacyAdd));
+        legacyGraph.addProcessor (std::move (legacyFb));
+        legacyGraph.addProcessor (std::move (legacyRes));
+        legacyGraph.addProcessor (std::move (legacyShaper));
+        legacyGraph.addProcessor (std::move (legacyOutGain));
+
+        graph.prepare (48000.0);
+        legacyGraph.prepare (48000.0);
+        // NOTE: the patch wires note.out -> resonator0.tune, so the played
+        // note tunes the body; MIDI 36 (C2) = the GM bass drum note.
+        resPtr->getTuneInput().connect (notePtr->getOutput());
+        legacyResPtr->getTuneInput().connect (legacyNotePtr->getOutput());
+        notePtr->setMidiNoteNumber (36);
+        legacyNotePtr->setMidiNoteNumber (36);
+        notePtr->setVelocity (1.0f);
+        legacyNotePtr->setVelocity (1.0f);
+
+        // -- Level anchor, part 1: the legacy chain (fb4d341 era: the noise
+        // grain x0.5 behind the 8 ms gate plus the tuned sine x2 through the
+        // adder) hits first.  Its early-ring RMS (first 100 ms of the body
+        // output) anchors the exchange level.
+        legacyGraph.startNote();
+        double legacyResSum = 0.0;
+        float legacyGrainPeak = 0.0f;
+        for (int i = 0; i < 48000; ++i)
+        {
+            const smolfm::StereoFrame y = legacyGraph.processSample();
+            if (i < 4800)
+            {
+                // The anchor reads the BODY itself (same link the live chain
+                // measures) — NOT the x10 output gain stage.
+                const smolfm::StereoFrame body = legacyResPtr->getOutput().getSample();
+                legacyResSum += double (body.l) * double (body.l);
+                const smolfm::StereoFrame grain = legacyGrainGainPtr->getOutput().getSample();
+                legacyGrainPeak = std::max (legacyGrainPeak, std::abs (grain.l));
+            }
+        }
+        const double legacyEarlyRms = std::sqrt (legacyResSum / 4800.0);
+
+        // -- Level anchor, part 2: the live chain (same note, strike knobs
+        // on) after it.  Every stage's level as before, so a dead link
+        // between node stages can never hide behind a total.
+        graph.startNote();
+        float srcPeak = 0.0f;
+        float resEarlyPeak = 0.0f;
+        float shaperPeak = 0.0f;
+        float finalPeak = 0.0f;
+        double resEarlySum = 0.0;
+        double resLateSum = 0.0;
+        double finalSum = 0.0;
+        for (int i = 0; i < 48000; ++i)   // 1 s at 48 kHz
+        {
+            const smolfm::StereoFrame y = graph.processSample();
+            const smolfm::StereoFrame src = oscPtr->getOutput().getSample();
+            const smolfm::StereoFrame res = resPtr->getOutput().getSample();
+            const smolfm::StereoFrame shp = shaperPtr->getOutput().getSample();
+
+            shaperPeak = std::max (shaperPeak, std::abs (shp.l));
+            finalPeak  = std::max (finalPeak,  std::abs (y.l));
+            finalSum   += double (y.l) * double (y.l);
+            if (i < 4800) {                  // first 100 ms
+                srcPeak      = std::max (srcPeak,      std::abs (src.l));
+                resEarlyPeak = std::max (resEarlyPeak, std::abs (res.l));
+                resEarlySum += double (res.l) * double (res.l);
+            }
+            if (i >= 24000)                  // body-ring tail window
+                resLateSum += double (res.l) * double (res.l);
+        }
+        const float resLateRms = (float) std::sqrt (resLateSum / 24000.0);
+        const double finalRms  = std::sqrt (finalSum / 48000.0);
+        const double liveEarlyRms = std::sqrt (resEarlySum / 4800.0);
+
+        if (legacyGrainPeak < 0.01f)
+            return { false, "stage probe: legacy grain silent (legacyGrainPeak "
+                          + std::to_string (legacyGrainPeak) + ")" };
+        if (! (legacyEarlyRms > 0.0))
+            return { false, "stage probe: legacy body never rings (legacyEarlyRms "
+                          + std::to_string (legacyEarlyRms) + ")" };
+        if (srcPeak < 0.01f)
+            return { false, "stage probe: tuned strike silent (srcPeak "
+                          + std::to_string (srcPeak) + ")" };
+        if (resEarlyPeak < 0.01f)
+            return { false, "stage probe: body never rings (resEarlyPeak "
+                          + std::to_string (resEarlyPeak) + ", srcPeak "
+                          + std::to_string (srcPeak) + ")" };
+        if (finalPeak < 0.02f)
+            return { false, "stage probe: OUTPUT INAUDIBLE (finalPeak "
+                          + std::to_string (finalPeak) + ", srcPeak "
+                          + std::to_string (srcPeak) + ", resEarlyPeak "
+                          + std::to_string (resEarlyPeak) + ", shaperPeak "
+                          + std::to_string (shaperPeak) + ", resLateRms "
+                          + std::to_string (resLateRms) + ", finalRms "
+                          + std::to_string (finalRms) + ")" };
+
+        // -- Strike audible against its own absence + calibration solve:
+        // level knob to 0 (window stays), one more hit — that render IS the
+        // sine-only floor c.  From the linear additivity of the body
+        //   live(L)²  = c² + s(L)²    (strike share s ∝ L)
+        //   legacy²   = c² + g²       (old grain share g, the x0.5 noise)
+        // the probe solves the level that lands the strike exactly on the
+        // old grain's contribution and prints it as the patch recommendation.
+        strikeLevelAtom.store (0.0f);
+        resPtr->reset();
+        fbPtr->reset();
+        graph.startNote();
+        double offSum = 0.0;
+        for (int i = 0; i < 4800; ++i)
+        {
+            const smolfm::StereoFrame res = resPtr->getOutput().getSample();
+            offSum += double (res.l) * double (res.l);
+        }
+        const double strikeOffRms = std::sqrt (offSum / 4800.0);
+        strikeLevelAtom.store (strikeLevelForProbe);
+
+        if (! (liveEarlyRms > strikeOffRms * 1.02))
+            return { false, "strike adds nothing measurable: strike-on rms "
+                          + std::to_string (liveEarlyRms) + " vs strike-off rms "
+                          + std::to_string (strikeOffRms) };
+
+        // Calibration solve (03.10.2026): the strike's share in the body's
+        // early ring should sit on the old grain's share.  The strike is a
+        // COHERENT (in-phase) sine added to the carrier — a plain RMS-
+        // additivity solve therefore under-counts it systematically and the
+        // solved recommendation drifts with the base level it is solved
+        // from (measured: 0.41 solved from L=0.5, 0.34 from L=0.4077).
+        // The probe still recomputes and REPORTS it, but only flags a gross
+        // drift (the additive solve carries ~20% systematic bias here).
+        const double strikeShare = std::sqrt (std::max (0.0, liveEarlyRms * liveEarlyRms - strikeOffRms * strikeOffRms));
+        const double grainShare  = std::sqrt (std::max (0.0, legacyEarlyRms * legacyEarlyRms - strikeOffRms * strikeOffRms));
+        const double solvedLevel = strikeShare > 0.0
+            ? strikeLevelForProbe * grainShare / strikeShare
+            : -1.0;
+        if (solvedLevel < 0.0 || std::abs (solvedLevel - (double) strikeLevelForProbe) > 0.40 * solvedLevel)
+            return { false, "calibration drift: shipped strikeLevel "
+                          + std::to_string (strikeLevelForProbe)
+                          + " but the body measures "
+                          + std::to_string (solvedLevel)
+                          + " (strike share " + std::to_string (strikeShare)
+                          + ", grain share " + std::to_string (grainShare)
+                          + ", sine-only floor " + std::to_string (strikeOffRms) + ")" };
+
+        // Exchange band: the internal strike must land the body's early ring
+        // close to the old grain's contribution at vel 1.0.  The velocity
+        // law itself is checked exactly in the strike probe.
+        if (! (liveEarlyRms >= legacyEarlyRms * 0.7 && liveEarlyRms <= legacyEarlyRms * 1.4))
+            return { false, "strike level off vs old grain: legacyEarlyRms "
+                          + std::to_string (legacyEarlyRms) + ", liveEarlyRms "
+                          + std::to_string (liveEarlyRms) + " (strikeLevel "
+                          + std::to_string (strikeLevelAtom.load())
+                          + ", solved level " + std::to_string (solvedLevel) + ")" };
+
+        // -- Phase 2: fast re-triggers (16th notes at 140 BPM = 107 ms).  The
+        // loop re-rings into a body that is still alive; the per-window
+        // output peak must stay bounded, never climb hit over hit.
+        const int windowSamples = 5142;   // 107 ms at 48 kHz
+        float windowPeak[6] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+        for (int w = 0; w < 6; ++w)
+        {
+            notePtr->setVelocity (1.0f);
+            graph.startNote();
+            for (int i = 0; i < windowSamples; ++i)
+            {
+                const smolfm::StereoFrame y = graph.processSample();
+                windowPeak[w] = std::max (windowPeak[w], std::abs (y.l));
+            }
+        }
+
+        // -- Phase 3A: single-ring decay WITH the feedback bridge.  Re-zero
+        // the circulating state first so the profile starts clean.
+        resPtr->reset();
+        fbPtr->reset();
+        notePtr->setVelocity (1.0f);
+        graph.startNote();
+        float decayA[8] = {};
+        for (int w = 0; w < 8; ++w)
+        {
+            double wSum = 0.0;
+            for (int i = 0; i < 12000; ++i)   // 250 ms at 48 kHz
+            {
+                const smolfm::StereoFrame y = graph.processSample();
+                wSum += double (y.l) * double (y.l);
+            }
+            decayA[w] = (float) std::sqrt (wSum / 12000.0);
+        }
+
+        // -- Phase 3B: same single hit, but the feedback bridge is BYPASSED
+        // (the strike gain feeds the body directly).  A passive body must
+        // decay monotonically; comparison A vs B localises the misbehaviour.
+        if (! resPtr->getInput().connect (strikeGainPtr->getOutput()))
+            return { false, "Failed to rewire exciter directly to body" };
+        resPtr->reset();
+        graph.startNote();
+        float decayB[8] = {};
+        for (int w = 0; w < 8; ++w)
+        {
+            double wSum = 0.0;
+            for (int i = 0; i < 12000; ++i)
+            {
+                const smolfm::StereoFrame y = graph.processSample();
+                wSum += double (y.l) * double (y.l);
+            }
+            decayB[w] = (float) std::sqrt (wSum / 12000.0);
+        }
+
+        std::string peaks = "retrigger peaks:";
+        for (int w = 0; w < 6; ++w)  peaks += " " + std::to_string (windowPeak[w]);
+        std::string profileA = "decay rms WITH loop:";
+        for (int w = 0; w < 8; ++w)  profileA += " " + std::to_string (decayA[w]);
+        std::string profileB = "decay rms bypassed:";
+        for (int w = 0; w < 8; ++w)  profileB += " " + std::to_string (decayB[w]);
+
+        if (decayB[7] >= decayB[0] * 0.5f)
+            return { false, "stage probe: BODY DOES NOT DECAY EVEN BYPASSED ("
+                          + profileB + "; " + profileA + ")" };
+
+        float worstPeak = windowPeak[0];
+        for (int w = 1; w < 6; ++w) worstPeak = std::max (worstPeak, windowPeak[w]);
+
+        // -- Phase 4: velocity sensitivity (the user's x10-gain report).  The
+        // kick multiplies three velocity inputs (out gain, shaper drive,
+        // decay spread) — the level at half velocity should show how steep
+        // that stack is.  Restore the bridge wiring first (3B bypassed it)
+        // and re-zero the circulating state.
+        if (! resPtr->getInput().connect (fbPtr->getOutput()))
+            return { false, "Failed to restore feedback bridge for velocity sweep" };
+        resPtr->reset();
+        fbPtr->reset();
+        std::string velLine = "velocity rms (first 500 ms):";
+        for (float v : { 1.0f, 0.5f, 0.25f })
+        {
+            // Fresh circulating state per step: without this the previous
+            // hit's ring leaks into the next window and the sweep only
+            // measures the decay rate, not the velocity.
+            resPtr->reset();
+            fbPtr->reset();
+            notePtr->setVelocity (v);
+            graph.startNote();
+            double vSum = 0.0;
+            float vPeak = 0.0f;
+            for (int i = 0; i < 24000; ++i)
+            {
+                const smolfm::StereoFrame y = graph.processSample();
+                vSum += double (y.l) * double (y.l);
+                vPeak = std::max (vPeak, std::abs (y.l));
+            }
+            velLine += "; v=" + std::to_string (v)
+                     + " rms " + std::to_string (std::sqrt (vSum / 24000.0))
+                     + " peak " + std::to_string (vPeak);
+        }
+
+        return { true, "bass drum chain rings (legacyEarlyRms "
+                     + std::to_string (legacyEarlyRms)
+                     + ", liveEarlyRms " + std::to_string (liveEarlyRms)
+                     + ", strikeOffRms " + std::to_string (strikeOffRms)
+                     + ", srcPeak " + std::to_string (srcPeak)
+                     + ", resEarlyPeak " + std::to_string (resEarlyPeak)
+                     + ", shaperPeak " + std::to_string (shaperPeak)
+                     + ", resLateRms " + std::to_string (resLateRms)
+                     + ", finalPeak " + std::to_string (finalPeak)
+                     + ", finalRms " + std::to_string (finalRms)
+                     + "; " + peaks
+                     + "; " + profileA
+                     + "; " + profileB
+                     + "; " + velLine + ")" };
+    }
 }
 
 int main()
@@ -1202,9 +1798,12 @@ int main()
     runTest ("Velocity FM index scaling", runVelocityFmTest);
     runTest ("Velocity filter cutoff scaling", runVelocityFilterTest);
     runTest ("Filter mode parameter id", runFilterModeParameterIdTest);
+    runTest ("Bass drum chain probe", runBassDrumChainTest);
+    runTest ("Waveshaper transfer table", runWaveshaperTransferTable);
     runTest ("Velocity fadsr depth scaling", runVelocityFAdsrTest);
     runTest ("Resonator ring + decay", runResonatorRingTest);
     runTest ("Resonator vel-on-decay", runResonatorVelDecayTest);
+    runTest ("Resonator strike", runResonatorStrikeProbe);
     runTest ("Feedback loop", runFeedbackLoopTest);
 
     return failures;

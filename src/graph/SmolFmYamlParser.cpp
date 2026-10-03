@@ -65,9 +65,11 @@ namespace
         else if (line.startsWith ("feedback:"))   node.parameters["feedback"]   = value.getFloatValue();
         else if (line.startsWith ("mix:"))        node.parameters["mix"]        = value.getFloatValue();
         else if (line.startsWith ("level:"))      node.parameters["level"]      = value.getFloatValue();
-        else if (line.startsWith ("tune:"))       node.parameters["tune"]       = value.getFloatValue();
-        else if (line.startsWith ("q:"))          node.parameters["q"]          = value.getFloatValue();
-        else if (line.startsWith ("spread:"))     node.parameters["spread"]     = value.getFloatValue();
+        else if (line.startsWith ("tune:"))          node.parameters["tune"]          = value.getFloatValue();
+        else if (line.startsWith ("q:"))             node.parameters["q"]             = value.getFloatValue();
+        else if (line.startsWith ("spread:"))        node.parameters["spread"]        = value.getFloatValue();
+        else if (line.startsWith ("strikelevel:"))   node.parameters["strikelevel"]   = value.getFloatValue();
+        else if (line.startsWith ("striketime:"))    node.parameters["striketime"]    = value.getFloatValue();
     }
 }
 
