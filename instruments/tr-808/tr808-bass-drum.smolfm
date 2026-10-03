@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3" name="tr808-bass-drum" description="808-Style Bassdrum: der schwingende Koerper-Resonator traegt das Bridged-T-Damping des Original-Netzwerks in der feedback-Loop (statischer Anker 49.5 Hz als Bridged-T-Messung, Spielregister ca. A1-B1 55-62 Hz); Velocity-Akzent waechst Dekay (spread 2.5) und Hit lauter. Anregung seit dem 03.10.2026 (Tuned-Strike + interner Koerper-Hieb, Plan Phase 2): der Tuned-Strike (Sinus-Impuls adsr1, 25 ms, auf der Korpus-Note osc1) laeuft weiterhin durch die Schleifenbruecke; der fruehere Rausch-Klick (osc0/adsr0/gain1) ist durch den internen Strike im Resonator ersetzt (strikelevel/striketime) - der Koerper zuendet seine Attack-Energie selbst und der Pegel haengt DIREKT an der Spielstaerke: strike_vel ist ein Roh-Anschluss (ohne vsc0-Kurve), die Anregungsenergie folgt damit dem Kraft-Gesetz vel^2. Saettigungsstufe nach dem Resonator (shape soft, Drive 0.25, vel-getrieben) bildet den Op-Amp-Clip der Original-Schaltung ab: der Ring-Tail wird mit Harmonischen gefaerbt statt rein sinusfoermig, und der Accent faehrt via shape.vel in die Kurve. Ausgangs-Gain 10.0 als Basis-Ebene (Hoerfund des Nutzers: so sitzt die Stimme). Vel-Scale vsc0 (sqrt, 1.0) vor den drei Accent-Verbrauchern (resonator-Dekay-Streuung, Ausgangs-Gain, Kurve): weiche Anschlaege erreichen die Akzent-Effekte frueher - die Hardware-Akzent-Naehe (Wurzel-Lautheitskurve); der interne Hieb liest die Spielstaerke ROH ueber strike_vel, damit die Kraft nicht doppelt gekruemmt wird." techniques="resonator-body-strike, tuned-strike-excitation, saturating-vca, 808-accent-gain">
+<SmolFM version="3" name="tr808-bass-drum" description="808-Style Bassdrum: der schwingende Koerper-Resonator traegt das Bridged-T-Damping des Original-Netzwerks in der feedback-Loop (statischer Anker 49.5 Hz als Bridged-T-Messung, Spielregister ca. A1-B1 55-62 Hz); Velocity-Akzent waechst Dekay (spread 2.5) und Hit lauter. Anregung seit dem 03.10.2026 (interner Strike als einziger Exziter, Plan Phase 2): der Resonator zuendet seine Attack-Energie selbst (strikelevel 0.4077, striketime 0.008); der fruehere Rausch-Klick (osc0/adsr0/gain1) ist durch den internen Strike im Resonator ersetzt und der nie verdrahtete Sinus-Strike-Arm (osc1/adsr1/gain3) ist entfernt - der Pegel haengt DIREKT an der Spielstaerke: strike_vel ist ein Roh-Anschluss (ohne vsc0-Kurve), die Anregungsenergie folgt damit dem Kraft-Gesetz vel^2. Saettigungsstufe nach dem Resonator (shape soft, Drive 0.25, vel-getrieben) bildet den Op-Amp-Clip der Original-Schaltung ab: der Ring-Tail wird mit Harmonischen gefaerbt statt rein sinusfoermig, und der Accent faehrt via shape.vel in die Kurve. Ausgangs-Gain 10.0 als Basis-Ebene (Hoerfund des Nutzers: so sitzt die Stimme). Vel-Scale vsc0 (sqrt, 1.0) vor den drei Accent-Verbrauchern (resonator-Dekay-Streuung, Ausgangs-Gain, Kurve): weiche Anschlaege erreichen die Akzent-Effekte frueher - die Hardware-Akzent-Naehe (Wurzel-Lautheitskurve); der interne Hieb liest die Spielstaerke ROH ueber strike_vel, damit die Kraft nicht doppelt gekruemmt wird." techniques="resonator-body-strike, tuned-strike-excitation, saturating-vca, 808-accent-gain">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -9,18 +9,6 @@
       <Node id="vsc0" curve="sqrt" scale="1.0">
         <Pin id="vel_in" direction="in" type="velocity" />
         <Pin id="out" direction="out" type="velocity" />
-      </Node>
-      <Node id="osc1" waveform="sine" mode="pitch" staticfreq="49.5">
-        <Pin id="note_in" direction="in" type="frequency" />
-        <Pin id="out" direction="out" type="signal" />
-      </Node>
-      <Node id="adsr1" attack="0.001" decay="0.025" sustain="0.0" release="0.005">
-        <Pin id="in" direction="in" type="signal" />
-        <Pin id="out" direction="out" type="signal" />
-      </Node>
-      <Node id="gain3" factor="2.0">
-        <Pin id="in" direction="in" type="signal" />
-        <Pin id="out" direction="out" type="signal" />
       </Node>
       <Node id="feedback0" amount="0.22">
         <Pin id="in" direction="in" type="signal" />
@@ -48,12 +36,10 @@
     </Nodes>
     <Connections>
       <Wire from="note" fromPort="out" to="resonator0" toPort="tune" />
-      <Wire from="note" fromPort="out" to="osc1" toPort="note_in" />
       <Wire from="note" fromPort="vel" to="vsc0" toPort="vel_in" />
       <Wire from="vsc0" fromPort="out" to="resonator0" toPort="vel" />
       <Wire from="vsc0" fromPort="out" to="gain0" toPort="vel" />
       <Wire from="note" fromPort="vel" to="resonator0" toPort="strike_vel" />
-      <Wire from="gain3" fromPort="out" to="feedback0" toPort="in" />
       <Wire from="feedback0" fromPort="out" to="resonator0" toPort="in" />
       <Wire from="resonator0" fromPort="out" to="feedback0" toPort="fb_in" />
       <Wire from="resonator0" fromPort="out" to="shape0" toPort="in" />
@@ -66,9 +52,6 @@
     <Boxes>
       <Box id="note" x="60" y="60" />
       <Box id="vsc0" x="60" y="380" />
-      <Box id="osc1" x="360" y="380" />
-      <Box id="adsr1" x="680" y="380" />
-      <Box id="gain3" x="1000" y="380" />
       <Box id="feedback0" x="1320" y="60" />
       <Box id="resonator0" x="1640" y="60" />
       <Box id="shape0" x="1800" y="60" />
