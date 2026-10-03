@@ -23,8 +23,10 @@ silently, ask instead.
   with dependencies.
 - Ground truth lives in `doc/formats/smolfm.xsd` (the grammar), the
   processor sources under `src/processors/` and their docs under
-  `doc/processors/`. Verify every claim against these files before
-  writing it down — never plan from the memory of an older session.
+  `doc/processors/` — the Abschnitt-1 tables there (1b ports in own rows,
+  1c parameters, each with a `Kurzbeschreibung` column) are the binding
+  wording for effect and modulation. Verify every claim against these files
+  before writing it down — never plan from the memory of an older session.
 - Every idea is examined **for both cases** (see
   `.github/copilot-instructions.md`): how it serves accessing famous
   instruments/sounds, and how it serves producing effects. A row that

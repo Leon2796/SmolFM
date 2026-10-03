@@ -10,15 +10,25 @@ stehenden) Erzeugers liest. `amount` dämpft je Umlauf (Stabilität bis 0.95);
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
-| Eigenschaft | Wert | Symbol / Typ | Datei |
-|---|---|---|---|
-| Max. Instanzen | 4 | `GraphNodeRegistry::maxFeedbacks` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `in` (Schleifeneingang, `PortType::signal`), `fb_in` (Rücklauf, `PortType::signal`) | `InputPort input`, `InputPort fbIn` | [src/processors/FeedbackProcessor.h](../../src/processors/FeedbackProcessor.h) |
-| Output-Ports | `out` (Schleifenaustritt, `PortType::signal`) | `OutputPort output` | [src/processors/FeedbackProcessor.h](../../src/processors/FeedbackProcessor.h) |
+Tabelle 1a: Instanzen.
 
-| Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
+| Eigenschaft | Wert | Symbol / Typ | Datei | Kurzbeschreibung |
 |---|---|---|---|---|
-| Amount | `feedback<N>Amount` | Float, 0–0.95, Default 0.3 | `std::atomic<float>* amount` | [src/processors/FeedbackProcessor.h](../../src/processors/FeedbackProcessor.h) |
+| Max. Instanzen | 4 | `GraphNodeRegistry::maxFeedbacks` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) | Bis zu 4 Zyklusbrecher pro Voice — je Schaltungs-Rückkopplung (BD-Damping, Loop-Entwurf) einer. |
+
+Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Parameter).
+
+| Port | Richtung | Port-Typ | Unverbunden (Default) | Kurzbeschreibung (Wirkung & Modulation) | Symbol im Code | Datei |
+|---|---|---|---|---|---|---|
+| `in` | Input | `signal` | liest 0 → die Schleifenseite liefert nichts | **Schleifeneingang.** Das reguläre Signal, um das herum der Rückkanal aufgebaut ist — ohne Draht bleibt nur die Rückstreuung übrig. | `InputPort input` | [src/processors/FeedbackProcessor.h](../../src/processors/FeedbackProcessor.h) |
+| `fb_in` | Input | `signal` | liest 0 → keine Rückstreuung (reiner Durchlass) | **Rücklauf.** Hier flattert ein Umlauf zurück, der später im Graphen „geboren" wurde — der Graph schraubt dafür implizit eine 1-Sample-Verzögerung ein. Je mehr vom Rücklauf durchgelassen wird, desto länger klingt die Schleife nach (wie ein Echo-Raum im Gehäuse). | `InputPort fbIn` | [src/processors/FeedbackProcessor.h](../../src/processors/FeedbackProcessor.h) |
+| `out` | Output | `signal` | — | **Schleifenaustritt.** Eingang + gedämpfter Rücklauf — das Signal, das den Körper (Resonator, Shaper …) speist und dessen Verdrahtung die Schleifenenergie trägt. | `OutputPort output` | [src/processors/FeedbackProcessor.h](../../src/processors/FeedbackProcessor.h) |
+
+Tabelle 1c: Daraus folgende echte Parameter (APVTS).
+
+| Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
+|---|---|---|---|---|---|
+| Amount | `feedback<N>Amount` | Float, 0–0.95, Default 0.3 | Der Umlauf-Dämpfer: wie groß der Anteil ist, mit dem das Zurückfließende pro Runde mitgenommen wird — je höher, desto länger schnarzt der Loop nach; 0 = transparenter Durchlass, 0.95 = fast ewiger Nachhang, ohne je aufzukippen. | `std::atomic<float>* amount` | [src/processors/FeedbackProcessor.h](../../src/processors/FeedbackProcessor.h) |
 
 `<N>` = Instanzindex 0–3.
 

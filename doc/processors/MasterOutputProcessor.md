@@ -8,15 +8,31 @@ wird atomar publiziert, damit die UI eine Pegelanzeige zeigen kann.
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
-| Eigenschaft | Wert | Symbol / Typ | Datei |
-|---|---|---|---|
-| Max. Instanzen | 1 | `GraphNodeRegistry::maxMasterOutputs` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `in1` … `in8` (`PortType::signal`) | `std::array<InputPort, 8> inputs` | [src/processors/MasterOutputProcessor.h](../../src/processors/MasterOutputProcessor.h) |
-| Output-Ports | *(keiner — Endstufe)* | — | — |
+Tabelle 1a: Instanzen.
 
-| Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
+| Eigenschaft | Wert | Symbol / Typ | Datei | Kurzbeschreibung |
 |---|---|---|---|---|
-| Master Level | `masterLevel` | Float, 0–1 (Default 0.8) | `std::atomic<float>* level` | [src/processors/MasterOutputProcessor.h](../../src/processors/MasterOutputProcessor.h) |
+| Max. Instanzen | 1 | `GraphNodeRegistry::maxMasterOutputs` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) | Exakt eine Endstufe pro Voice — der Sammelbus, durch den jede Voice zur Master-Leitung laufen muss. |
+
+Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Parameter).
+
+| Port | Richtung | Port-Typ | Unverbunden (Default) | Kurzbeschreibung (Wirkung & Modulation) | Symbol im Code | Datei |
+|---|---|---|---|---|---|---|
+| `in1` | Input | `signal` | liest 0 → trägt nichts zur Summe bei | **Layer-Eingang 1.** Eins der acht Signal-Zuläufe: fließt L zu L, R zu R in die Kanalsumme — wie ein belegter Mischpultkanal; ohne Kabel bleibt der Kanal frei und summiert still. | `inputs[0]` | [src/processors/MasterOutputProcessor.h](../../src/processors/MasterOutputProcessor.h) |
+| `in2` | Input | `signal` | liest 0 → trägt nichts zur Summe bei | **Layer-Eingang 2.** Zweiter Kanalplatz des Sammelbus — unabhängig, kanalrein und frei für einen zweiten Signalstrang. | `inputs[1]` | [src/processors/MasterOutputProcessor.h](../../src/processors/MasterOutputProcessor.h) |
+| `in3` | Input | `signal` | liest 0 → trägt nichts zur Summe bei | **Layer-Eingang 3.** Dritter Zulauf — parallel zur Summe, ohne Reihenfolgevorteil. | `inputs[2]` | [src/processors/MasterOutputProcessor.h](../../src/processors/MasterOutputProcessor.h) |
+| `in4` | Input | `signal` | liest 0 → trägt nichts zur Summe bei | **Layer-Eingang 4.** Vierter Platz der Endstufe — auch er nur L zu L, R zu R. | `inputs[3]` | [src/processors/MasterOutputProcessor.h](../../src/processors/MasterOutputProcessor.h) |
+| `in5` | Input | `signal` | liest 0 → trägt nichts zur Summe bei | **Layer-Eingang 5.** Fünfter Zulauf — weiterer belegbarer Kanalplatz. | `inputs[4]` | [src/processors/MasterOutputProcessor.h](../../src/processors/MasterOutputProcessor.h) |
+| `in6` | Input | `signal` | liest 0 → trägt nichts zur Summe bei | **Layer-Eingang 6.** Sechster Kanalplatz der Summierung. | `inputs[5]` | [src/processors/MasterOutputProcessor.h](../../src/processors/MasterOutputProcessor.h) |
+| `in7` | Input | `signal` | liest 0 → trägt nichts zur Summe bei | **Layer-Eingang 7.** Siebter Zulauf an der Endstufe. | `inputs[6]` | [src/processors/MasterOutputProcessor.h](../../src/processors/MasterOutputProcessor.h) |
+| `in8` | Input | `signal` | liest 0 → trägt nichts zur Summe bei | **Layer-Eingang 8.** Achter und letzter Platz — danach muss gepoolt (Adder) werden. | `inputs[7]` | [src/processors/MasterOutputProcessor.h](../../src/processors/MasterOutputProcessor.h) |
+| *(keiner — Endstufe)* | Output | — | — | Der MasterOutput speist direkt die Voice-Ausgabe; was hier hineinfließt, ist im Stereomaster des Instruments hörbar — ein letztes Sammeln, Blenden und Publizieren (Peak für die UI-Anzeige). | — | — |
+
+Tabelle 1c: Daraus folgende echte Parameter (APVTS).
+
+| Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
+|---|---|---|---|---|---|
+| Master Level | `masterLevel` | Float, 0–1 (Default 0.8) | Gesamtlautheits-Regler der Voice (0–1): die letzte Blendoberfläche, bevor die summierten Layer zur Master-Leitung laufen; skaliert die komplette Kanalsumme gleichmäßig. | `std::atomic<float>* level` | [src/processors/MasterOutputProcessor.h](../../src/processors/MasterOutputProcessor.h) |
 
 ## Abschnitt 2 — UI-Konfiguration
 

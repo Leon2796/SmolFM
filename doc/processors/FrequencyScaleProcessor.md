@@ -8,16 +8,25 @@ Kette.
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
-| Eigenschaft | Wert | Symbol / Typ | Datei |
-|---|---|---|---|
-| Max. Instanzen | 16 | `GraphNodeRegistry::maxFrequencyScales` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `freq_in` (`PortType::frequency`) | `InputPort freqInput` | [src/processors/FrequencyScaleProcessor.h](../../src/processors/FrequencyScaleProcessor.h) |
-| Output-Ports | `out` (`PortType::frequency`) | `OutputPort output` | [src/processors/FrequencyScaleProcessor.h](../../src/processors/FrequencyScaleProcessor.h) |
+Tabelle 1a: Instanzen.
 
-| Parameter | APVTS-ID | Typ / Auswahl | Symbol im Prozessor | Datei |
+| Eigenschaft | Wert | Symbol / Typ | Datei | Kurzbeschreibung |
 |---|---|---|---|---|
-| Factor | `fscale<N>Factor` | Float, 0–10 (Default 1) | `std::atomic<float>* factor` | [src/processors/FrequencyScaleProcessor.h](../../src/processors/FrequencyScaleProcessor.h) |
-| Interval | `fscale<N>Interval` | Choice: none, octave_up, octave_down, fifth_up, fifth_down, fourth_up, fourth_down, minor_third_up, major_third_up, semitone_up, semitone_down (Default none) | `std::atomic<float>* interval` | [src/processors/FrequencyScaleProcessor.h](../../src/processors/FrequencyScaleProcessor.h) |
+| Max. Instanzen | 16 | `GraphNodeRegistry::maxFrequencyScales` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) | Bis zu 16 Frequenz-Verhältnis-Umschalter pro Voice — je Intervall/Quint-Lage eine Stufe. |
+
+Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Parameter).
+
+| Port | Richtung | Port-Typ | Unverbunden (Default) | Kurzbeschreibung (Wirkung & Modulation) | Symbol im Code | Datei |
+|---|---|---|---|---|---|---|
+| `freq_in` | Input | `frequency` | liest 0 Hz → 0 rein, 0 raus (die Stufe ist tonlos inert) | **Aufzustreckende Frequenz.** Die Hz-Zahl von `note.out` oder einer FM-Stufe, die mit einem Verhältnis multipliziert wird — wie ein Fotokopierer, der die Vorlage größer/kleiner druckt. | `InputPort freqInput` | [src/processors/FrequencyScaleProcessor.h](../../src/processors/FrequencyScaleProcessor.h) |
+| `out` | Output | `frequency` | — | **Skalierte Frequenz:** Eingang × Intervallverhältnis × Faktor — die verschobene Spielpitch für den Downstream-Carrier. | `OutputPort output` | [src/processors/FrequencyScaleProcessor.h](../../src/processors/FrequencyScaleProcessor.h) |
+
+Tabelle 1c: Daraus folgende echte Parameter (APVTS).
+
+| Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
+|---|---|---|---|---|---|
+| Factor | `fscale<N>Factor` | Float, 0–10 (Default 1) | Der freiveränderliche Skalierer: 1 = neutral, 2 = Oktave hoch, 0,5 = Oktave runter, 0 = die Frequenz ruht (kein Ton fließt). | `std::atomic<float>* factor` | [src/processors/FrequencyScaleProcessor.h](../../src/processors/FrequencyScaleProcessor.h) |
+| Interval | `fscale<N>Interval` | Choice: none, octave_up, octave_down, fifth_up, fifth_down, fourth_up, fourth_down, minor_third_up, major_third_up, semitone_up, semitone_down (Default none) | Der musikalische Kurzbefehl statt Zahlenraten: jeder Name ist ein exaktes 12-TET-Verhältnis (Quinte rauf ≈ 1,5); multipliziert sich mit dem Factor, „none" ist neutral. | `std::atomic<float>* interval` | [src/processors/FrequencyScaleProcessor.h](../../src/processors/FrequencyScaleProcessor.h) |
 
 `<N>` = Instanzindex 0–7. Verkettung: `fscale<K>.out` → `fscale<K+1>.freq_in`.
 Das Intervall ist der musikalische Kurzbefehl: der Name steht für ein exaktes

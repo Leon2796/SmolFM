@@ -8,16 +8,27 @@ ist nahezu transparent (Identität bei kleinen Amplituden).
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
-| Eigenschaft | Wert | Symbol / Typ | Datei |
-|---|---|---|---|
-| Max. Instanzen | 16 | `GraphNodeRegistry::maxWaveshapers` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `in` (`PortType::signal`), `drive_mod_in` (`PortType::signal`), `vel` (`PortType::velocity`) | `InputPort input`, `InputPort driveMod`, `InputPort velIn` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
-| Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
+Tabelle 1a: Instanzen.
 
-| Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
+| Eigenschaft | Wert | Symbol / Typ | Datei | Kurzbeschreibung |
 |---|---|---|---|---|
-| Drive | `shape<N>Drive` | Float, 0–1, Default 0 | `std::atomic<float>* drive` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
-| Shape | `shape<N>Shape` | Choice 0–2 (Soft, Hard, Fold), Default 0 | `std::atomic<float>* shape` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
+| Max. Instanzen | 16 | `GraphNodeRegistry::maxWaveshapers` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) | Bis zu 16 Kurven-Zauberkästen pro Voice — je Klangverzerrungs-Schritt einer. |
+
+Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Parameter).
+
+| Port | Richtung | Port-Typ | Unverbunden (Default) | Kurzbeschreibung (Wirkung & Modulation) | Symbol im Code | Datei |
+|---|---|---|---|---|---|---|
+| `in` | Input | `signal` | liest 0 → stumm | **Rohsignal.** Das Signal, dessen Wellenberge durch die gewählte Kurve neu „gezeichnet" werden — wie ein Stift, der Berge zurecht staucht; das Rohsignal selbst kommt nicht wieder heraus, nur seine Formverzerrung. | `InputPort input` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
+| `drive_mod_in` | Input | `signal` | liest 0 → vollständig transparent (neutral) | **Drive-Fremdfahrer.** Multipliziert den eingestellten Drive ($\cdot\,(1+m)$, auf 0–1 geclampt) — die Kurvenform wird selbst enveloppierbar: ADSR = Klangfarben-Envelope (clean→growl), Perlin = driftende Saturation, Square = Timbre-Stepper. | `InputPort driveMod` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
+| `vel` | Input | `velocity` | liest 1.0 → neutral, klanginvariant | **Anschlags-Drive.** Anschlagstärke multipliziert den wirksamen Drive ($d\cdot v$): harte Anschläge drücken tiefer in die Kurve — die timbrale Hälfte des TR-808-Accents. | `InputPort velIn` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
+| `out` | Output | `signal` | — | **Verzerrtes Signal:** die durch die Transferkurve geformte Welle — von sanfter Färbung bis metallischer Faltung. | `OutputPort output` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
+
+Tabelle 1c: Daraus folgende echte Parameter (APVTS).
+
+| Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
+|---|---|---|---|---|---|
+| Drive | `shape<N>Drive` | Float, 0–1, Default 0 | Wie kräftig das Signal in die Kurve hineingedrückt wird — das Antriebsrad vor der Zurechtstauchung: nahe 0 mit „Soft" fast neutral, voll aufgedreht kantig. | `std::atomic<float>* drive` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
+| Shape | `shape<N>Shape` | Choice 0–2 (Soft, Hard, Fold), Default 0 | Der Verzerrungs-Charakter: Soft = sanfte tubige Weichzeichnung, Hard = harte Clipschere (digital-randige Kanten), Fold = Wellenfaltung, die inharmonisch-metallisch klingt. | `std::atomic<float>* shape` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
 
 `<N>` = Instanzindex 0–7.
 

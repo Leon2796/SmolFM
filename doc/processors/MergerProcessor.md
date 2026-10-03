@@ -10,15 +10,25 @@ speisen — `out` ist dann wieder das zentrierte Eingangsframe.
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
-| Eigenschaft | Wert | Symbol / Typ | Datei |
-|---|---|---|---|
-| Max. Instanzen | 8 | `GraphNodeRegistry::maxMergers` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `in1` (`PortType::signal`, Hinweis `ChannelSide::left`), `in2` (`PortType::signal`, Hinweis `ChannelSide::right`) | `InputPort leftInput`, `rightInput` | [src/processors/MergerProcessor.h](../../src/processors/MergerProcessor.h) |
-| Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/MergerProcessor.h](../../src/processors/MergerProcessor.h) |
+Tabelle 1a: Instanzen.
 
-| Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
+| Eigenschaft | Wert | Symbol / Typ | Datei | Kurzbeschreibung |
 |---|---|---|---|---|
-| *(keine)* | — | — | — | — |
+| Max. Instanzen | 8 | `GraphNodeRegistry::maxMergers` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) | Acht Stereo-Zusammenführer pro Voice — je Zwei-Seiten-Paarung einer. |
+
+Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Parameter).
+
+| Port | Richtung | Port-Typ | Unverbunden (Default) | Kurzbeschreibung (Wirkung & Modulation) | Symbol im Code | Datei |
+|---|---|---|---|---|---|---|
+| `in1` | Input | `signal` (Hinweis `ChannelSide::left`) | liest 0 → die linke Ausgangsseite bleibt stumm | **Linke Kanalspur.** Sie liefert die L-Seite des Ausgangs — wie der linke Rinnstein einer Straße: nur seine Seite fließt ins gemeinsame Stereobett, die rechte bleibt unberührt. | `InputPort leftInput` | [src/processors/MergerProcessor.h](../../src/processors/MergerProcessor.h) |
+| `in2` | Input | `signal` (Hinweis `ChannelSide::right`) | liest 0 → die rechte Ausgangsseite bleibt stumm | **Rechte Kanalspur.** Das Gegenstück für die R-Seite. Eine zentrierte Mono-Quelle darf beide Eingänge speisen — das Ausgangs-Frame ist dann exakt das zentrierte Eingangsframe (keine Mittelung, keine Verdopplung). | `InputPort rightInput` | [src/processors/MergerProcessor.h](../../src/processors/MergerProcessor.h) |
+| `out` | Output | `signal` | — | **Zusammengeführtes Stereo-Signal:** L aus `in1`, R aus `in2` — das Bett, in dem Seitenzweige wieder ein Vollsignal werden. | `OutputPort output` | [src/processors/MergerProcessor.h](../../src/processors/MergerProcessor.h) |
+
+Tabelle 1c: Daraus folgende echte Parameter (APVTS).
+
+| Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
+|---|---|---|---|---|---|
+| *(keine)* | — | — | Der Merger regelt nichts — reine Topologie; die `ChannelSide`-Hinweise sind nur Anzeige-Metadaten für das L/R-Badge im UI. | — | — |
 
 Der Merger besitzt **keine APVTS-Parameter**. Die Port-Hinweise
 `ChannelSide::left` / `ChannelSide::right` an `in1`/`in2` sind reine

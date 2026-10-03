@@ -8,15 +8,26 @@ Stillstand (Default-Eingang 0.0).
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
-| Eigenschaft | Wert | Symbol / Typ | Datei |
-|---|---|---|---|
-| Max. Instanzen | 16 | `GraphNodeRegistry::maxGains` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `in` (`PortType::signal`), `factor_mod_in` (`PortType::signal`), `vel` (`PortType::velocity`) | `InputPort input`, `InputPort modInput`, `InputPort velIn` | [src/processors/GainProcessor.h](../../src/processors/GainProcessor.h) |
-| Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/GainProcessor.h](../../src/processors/GainProcessor.h) |
+Tabelle 1a: Instanzen.
 
-| Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
+| Eigenschaft | Wert | Symbol / Typ | Datei | Kurzbeschreibung |
 |---|---|---|---|---|
-| Gain | `gain<N>Factor` | Float, 0–10, Default 1 (UI-Bipolar: Mitte ≙ 1.0/Unity — linke Hälfte linear 0–1, rechte Hälfte quadratisch 1–10; Rohwert bleibt 0–10) | `std::atomic<float>* gain` | [src/processors/GainProcessor.h](../../src/processors/GainProcessor.h) |
+| Max. Instanzen | 16 | `GraphNodeRegistry::maxGains` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) | Bis zu 16 Dreh-Verstärker pro Voice — je Layer/Kopie ein eigener Lautheits-Hahn (Budgets sind verdoppelt; der Code registriert sie per `for (i < GraphNodeRegistry::maxGains)`). |
+
+Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Parameter).
+
+| Port | Richtung | Port-Typ | Unverbunden (Default) | Kurzbeschreibung (Wirkung & Modulation) | Symbol im Code | Datei |
+|---|---|---|---|---|---|---|
+| `in` | Input | `signal` | liest 0 → Stillstand (der Hahn dreht auf Nichts) | **Rohsignal.** Das Signal, das mit dem wirksamen Faktor multipliziert wird — der Gain verändert nur die Lautheit, nie die Gestalt. | `InputPort input` | [src/processors/GainProcessor.h](../../src/processors/GainProcessor.h) |
+| `factor_mod_in` | Input | `signal` | liest 0 → vollständig transparent (neutral) | **Fremdfahrer des Faktors.** Multipliziert den Regler-Gain ($\cdot\,(1+m)$, auf 0–10 geclampt) — macht aus dem Gain ein steuerbares VCA: LFO = sanftes Tremolo/Swell, Square = rhythmisches Gate, ADSR = eigene Volume-Envelope pro Layer. | `InputPort modInput` | [src/processors/GainProcessor.h](../../src/processors/GainProcessor.h) |
+| `vel` | Input | `velocity` | liest 1.0 → neutral, klanginvariant | **Lautheits-Hälfte des Anschlags.** Anschlagstärke multipliziert den wirksamen Gain (Accent): hard = lauter, zart = leiser — und zwar nur in verdrahteten Gains (opt-in pro Layer), unverdrahtete Layers ignorieren den Anschlag. | `InputPort velIn` | [src/processors/GainProcessor.h](../../src/processors/GainProcessor.h) |
+| `out` | Output | `signal` | — | **Skaliertes Signal:** der Eingang mal wirksamer Faktor — lauter, leiser oder komplett stumm (Faktor 0 = Layer-Mute). | `OutputPort output` | [src/processors/GainProcessor.h](../../src/processors/GainProcessor.h) |
+
+Tabelle 1c: Daraus folgende echte Parameter (APVTS).
+
+| Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
+|---|---|---|---|---|---|
+| Gain | `gain<N>Factor` | Float, 0–10, Default 1 (UI-Bipolar: Mitte ≙ 1.0/Unity — linke Hälfte linear 0–1, rechte Hälfte quadratisch 1–10; Rohwert bleibt 0–10) | Der Lautheits-Faktor des Layers: 1 = neutraler Durchlass, 0 = Mute, über 1 = Boost (Vorsicht vor Clipping am gestapelten Master-Bus). | `std::atomic<float>* gain` | [src/processors/GainProcessor.h](../../src/processors/GainProcessor.h) |
 
 `<N>` = Instanzindex 0–15 (Budgets seit Commit ecfdef2 verdoppelt; der Code
 registriert die Parameter über `for (i < GraphNodeRegistry::maxGains)`).

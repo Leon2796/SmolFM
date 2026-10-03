@@ -9,18 +9,27 @@ wirken daher auf die nächste Note.
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
-| Eigenschaft | Wert | Symbol / Typ | Datei |
-|---|---|---|---|
-| Max. Instanzen | 16 | `GraphNodeRegistry::maxAdsr` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `in` (`PortType::signal`) | `InputPort input` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
-| Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
+Tabelle 1a: Instanzen.
 
-| Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
+| Eigenschaft | Wert | Symbol / Typ | Datei | Kurzbeschreibung |
 |---|---|---|---|---|
-| Attack | `adsr<N>Attack` | Float, 0.001–5 s | `std::atomic<float>* attack` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
-| Decay | `adsr<N>Decay` | Float, 0.001–5 s | `std::atomic<float>* decay` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
-| Sustain | `adsr<N>Sustain` | Float, 0–1 | `std::atomic<float>* sustain` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
-| Release | `adsr<N>Release` | Float, 0.001–10 s | `std::atomic<float>* release` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
+| Max. Instanzen | 16 | `GraphNodeRegistry::maxAdsr` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) | Bis zu 16 Lautstärke-Blendregler pro Voice — je Layer einer, damit jeder Klanganteil sein eigenes Auf- und Abblenden bekommt. |
+
+Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Parameter).
+
+| Port | Richtung | Port-Typ | Unverbunden (Default) | Kurzbeschreibung (Wirkung & Modulation) | Symbol im Code | Datei |
+|---|---|---|---|---|---|---|
+| `in` | Input | `signal` | liest 0 → der Knoten gibt Stille weiter (die Hüllkurve läuft unsichtbar weiter) | **Rohsignal unter der Blende.** Das Signal wird nicht verformt, sondern nur in Lautstärke gewogen — wie ein Vorhang, der sich nach Kurvengang öffnet und schließt. | `InputPort input` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
+| `out` | Output | `signal` | — | **Geblendetes Signal:** Eingang × Hüllkurvenwert — trägt die Anschlags-Gestalt (Aufbau, Halt, Ausklingen) in den nachgeschalteten Bus. | `OutputPort output` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
+
+Tabelle 1c: Daraus folgende echte Parameter (APVTS).
+
+| Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
+|---|---|---|---|---|---|
+| Attack | `adsr<N>Attack` | Float, 0.001–5 s | Anstiegszeit vom Stillstand zum Peak: 1 ms knallt der Ton schlagartig rein (Schlagstock), Sekunden lassen ihn langsam aufschwellen (Bogenstrich). Wird bei Note-On gelesen und wirkt auf die nächste Note. | `std::atomic<float>* attack` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
+| Decay | `adsr<N>Decay` | Float, 0.001–5 s | Zeit, in der der Pegel vom Peak auf den Sustain-Halt zurückfällt — der „Nachfall" direkt hinter dem Einschlag. | `std::atomic<float>* decay` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
+| Sustain | `adsr<N>Sustain` | Float, 0–1 | Halt-Pegel, solange die Note klingt: 1 = volle Lautheit bis zum Loslassen, 0 = der Ton verklingt schon während des Decay. | `std::atomic<float>* sustain` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
+| Release | `adsr<N>Release` | Float, 0.001–10 s | Ausblendzeit nach Note-Off — wie lange der Ton hinter der losgelassenen Note noch nachhallt. | `std::atomic<float>* release` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
 
 `<N>` = Instanzindex 0–3.
 

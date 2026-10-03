@@ -10,20 +10,30 @@ bei Note-On gelesen (JUCE-Empfehlung) und wirken daher auf die nächste Note.
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
-| Eigenschaft | Wert | Symbol / Typ | Datei |
-|---|---|---|---|
-| Max. Instanzen | 8 | `GraphNodeRegistry::maxFAdsr` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `freq_in` (`PortType::frequency`), `vel` (`PortType::velocity`) | `InputPort freqInput`, `InputPort velIn` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
-| Output-Ports | `out` (`PortType::frequency`) | `OutputPort output` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
+Tabelle 1a: Instanzen.
 
-| Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
+| Eigenschaft | Wert | Symbol / Typ | Datei | Kurzbeschreibung |
 |---|---|---|---|---|
-| Attack | `fadsr<N>Attack` | Float, 0.001–5 s | `std::atomic<float>* attack` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
-| Decay | `fadsr<N>Decay` | Float, 0.001–5 s | `std::atomic<float>* decay` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
-| Sustain | `fadsr<N>Sustain` | Float, 0–1 | `std::atomic<float>* sustain` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
-| Release | `fadsr<N>Release` | Float, 0.001–10 s | `std::atomic<float>* release` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
-| Up Factor | `fadsr<N>Up` | Float, 0–10, Default 1 | `std::atomic<float>* up` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
-| Down Factor | `fadsr<N>Down` | Float, 0–10, Default 1 | `std::atomic<float>* down` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
+| Max. Instanzen | 8 | `GraphNodeRegistry::maxFAdsr` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) | Acht Pitch-Hüllkurven pro Voice — je Layer/Kette eine eigene Tonhöhen-Gestalt. |
+
+Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Parameter).
+
+| Port | Richtung | Port-Typ | Unverbunden (Default) | Kurzbeschreibung (Wirkung & Modulation) | Symbol im Code | Datei |
+|---|---|---|---|---|---|---|
+| `freq_in` | Input | `frequency` | liest 440 Hz → die Kurve arbeitet auf derselben Grundstellung | **Die Frequenz, die gestreckt/gedrückt wird.** Kommt typisch von `note.out` oder `fscale`; die Hüllkurve multipliziert sie mit einem zeitlich wandernden Faktor — wie eine Hand, die am Stimmschlüssel anhebt und wieder loslässt. | `InputPort freqInput` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
+| `vel` | Input | `velocity` | liest 1.0 → neutral, byteidentisch unverdrahtet | **Anschlagstärke = Tiefe der Pitch-Kurve.** Harte Anschläge ziehen beide Anker (Up/Down) voll auf ihre eingestellten Werte, zarte lassen sie Richtung Neutral 1.0 zurückbleiben (Pull-to-Neutral $1+v\cdot(F-1)$) — die Kurvenform (A/D/S/R) bleibt unangetastet. | `InputPort velIn` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
+| `out` | Output | `frequency` | — | **Momentanfrequenz mit Pitch-Hüllkurve:** die verformte Hz-Zahl — wie ein Drehregler am Stimmstock, den die Kurve auf und ab bewegt; landet am Carrier-Oszillator oder in der nächsten FM-Stufe. | `OutputPort output` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
+
+Tabelle 1c: Daraus folgende echte Parameter (APVTS).
+
+| Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
+|---|---|---|---|---|---|
+| Attack | `fadsr<N>Attack` | Float, 0.001–5 s | Anfahrtszeit der Pitch-Bewegung: wie schnell die Frequenz von ihrem Fußwert (Down) hoch zur Spitze zieht. Parameter werden bei Note-On gelesen und wirken auf die nächste Note. | `std::atomic<float>* attack` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
+| Decay | `fadsr<N>Decay` | Float, 0.001–5 s | Fall von der Kurvenspitze zur Haltephase — das „Zurückfedern" der Tonhöhe nach dem Anschlag. | `std::atomic<float>* decay` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
+| Sustain | `fadsr<N>Sustain` | Float, 0–1 | Haltephase: steuert, welchem Faktor (nahe Down oder Up) die Tonhöhe während der Haltephase folgt. | `std::atomic<float>* sustain` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
+| Release | `fadsr<N>Release` | Float, 0.001–10 s | Rückkehr der Tonhöhe nach Note-Off — wie lang das Pitch-Nachzirpen anhält. | `std::atomic<float>* release` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
+| Up Factor | `fadsr<N>Up` | Float, 0–10, Default 1 | Faktor am Kurvenscheitel (E = 1): wie weit der Ton über der Spielpitch schwingt (Pitch-Bling). | `std::atomic<float>* up` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
+| Down Factor | `fadsr<N>Down` | Float, 0–10, Default 1 | Faktor am Kurvenfuß (E = 0): Startpunkt der Bewegung; 0 lässt den Ton erst stillstehen und beim Attack zur Spielpitch hinaufgleiten (umgekehrter Pitch-Drop). | `std::atomic<float>* down` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
 
 `<N>` = Instanzindex 0–3.
 

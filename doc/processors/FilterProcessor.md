@@ -8,17 +8,29 @@ stabil auch bei hoher Resonance, Cutoff wird pro Sample neu hergeleitet.
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
-| Eigenschaft | Wert | Symbol / Typ | Datei |
-|---|---|---|---|
-| Max. Instanzen | 16 | `GraphNodeRegistry::maxFilters` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `in` (`PortType::signal`), `cutoff_mod_in` (`PortType::frequency`), `resonance_mod_in` (`PortType::signal`), `vel` (`PortType::velocity`) | `InputPort input`, `InputPort cutoffMod`, `InputPort resonanceMod`, `InputPort velIn` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
-| Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
+Tabelle 1a: Instanzen.
 
-| Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
+| Eigenschaft | Wert | Symbol / Typ | Datei | Kurzbeschreibung |
 |---|---|---|---|---|
-| Cutoff | `filter<N>Cutoff` | Float, 20–20000 Hz (log, skew 0.3), Default 1000 | `std::atomic<float>* cutoff` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
-| Resonance | `filter<N>Resonance` | Float, 0–1, Default 0 | `std::atomic<float>* resonance` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
-| Mode | `filter<N>Mode` | Choice 0–3 (LP, BP, HP, Notch), Default 0 | `std::atomic<float>* mode` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
+| Max. Instanzen | 16 | `GraphNodeRegistry::maxFilters` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) | Bis zu 16 Klangfarben-Blendregler pro Voice — je Signalfaden (Layer, Bus, Kopie) einer. |
+
+Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Parameter).
+
+| Port | Richtung | Port-Typ | Unverbunden (Default) | Kurzbeschreibung (Wirkung & Modulation) | Symbol im Code | Datei |
+|---|---|---|---|---|---|---|
+| `in` | Input | `signal` | liest 0 → das Filter läuft weiter, gibt aber Stille weiter | **Rohsignal.** Hier kommt das Signal herein, aus dem die gewünschten Frequenzbereiche herausgelockt werden — alle anderen Teile verwirft das Fenster. | `InputPort input` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
+| `cutoff_mod_in` | Input | `frequency` | unverbunden: der statische Cutoff-Regler gilt | **Die Stimme der Blendgrenze.** Verbunden ersetzt der Hz-Wert den Cutoff-Regler komplett (kein Offset, 20–20000 Hz) — Key-Tracking bzw. F-ADSR-Dives gliden die Klangfarbe hoch/runter. | `InputPort cutoffMod` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
+| `resonance_mod_in` | Input | `signal` | liest 0 → die statische Resonance wirkt unverändert | **Die Resonanz-Schwellkurbel.** Multipliziert die eingestellte Resonanz ($r\cdot(1+m)$, auf 0–1 geclampt): Perlin = organische Q-Atmung, Saw-LFO = zyklische Selbst-Oszillations-Rampen, ADSR = kurze Hammer-Pings. | `InputPort resonanceMod` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
+| `vel` | Input | `velocity` | liest 1.0 → neutral (byteidentisch) | **Anschlag öffnet die Blende.** Anschlagstärke multipliziert die wirksame Cutoff ($f_c \cdot v$, 20–20000): harte Anschläge sitzen heller, zarte dunkler — der Noise-Snap-Akzent der 808-Snare. | `InputPort velIn` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
+| `out` | Output | `signal` | — | **Durchlässige Signalfarben:** der gefilterte Klang nach dem gewählten Fenster (LP/BP/HP/Notch). | `OutputPort output` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
+
+Tabelle 1c: Daraus folgende echte Parameter (APVTS).
+
+| Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
+|---|---|---|---|---|---|
+| Cutoff | `filter<N>Cutoff` | Float, 20–20000 Hz (log, skew 0.3), Default 1000 | Die Blendgrenze der Klangfarbe — wie ein Dimmer zwischen dunklem Fundament (tief) und hellen Spitzen (hoch); der Regler, solange `cutoff_mod_in` leer bleibt. | `std::atomic<float>* cutoff` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
+| Resonance | `filter<N>Resonance` | Float, 0–1, Default 0 | Das Anheben der Kante an der Blendgrenze: 0 = sanft zugehalten, nahe 1 = die Kante piept fast von selbst (Selbst-Oszillation, bleibt stabil). | `std::atomic<float>* resonance` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
+| Mode | `filter<N>Mode` | Choice 0–3 (LP, BP, HP, Notch), Default 0 | Der Flügelsatz am Fenster: Lowpass (nur Tiefen), Bandpass (schmale Klangzunge), Highpass (nur Höhen), Notch (ein Loch im Spektrum). | `std::atomic<float>* mode` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
 
 `<N>` = Instanzindex 0–7.
 

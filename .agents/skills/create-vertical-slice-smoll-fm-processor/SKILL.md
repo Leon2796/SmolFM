@@ -233,7 +233,17 @@ The file path is referenced by the NodeType annotation (`docReference`) in
 Sections:
 
 1. **Ports & real parameters** — copy the tables, replace names; if no
-   parameters, write `*(keine)*`.
+   parameters, write `*(keine)*`. Tabelle 1b lists **every input and output
+   port in its own row** (one port = one parameter, set by the wiring rather
+   than by a slider); Tabelle 1c has one row per APVTS parameter. Both tables
+   carry the mandatory `Kurzbeschreibung` column, written for DSP beginners:
+   short sentences, everyday words, one physical/mental analogy when it helps.
+   Each description states (1) what flows in/out, (2) the unwired default +
+   what happens then, (3) how the port/parameter modulates — replaces a
+   static value, multiplies it by (1+m), clamps — and how it shapes the
+   isolated processor's sound. Fill `Unverbunden (Default)` from the real
+   code (`setDefaultValue`, `jlimit`, velocity-neutral 1.0). Formal math
+   stays in §3 (Mathematical description).
 2. **UI configuration** — list only *mode toggles* (LFO switch, range
    buttons). If none, the `*(noch keine)*` row. Static labels count as UI
    but live in the same row.

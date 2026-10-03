@@ -7,19 +7,29 @@ freie Millisekunden oder Sync an die Host-Tempo.
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
-| Eigenschaft | Wert | Symbol / Typ | Datei |
-|---|---|---|---|
-| Max. Instanzen | 16 | `GraphNodeRegistry::maxDelays` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `in` (`PortType::signal`), `time_mod_in` (`PortType::signal`) | `InputPort input`, `InputPort timeMod` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
-| Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
+Tabelle 1a: Instanzen.
 
-| Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
+| Eigenschaft | Wert | Symbol / Typ | Datei | Kurzbeschreibung |
 |---|---|---|---|---|
-| Time | `delay<N>TimeMs` | Float 1 – 2000 ms, Default 250 | `std::atomic<float>* timeMs` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
-| Feedback | `delay<N>Feedback` | Float 0 – 0.95, Default 0.3 | `std::atomic<float>* feedback` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
-| Mix | `delay<N>Mix` | Float 0 – 1, Default 0.3 | `std::atomic<float>* mix` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
-| Sync | `delay<N>SyncMode` | Bool, Default false | `std::atomic<float>* syncMode` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
-| Division | `delay<N>Division` | Choice 0-3 (1/2, 1/4, 1/8, 1/16), Default 1 | `std::atomic<float>* division` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
+| Max. Instanzen | 16 | `GraphNodeRegistry::maxDelays` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) | Bis zu 16 Echo-Kammern pro Voice — je Layer eine eigene Raumschattierung. |
+
+Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Parameter).
+
+| Port | Richtung | Port-Typ | Unverbunden (Default) | Kurzbeschreibung (Wirkung & Modulation) | Symbol im Code | Datei |
+|---|---|---|---|---|---|---|
+| `in` | Input | `signal` | liest 0 → Ausgang bleibt 0 | **Eingang.** Das Signal, das in die Echo-Kammer geschoben wird — es geht unverändert hinein und als zeitversetzte Kopie wieder hinaus. | `InputPort input` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
+| `time_mod_in` | Input | `signal` | liest 0 → exakt die statische Zeit (neutral, byteidentisch) | **Fremdfahrer der Echo-Zeit.** Multipliziert die eingestellte Verzögerung mit (1 + m): schneller Sinus bei kurzer Grundzeit stampft die Linie ins Flanger-Schimmern, langsame Kurven watscheln die Echos dub-mäßig — die Verschiebung selbst ist zugleich die Tonhöhe der Echos: die Zeit IST die Echo-Pitch. | `InputPort timeMod` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
+| `out` | Output | `signal` | — | **Mix aus Original und Echo(n):** trockenes Signal plus zeitversetzte, ggf. mehrfach zurückkehrende Kopie. | `OutputPort output` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
+
+Tabelle 1c: Daraus folgende echte Parameter (APVTS).
+
+| Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
+|---|---|---|---|---|---|
+| Time | `delay<N>TimeMs` | Float 1–2000 ms, Default 250 | Der Abstand zwischen Original und Echo in Millisekunden — wie weit die Stimme in den Raum geschoben wird; wenige ms schimmern, hunderte ms rufen deutlich zurück. | `std::atomic<float>* timeMs` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
+| Feedback | `delay<N>Feedback` | Float 0–0.95, Default 0.3 | Wie oft das Echo sich selbst wiederhören darf: 0 = nur ein einzelnes Echo, 0.95 = langer, fast ewiger Ausläufer (Sicherheitsdeckel gegen Aufschaukeln). | `std::atomic<float>* feedback` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
+| Mix | `delay<N>Mix` | Float 0–1, Default 0.3 | Mischhebel zwischen trockenem Original (0) und reinem Echo (1) — wie viel „Ferne" im Klang sitzt. | `std::atomic<float>* mix` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
+| Sync | `delay<N>SyncMode` | Bool, Default false | Schnürung der Echozeit an das Host-Tempo statt an freie Millisekunden — die Echos sitzen auf dem Takt statt einer Stoppuhr. | `std::atomic<float>* syncMode` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
+| Division | `delay<N>Division` | Choice 0–3 (1/2, 1/4, 1/8, 1/16), Default 1 | Der Taktanteil im Sync-Modus — von breiten Halben bis zum rastlosen Sechzehntel-Echo. | `std::atomic<float>* division` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
 
 Der Prozessor benötigt zusätzlich den aktuellen Host-BPM, der über
 `setHostTempo(double)` vom `AudioPluginAudioProcessor` (via `getPlayHead`)

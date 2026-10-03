@@ -12,15 +12,25 @@ reine, clip- und gain-freie Addition.
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
-| Eigenschaft | Wert | Symbol / Typ | Datei |
-|---|---|---|---|
-| Max. Instanzen | 8 | `GraphNodeRegistry::maxAdds` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `in1` (`PortType::signal`), `in2` (`PortType::signal`) | `InputPort input1`, `input2` | [src/processors/AdderProcessor.h](../../src/processors/AdderProcessor.h) |
-| Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/AdderProcessor.h](../../src/processors/AdderProcessor.h) |
+Tabelle 1a: Instanzen.
 
-| Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
+| Eigenschaft | Wert | Symbol / Typ | Datei | Kurzbeschreibung |
 |---|---|---|---|---|
-| *(keine)* | — | — | — | — |
+| Max. Instanzen | 8 | `GraphNodeRegistry::maxAdds` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) | Acht Summier-Baukästen pro Voice — genug, um z. B. einen Sechs-Quellen-Cluster mit zwei kaskadierenden Reserve-Stufen zu verdrahten (k Quellen brauchen k−1 Adder). |
+
+Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Parameter).
+
+| Port | Richtung | Port-Typ | Unverbunden (Default) | Kurzbeschreibung (Wirkung & Modulation) | Symbol im Code | Datei |
+|---|---|---|---|---|---|---|
+| `in1` | Input | `signal` | liest 0 → der Adder wird zum neutralen Durchlass für `in2` | **Erster Summand.** Bringt ein komplettes Signal in die Summierung — wie ein Mischpultkanal, hinter dem ein Kabel angesteckt ist: Ist der Pin leer, fließt nur der andere Kanal weiter, ohne dass sich etwas ändert. | `InputPort input1` | [src/processors/AdderProcessor.h](../../src/processors/AdderProcessor.h) |
+| `in2` | Input | `signal` | liest 0 → der Adder wird zum neutralen Durchlass für `in1` | **Zweiter Summand.** Gleichberechtigtes Gegenstück zu `in1`; beide Seiten laufen sampleweise zusammen (L zu L, R zu R). Ohne Clipping und ohne Balance-Hahn — Lautverhältnis und Headroom regelt eine Gain-Stufe vor oder hinter dem Bus. | `InputPort input2` | [src/processors/AdderProcessor.h](../../src/processors/AdderProcessor.h) |
+| `out` | Output | `signal` | — (liegt an, sobald ein Verbraucher verdrahtet) | **Summen-Bus.** Die zusammengeführte Einzelmischung: alle nachgeschalteten Stufen (Filter, Shaper, ADSR, Delay) schmücken den ganzen Bus, statt jede Quelle einzeln zu dekorieren. Dieselbe Quelle auf beide Eingänge gelegt lässt alles doppelt so laut klingen. | `OutputPort output` | [src/processors/AdderProcessor.h](../../src/processors/AdderProcessor.h) |
+
+Tabelle 1c: Daraus folgende echte Parameter (APVTS).
+
+| Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
+|---|---|---|---|---|---|
+| *(keine)* | — | — | Der Adder hat keine Drehregler — seine gesamte Wirkung lebt in den Ports (Tabelle 1b). | — | — |
 
 Der Adder besitzt **keine APVTS-Parameter**. Er ist zustandslos: `prepare` und
 `startNote` leeren nichts, es gibt keine Internat, die ein Reset brauchte.

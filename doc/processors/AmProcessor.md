@@ -8,15 +8,25 @@ nie ganz ausgelöscht wird.
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
-| Eigenschaft | Wert | Symbol / Typ | Datei |
-|---|---|---|---|
-| Max. Instanzen | 8 | `GraphNodeRegistry::maxAmModulators` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `carrier_in`, `modulator_in` (`PortType::signal`) | `InputPort carrierIn`, `modulatorIn` | [src/processors/AmProcessor.h](../../src/processors/AmProcessor.h) |
-| Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/AmProcessor.h](../../src/processors/AmProcessor.h) |
+Tabelle 1a: Instanzen.
 
-| Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
+| Eigenschaft | Wert | Symbol / Typ | Datei | Kurzbeschreibung |
 |---|---|---|---|---|
-| Depth | `am<N>Amount` | Float, 0.0 – 1.0 (Default 0.0) | `std::atomic<float>* amount` | [src/processors/AmProcessor.h](../../src/processors/AmProcessor.h) |
+| Max. Instanzen | 8 | `GraphNodeRegistry::maxAmModulators` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) | Acht „Lautstärke-Pumpen" pro Voice — je Layer eine, um Träger klanggestaltend zu wobbeln. |
+
+Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Parameter).
+
+| Port | Richtung | Port-Typ | Unverbunden (Default) | Kurzbeschreibung (Wirkung & Modulation) | Symbol im Code | Datei |
+|---|---|---|---|---|---|---|
+| `carrier_in` | Input | `signal` | liest 0 → Stille (ohne Träger kann nichts schwingen) | **Träger.** Das Signal, das am Ende hörbar bleiben soll — der AmProcessor verformt es nicht, es wird nur im Rhythmus des Modulators laut und leise gewogen (wie eine Stimme hinter einem öffnenden und schließenden Fenster). | `InputPort carrierIn` | [src/processors/AmProcessor.h](../../src/processors/AmProcessor.h) |
+| `modulator_in` | Input | `signal` | liest 0 → sauberer Durchlass ($g = 1$, byteidentisch zum Bypass) | **Pump-Signal.** Seine Schwingung treibt die Lautstärke hoch und runter: langsam und sanft = Tremolo-Zittern, kräftig und schnell = Chopper, der den Träger periodisch ausblendet. Der bipolare Modulator wird vor der Multiplikation in einen positiven Gain-Bereich geschoben, damit der Träger nie ganz verschwindet. | `InputPort modulatorIn` | [src/processors/AmProcessor.h](../../src/processors/AmProcessor.h) |
+| `out` | Output | `signal` | — | **Gepumptes Signal:** Träger × zeitlich wandernder Gain-Faktor — klingt wie der Träger, aber im Takt des Modulators atmend. | `OutputPort output` | [src/processors/AmProcessor.h](../../src/processors/AmProcessor.h) |
+
+Tabelle 1c: Daraus folgende echte Parameter (APVTS).
+
+| Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
+|---|---|---|---|---|---|
+| Depth | `am<N>Amount` | Float, 0.0–1.0 (Default 0.0) | Wie tief die Lautstärke-Schwankung greift: 0 = trocken bzw. neutral (reiner Durchlass), 1 = der Modulator diktiert die Lautheit komplett (bis zum periodischen Auslöschen — der Grenzfall zur Ringmodulation). | `std::atomic<float>* amount` | [src/processors/AmProcessor.h](../../src/processors/AmProcessor.h) |
 
 ## Abschnitt 2 — UI-Konfiguration
 

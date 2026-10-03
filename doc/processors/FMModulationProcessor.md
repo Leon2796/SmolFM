@@ -14,15 +14,27 @@ Modulationstiefe.
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
-| Eigenschaft | Wert | Symbol / Typ | Datei |
-|---|---|---|---|
-| Max. Instanzen | 8 | `GraphNodeRegistry::maxFmAmounts` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `freq_in` (`PortType::frequency`), `modulator_in` (`PortType::signal`), `amount_mod_in` (`PortType::signal`), `vel` (`PortType::velocity`) | `InputPort freqInput`, `InputPort modulatorInput`, `InputPort amountMod`, `InputPort velIn` | [src/processors/FMModulationProcessor.h](../../src/processors/FMModulationProcessor.h) |
-| Output-Ports | `out` (`PortType::frequency`) | `OutputPort output` | [src/processors/FMModulationProcessor.h](../../src/processors/FMModulationProcessor.h) |
+Tabelle 1a: Instanzen.
 
-| Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
+| Eigenschaft | Wert | Symbol / Typ | Datei | Kurzbeschreibung |
 |---|---|---|---|---|
-| FM Amount | `fmAmount<N>` | Float, 0–10 | `std::atomic<float>* fmAmount` | [src/processors/FMModulationProcessor.h](../../src/processors/FMModulationProcessor.h) |
+| Max. Instanzen | 8 | `GraphNodeRegistry::maxFmAmounts` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) | Acht FM-Stufen pro Voice — für verkettete Spektralebenen (`fm<K>.out → fm<K+1>.freq_in`). |
+
+Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Parameter).
+
+| Port | Richtung | Port-Typ | Unverbunden (Default) | Kurzbeschreibung (Wirkung & Modulation) | Symbol im Code | Datei |
+|---|---|---|---|---|---|---|
+| `freq_in` | Input | `frequency` | liest 0 Hz → die Stufe rechnet auf 0 Hz (kein Klang fließt weiter) | **Carrier-Grundton.** Die Hz-Zahl, die verbogen wird — typisch von `note.out` oder der vorherigen FM-Stufe; hier fließt die „Stimmachse" durch die Kette. | `InputPort freqInput` | [src/processors/FMModulationProcessor.h](../../src/processors/FMModulationProcessor.h) |
+| `modulator_in` | Input | `signal` | unverbunden (oder Amount 0): Modulator = 0 → Frequenz bleibt exakt wie am Eingang | **Der Verbieger.** Seine Schwingung schiebt die Carrier-Frequenz pro Sample hoch und runter — wie ein kräftiges Handgelenk am Stimmrad des Tones; in den entstehenden Nebenwellen wohnt das metallische FM-Klangbild. | `InputPort modulatorInput` | [src/processors/FMModulationProcessor.h](../../src/processors/FMModulationProcessor.h) |
+| `amount_mod_in` | Input | `signal` | liest 0 → statischer FM-Amount gilt (neutral) | **Tiefe der Tiefe.** Multipliziert den eingestellten FM-Amount ($a\cdot(1+m)$, auf 0–10 geclampt): Spektrum-Envelope per ADSR, Index-Tremolo per LFO oder audio-getriebene Tiefe direkt. | `InputPort amountMod` | [src/processors/FMModulationProcessor.h](../../src/processors/FMModulationProcessor.h) |
+| `vel` | Input | `velocity` | liest 1.0 → neutral (byteidentisch unverdrahtet) | **Accent-Metall.** Anschlagstärke multipliziert die wirksame Modulationstiefe — harte Anschläge gewinnen metallische Sidebands (Cowbell/Clave-Charakter). | `InputPort velIn` | [src/processors/FMModulationProcessor.h](../../src/processors/FMModulationProcessor.h) |
+| `out` | Output | `frequency` | — | **Verbogene Momentanfrequenz (Hz):** wandert als reine Frequenz weiter — verkettbar (`fm<K>.out → fm<K+1>.freq_in`), bis der Carrier-Oszillator sie in Schall verwandelt. | `OutputPort output` | [src/processors/FMModulationProcessor.h](../../src/processors/FMModulationProcessor.h) |
+
+Tabelle 1c: Daraus folgende echte Parameter (APVTS).
+
+| Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
+|---|---|---|---|---|---|
+| FM Amount | `fmAmount<N>` | Float, 0–10 | Wie tief die Verbiegung reicht: 0 = reiner Ton, 1 = die Frequenz pendelt zwischen 0 % und 200 %, darüber kippt die Phase durch null (Through-Zero) und füllt Obertonbündel — bei Saw/Square moderat halten (typisch < 1.5). | `std::atomic<float>* fmAmount` | [src/processors/FMModulationProcessor.h](../../src/processors/FMModulationProcessor.h) |
 
 `<N>` = Instanzindex 0–3. Verkettung: `fm<K>.out` → `fm<K+1>.freq_in`.
 

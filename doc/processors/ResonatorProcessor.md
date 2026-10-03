@@ -12,18 +12,30 @@ offen).
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
-| Eigenschaft | Wert | Symbol / Typ | Datei |
-|---|---|---|---|
-| Max. Instanzen | 8 | `GraphNodeRegistry::maxResonators` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `in` (Exciter, `PortType::signal`), `tune` (`PortType::frequency`), `q_mod_in` (`PortType::signal`), `vel` (`PortType::velocity`) | `InputPort input`, `InputPort tuneIn`, `InputPort qMod`, `InputPort velIn` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
-| Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
+Tabelle 1a: Instanzen.
 
-| Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
+| Eigenschaft | Wert | Symbol / Typ | Datei | Kurzbeschreibung |
 |---|---|---|---|---|
-| Tune | `resonator<N>Tune` | Float, 20–8000 Hz (log, skew 0.3), Default 100 | `std::atomic<float>* tune` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
-| Q | `resonator<N>Q` | Float, 0–1, Default 0.5 (≙ $Q\approx1$) | `std::atomic<float>* q` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
-| Decay | `resonator<N>Decay` | Float, 0.01–10 s (skew 0.5), Default 0.3 (t60) | `std::atomic<float>* decay` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
-| Vel Spread | `resonator<N>VelSpread` | Float, 0.25–4, Default 1 (neutral) | `std::atomic<float>* velSpread` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
+| Max. Instanzen | 8 | `GraphNodeRegistry::maxResonators` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) | Acht resonierende Körper pro Voice — genug für Drum-Familien (BD, Toms, Congas, Claves, Snare-Bodies) mit geteiltem Kern. |
+
+Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Parameter).
+
+| Port | Richtung | Port-Typ | Unverbunden (Default) | Kurzbeschreibung (Wirkung & Modulation) | Symbol im Code | Datei |
+|---|---|---|---|---|---|---|
+| `in` | Input | `signal` | liest 0 → beide Stufen bleiben still, der Knoten ist inert | **Exciter (Anreger).** Der Schlägel: kippt bei jedem Impuls Energie in den Resonanzkörper — ohne Anreger singt der Körper nicht. | `InputPort input` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
+| `tune` | Input | `frequency` | unverbunden: der statische Tune-Regler gilt | **Live-Stimmung.** Verbunden IST der Hz-Wert die Resonanzfrequenz (20–8000 Hz, kein Offset) — Key-Tracking (note → fscale → tune) und F-ADSR-Dives gliden den Körper hoch/runter, ohne eigenen Quirk. | `InputPort tuneIn` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
+| `q_mod_in` | Input | `signal` | liest 0 → das statische q gilt (neutral) | **Live-Schärfe.** Multipliziert die eingestellte Resonanz-Q ($q\cdot(1+m)$, auf 0–1 geclampt) — wie eine Faust, die die Saite enger greift oder löst: eng = spitz-klingend, breit = hohl-dunkel. | `InputPort qMod` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
+| `vel` | Input | `velocity` | liest 1.0 (Port-Default) + Spread 1 → byteidentisch neutral | **Abklingzeit vom Anschlag.** Anschlagstärke dehnt die Dekay nach dem 808-Gesetz „Decay über VIN": $t_{\text{eff}} = t\cdot(1+v\cdot(\text{spread}-1))$ — harte Schläge klingen länger. | `InputPort velIn` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
+| `out` | Output | `signal` | — | **Der abklingende Ring.** Die pseudo-sinusförmige Antwort des Körpers — der Klang, den BD, Toms, Congas und Claves singen; Retrigger kippt neue Energie in den noch klingenden Schwanz (kein Neustart, sondern Summierung). | `OutputPort output` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
+
+Tabelle 1c: Daraus folgende echte Parameter (APVTS).
+
+| Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
+|---|---|---|---|---|---|
+| Tune | `resonator<N>Tune` | Float, 20–8000 Hz (log, skew 0.3), Default 100 | Die Tonhöhe des Klangkörpers — wie die Stimmung der Trommelkiste: wo der „Ring" sitzt. Der Regler, solange `tune` unverbunden bleibt. | `std::atomic<float>* tune` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
+| Q | `resonator<N>Q` | Float, 0–1, Default 0.5 (≙ $Q\approx1$) | Die Schärfe des Rings (Breite der Kopplungsstufe): hoher Wert singt wie eine scharf gestimmte Saite (schmal, spitzer Ton), niedriger vibriert wie ein hohler Holzkasten (breit, dumpf). | `std::atomic<float>* q` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
+| Decay | `resonator<N>Decay` | Float, 0.01–10 s (skew 0.5), Default 0.3 (t60) | Die Nachklingzeit (t60) — wie lange der Körper weiterschwingt, bevor Ruhe einkehrt; der Polradius, keine aufgelegte Hüllkurve. | `std::atomic<float>* decay` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
+| Vel Spread | `resonator<N>VelSpread` | Float, 0.25–4, Default 1 (neutral) | Der Dehnfaktor der Dekay für Anschläge: 1 = alle Anschläge klingen gleich lang, 4 = harte Anschläge klingen bis zu viermal länger nach (das Anschlags-Gesetz der 808-Maschine). | `std::atomic<float>* velSpread` | [src/processors/ResonatorProcessor.h](../../src/processors/ResonatorProcessor.h) |
 
 `<N>` = Instanzindex 0–7.
 

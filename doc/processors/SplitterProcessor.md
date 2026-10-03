@@ -10,15 +10,25 @@ direkt in den Master geroutet werden und mischt nur in genau einen Kanal.
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
-| Eigenschaft | Wert | Symbol / Typ | Datei |
-|---|---|---|---|
-| Max. Instanzen | 8 | `GraphNodeRegistry::maxSplitters` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `in` (`PortType::signal`) | `InputPort input` | [src/processors/SplitterProcessor.h](../../src/processors/SplitterProcessor.h) |
-| Output-Ports | `outL` (`PortType::signal`, Hinweis `ChannelSide::left`), `outR` (`PortType::signal`, Hinweis `ChannelSide::right`) | `OutputPort leftOutput`, `rightOutput` | [src/processors/SplitterProcessor.h](../../src/processors/SplitterProcessor.h) |
+Tabelle 1a: Instanzen.
 
-| Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
+| Eigenschaft | Wert | Symbol / Typ | Datei | Kurzbeschreibung |
 |---|---|---|---|---|
-| *(keine)* | — | — | — | — |
+| Max. Instanzen | 8 | `GraphNodeRegistry::maxSplitters` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) | Acht Kanal-Weichen pro Voice — je Signal, das in zwei Seitenzweige geteilt wird, eine. |
+
+Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Parameter).
+
+| Port | Richtung | Port-Typ | Unverbunden (Default) | Kurzbeschreibung (Wirkung & Modulation) | Symbol im Code | Datei |
+|---|---|---|---|---|---|---|
+| `in` | Input | `signal` | liest 0 → beide Zweige bleiben stumm | **Stereo-Zufuhr.** Das Signal, das in seine zwei Seiten zerlegt wird — wie ein Doppelkabel, das auseinandergeflochten wird. | `InputPort input` | [src/processors/SplitterProcessor.h](../../src/processors/SplitterProcessor.h) |
+| `outL` | Output | `signal` (Hinweis `ChannelSide::left`) | — | **Linke seitenreine Spur.** Trägt nur die linke Hälfte (rechte exakt 0) — z. B. für Merger-Seitenzweige oder direkt als Einseiten-Einspeisung in den Master. | `OutputPort leftOutput` | [src/processors/SplitterProcessor.h](../../src/processors/SplitterProcessor.h) |
+| `outR` | Output | `signal` (Hinweis `ChannelSide::right`) | — | **Rechte seitenreine Spur.** Trägt nur die rechte Hälfte (linke exakt 0) — das seitenreine Gegenstück zu `outL`. | `OutputPort rightOutput` | [src/processors/SplitterProcessor.h](../../src/processors/SplitterProcessor.h) |
+
+Tabelle 1c: Daraus folgende echte Parameter (APVTS).
+
+| Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
+|---|---|---|---|---|---|
+| *(keine)* | — | — | Der Splitter regelt nichts — reine Kanalseiten-Trennung; die `ChannelSide`-Hinweise sind Anzeige-Metadaten für das L/R-Badge, Audiopfad und `connect()` ignorieren sie. | — | — |
 
 Der Splitter besitzt **keine APVTS-Parameter**. Die Port-Attribute
 `ChannelSide::left` / `ChannelSide::right` sind reine Anzeige-Metadaten für

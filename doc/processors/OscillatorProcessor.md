@@ -8,18 +8,27 @@ Momentanfrequenz in die Phase — das ist die Stelle, an der echte FM entsteht.
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
-| Eigenschaft | Wert | Symbol / Typ | Datei |
-|---|---|---|---|
-| Max. Instanzen | 16 | `GraphNodeRegistry::maxOscillators` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | `note_in` (`PortType::frequency`) | `InputPort noteInput` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
-| Output-Ports | `out` (`PortType::signal`) | `OutputPort output` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
+Tabelle 1a: Instanzen.
 
-| Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
+| Eigenschaft | Wert | Symbol / Typ | Datei | Kurzbeschreibung |
 |---|---|---|---|---|
-| Wellenform | `osc<N>Waveform` | Choice: Sine/Saw/Square/Triangle/Noise/Perlin Noise/Simplex Noise | `std::atomic<float>* waveform` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
-| Modus | `osc<N>Mode` | Choice: Pitch/Static/LFO, Default Pitch | `std::atomic<float>* mode` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
-| Statische Frequenz | `osc<N>StaticFreq` | Float, 20–20000 Hz, Default 440 | `std::atomic<float>* staticFreq` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
-| LFO-Rate | `osc<N>LfoRate` | Float, 0.01–50 Hz, Default 1 | `std::atomic<float>* lfoRate` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
+| Max. Instanzen | 16 | `GraphNodeRegistry::maxOscillators` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) | Bis zu 16 Wellen-Generatoren pro Voice — je Carrier-/Modulator-Rolle eine (Träger, Modulator-Quelle, LFO-Pendel). |
+
+Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Parameter).
+
+| Port | Richtung | Port-Typ | Unverbunden (Default) | Kurzbeschreibung (Wirkung & Modulation) | Symbol im Code | Datei |
+|---|---|---|---|---|---|---|
+| `note_in` | Input | `frequency` | Pitch-Modus: liest 0 Hz → der Oszillator schweigt; Static-/LFO-Modus: der Port wird ignoriert | **Stimm-Führer.** Die Momentanfrequenz in Hz, die pro Sample in die Phase integriert wird — das ist die Stelle, an der echte FM entsteht: jede Frequenzwanderung (FM-Stufe, F-ADSR, Key-Tracking) biegt die Welle direkt. Im Static-/LFO-Modus ignoriert der Oszillator den Draht und folgt seinem eigenen Hz-Regler. | `InputPort noteInput` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
+| `out` | Output | `signal` | — | **Gerenderte Wellenform.** Die erzeugte Welle (Sine bis Simplex Noise) — als Carrier der eigentliche Ton, als Quelle für FM-/AM-/Vel-Verbraucher das Spektrum-Material. | `OutputPort output` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
+
+Tabelle 1c: Daraus folgende echte Parameter (APVTS).
+
+| Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
+|---|---|---|---|---|---|
+| Wellenform | `osc<N>Waveform` | Choice: Sine/Saw/Square/Triangle/Noise/Perlin Noise/Simplex Noise | Die Rohfarbe der Quelle — die Gestalt der Welle: rein und klar (Sine), sägescharf obertonreich (Saw), hörnig-hohl (Square), weich gerundet (Triangle), unregelmäßig lebendig (Noise/Perlin/Simplex). | `std::atomic<float>* waveform` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
+| Modus | `osc<N>Mode` | Choice: Pitch/Static/LFO, Default Pitch | Wem die Frequenz gehört: der Note-/FM-Kette (Pitch — der übliche Carrier), dem eigenen Hz-Regler (Static — feststehende Tonquelle) oder dem langsamen Pendel (LFO — feste Modulationsquelle für Effekt-Ports, z. B. Tremolo/Wobble). | `std::atomic<float>* mode` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
+| Statische Frequenz | `osc<N>StaticFreq` | Float, 20–20000 Hz, Default 440 | Der feste Ton im Static-Modus (20–20000 Hz) — die Grundstimmung, wenn keine Note die Frequenz übernimmt. | `std::atomic<float>* staticFreq` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
+| LFO-Rate | `osc<N>LfoRate` | Float, 0.01–50 Hz, Default 1 | Das Pendeltempo im LFO-Modus (0.01–50 Hz) — wie schnell die Quelle auf- und abwippt, wenn sie als Modulator für Tremolo/Wobble dient. | `std::atomic<float>* lfoRate` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
 
 `<N>` = Instanzindex 0–7.
 

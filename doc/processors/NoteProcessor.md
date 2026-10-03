@@ -8,15 +8,25 @@ Inputs).
 
 ## Abschnitt 1 — Echte Prozessor-Parameter (Sends/Inputs)
 
-| Eigenschaft | Wert | Symbol / Typ | Datei |
-|---|---|---|---|
-| Max. Instanzen | 1 | `GraphNodeRegistry::maxNotes` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) |
-| Input-Ports | *(keine)* | — | — |
-| Output-Ports | `out` (`PortType::frequency`), `vel` (`PortType::velocity`) | `OutputPort output`, `OutputPort velOutput` | [src/processors/NoteProcessor.h](../../src/processors/NoteProcessor.h) |
+Tabelle 1a: Instanzen.
 
-| Parameter | APVTS-ID | Typ / Bereich | Symbol im Prozessor | Datei |
+| Eigenschaft | Wert | Symbol / Typ | Datei | Kurzbeschreibung |
 |---|---|---|---|---|
-| *(keine APVTS-Parameter)* | — | MIDI-Note → Hz | `int currentNote`, `float currentFrequency` | [src/processors/NoteProcessor.h](../../src/processors/NoteProcessor.h) |
+| Max. Instanzen | 1 | `GraphNodeRegistry::maxNotes` | [src/graph/GraphNodes.h](../../src/graph/GraphNodes.h) | Exakt eine Noten-Quelle pro Voice — der gemeinsame Update-Anker aller tonhöhen-/anschlugs-empfindlichen Verbraucher. |
+
+Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Parameter).
+
+| Port | Richtung | Port-Typ | Unverbunden (Default) | Kurzbeschreibung (Wirkung & Modulation) | Symbol im Code | Datei |
+|---|---|---|---|---|---|---|
+| *(keine)* | Input | — | — | Der Knoten braucht keinen Draht — die Voice drückt ihm die gespielte MIDI-Note und ihre Anschlagstärke direkt auf. | — | — |
+| `out` | Output | `frequency` | — | **Spielpitch-Quelle.** Die Frequenz der zuletzt gespielten Note in Hz (12-TET-Stimmung, 440 Hz bei MIDI-Note 69) — der „Update-Anker" für Oszillator und FM-Ketten; 0 Hz, solange der Node nicht verdrahtet ist. Ein Output-Port darf sich an viele Inputs teilen. | `OutputPort output` | [src/processors/NoteProcessor.h](../../src/processors/NoteProcessor.h) |
+| `vel` | Output | `velocity` | — | **Anschlag-Fernleitung.** Die Anschlagstärke (0–1) der aktuellen Note als velocity-Quelle — speist die `vel`-Ports von Gain, Waveshaper, FM, Filter, F-ADSR (Accent-Klangregulierung); unverdrahtet skalieren die Konsumenten neutral mit 1.0. | `OutputPort velOutput` | [src/processors/NoteProcessor.h](../../src/processors/NoteProcessor.h) |
+
+Tabelle 1c: Daraus folgende echte Parameter (APVTS).
+
+| Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
+|---|---|---|---|---|---|
+| *(keine APVTS-Parameter)* | — | — | Es gibt nichts einzustellen — die Werte kommen aus dem Spiel (gespielte MIDI-Note + Anschlag), nicht von Reglern. | `int currentNote`, `float currentFrequency` | [src/processors/NoteProcessor.h](../../src/processors/NoteProcessor.h) |
 
 ## Abschnitt 2 — UI-Konfiguration
 
