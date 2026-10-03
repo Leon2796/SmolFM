@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3" name="tr808-bass-drum" description="808-Style Bassdrum: Rausch-Klick als Schlegel-Anreger in den schwingenden Koerper-Resonator, der feedback-Loop traegt das Bridged-T-Damping des Original-Netzwerks (statischer Anker 49.5 Hz als Bridged-T-Messung, Spielregister ca. A1-B1 55-62 Hz); Velocity-Akzent waechst Dekay (spread 2.5) und Hit lauter." techniques="resonator-body-strike, tuned-noise-percussion, 808-accent-gain">
+<SmolFM version="3" name="tr808-bass-drum" description="808-Style Bassdrum: Rausch-Klick als Schlegel-Anreger in den schwingenden Koerper-Resonator, der feedback-Loop traegt das Bridged-T-Damping des Original-Netzwerks (statischer Anker 49.5 Hz als Bridged-T-Messung, Spielregister ca. A1-B1 55-62 Hz); Velocity-Akzent waechst Dekay (spread 2.5) und Hit lauter. Saettigungsstufe nach dem Resonator (shape soft, Drive 0.25, vel-getrieben) bildet den Op-Amp-Clip der Original-Schaltung ab: der Ring-Tail wird mit Harmonischen gefaerbt statt rein sinusfoermig, und der Accent faehrt via shape.vel in die Kurve." techniques="resonator-body-strike, tuned-noise-percussion, saturating-vca, 808-accent-gain">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -28,7 +28,12 @@
         <Pin id="vel" direction="in" type="velocity" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="gain0" factor="1.0">
+      <Node id="shape0" drive="0.25" shape="soft">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.5">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="vel" direction="in" type="velocity" />
         <Pin id="out" direction="out" type="signal" />
@@ -44,7 +49,9 @@
       <Wire from="gain1" fromPort="out" to="feedback0" toPort="in" />
       <Wire from="feedback0" fromPort="out" to="resonator0" toPort="in" />
       <Wire from="resonator0" fromPort="out" to="feedback0" toPort="fb_in" />
-      <Wire from="resonator0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="resonator0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="note" fromPort="vel" to="shape0" toPort="vel" />
       <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
     </Connections>
   </Graph>
@@ -56,8 +63,9 @@
       <Box id="gain1" x="1000" y="60" />
       <Box id="feedback0" x="1320" y="60" />
       <Box id="resonator0" x="1640" y="60" />
-      <Box id="gain0" x="1960" y="60" />
-      <Box id="output" x="2280" y="60" />
+      <Box id="shape0" x="1800" y="60" />
+      <Box id="gain0" x="2120" y="60" />
+      <Box id="output" x="2440" y="60" />
     </Boxes>
   </Layout>
 </SmolFM>

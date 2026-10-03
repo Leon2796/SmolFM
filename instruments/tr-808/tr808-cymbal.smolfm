@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3" name="tr808-cymbal" description="808-Style Crash-Cymbal: sechs statische Squares exakt auf der Service-Notes-Bank (205,3/304,4/369,6/522,7/540/800 Hz, Square-Approximation der 6-Puls-Oszillator-Bank) auf dem Adder-Bus, geteilt in drei Frequenzbereiche mit Dekay-Treppe (BP 5,2 kHz 0,65 s Tiefe, BP 9,4 kHz als Splitter in 0,35 s Tick und 1,25 s langen Schwanz) und gemeinsamer HP-Tone-Stufe; das Spektrum wandert im Abklingen, Velocity-Akzent nur lauter (gain.vel), Band-Centra statisch." techniques="pulse-oscillator-bank, osc-sum-bus, band-envelope-choreography, 808-accent-gain">
+<SmolFM version="3" name="tr808-cymbal" description="808-Style Crash-Cymbal: sechs statische Squares exakt auf der Service-Notes-Bank (205,3/304,4/369,6/522,7/540/800 Hz, Square-Approximation der 6-Puls-Oszillator-Bank) auf dem Adder-Bus, geteilt in drei Frequenzbereiche mit Dekay-Treppe (BP 5,2 kHz 0,65 s Tiefe, BP 9,4 kHz als Splitter in 0,35 s Tick und 1,25 s langen Schwanz) und gemeinsamer HP-Tone-Stufe - auf 6500 Hz/Butterworth-Q gezogen (808-synth-Kette), Band-Q beide 1,4; das Spektrum wandert im Abklingen, Velocity-Akzent nur lauter (gain.vel), Band-Centra statisch." techniques="pulse-oscillator-bank, osc-sum-bus, band-envelope-choreography, 808-accent-gain">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -55,11 +55,11 @@
         <Pin id="in2" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="filter0" cutoff="5200" resonance="0.45" mode="bp">
+      <Node id="filter0" cutoff="5200" resonance="0.65" mode="bp">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="filter1" cutoff="9400" resonance="0.45" mode="bp">
+      <Node id="filter1" cutoff="9400" resonance="0.65" mode="bp">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
@@ -100,7 +100,7 @@
         <Pin id="in2" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="filter2" cutoff="4200" resonance="0.25" mode="hp">
+      <Node id="filter2" cutoff="6500" resonance="0.29" mode="hp">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>

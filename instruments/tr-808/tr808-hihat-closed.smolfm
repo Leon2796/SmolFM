@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3" name="tr808-hihat-closed" description="808-Style Closed Hi-Hat getreu der 6-Puls-Oszillator-Bank: sechs statische Squares exakt auf der Service-Notes-Bank (205,3/304,4/369,6/522,7/540/800 Hz, Square-Approximation der Pulswelle) auf dem Adder-Bus durch Bandpass 10 kHz mit 50-ms-Dekay; bewusst Phase-Lock-tonal statt Rausch-Wash, Velocity-Akzent nur lauter (gain.vel), Band-Centrum statisch, weil filter.vel den 10-kHz-Bandpass die Harmonik-Leiter hinunter zieht." techniques="pulse-oscillator-bank, osc-sum-bus, 808-accent-gain">
+<SmolFM version="3" name="tr808-hihat-closed" description="808-Style Closed Hi-Hat getreu der 6-Puls-Oszillator-Bank: sechs statische Squares exakt auf der Service-Notes-Bank (205,3/304,4/369,6/522,7/540/800 Hz, Square-Approximation der Pulswelle) auf dem Adder-Bus durch Bandpass 10 kHz bei Resonance 0.65 (Q 1.4 wie beide GitHub-Sims und 8W8) in die Saettigungsstufe (shape soft, Drive 0.25 = die Swing-VCA-Diode des Originals; Accent faehrt via shape.vel in die Kurve) mit Doppel-HP 7200 dazwischen (808-synth-Kette; killt die tonalen 2-7-kHz-Square-Parallelen) und 85-ms-Dekay; bewusst Phase-Lock-tonal statt Rausch-Wash, Velocity-Akzent lauter+faerber (gain.vel + shape.vel), Band-Centrum statisch, weil filter.vel den 10-kHz-Bandpass die Harmonik-Leiter hinunter zieht." techniques="pulse-oscillator-bank, osc-sum-bus, saturating-vca, 808-accent-gain">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -55,15 +55,23 @@
         <Pin id="in2" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="filter0" cutoff="10000" resonance="0.5" mode="bp">
+      <Node id="filter0" cutoff="10000" resonance="0.65" mode="bp">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="adsr0" attack="0.001" decay="0.05" sustain="0.0" release="0.02">
+      <Node id="filter1" cutoff="7200" resonance="0.29" mode="hp">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="gain0" factor="4.0">
+      <Node id="shape0" drive="0.25" shape="soft">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.001" decay="0.085" sustain="0.0" release="0.02">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="1.6">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="vel" direction="in" type="velocity" />
         <Pin id="out" direction="out" type="signal" />
@@ -88,7 +96,10 @@
       <Wire from="add3" fromPort="out" to="add4" toPort="in1" />
       <Wire from="osc5" fromPort="out" to="add4" toPort="in2" />
       <Wire from="add4" fromPort="out" to="filter0" toPort="in" />
-      <Wire from="filter0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="filter1" toPort="in" />
+      <Wire from="filter1" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="note" fromPort="vel" to="shape0" toPort="vel" />
       <Wire from="adsr0" fromPort="out" to="gain0" toPort="in" />
       <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
       <Wire from="note" fromPort="vel" to="gain0" toPort="vel" />
@@ -109,6 +120,8 @@
       <Box id="add3" x="680" y="1080" />
       <Box id="add4" x="680" y="1400" />
       <Box id="filter0" x="1020" y="760" />
+      <Box id="shape0" x="1190" y="760" />
+      <Box id="filter1" x="1190" y="380" />
       <Box id="adsr0" x="1360" y="760" />
       <Box id="gain0" x="1700" y="760" />
       <Box id="output" x="2040" y="760" />
