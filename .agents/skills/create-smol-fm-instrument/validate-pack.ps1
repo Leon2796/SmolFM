@@ -16,6 +16,7 @@ $PortSpec=@{
   shape=@{ins=@{in='signal';drive_mod_in='signal';vel='velocity'};outs=@{out='signal'}}
   filter=@{ins=@{in='signal';cutoff_mod_in='frequency';resonance_mod_in='signal';vel='velocity'};outs=@{out='signal'}}
   resonator=@{ins=@{in='signal';tune='frequency';q_mod_in='signal';vel='velocity';strike_vel='velocity'};outs=@{out='signal'}}
+  vsc=@{ins=@{vel_in='velocity'};outs=@{out='velocity'}}
   feedback=@{ins=@{in='signal';fb_in='signal'};outs=@{out='signal'}}
   delay=@{ins=@{in='signal';time_mod_in='signal'};outs=@{out='signal'}}
   ring=@{ins=@{in1='signal';in2='signal'};outs=@{out='signal'}}
@@ -25,7 +26,7 @@ $PortSpec=@{
   split=@{ins=@{in='signal'};outs=@{outL='signal';outR='signal'}}
   output=@{ins=@{in1='signal';in2='signal';in3='signal';in4='signal';in5='signal';in6='signal';in7='signal';in8='signal'};outs=@{}}
 }
-$Max=@{note=1;osc=16;fm=8;fscale=16;ring=8;am=8;delay=16;adsr=16;fadsr=8;gain=16;shape=16;filter=16;resonator=8;feedback=4;add=8;split=8;merge=8;output=1}
+$Max=@{note=1;osc=16;fm=8;fscale=16;vsc=8;ring=8;am=8;delay=16;adsr=16;fadsr=8;gain=16;shape=16;filter=16;resonator=8;feedback=4;add=8;split=8;merge=8;output=1}
 $Range=@{
   'osc.staticfreq'=20,20000;'osc.lforate'=0.01,50;'fm.amount'=0,10;'fscale.factor'=0,10
   'adsr.attack'=0.001,5;'adsr.decay'=0.001,5;'adsr.sustain'=0,1;'adsr.release'=0.001,10
@@ -33,13 +34,14 @@ $Range=@{
   'fadsr.up'=0,10;'fadsr.down'=0,10;'gain.factor'=0,10;'shape.drive'=0,1
   'filter.cutoff'=20,20000;'filter.resonance'=0,1;'delay.time'=1,2000;'am.amount'=0,1
   'delay.feedback'=0,0.95;'delay.mix'=0,1;'output.level'=0,1
-  'resonator.tune'=20,8000;'resonator.q'=0,1;'resonator.decay'=0.01,10;'resonator.spread'=0.25,4;'resonator.strikelevel'=0,2;'resonator.striketime'=0,0.2;'feedback.amount'=0,0.95
+  'resonator.tune'=20,8000;'resonator.q'=0,1;'resonator.decay'=0.01,10;'resonator.spread'=0.25,4;'resonator.strikelevel'=0,2;'resonator.striketime'=0,0.2;'feedback.amount'=0,0.95;'vsc.scale'=0.25,4
 }
 $Enums=@{
   'osc.waveform'=@('sine','saw','square','triangle','noise','perlin','simplex');'osc.mode'=@('pitch','static','lfo')
   'shape.shape'=@('soft','hard','fold');'filter.mode'=@('lp','bp','hp','notch')
   'delay.sync'=@('off','on');'delay.division'=@('half','quarter','eighth','sixteenth')
   'fscale.interval'=@('none','octave_up','octave_down','fifth_up','fifth_down','fourth_up','fourth_down','minor_third_up','major_third_up','semitone_up','semitone_down')
+  'vsc.curve'=@('linear','sqrt','square')
 }
 $files=Get-ChildItem $Folder -Filter *.smolfm | Sort-Object Name
 foreach ($f in $files)
