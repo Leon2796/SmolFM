@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="resonator-demo" description="Minimale Resonator-Demo: ein 18 ms Quadrat-Klick (Exciter) schlaegt den Koerper an, danach klingt er als reiner Fast-Sinus-Ring auf der gespielten Tonhoehe ab (t60 ca. 0,5 s); Akzent verlaengert den Ring (spread 2) und macht ihn lauter." techniques="resonator-body-strike, tuned-strike-excitation, 808-accent-gain">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+        <Pin id="vel" direction="out" type="velocity" />
+      </Node>
+      <Node id="osc0" waveform="square">
+        <Pin id="note_in" direction="in" type="frequency" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.001" decay="0.018" sustain="0.0" release="0.002">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="resonator0" tune="220" q="0.9" decay="0.5" spread="2.0">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="tune" direction="in" type="frequency" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="1.6">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.85" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="resonator0" toPort="tune" />
+      <Wire from="note" fromPort="vel" to="resonator0" toPort="vel" />
+      <Wire from="note" fromPort="vel" to="gain0" toPort="vel" />
+      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="resonator0" toPort="in" />
+      <Wire from="resonator0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="osc0" x="380" y="60" />
+      <Box id="adsr0" x="700" y="60" />
+      <Box id="resonator0" x="1020" y="60" />
+      <Box id="gain0" x="1340" y="60" />
+      <Box id="output" x="1660" y="60" />
+    </Boxes>
+  </Layout>
+</SmolFM>

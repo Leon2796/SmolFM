@@ -26,7 +26,8 @@ namespace
         "waveform", "mode", "shape", "sync", "division", "interval",
         "staticfreq", "lforate", "attack", "decay", "sustain", "release",
         "up", "down", "factor", "amount", "drive", "cutoff", "resonance",
-        "time", "feedback", "mix", "level", "tune", "q", "spread"
+        "time", "feedback", "mix", "level", "tune", "q", "spread",
+        "curve", "scale"
     };
 
     void readAttributes (const juce::XmlElement& element, const juce::String& nodeId,

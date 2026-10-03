@@ -385,6 +385,46 @@ int main()
         CHECK (f.id == "feedback0" && f.parameters["amount"] == 0.42f);
     }
 
+    // vsc: the curve enum parses by name (both flavours), the scale float
+    // loads alongside it — mirrors the resonator/feedback round-trip checks.
+    CHECK (enumOrNumber ("curve", "vsc", "sqrt") == 1.0f);
+    CHECK (enumOrNumber ("curve", "vsc", "linear") == 0.0f);
+    CHECK (enumOrNumber ("curve", "vsc", "Square") == 2.0f);
+    CHECK (enumValueText ("curve", "vsc", 2.0f) == "square");
+
+    const auto vscXml = writeTemp ("vsc_node.smolfm",
+        "<SmolFM version=\"3\" name=\"VscDemo\">\n"
+        "  <Graph>\n"
+        "    <Nodes>\n"
+        "      <Node id=\"vsc0\" scale=\"1.5\" curve=\"sqrt\"/>\n"
+        "    </Nodes>\n"
+        "  </Graph>\n"
+        "</SmolFM>\n");
+    const auto vscYaml = writeTemp ("vsc_node.yaml.smolfm",
+        "version: \"3\"\n"
+        "name: \"VscDemo\"\n"
+        "graph:\n"
+        "  nodes:\n"
+        "    - id: \"vsc0\"\n"
+        "      curve: sqrt\n"
+        "      scale: 1.5\n");
+    SmolFmData vscData;
+    CHECK (xmlParser.parse (vscXml, vscData) && vscData.nodes.size() == 1);
+    SmolFmData vscYData;
+    CHECK (yamlParser.parse (vscYaml, vscYData) && vscYData.nodes.size() == 1);
+    if (vscData.nodes.size() == 1)
+    {
+        auto& n = vscData.nodes[0];
+        CHECK (n.parameters["curve"] == 1.0f);
+        CHECK (n.parameters["scale"] == 1.5f);
+    }
+    if (vscYData.nodes.size() == 1)
+    {
+        auto& y = vscYData.nodes[0];
+        CHECK (y.parameters["curve"] == 1.0f);
+        CHECK (y.parameters["scale"] == 1.5f);
+    }
+
     if (failures == 0)
         std::cout << "SmolFM_ParserTests: all checks passed\n";
 

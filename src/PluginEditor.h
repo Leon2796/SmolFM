@@ -41,6 +41,7 @@ private:
     gui::PaletteButton oscButton;
     gui::PaletteButton fmButton;
     gui::PaletteButton scaleButton;
+    gui::PaletteButton vScaleButton;
     gui::PaletteButton adsrButton;
     gui::PaletteButton fAdsrButton;
     gui::PaletteButton gainButton;
@@ -66,6 +67,17 @@ private:
     void importPatch();
     void addNodeFromToolbar (const juce::String& baseId);
     void refreshToolbarBadges();
+
+    /**
+        Optional standalone start parameter:  SmolFM.exe --instrument <file.smolfm>
+        (also accepted: "-i <file>" or a bare positional "<file>.smolfm").
+
+        Only runs in the standalone binary — hosted plugin copies ignore the
+        (host process') command line.  Loads the file exactly like a patch
+        browser selection: switches the browser to the file's directory, loads
+        the instrument and marks it in the listing.
+    */
+    void applyStartupInstrumentParameter();
 
     /** Grow the window after loading a patch so the layout fits on screen. */
     void fitWindowToContent();

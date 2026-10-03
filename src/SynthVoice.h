@@ -27,6 +27,7 @@
 #include "processors/OscillatorProcessor.h"
 #include "processors/FMModulationProcessor.h"
 #include "processors/FrequencyScaleProcessor.h"
+#include "processors/VelocityScaleProcessor.h"
 #include "processors/NoteProcessor.h"
 #include "processors/AdsrProcessor.h"
 #include "processors/FAdsrProcessor.h"
@@ -64,6 +65,8 @@ struct SynthVoiceParameters
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFmAmounts>   fmAmount;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFrequencyScales> freqScaleFactor;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFrequencyScales> freqScaleInterval;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxVelocityScales> velScaleCurve;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxVelocityScales> velScaleScale;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrAttack;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrDecay;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrSustain;
@@ -179,6 +182,7 @@ private:
     std::array<OscillatorProcessor*, GraphNodeRegistry::maxOscillators> oscillators {};
     std::array<FMModulationProcessor*, GraphNodeRegistry::maxFmAmounts> fmProcessors {};
     std::array<FrequencyScaleProcessor*, GraphNodeRegistry::maxFrequencyScales> frequencyScalers {};
+    std::array<VelocityScaleProcessor*, GraphNodeRegistry::maxVelocityScales> velocityScalers {};
     std::array<AdsrProcessor*, GraphNodeRegistry::maxAdsr> adsrProcessors {};
     std::array<FAdsrProcessor*, GraphNodeRegistry::maxFAdsr> fAdsrProcessors {};
     std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators> ringModulators {};

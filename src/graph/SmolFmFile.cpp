@@ -94,6 +94,13 @@ namespace
             if (factorId.isNotEmpty())   specs.add ({ "factor",   factorId });
             if (intervalId.isNotEmpty()) specs.add ({ "interval", intervalId });
         }
+        else if (baseId == "vsc")
+        {
+            const auto scaleId = GraphNodeRegistry::amountParameterIdFor (nodeId);
+            const auto curveId = GraphNodeRegistry::velocityScaleCurveParameterIdFor (nodeId);
+            if (scaleId.isNotEmpty()) specs.add ({ "scale", scaleId });
+            if (curveId.isNotEmpty()) specs.add ({ "curve", curveId });
+        }
         else if (baseId == "adsr")
         {
             for (const char* which : { "Attack", "Decay", "Sustain", "Release" })

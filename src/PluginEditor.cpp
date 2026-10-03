@@ -11,6 +11,7 @@
 #include "gui/components/OscillatorPanel.h"
 #include "gui/components/FMModulationComponent.h"
 #include "gui/components/FrequencyScaleComponent.h"
+#include "gui/components/VelocityScaleComponent.h"
 #include "gui/components/AdsrPanel.h"
 #include "gui/components/FAdsrComponent.h"
 #include "gui/components/GainComponent.h"
@@ -57,6 +58,15 @@ namespace
             apvts,
             smolfm::GraphNodeRegistry::amountParameterIdFor (instanceId),
             smolfm::GraphNodeRegistry::freqScaleIntervalParameterIdFor (instanceId));
+    }
+
+    std::unique_ptr<juce::Component> makeVelocityScaleContent (const juce::String& instanceId,
+                                                               juce::AudioProcessorValueTreeState& apvts)
+    {
+        return std::make_unique<gui::VelocityScaleComponent> (
+            apvts,
+            smolfm::GraphNodeRegistry::velocityScaleCurveParameterIdFor (instanceId),
+            smolfm::GraphNodeRegistry::amountParameterIdFor (instanceId));
     }
 
     std::unique_ptr<juce::Component> makeAdsrContent (const juce::String& instanceId,
@@ -240,6 +250,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         oscButton  .configure ("osc",   "Osc",  smolfm::GraphNodeRegistry::maxOscillators);
     fmButton   .configure ("fm",   "FM",   smolfm::GraphNodeRegistry::maxFmAmounts);
     scaleButton.configure ("fscale", "FSC",  smolfm::GraphNodeRegistry::maxFrequencyScales);
+    vScaleButton.configure ("vsc", "VSC",  smolfm::GraphNodeRegistry::maxVelocityScales);
     adsrButton .configure ("adsr",  "ADSR", smolfm::GraphNodeRegistry::maxAdsr);
     fAdsrButton .configure ("fadsr", "FAD", smolfm::GraphNodeRegistry::maxFAdsr);
     gainButton .configure ("gain",  "GN",   smolfm::GraphNodeRegistry::maxGains);
@@ -256,7 +267,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     mergeButton .configure ("merge", "MRG",  smolfm::GraphNodeRegistry::maxMergers);
     addButton   .configure ("add",   "ADD",  smolfm::GraphNodeRegistry::maxAdds);
 
-        for (auto* b : { &oscButton, &fmButton, &scaleButton, &adsrButton, &fAdsrButton, &gainButton, &shapeButton, &filterButton, &resonatorButton, &feedbackButton, &noteButton, &ringButton, &amButton, &delayButton, &outputButton, &splitButton, &mergeButton, &addButton })
+        for (auto* b : { &oscButton, &fmButton, &scaleButton, &vScaleButton, &adsrButton, &fAdsrButton, &gainButton, &shapeButton, &filterButton, &resonatorButton, &feedbackButton, &noteButton, &ringButton, &amButton, &delayButton, &outputButton, &splitButton, &mergeButton, &addButton })
     {
         addAndMakeVisible (*b);
                 b->onCountChanged = [this] (const juce::String& baseId, bool add)
@@ -296,6 +307,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             return graphPanel.addNodeOfType ("fm",   processorRef.getParameters(), makeFmContent, nodeStartsHidden);
         if (baseId == "fscale")
             return graphPanel.addNodeOfType ("fscale", processorRef.getParameters(), makeFrequencyScaleContent, nodeStartsHidden);
+        if (baseId == "vsc")
+            return graphPanel.addNodeOfType ("vsc", processorRef.getParameters(), makeVelocityScaleContent, nodeStartsHidden);
         if (baseId == "adsr")
             return graphPanel.addNodeOfType ("adsr", processorRef.getParameters(), makeAdsrContent, nodeStartsHidden);
         if (baseId == "fadsr")
@@ -348,6 +361,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         smolfm::SmolFmFile::load (graphPanel, processorRef.getParameters(), initialPatch);
 
     setSize (1200, 800);
+
+    // Optional: --instrument <file.smolfm> from the standalone app's command
+    // line overrides the browser's default first patch (see method comment).
+    applyStartupInstrumentParameter();
 }
 
 void AudioPluginAudioProcessorEditor::addNodeFromToolbar (const juce::String& baseId)
@@ -361,6 +378,7 @@ void AudioPluginAudioProcessorEditor::addNodeFromToolbar (const juce::String& ba
         { "osc",    makeOscillatorContent },
         { "fm",     makeFmContent      },
                         { "fscale", makeFrequencyScaleContent },
+        { "vsc",    makeVelocityScaleContent },
         { "adsr",   makeAdsrContent    },
         { "fadsr",  makeFAdsrContent   },
         { "gain",   makeGainContent    },
@@ -396,6 +414,7 @@ void AudioPluginAudioProcessorEditor::refreshToolbarBadges()
     oscButton  .setRemaining (smolfm::GraphNodeRegistry::maxOscillators     - graphPanel.countBoxesOfType ("osc"));
     fmButton   .setRemaining (smolfm::GraphNodeRegistry::maxFmAmounts       - graphPanel.countBoxesOfType ("fm"));
     scaleButton.setRemaining (smolfm::GraphNodeRegistry::maxFrequencyScales - graphPanel.countBoxesOfType ("fscale"));
+    vScaleButton.setRemaining (smolfm::GraphNodeRegistry::maxVelocityScales - graphPanel.countBoxesOfType ("vsc"));
     adsrButton  .setRemaining (smolfm::GraphNodeRegistry::maxAdsr            - graphPanel.countBoxesOfType ("adsr"));
     fAdsrButton .setRemaining (smolfm::GraphNodeRegistry::maxFAdsr            - graphPanel.countBoxesOfType ("fadsr"));
     gainButton  .setRemaining (smolfm::GraphNodeRegistry::maxGains             - graphPanel.countBoxesOfType ("gain"));
@@ -437,30 +456,39 @@ void AudioPluginAudioProcessorEditor::resized()
     importButton.setBounds (buttonsArea.removeFromRight (84).reduced (2));
     exportButton.setBounds (buttonsArea.removeFromRight (84).reduced (2));
 
-        // Palette tiles with +/- buttons: 80×52 px each (set by PaletteButton::setSize).
-        auto palette = toolbar.reduced (4, 2);
-        const int tileWidth = 80;
-        const int tileHeight = 52;
-        const int tileSpacing = 8;
+    // Palette tiles with +/- buttons: 80x52 px each (set by PaletteButton::setSize).
+    // Tiles flow left to right and wrap into a new row whenever the current
+    // row is full — 19 node types need more horizontal room than most windows
+    // offer.  Extra rows grow downwards; the space they need is reserved below
+    // the toolbar first so tiles never overlap the patch browser or canvas.
+    auto palette = toolbar.reduced (4, 2);
+    const int tileWidth = 80;
+    const int tileHeight = 52;
+    const int tileSpacing = 8;
+    const int paletteCount = 19;   // keep in sync with the addAndMakeVisible loop
 
-        // Arrange in two rows if space is tight
-        const bool twoRows = palette.getWidth() < (tileWidth + tileSpacing) * 16;
-        int x = 0, y = 0;
+    const int perRow = juce::jmax (1, (palette.getWidth() + tileSpacing) / (tileWidth + tileSpacing));
+    const int rows = (paletteCount + perRow - 1) / perRow;
+    if (rows > 1)
+        bounds.removeFromTop ((rows - 1) * (tileHeight + tileSpacing));
 
-        auto placeTile = [&] (gui::PaletteButton& b)
+    int x = 0, y = 0;
+
+    auto placeTile = [&] (gui::PaletteButton& b)
+    {
+        if (x + tileWidth > palette.getWidth())
         {
-            if (twoRows && x + tileWidth > palette.getWidth())
-            {
-                x = 0;
-                y += tileHeight + tileSpacing;
-            }
-            b.setBounds (palette.getX() + x, palette.getY() + y, tileWidth, tileHeight);
-            x += tileWidth + tileSpacing;
-        };
+            x = 0;
+            y += tileHeight + tileSpacing;
+        }
+        b.setBounds (palette.getX() + x, palette.getY() + y, tileWidth, tileHeight);
+        x += tileWidth + tileSpacing;
+    };
 
-        placeTile (oscButton);
-        placeTile (fmButton);
-        placeTile (scaleButton);
+    placeTile (oscButton);
+    placeTile (fmButton);
+    placeTile (scaleButton);
+    placeTile (vScaleButton);  // was missing: tile stayed parked at (0,0), top-left corner
         placeTile (adsrButton);
         placeTile (fAdsrButton);
         placeTile (gainButton);
@@ -582,5 +610,94 @@ void AudioPluginAudioProcessorEditor::importPatch()
             patchBrowser.selectPatch (source);
             fitWindowToContent();
         });
+}
+
+//==============================================================================
+/*
+    Optional start parameter of the standalone binary:
+
+        SmolFM.exe --instrument <path\file.smolfm>
+        SmolFM.exe --instrument=<path\file.smolfm>
+        SmolFM.exe -i <path\file.smolfm>
+        SmolFM.exe <path\file.smolfm>
+
+    Relative paths resolve against the current working directory.  The file is
+    loaded exactly like a patch browser selection: the browser switches to the
+    file's directory, the instrument is parsed and its name is displayed.
+*/
+void AudioPluginAudioProcessorEditor::applyStartupInstrumentParameter()
+{
+    // A JUCEApplication instance and a standalone wrapper type both exist
+    // only in our own binary.  Hosted plugin copies must not react to the
+    // (host process') command line, so bail out there.
+    if (juce::JUCEApplicationBase::getInstance() == nullptr
+        || processorRef.wrapperType != juce::AudioProcessor::wrapperType_Standalone)
+        return;
+
+    const juce::StringArray tokens (juce::JUCEApplicationBase::getCommandLineParameterArray());
+
+    // Accepted flag spellings; the first match wins.
+    juce::String optionPath;
+
+    for (int i = 0; i < tokens.size(); ++i)
+    {
+        const juce::String& token = tokens.getReference (i);
+
+        if ((token == "--instrument" || token == "-i") && i + 1 < tokens.size())
+        {
+            optionPath = tokens [i + 1];
+            break;
+        }
+
+        if (token.startsWith ("--instrument="))
+        {
+            optionPath = token.fromFirstOccurrenceOf ("=", false, false);
+            break;
+        }
+    }
+
+    // Fallback: one bare positional token naming an instrument file.
+    if (optionPath.isEmpty())
+    {
+        for (const auto& token : tokens)
+        {
+            if (! token.startsWith ("-") && token.endsWithIgnoreCase (".smolfm"))
+            {
+                optionPath = token;
+                break;
+            }
+        }
+    }
+
+    if (optionPath.isEmpty())
+        return;
+
+    // getChildFile() returns the argument itself when it is already an
+    // absolute path; otherwise it resolves against the working directory.
+    const juce::File instrumentFile (juce::File::getCurrentWorkingDirectory()
+                                        .getChildFile (optionPath));
+
+    if (! instrumentFile.existsAsFile() || ! instrumentFile.hasFileExtension (".smolfm"))
+    {
+        juce::AlertWindow::showMessageBoxAsync (juce::MessageBoxIconType::WarningIcon,
+                                                "SmolFM",
+                                                "Instrument file not found:\n"
+                                                + instrumentFile.getFullPathName());
+        return;
+    }
+
+    // Behave like choosing the file through the patch browser: switch the
+    // working directory, mark the file in the listing, then load and show it.
+    const juce::File directory (instrumentFile.getParentDirectory());
+
+    processorRef.setPatchDirectory (directory);
+    patchBrowser.setDirectory (directory);
+    patchBrowser.selectPatch (instrumentFile);
+
+    if (smolfm::SmolFmFile::load (graphPanel, processorRef.getParameters(), instrumentFile))
+    {
+        patchBrowser.setInstrumentName (smolfm::SmolFmFile::readInstrumentName (instrumentFile));
+        fitWindowToContent();
+    }
 }
 

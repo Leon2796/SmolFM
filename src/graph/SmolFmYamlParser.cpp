@@ -46,6 +46,8 @@ namespace
         else if (line.startsWith ("sync:"))       node.parameters["sync"]     = enumOrNumber ("sync", prefix, value);
         else if (line.startsWith ("division:"))   node.parameters["division"] = enumOrNumber ("division", prefix, value);
         else if (line.startsWith ("interval:"))   node.parameters["interval"] = enumOrNumber ("interval", prefix, value);
+        else if (line.startsWith ("curve:"))      node.parameters["curve"]    = enumOrNumber ("curve", prefix, value);
+        else if (line.startsWith ("scale:"))      node.parameters["scale"]    = value.getFloatValue();
         else if (line.startsWith ("staticfreq:")) node.parameters["staticfreq"] = value.getFloatValue();
         else if (line.startsWith ("lforate:"))    node.parameters["lforate"]    = value.getFloatValue();
         else if (line.startsWith ("attack:"))     node.parameters["attack"]     = value.getFloatValue();

@@ -396,6 +396,37 @@
     </xs:complexContent>
   </xs:complexType>
 
+  <!-- Velocity Scale (vsc): bends the velocity domain before the consumers -->
+  <xs:simpleType name="VscCurveType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="linear"/>
+      <xs:enumeration value="sqrt"/>
+      <xs:enumeration value="square"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="VelocityScaleNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Skaliert die Velocity-Domäne vor den vel-Verbrauchern (Curve linear/sqrt/square, Scale 0,25-4). Die Analog-Brücke zwischen rohem MIDI-Anschlag und Hardware-Akzentgesetzen.</purpose>
+        <docReference>doc/processors/VelocityScaleProcessor.md</docReference>
+        <inputs>
+          <port id="vel_in" type="velocity"/>
+        </inputs>
+        <outputs>
+          <port id="out" type="velocity"/>
+        </outputs>
+        <maxInstances>8</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType">
+        <xs:attribute name="curve" type="VscCurveType" use="optional"/>
+        <xs:attribute name="scale" type="xs:float" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
   <!-- ADSR (adsr) -->
   <xs:complexType name="AdsrNodeType">
     <xs:annotation>

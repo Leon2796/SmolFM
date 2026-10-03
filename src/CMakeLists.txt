@@ -28,6 +28,7 @@ target_sources(${PROJECT_NAME}
         processors/OscillatorProcessor.cpp
         processors/FMModulationProcessor.cpp
         processors/FrequencyScaleProcessor.cpp
+        processors/VelocityScaleProcessor.cpp
         processors/AdsrProcessor.cpp
         processors/FAdsrProcessor.cpp
         processors/GainProcessor.cpp
@@ -41,6 +42,7 @@ target_sources(${PROJECT_NAME}
         gui/components/OscillatorPanel.cpp
         gui/components/FMModulationComponent.cpp
         gui/components/FrequencyScaleComponent.cpp
+        gui/components/VelocityScaleComponent.cpp
         gui/components/AdsrPanel.cpp
         gui/components/FAdsrComponent.cpp
         gui/components/GainComponent.cpp
@@ -97,6 +99,7 @@ add_executable(SmolFM_GraphTests
     graph/GraphNodes.cpp
     processors/NoteProcessor.cpp
     processors/FrequencyScaleProcessor.cpp
+    processors/VelocityScaleProcessor.cpp
     processors/OscillatorProcessor.cpp
     processors/FMModulationProcessor.cpp
     processors/AdsrProcessor.cpp

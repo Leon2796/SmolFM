@@ -128,6 +128,32 @@ namespace
 
         }
 
+        {
+
+            NodeSpec vsc;
+
+            vsc.id = "vsc";
+
+            vsc.title = "Vel Scale";
+
+            vsc.outputPortId = "out";
+
+            vsc.outputType = PortType::velocity;
+
+            vsc.inputPortIds = { "vel_in" };
+
+            vsc.inputTypes = { PortType::velocity };
+
+            // Must match the APVTS id pattern "vsc<N>Scale" used by
+            // createParameterLayout() and SynthVoice.  The curve choice
+            // shares this template's prefix via the replace-trick
+            // ("vsc%Scale" -> "vsc<N>Curve"), like the fscale interval.
+            vsc.amountParameterTemplate = "vsc%Scale";
+
+            specs.push_back (vsc);
+
+        }
+
                 {
             NodeSpec ring;
             ring.id = "ring";
@@ -444,6 +470,7 @@ NodeType GraphNodeRegistry::typeOf (const juce::String& nodeId)
     if (base == "fm")     return NodeType::fmAmount;
 
     if (base == "fscale") return NodeType::frequencyScale;
+    if (base == "vsc")    return NodeType::velocityScale;
 
         if (base == "ring")    return NodeType::ringModulator;
     if (base == "am")      return NodeType::amModulator;
@@ -552,6 +579,7 @@ int GraphNodeRegistry::maxInstancesOf (NodeType type)
         case NodeType::fmAmount:       return maxFmAmounts;
 
         case NodeType::frequencyScale: return maxFrequencyScales;
+        case NodeType::velocityScale:  return maxVelocityScales;
 
         case NodeType::ringModulator:  return maxRingModulators;
         case NodeType::amModulator:    return maxAmModulators;
@@ -901,6 +929,17 @@ juce::String GraphNodeRegistry::freqScaleIntervalParameterIdFor (const juce::Str
         return {};
 
     return withIndex (spec->amountParameterTemplate, indexOf (nodeId)).replace ("Factor", "Interval");
+}
+
+juce::String GraphNodeRegistry::velocityScaleCurveParameterIdFor (const juce::String& nodeId)
+{
+    // Curve shares the amount template prefix ("vsc%Scale") and re-skins it
+    // "Scale" -> "Curve" — the same replace-trick as the fscale interval.
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->id != "vsc" || spec->amountParameterTemplate.isEmpty())
+        return {};
+
+    return withIndex (spec->amountParameterTemplate, indexOf (nodeId)).replace ("Scale", "Curve");
 }
 
 

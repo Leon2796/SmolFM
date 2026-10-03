@@ -56,6 +56,13 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
         voiceParameters.freqScaleInterval [static_cast<size_t> (i)] = parameters.getRawParameterValue ("fscale" + num + "Interval");
     }
 
+        for (int i = 0; i < smolfm::GraphNodeRegistry::maxVelocityScales; ++i)
+        {
+            const juce::String num (i);
+            voiceParameters.velScaleCurve [static_cast<size_t> (i)] = parameters.getRawParameterValue ("vsc" + num + "Curve");
+            voiceParameters.velScaleScale [static_cast<size_t> (i)] = parameters.getRawParameterValue ("vsc" + num + "Scale");
+        }
+
         for (int i = 0; i < smolfm::GraphNodeRegistry::maxAdsr; ++i)
     {
         const juce::String num (i);
@@ -422,6 +429,28 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
                                 "Fifth down", "Fourth up", "Fourth down",
                                 "Minor third up", "Major third up",
                                 "Semitone up", "Semitone down" }, 0));
+    }
+
+    // Velocity Scale: a velocity-domain rescaler (curve x scale).  Defaults
+    // are transparent: v_out = v_in (curve linear, scale 1.0).  Exists so
+    // analog-hardware sims can bend the MIDI velocity before it reaches the
+    // gain/shape/resonator/fm vel inputs (the TR-808's accent is a trigger
+    // voltage law, not raw linear MIDI velocity).
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxVelocityScales; ++i)
+    {
+        const juce::String num (i);
+        jassert (smolfm::GraphNodeRegistry::velocityScaleCurveParameterIdFor ("vsc" + num)
+                 == "vsc" + num + "Curve");
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "vsc" + num + "Scale", "Velocity Scale " + num + " Scale",
+            juce::NormalisableRange<float> (0.25f, 4.0f, 0.0f, 0.5f), 1.0f));
+
+        // Choice order must match vscCurveNames() (ISmolFmParser.h)
+        // and the VelocityScaleComponent dropdown item list.
+        layout.add (std::make_unique<juce::AudioParameterChoice> (
+            "vsc" + num + "Curve", "Velocity Scale " + num + " Curve",
+            juce::StringArray { "Linear", "Sqrt", "Square" }, 0));
     }
 
     // -- ADSR pool ----------------------------------------------------------

@@ -61,6 +61,7 @@ enum class NodeType
     oscillator,
     fmAmount,
     frequencyScale,
+    velocityScale,
         ringModulator,
     amModulator,
     delay,
@@ -192,6 +193,7 @@ public:
     static constexpr int maxOscillators = 16;
     static constexpr int maxFmAmounts   = 8;
     static constexpr int maxFrequencyScales = 16;
+    static constexpr int maxVelocityScales  = 8;
     static constexpr int maxRingModulators  = 8;
     static constexpr int maxAmModulators    = 8;
     static constexpr int maxDelays          = 16;
@@ -233,6 +235,7 @@ public:
     static juce::String oscLfoRateParameterIdFor    (const juce::String& nodeId);
     static juce::String amountParameterIdFor    (const juce::String& nodeId);
     static juce::String freqScaleIntervalParameterIdFor (const juce::String& nodeId);
+    static juce::String velocityScaleCurveParameterIdFor (const juce::String& nodeId);
     static juce::String adsrParameterIdFor      (const juce::String& nodeId, const juce::String& which);
     static juce::String fAdsrParameterIdFor     (const juce::String& nodeId, const juce::String& which);
     static juce::String gainParameterIdFor      (const juce::String& nodeId);

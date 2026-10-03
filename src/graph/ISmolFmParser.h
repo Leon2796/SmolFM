@@ -108,6 +108,8 @@ inline juce::StringArray fscaleIntervalNames ()
              "minor_third_up", "major_third_up", "semitone_up", "semitone_down" };
 }
 
+inline juce::StringArray vscCurveNames ()    { return { "linear", "sqrt", "square" }; }
+
 /** Base id ("osc3" -> "osc"): everything before the first digit. */
 inline juce::String baseIdPrefix (const juce::String& nodeId)
 {
@@ -131,6 +133,7 @@ inline float enumOrNumber (const juce::String& key, const juce::String& baseId, 
     if (k == "sync"     && baseId == "delay")  { const int i = syncNames().indexOf (name, true);        if (i >= 0) return (float) i; }
     if (k == "division" && baseId == "delay")  { const int i = divisionNames().indexOf (name, true);    if (i >= 0) return (float) i; }
     if (k == "interval" && baseId == "fscale") { const int i = fscaleIntervalNames().indexOf (name, true); if (i >= 0) return (float) i; }
+    if (k == "curve"    && baseId == "vsc")    { const int i = vscCurveNames().indexOf (name, true);      if (i >= 0) return (float) i; }
 
     return name.getFloatValue();
 }
@@ -148,6 +151,7 @@ inline juce::String enumValueText (const juce::String& key, const juce::String& 
     if (k == "sync"     && baseId == "delay")  { const auto& n = syncNames();       if (index >= 0 && index < n.size()) return n[index]; }
     if (k == "division" && baseId == "delay")  { const auto& n = divisionNames();   if (index >= 0 && index < n.size()) return n[index]; }
     if (k == "interval" && baseId == "fscale") { const auto& n = fscaleIntervalNames(); if (index >= 0 && index < n.size()) return n[index]; }
+    if (k == "curve"    && baseId == "vsc")    { const auto& n = vscCurveNames();      if (index >= 0 && index < n.size()) return n[index]; }
 
     return juce::String (value);
 }

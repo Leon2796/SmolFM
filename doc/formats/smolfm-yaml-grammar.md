@@ -117,6 +117,10 @@ for a node type are ignored by the parsers.
 - `factor`: float, 0..10 (default 1 = transparent)
 - `interval`: none | octave_up | octave_down | fifth_up | fifth_down | fourth_up | fourth_down | minor_third_up | major_third_up | semitone_up | semitone_down (default none = transparent; each name stands for its exact 12-TET ratio and multiplies with `factor`, so `interval: octave_up` at `factor: 1.0` equals `factor: 2.0`)
 
+### Velocity Scale (vsc)
+- `curve`: linear | sqrt | square (default linear = transparent; sqrt fattens soft hits, square reserves the top of the range for hard accents)
+- `scale`: float, 0.25..4 (default 1 = transparent; multiplies with the curve, output clamps to 0..1)
+
 ### ADSR (adsr)
 - `attack`, `decay`: float, 0.001..5 s
 - `sustain`: float, 0..1

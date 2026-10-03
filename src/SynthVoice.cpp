@@ -25,6 +25,7 @@ namespace
     smolfm::InputPort* resolveInput (const juce::String& nodeId,
                                      const juce::String& portId,
                                      SynthVoiceParameters& params,
+                                     std::array<VelocityScaleProcessor*, GraphNodeRegistry::maxVelocityScales>& velocityScalers,
                                      std::array<NoteProcessor*, GraphNodeRegistry::maxNotes>& noteSources,
                                      std::array<AdsrProcessor*, GraphNodeRegistry::maxAdsr>& adsrProcessors,
                                      std::array<FAdsrProcessor*, GraphNodeRegistry::maxFAdsr>& fAdsrProcessors,
@@ -113,6 +114,16 @@ namespace
         {
             if (portId == "freq_in")
                 return &frequencyScalers[static_cast<size_t> (index)]->getFreqInput();
+
+            return nullptr;
+        }
+
+        if (type == NodeType::velocityScale
+         && index >= 0 && index < GraphNodeRegistry::maxVelocityScales
+          && velocityScalers[static_cast<size_t> (index)] != nullptr)
+        {
+            if (portId == "vel_in")
+                return &velocityScalers[static_cast<size_t> (index)]->getVelInput();
 
             return nullptr;
         }
@@ -252,7 +263,8 @@ namespace
                                        std::array<MergerProcessor*, GraphNodeRegistry::maxMergers>& mergers,
                                        std::array<AdderProcessor*, GraphNodeRegistry::maxAdds>& adders,
                                         std::array<FeedbackProcessor*, GraphNodeRegistry::maxFeedbacks>& feedbackProcessors,
-                                        std::array<ResonatorProcessor*, GraphNodeRegistry::maxResonators>& resonators)
+                                        std::array<ResonatorProcessor*, GraphNodeRegistry::maxResonators>& resonators,
+                                        std::array<VelocityScaleProcessor*, GraphNodeRegistry::maxVelocityScales>& velocityScalers)
     {
         if (portId != "out" && portId != "outL" && portId != "outR" && portId != "vel")
             return nullptr;
@@ -284,6 +296,11 @@ namespace
          && index >= 0 && index < GraphNodeRegistry::maxFrequencyScales
          && frequencyScalers[static_cast<size_t> (index)] != nullptr)
             return &frequencyScalers[static_cast<size_t> (index)]->getOutput();
+
+        if (type == NodeType::velocityScale
+         && index >= 0 && index < GraphNodeRegistry::maxVelocityScales
+          && velocityScalers[static_cast<size_t> (index)] != nullptr)
+            return &velocityScalers[static_cast<size_t> (index)]->getOutput();
 
                 if (type == NodeType::adsr
          && index >= 0 && index < GraphNodeRegistry::maxAdsr
@@ -408,6 +425,17 @@ void SynthVoice::buildGraph()
                                                                  parameters.freqScaleInterval[static_cast<size_t> (i)]);
         frequencyScalers[static_cast<size_t> (i)] = fscale.get();
         graph.addProcessor (std::move (fscale));
+    }
+
+    // Velocity scale pool — velocity-domain scalers.  Placed with the other
+    // domain transformers (after the note/fm/fscale sources, before every
+    // vel consumer) so accent chains read a fresh velocity in the same tick.
+    for (int i = 0; i < GraphNodeRegistry::maxVelocityScales; ++i)
+    {
+        auto vsc = std::make_unique<VelocityScaleProcessor> (parameters.velScaleCurve [static_cast<size_t> (i)],
+                                                             parameters.velScaleScale [static_cast<size_t> (i)]);
+        velocityScalers[static_cast<size_t> (i)] = vsc.get();
+        graph.addProcessor (std::move (vsc));
     }
 
     // ADSR pool â€” pure envelope filters; the master output is the end of
@@ -868,9 +896,10 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
                 OutputPort* out = resolveOutput (conn.from.nodeId, conn.from.portId,
                                                    noteSources, adsrProcessors, fAdsrProcessors, masterOutput,
                                                    oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors, waveshapers, filters,
-                                                   splitters, mergers, adders, feedbackProcessors, resonators);
+                                                   splitters, mergers, adders, feedbackProcessors, resonators, velocityScalers);
                 InputPort*  in  = resolveInput  (conn.to.nodeId,   conn.to.portId,
                                                    const_cast<SynthVoiceParameters&> (parameters),
+                                                   velocityScalers,
                                                    noteSources, adsrProcessors, fAdsrProcessors, masterOutput,
                                                    oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors, waveshapers, filters,
                                                    splitters, mergers, adders, feedbackProcessors, resonators);
