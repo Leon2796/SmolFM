@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3" name="tr808-bass-drum" description="808-Style Bassdrum: Rausch-Klick als Schlegel-Anreger in den schwingenden Koerper-Resonator, der feedback-Loop traegt das Bridged-T-Damping des Original-Netzwerks (statischer Anker 49.5 Hz als Bridged-T-Messung, Spielregister ca. A1-B1 55-62 Hz); Velocity-Akzent waechst Dekay (spread 2.5) und Hit lauter. Saettigungsstufe nach dem Resonator (shape soft, Drive 0.25, vel-getrieben) bildet den Op-Amp-Clip der Original-Schaltung ab: der Ring-Tail wird mit Harmonischen gefaerbt statt rein sinusfoermig, und der Accent faehrt via shape.vel in die Kurve." techniques="resonator-body-strike, tuned-noise-percussion, saturating-vca, 808-accent-gain">
+<SmolFM version="3" name="tr808-bass-drum" description="808-Style Bassdrum: Rausch-Klick als Schlegel-Anreger in den schwingenden Koerper-Resonator, der feedback-Loop traegt das Bridged-T-Damping des Original-Netzwerks (statischer Anker 49.5 Hz als Bridged-T-Messung, Spielregister ca. A1-B1 55-62 Hz); Velocity-Akzent waechst Dekay (spread 2.5) und Hit lauter. Saettigungsstufe nach dem Resonator (shape soft, Drive 0.25, vel-getrieben) bildet den Op-Amp-Clip der Original-Schaltung ab: der Ring-Tail wird mit Harmonischen gefaerbt statt rein sinusfoermig, und der Accent faehrt via shape.vel in die Kurve. Ausgangs-Gain 10.0 als Basis-Ebene (Hoerfund des Nutzers: so sitzt die Stimme)." techniques="resonator-body-strike, tuned-noise-percussion, saturating-vca, 808-accent-gain">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -17,12 +17,12 @@
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="feedback0" amount="0.35">
+      <Node id="feedback0" amount="0.22">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="fb_in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="resonator0" tune="49.5" q="0.85" decay="0.8" spread="2.5">
+      <Node id="resonator0" tune="49.5" q="0.85" decay="0.30" spread="2.5">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="tune" direction="in" type="frequency" />
         <Pin id="vel" direction="in" type="velocity" />
@@ -33,7 +33,7 @@
         <Pin id="vel" direction="in" type="velocity" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="gain0" factor="0.5">
+      <Node id="gain0" factor="10.0">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="vel" direction="in" type="velocity" />
         <Pin id="out" direction="out" type="signal" />
