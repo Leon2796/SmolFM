@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3" name="tr808-conga-low" description="808-Style Low Conga: Quadrat-Puls-Klick schwingt den Koerper-Resonator ein (statischer Anker 196 Hz, ca. G3); Dekay ist Pol-Radius statt Envelope-Dive, kompakter Ring, Velocity-Akzent waechst Dekay (spread 1.5) und Hit lauter." techniques="resonator-body-strike, 808-accent-gain">
+<SmolFM version="3" name="tr808-conga-low" description="808-Style Low Conga: Quadrat-Puls-Klick schwingt den Koerper-Resonator ein (statischer Anker 196 Hz, ca. G3); Dekay ist Pol-Radius statt Envelope-Dive, kompakter Ring, Velocity-Akzent waechst Dekay (spread 1.5) und Hit lauter." techniques="resonator-body-strike, tuned-strike-excitation, 808-accent-gain">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -10,7 +10,7 @@
         <Pin id="note_in" direction="in" type="frequency" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="adsr0" attack="0.001" decay="0.004" sustain="0.0" release="0.003">
+      <Node id="adsr0" attack="0.001" decay="0.015" sustain="0.0" release="0.003">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>

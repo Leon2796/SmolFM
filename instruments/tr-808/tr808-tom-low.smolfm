@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3" name="tr808-tom-low" description="808-Style Low Tom: Quadrat-Puls-Klick schwingt den Koerper-Resonator ein (statischer Anker 98 Hz, ca. G2); Dekay ist Pol-Radius statt Envelope-Dive, Velocity-Akzent waechst Dekay (spread 2.0) und Hit lauter." techniques="resonator-body-strike, 808-accent-gain">
+<SmolFM version="3" name="tr808-tom-low" description="808-Style Low Tom: Quadrat-Puls-Klick schwingt den Koerper-Resonator ein (statischer Anker 98 Hz, ca. G2); Dekay ist Pol-Radius statt Envelope-Dive, Velocity-Akzent waechst Dekay (spread 2.0) und Hit lauter." techniques="resonator-body-strike, tuned-strike-excitation, 808-accent-gain">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -10,7 +10,7 @@
         <Pin id="note_in" direction="in" type="frequency" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="adsr0" attack="0.001" decay="0.005" sustain="0.0" release="0.004">
+      <Node id="adsr0" attack="0.001" decay="0.020" sustain="0.0" release="0.004">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>

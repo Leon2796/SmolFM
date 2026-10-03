@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3" name="tr808-snare" description="808-Style Snare: Zweiton-Korpus 185/330 Hz mit 120-ms-Korpus-Dekay (driftbox-Cap) plus Rausch-Kette nach 808-synth: HP 2200 x0,7 + Rattle-Bandpass 3600 Q4,5 x0,5 mit Skitter-Raster (Echo-Delay 3,5 ms, fb 0,5 - Annaeherung der Burst-Re-Gates aus 808-synth), 160-ms-Snap, Noise-Dominanz 1,05 (tuned-noise-percussion); Velocity-Akzent hebt alle Schichten an." techniques="tuned-noise-percussion">
+<SmolFM version="3" name="tr808-snare" description="808-Style Snare: Zweiton-Korpus 185/330 Hz mit 120-ms-Korpus-Dekay (driftbox-Cap) plus Rausch-Kette nach 808-synth: HP 2200 x0,7 + Rattle-Bandpass 3600 Q4,5 x0,5, 160-ms-Snap, Noise-Dominanz 1,05; Skitter/Burst-Re-Gates = Engine-Case, bewusst ohne Echo-Delay angenaehert (Echo am resonanten Noise = quasi-periodische Segmente = metallisch) (tuned-noise-percussion); Velocity-Akzent hebt alle Schichten an." techniques="tuned-noise-percussion">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -62,10 +62,6 @@
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="delay0" time="3.5" feedback="0.5" mix="0.5" sync="off" division="quarter">
-        <Pin id="in" direction="in" type="signal" />
-        <Pin id="out" direction="out" type="signal" />
-      </Node>
       <Node id="add0">
         <Pin id="in1" direction="in" type="signal" />
         <Pin id="in2" direction="in" type="signal" />
@@ -89,8 +85,7 @@
       <Wire from="osc2" fromPort="out" to="filter1" toPort="in" />
       <Wire from="osc2" fromPort="out" to="filter0" toPort="in" />
 
-      <Wire from="filter0" fromPort="out" to="delay0" toPort="in" />
-      <Wire from="delay0" fromPort="out" to="gain4" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="gain4" toPort="in" />
       <Wire from="gain4" fromPort="out" to="add0" toPort="in2" />
       <Wire from="filter1" fromPort="out" to="gain3" toPort="in" />
       <Wire from="gain3" fromPort="out" to="add0" toPort="in1" />
@@ -114,7 +109,6 @@
       <Box id="gain2" x="1320" y="700" />
       <Box id="filter1" x="680" y="1020" />
       <Box id="gain3" x="1000" y="1020" />
-      <Box id="delay0" x="680" y="1340" />
       <Box id="gain4" x="1000" y="1340" />
       <Box id="add0" x="1320" y="1020" />
       <Box id="output" x="1640" y="380" />

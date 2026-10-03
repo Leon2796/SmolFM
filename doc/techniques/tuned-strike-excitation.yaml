@@ -1,0 +1,147 @@
+technique:
+  name: tuned-strike-excitation
+
+  idea: |
+    A resonator body is excited by a short impulse built from a sine
+    oscillator running in pitch mode on the SAME note the body's tune port
+    tracks.  The impulse is coherent with the body's resonance frequency, so
+    the captured ring energy is deterministic: every hit transfers the same
+    share regardless of random window content, and hit-to-hit loudness
+    follows only the velocity laws.  Raw noise may stay in the topology as a
+    quiet high-passed attack garnish layer (variance then lives in colour,
+    not in level); the driftbox reference builds its tom and conga bodies
+    exactly this way (sine body plus noise head).  Motivation: a broadband
+    noise stroke through a narrow body only samples B*T << 1 of the random
+    signal, which makes the captured ring energy a random variable per hit —
+    the "sometimes loud, sometimes soft at the same velocity" failure mode.
+    The analog TR-808 has no random exciter at all: its trigger runs through
+    a deterministic pulse-shaper network (capacitor, two resistors, clamp
+    diode) that Voltage Drums solves closed-form per sample with the
+    Wright-omega equation.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard source; fans out to BOTH the strike oscillator's pitch
+        input and the body's tune port, so impulse and body share the note.
+    - type: osc
+      role: Strike tone — sine in pitch mode, driven by note.out; the
+        deterministic coherent exciter standing in for the hardware trigger
+        pulse.
+    - type: adsr
+      role: Impulse gate behind the strike tone (attack 0.001 s, decay
+        0.02-0.03 s); the same node style gates the optional noise garnish.
+    - type: gain
+      role: Strike level into the body entry; a parallel second gain scales
+        the noise garnish — the blend pair is the randomness knob: r = 0 full
+        coherence, r = 1 full noise, ring-level variance grows with r^2.
+    - type: add
+      role: Sums the coherent impulse and the noise garnish into the single
+        body entry.
+    - type: feedback
+      role: Optional bounded loop recirculating the body's output per the
+        resonator-body-strike recipe.
+    - type: resonator
+      role: The singing body — tune tracks the note, vel spreads the decay;
+        nothing about the body changes in this technique.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard source
+      port: out
+      role: Played frequency into the strike oscillator's note_in and the
+        resonator's tune (and optionally the garnish band-pass's
+        cutoff_mod_in) — one note, two or three frequency consumers.
+    - node_role: Keyboard source
+      port: vel
+      role: Velocity into the accent chain as in resonator-body-strike.
+    - node_role: Strike tone
+      port: note_in
+      role: Receives the note frequency (frequency).
+    - node_role: Strike tone
+      port: out
+      role: Coherent strike tone into the impulse gate (signal).
+    - node_role: Impulse gate
+      port: out
+      role: Gated strike impulse into the strike gain and the additive body
+        entry (signal).
+    - node_role: Body
+      port: in
+      role: Receives the summed excitation or the impulse alone (signal).
+    - node_role: Body
+      port: tune
+      role: Tracks the played key (frequency).
+    - node_role: Garnish filter
+      port: cutoff_mod_in
+      role: Note-tracked band centre for the in-band noise layer; connected
+        it replaces the static cutoff (frequency).
+
+  topology:
+    description: |
+      note.out fans out to osc1.note_in (strike sine) and resonator0.tune
+      (frequency domain, two consumers).  osc1.out -> adsr1.in ->
+      strike-gain.in.  Direct form: strike-gain.out -> resonator0.in.  Blend
+      form: strike-gain.out -> coherence-gain.in, noise -> noise-adsr.in ->
+      garnish-filter.in (cutoff_mod_in <- note.out) -> garnish-gain.in; both
+      gains -> add0.in1/in2; add0.out -> resonator0.in.  Loop form wraps the
+      body as in resonator-body-strike (feedback before the resonator, the
+      return edge carries the one-sample delay).  Body out -> accent gain ->
+      output.
+
+  parameters:
+    - name: impulse gate
+      role: |
+        adsr attack 0.001 s, decay 0.02..0.03 s.  The impulse sits inside the
+        reference excitation band: 808-synth pitches the BD transient with an
+        18 ms sweep constant, driftbox's tom noise head lasts 30 ms and its
+        click 14 ms.  Below ~10 ms the coherent strike's ring attack thins;
+        beyond ~40 ms the strike starts sounding like a tone burst itself.
+    - name: strike level
+      role: |
+        gain factor ~1..4; a looped body carries the sustainable level
+        itself, the strike only ignites it.
+    - name: blend pair (r)
+      role: |
+        coherence gain (1-r) and garnish gain r.  r = 0 fully deterministic,
+        0.2..0.4 natural hand spread, 1 = the pre-tuned-strike random state;
+        ring-level variance grows with r^2, so the pair acts as a
+        Randomness control from two factor values.
+    - name: garnish band
+      role: |
+        Optional filter on the noise layer: band-pass tracked via
+        cutoff_mod_in from the note keeps the random layer in-band, so even
+        full randomness excites near the resonance.
+
+  relationships:
+    - name: extends
+      description: |
+        resonator-body-strike already mentions "square (pitch mode) for the
+        tuned pulse standing in for the hardware trigger"; this technique
+        makes the excitation law itself the subject: why the tuned pulse is
+        deterministic (coherent capture vs sampling a too-short noise
+        window), the impulse-length band from the references, and the blend
+        pair that scales randomness instead of abolishing it.  Not a
+        duplicate: body-strike documents the body topology, this documents
+        the strike.
+    - name: reference-exciters
+      description: |
+        driftbox's tom/conga = sine body plus noise head (HP 600, 30 ms,
+        0.22); 808-synth's kick = phase-embedded 18 ms sweep plus a 900 Hz,
+        4 ms sine click; 8W8's bridged-T rings ~80 ms with the loop carrying
+        the rest; Voltage-80's pulse-shaper network is solved closed-form per
+        sample (Wright-omega).
+    - name: variance-siblings
+      description: |
+        tuned-noise-percussion rings a static band-pass as the body and
+        gates the ring; key-tracking-filter tracks a filter's cutoff per key
+        — this technique applies key tracking to the EXCITATION (both the
+        strike tone and, optionally, the garnish band), not to the body.
+    - name: budget
+      description: |
+        Registry budgets: note = 1, osc <= 16, adsr <= 16, gain <= 16,
+        add <= 8, filter <= 16, resonator <= 8, feedback <= 4, output = 1.
+
+  perceptual_effects:
+    - hit-level predictability: ring energy follows the velocity laws only
+    - natural hand-spread available via the blend pair without losing control
+    - strikes that ignite the body instead of gambling on a short noise window
