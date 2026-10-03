@@ -814,7 +814,7 @@ juce::String GraphNodeRegistry::filterModeParameterIdFor (const juce::String& no
     if (spec == nullptr || spec->cutoffParameterTemplate.isEmpty())
         return {};
 
-    return withIndex (spec->cutoffParameterTemplate, indexOf (nodeId)) + "Mode";
+    return withIndex (spec->cutoffParameterTemplate, indexOf (nodeId)).replace ("Cutoff", "Mode");
 }
 
 juce::String GraphNodeRegistry::delayTimeParameterIdFor (const juce::String& nodeId)

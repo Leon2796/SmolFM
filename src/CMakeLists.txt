@@ -94,6 +94,7 @@ target_link_libraries(${PROJECT_NAME}
 # produces samples.
 add_executable(SmolFM_GraphTests
     processors/ProcessorGraphTests.cpp
+    graph/GraphNodes.cpp
     processors/NoteProcessor.cpp
     processors/FrequencyScaleProcessor.cpp
     processors/OscillatorProcessor.cpp
@@ -110,7 +111,7 @@ add_executable(SmolFM_GraphTests
     processors/FeedbackProcessor.cpp)
 
 target_include_directories(SmolFM_GraphTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
-target_link_libraries(SmolFM_GraphTests PRIVATE juce::juce_audio_basics juce::juce_core juce::juce_graphics)
+target_link_libraries(SmolFM_GraphTests PRIVATE juce::juce_audio_basics juce::juce_core juce::juce_graphics juce::juce_data_structures)
 
 # Minimal self-check for the .smolfm parsers: the XML and the YAML flavour of
 # the same instrument must parse into identical SmolFmData (SmolFmParserTests.cpp).

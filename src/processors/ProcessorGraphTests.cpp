@@ -28,6 +28,7 @@
 #include "FeedbackProcessor.h"
 #include "FAdsrProcessor.h"
 #include "SignalGraph.h"
+#include "../graph/GraphNodes.h"
 
 namespace
 {
@@ -1145,6 +1146,37 @@ namespace
         return { true, "feedback loop stable and scaled (gain "
                      + std::to_string (ratio) + " at amount 0.5); amount 0 = transparent" };
     }
+
+    // Regression (TR-808 session, 03.10.2026): the filter-mode loader used to
+    // append "Mode" to the FULL cutoff template — "filter%Cutoff" + "Mode"
+    // produced "filter0CutoffMode", which does not exist in the APVTS
+    // ("filter0Mode").  apvts.getParameter() then returned nullptr, the
+    // setParameter() call silently no-oped, and every patch file loaded with
+    // the declared default mode (LP) no matter what the XML said.  This is
+    // the bug that made all .smolfm filters sound like they filter nothing.
+    TestResult runFilterModeParameterIdTest()
+    {
+        const juce::String modeId = smolfm::GraphNodeRegistry::filterModeParameterIdFor ("filter0");
+        if (modeId != "filter0Mode")
+            return { false, "filterModeParameterIdFor(\"filter0\") = \""
+                          + modeId.toStdString()
+                          + "\" — must be filter0Mode" };
+
+        if (smolfm::GraphNodeRegistry::filterCutoffParameterIdFor ("filter0") != "filter0Cutoff")
+            return { false, "filterCutoffParameterIdFor must still resolve to filter0Cutoff" };
+
+        if (smolfm::GraphNodeRegistry::filterResonanceParameterIdFor ("filter0") != "filter0Resonance")
+            return { false, "filterResonanceParameterIdFor must still resolve to filter0Resonance" };
+
+        // The waveshaper sibling the append-pattern came from must not regress.
+        const juce::String driveId = smolfm::GraphNodeRegistry::driveParameterIdFor ("shape3");
+        if (driveId != "shape3Drive")
+            return { false, "driveParameterIdFor(\"shape3\") = \""
+                          + driveId.toStdString()
+                          + "\" — must be shape3Drive" };
+
+        return { true, "filter mode id resolves to the APVTS id (filter0Mode)" };
+    }
 }
 
 int main()
@@ -1169,6 +1201,7 @@ int main()
     runTest ("Velocity waveshaper scaling", runVelocityWaveshaperTest);
     runTest ("Velocity FM index scaling", runVelocityFmTest);
     runTest ("Velocity filter cutoff scaling", runVelocityFilterTest);
+    runTest ("Filter mode parameter id", runFilterModeParameterIdTest);
     runTest ("Velocity fadsr depth scaling", runVelocityFAdsrTest);
     runTest ("Resonator ring + decay", runResonatorRingTest);
     runTest ("Resonator vel-on-decay", runResonatorVelDecayTest);
