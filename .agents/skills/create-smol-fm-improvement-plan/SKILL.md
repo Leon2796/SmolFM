@@ -1,16 +1,59 @@
+---
+name: create-smol-fm-improvement-plan
+description: >
+  Expert skill for managing improvement plans under doc/improvement-plans/
+  over their full lifecycle: turning a user prompt into a structured
+  German-language plan (evidence-first gap analysis), making small local
+  edits to an existing plan, reviewing and refreshing it against the
+  evidence rules, and
+  inventorying the plan landscape. Use when the user names a topic,
+  synthesizer, effect or feature idea and wants the format/engine gaps
+  examined ("make an improvement plan for ...", "gap analysis for ...",
+  "what can the format not express in ...") or an existing plan changed,
+  reviewed or surveyed. Accepts the invocation options: anlegen | ändern |
+  minen | health-check | port.
+---
+
 # SmolFM Improvement-Plan Skill
 
 Expert skill for turning a user prompt into a structured **improvement
 plan** under `doc/improvement-plans/` — the same evidence-first
 gap-analysis format as `famous-synth-algorithms-gap-analysis.md` and
-`stereo-effects-support-gap-analysis.md`.
+`stereo-effects-support-gap-analysis.md` — and for managing those plans
+over their lifecycle.
 
 Use whenever the user names a topic, synthesizer, effect or feature idea
 and wants the format/engine gaps examined and proposed ("make an
 improvement plan for …", "what can the format not express in …", "gap
-analysis for …"). The plan is always **based on the user's prompt**: the
-prompt fixes the topic and reference axis — do not widen the scope
-silently, ask instead.
+analysis for …"), or an existing plan edited, reviewed or surveyed. The
+plan is always **based on the user's prompt**: the prompt fixes the topic
+and reference axis — do not widen the scope silently, ask instead. The
+same evidence rules and skeleton drive managing an existing plan:
+`ändern` edits it small and local, `health-check` runs the Review
+checklist below and keeps already-implemented suggestions in the file,
+`minen` inventories without rewriting — or, given a fresh theme in the
+prompt, drafts a general improvement plan for it (see the options table).
+
+---
+
+## Options (args)
+
+When the agent invokes this skill it may pass one option string (`args`).
+The five operations come from the agent's routing table
+(`Anlegen`/`Ändern`/`Minen`/`Health-Check`/`Port`); everything else in the
+args is part of the request. The modes this file already documents are
+formalized here — free prose still triggers the same work, the option just
+removes ambiguity. Ambiguous args → ask before writing anything.
+
+| args | Mode |
+|---|---|
+| `anlegen <topic>` (default) | Full workflow: new `<topic>-gap-analysis.md`, anchored on the prompt (Workflow below) |
+| `ändern <plan>` | Small, local edits to an existing plan (Help hard rule: edits to existing plans stay small and local) |
+| `minen [<theme>]` | No argument: read-only inventory of the existing plans — topics, overlaps, sibling dependencies — report, don't rewrite. With a theme: propose a general improvement plan for it — derive the topic/aim directly from the requested theme, examine SmolFM's current state and, when needed, pull online references (effect / sound-design / sound-synthesis tutorials, analogue and digital synthesizer material, VST tutorials, famous VST designs, open-source VSTs, DSP tutorials) and translate them into the SmolFM domain. Example: `minen "Überleg dir einen Weg **Stereo Support** zu verbessern."` — a new plan file still requires the user's explicit yes |
+| `health-check <plan>` | The **Review** mode (section below) plus the freshness pass: one-line findings in the house format; is the plan still current, or already implemented? Already-implemented suggestions are annotated `erledigt` in place (with proof) and stay in the file — no other rewriting |
+| `port <reference>` | Reference-anchored plan: the reference device/effect fixes the row set (like the TR-808/TR-909 analyses) — make the plan from the prompt and, where possible, bring the source itself in; what SmolFM cannot express is reported honestly. |
+
+The plan language stays German in all modes.
 
 ---
 
@@ -105,6 +148,7 @@ is actually requested.
 | A topic/prompt: "plan / gap analysis for X" | `doc/improvement-plans/<x>-gap-analysis.md`, skeleton above, in German |
 | "review the <topic> plan" | Review mode: one-line findings on an existing plan file |
 | "X landed in the engine" | The plan's rows updated: `erledigt` annotation with proof |
+| A theme without a plan: "think of a way to improve X" | Minen proposal: a researched general plan for X (new file only after your explicit yes) |
 
 **Hard rules (all modes)**
 
@@ -125,8 +169,11 @@ is actually requested.
 
 Focused review of an existing improvement-plan document (or a section
 of it). One line per finding, in the house format
-`<file>:L<line>: <what>. <fix>.` — findings only, no rewriting. The
-best outcome for a plan is that it gets shorter and better-sourced.
+`<file>:L<line>: <what>. <fix>.`. Implemented suggestions are the one
+exception to "findings only": their rows get the `erledigt` annotation in
+place (with proof) and stay in the file — see the `stale:` item below.
+Otherwise no rewriting, and the best outcome for a plan is that it gets
+shorter and better-sourced.
 
 Checklist, most damaging first:
 

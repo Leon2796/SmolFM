@@ -1,13 +1,55 @@
+---
+name: create-smolfm-technique
+description: >
+  Expert skill for managing the SmolFM synthesis-technique catalogue over
+  its full lifecycle: discovering, describing and registering techniques as
+  YAML files under doc/techniques/, adjusting existing ones, auditing them
+  against the format grammar and the catalogue, and mining candidates from
+  research, instruments and real usage. Use when the user asks for new
+  synthesis techniques, asks what the format can express, wants the
+  technique catalogue grown, or wants existing techniques changed, checked
+  or mined. Accepts the invocation options: anlegen | ändern | minen |
+  health-check | port.
+---
+
 # SmolFM Technique Skill
 
-Expert skill for discovering, describing and registering **synthesis
-techniques** for the SmolFM `.smolfm` format as YAML technique files under
-`doc/techniques/`.
+Expert skill for **the SmolFM technique catalogue** — discovering,
+describing and registering **synthesis techniques** for the SmolFM
+`.smolfm` format as YAML technique files under `doc/techniques/`, and
+managing that catalogue once it exists.
 
 Use whenever the user asks for new synthesis techniques, asks what the
-format can express, or wants the technique catalogue grown.  Produces one
-descriptive YAML file per technique, following the embedded template, and
-validates feasibility against the format grammar before anything is written.
+format can express, wants the technique catalogue grown, or wants existing
+techniques changed, audited or mined.  Produces one descriptive YAML file
+per technique, following the embedded template, and validates feasibility
+against the format grammar before anything is written.
+
+---
+
+## Options (args)
+
+When the agent invokes this skill it may pass one option string (`args`).
+The five operations come from the agent's routing table
+(`Anlegen`/`Ändern`/`Minen`/`Health-Check`/`Port`); everything else in the
+args is part of the request. Free prose still triggers the same work — the
+option just removes ambiguity. Ambiguous args → ask before writing.
+
+| args | Mode |
+|---|---|
+| `anlegen <idea>` (default) | Propose new technique(s); no file is written before the user's explicit yes (Workflow 4) |
+| `ändern <technique>` | Adjust the existing technique file instead of creating a parallel variant (Workflow 5) |
+| `minen [<idea>]` | Read-only: mine research notes, instruments, improvement plans and the catalogue itself for candidate techniques — proposals only; for a described topology, additionally check whether it can meanwhile be expressed better given the current graph state, and which similar techniques have become expressible since |
+| `health-check <technique>` | Feasibility + duplicate audit of existing technique(s) (Feasibility rules below): wrong node/port/param, range violations, catalogue duplicates — findings only; plus the fit check: does the described topology actually do what the technique's idea aims at? |
+| `port <reference>` | New technique from an external reference (synth architecture text, effect writeup): the reference comes with the args or is extracted from the prompt — if it is not clear what can be extracted, give the reasons, stop and ask; otherwise port the technique as faithfully as possible as `.yaml` via the `anlegen` proposal workflow (Workflow 4), and XSD feasibility decides |
+
+The workflow below is written from the **`anlegen`/`port`** perspective; an
+existing technique is **managed with the same material**: `ändern` adjusts
+it instead of forking a parallel variant (Workflow 5), `health-check` runs
+the Feasibility rules find-only and checks that the topology does what the
+idea aims at, `minen` harvests candidates — and re-checks for described
+topologies whether they are meanwhile better expressible given the current
+graph state — and never writes.
 
 ---
 

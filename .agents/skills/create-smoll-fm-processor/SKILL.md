@@ -1,29 +1,54 @@
-# SmolFM Processor Vertical-Slice Skill
+---
+name: create-smoll-fm-processor
+description: >
+  Expert skill for managing processors in SmolFM over their full lifecycle:
+  adding a complete new processor (vertical slice: DSP core, voice graph,
+  GraphNodeRegistry, palette, editor factory, GUI component, .smolfm
+  (de)serialisation, documentation), changing an existing one under the
+  compatibility guard, auditing it against its doc/processors/*.md and
+  harvesting processor candidates. Use when the user asks for a new
+  node/processor type, asks how to add one, or wants an existing processor
+  changed, checked or mined. Accepts the invocation options:
+  anlegen | ändern | minen | health-check | port.
+---
 
-Expert skill for adding a **complete new processor** (vertical slice) to SmolFM:
-DSP core → voice graph → GraphNodeRegistry → palette button → editor factory
-→ GUI component → `.smolfm` (de)serialisation → documentation.
+# SmolFM Processor Skill
 
-Use whenever the user asks for a new node/processor type, or asks how to add
-one. Produces a checklist-driven, minimal-diff implementation plan that keeps
-every layer consistent.
+Expert skill for **processors in SmolFM**. The
+core is the **vertical slice** for a complete new processor: DSP core → voice
+graph → GraphNodeRegistry → palette button → editor factory → GUI component
+→ `.smolfm` (de)serialisation → documentation. The same layer map also drives
+managing an existing processor: changing it (Compatibility guard below),
+auditing it against its `doc/processors/*.md`, mining processor candidates
+from real usage.
+
+Use whenever the user asks for a new node/processor type, asks how to add
+one, or wants an existing processor changed, health-checked or mined.
+Produces a checklist-driven, minimal-diff plan that keeps every layer
+consistent — for new processors and changes to existing ones alike.
 
 ---
 
-## Compatibility guard (signal processing changes)
+## Options (args)
 
-Adding a brand-new processor is additive by design: nothing in a saved patch
-depends on it. But when work changes the **signal processing** of an existing
-processor — its algorithm/behaviour, what a parameter does or its default,
-internal routing, port layout, or render order relative to other processors —
-do not apply it silently:
+When the agent invokes this skill it may pass one option string (`args`).
+The five operations come from the agent's routing table
+(`Anlegen`/`Ändern`/`Minen`/`Health-Check`/`Port`); everything else in the
+args is part of the request. Free prose still triggers the same work — the
+option just removes ambiguity. Ambiguous args → ask before implementing.
 
-1. Briefly check whether existing `.smolfm` instruments could break:
-   structurally (dangling connection ids, parameters silently dropped by
-   the read whitelist, xsd/grammar mismatch on reload) or audibly (the same
-   patch suddenly behaves or sounds differently, audio rerouted or silent).
-2. If breakage is plausible, briefly ask the user (name the concrete risk)
-   before applying the change.
+| args | Mode |
+|---|---|
+| `anlegen <node>` (default) | Full vertical slice for a new processor (layered checklist below) |
+| `ändern <processor>` | Change to an existing processor — the **Compatibility guard** (section below) applies: check breakage, ask before signal-processing changes |
+| `minen` | Read-only harvest: scan instruments, improvement plans and teaching docs for repeated wirings and missing nodes → processor candidates (Reinforcement-Ziel); report, don't build |
+| `health-check <processor>` | Audit an existing processor against its `doc/processors/*.md`, the template rules and the Common pitfalls (doc drift, ID/attribute spelling in every required place) — findings only |
+| `port <algorithm>` | Vertical slice derived from a known DSP algorithm or external reference; translate honestly into existing Bausteine, name deviations |
+
+The layered checklist below is written for the vertical slice (`anlegen` /
+`port`); an existing processor can be **managed with the same skill**:
+`ändern` walks those layers on the existing processor (consistency check
+instead of building), `health-check` audits them step by step.
 
 ---
 
@@ -52,11 +77,31 @@ bind sliders/combos directly. No locks on the audio thread.
 
 ---
 
-## The layered checklist
+## Compatibility guard (signal processing changes)
 
-Adding processor `Foo` (baseId `foo`) touches **every** layer below, in this
-order. Skipping one leaves a half-wired node: palette tile appears but sound
-never reaches the output, or the `.smolfm` save/load round-trips nothing.
+Adding a brand-new processor is additive by design: nothing in a saved patch
+depends on it. But when work changes the **signal processing** of an existing
+processor — its algorithm/behaviour, what a parameter does or its default,
+internal routing, port layout, or render order relative to other processors —
+do not apply it silently:
+
+1. Briefly check whether existing `.smolfm` instruments could break:
+   structurally (dangling connection ids, parameters silently dropped by
+   the read whitelist, xsd/grammar mismatch on reload) or audibly (the same
+   patch suddenly behaves or sounds differently, audio rerouted or silent, layout changed).
+2. If breakage is plausible, briefly ask the user (name the concrete risk)
+   before applying the change.
+
+---
+
+## The layered checklist(Vertical Slice)
+
+Written from the **`anlegen`** perspective: adding processor `Foo` (baseId
+`foo`) touches **every** layer below, in this order. The same layer map is
+the backbone for every mode — `ändern` walks the layers on an existing
+processor, `health-check` audits each one against its docs. Skipping one
+leaves a half-wired node: palette tile appears but sound never reaches the
+output, or the `.smolfm` save/load round-trips nothing.
 
 ### 1. DSP — `src/processors/FooProcessor.{h,cpp}`
 

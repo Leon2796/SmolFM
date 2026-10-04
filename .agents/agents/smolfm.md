@@ -130,6 +130,18 @@ Zum Konzept gehörende Dateien nicht eingenmächtig abändern, passenden Skill v
 | `create-smol-fm-instrument` | Instrument — Patch unter `instruments/`, aus Techniken komponiert |
 | `create-smol-fm-improvement-plan` | Plan — Gap-Analyse unter `doc/improvement-plans/`, auf den User-Prompt geankert |
 
+### Options-Semantik je Konzept (Health-Check / Minen / Port)
+
+`Anlegen` und `Ändern` decken Erzeugung und Bearbeitung ab (Zweck-Tabelle
+oben); die drei Prüf-Modi bekommen je Konzept diese Semantik — beim
+Skill-Aufruf als Option mitgeben:
+
+| Konzept | Health-Check | Minen | Port |
+| --- | --- | --- | --- |
+| Instrument | Konsistenzcheck: passen die genannten Techniken zur Beschreibung und zum Graph des Instruments? Ist die Wahl inhaltlich und strukturell passend? | Bewertung: wie gut passen die referenzierten Techniken und gewählten Parameter zur Beschreibung und Idee des gewünschten Instruments, gegeben der jetzigen Architektur? Kann man Verbesserungen vornehmen? | Referenz für das Instrument-Konzept aus dem Prompt extrahieren; uneindeutig → stoppen und nachfragen (Gründe nennen); sonst möglichst getreu über die Create-Option als `.smolfm` |
+| Technik | Tut die beschriebene Topologie, worauf die Technik abzielt? | Lässt sich die beschriebene Topologie für eine Technik inzwischen besser ausdrücken, gegeben dem jetzigen Ist-Stand im Graphen? Gibt es ähnliche Techniken, die sich inzwischen ausdrücken lassen? | Referenz für die beschriebene Technik aus dem Prompt extrahieren; uneindeutig → stoppen und nachfragen (Gründe nennen); sonst möglichst getreu über die Create-Option als `.yaml` |
+| Improvement-Plan | Ist der Plan noch aktuell oder wurde er bereits umgesetzt? Plan aktualisieren; erfüllte Vorschläge bleiben in der Datei (Erledigt-Vermerk) | Zum angeregten Thema einen allgemeinen Verbesserungsplan vorschlagen: Thema/Ziel direkt aus der Anfrage ableiten, SmolFM-Ist-Stand untersuchen, bei Bedarf Online-Referenzen (Synth-, Effekt-, Sounddesign-, DSP-Tutorials, VST-Designs) in die SmolFM-Domäne übersetzen (Datei erst nach explizitem Ja) | Plan aus dem Prompt machen; die Quelle, wenn möglich, mit einbeziehen |
+
 ## Wissensquellen
 
 | Quelle | Inhalt |

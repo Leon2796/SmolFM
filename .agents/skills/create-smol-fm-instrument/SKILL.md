@@ -1,15 +1,60 @@
+---
+name: create-smol-fm-instrument
+description: >
+  Expert skill for managing SmolFM instruments over their full lifecycle:
+  designing and generating concrete .smolfm patches that realize a
+  requested Klangbild, genre or instrument type (composed from the
+  technique catalogue, valid against the format grammar), reworking or
+  auditing existing patches, and mining them for reusable patterns and
+  catalogue gaps. Use for new patches, changes to existing ones, specific
+  sounds ("a bell, a growling bass, a glassy pad") or instrument sets.
+  Accepts the invocation options: anlegen | ändern | minen | health-check |
+  port | --chaos | --minimal.
+---
+
 # SmolFM Instrument Skill
 
-Expert skill for designing and generating **SmolFM instruments** — concrete
-`.smolfm` patches that realize a requested genre, Klangbild or instrument
-type with the best possible sound under the format's (sometimes harsh) DSP
-conditions.
+Expert skill for designing, generating and managing **SmolFM instruments**
+— concrete `.smolfm` patches that realize a requested genre, Klangbild or
+instrument type with the best possible sound under the format's (sometimes
+harsh) DSP conditions.
 
 Use whenever the user asks for a new instrument, a patch, a specific sound
-("a bell, a growling bass, a glassy pad for genre X"), or a set of
-instruments matching a description.  One or more `.smolfm` files are written
-to `instruments/`, always built from techniques in the technique catalogue
-and always valid against the format grammar.
+("a bell, a growling bass, a glassy pad for genre X"), a set of instruments
+matching a description, or an existing instrument to be reworked or
+checked.  One or more `.smolfm` files are written to `instruments/`, always
+built from techniques in the technique catalogue and always valid against
+the format grammar — for new patches and existing ones alike.
+
+---
+
+## Options (args)
+
+When the agent invokes this skill it may pass one option string (`args`).
+The five operations come from the agent's routing table
+(`Anlegen`/`Ändern`/`Minen`/`Health-Check`/`Port`), plus two adopted opt-in
+flags; everything else in the args is part of the request. Free prose still
+triggers the same work — the option just removes ambiguity. Ambiguous args
+→ ask before building.
+
+| args | Mode |
+|---|---|
+| `anlegen <description>` (default) | Design & generate new instrument(s) under `instruments/` (Workflow below) |
+| `ändern <instrument>` | Rework an existing `.smolfm`: stays valid against the Validation checklist and keeps its declared mode (musical/chaos) |
+| `minen [<instrument>]` | Read-only dig of existing patches: which catalogue techniques compose them, which reusable patterns are not yet in the catalogue (feeds `create-smolfm-technique`); and the fit assessment: how well do the referenced techniques and chosen parameters match the description and idea of the described/target instrument given the current architecture? Improvement suggestions welcome — read-only, evaluated rather than reworked |
+| `health-check <instrument>` | Run the **Validation checklist** plus the musicality/chaos guardrails below on an existing patch; findings only, no rework. **Consistency check** included: do the named techniques fit the description and the built graph — is the selection coherent in content and structure? |
+| `port <reference>` | Reference-driven design (e.g. a machine documented under `research/` or `doc/teaching/`): the reference comes with the args or is extracted from the prompt — if it is not clear what can be extracted, stop and ask, giving the reasons; otherwise build the patch from the reference via the create workflow, as faithfully as possible, and state what the Bausteine reproduce and where they deviate ("Wie die Bausteine abweichen") |
+| `--chaos` | Chaos mode opt-in — counts as the user's explicit wording for it (see "Musicality and chaos mode") |
+| `--minimal` | Minimal test patch instead of a finished instrument (see Common pitfalls) |
+
+The workflow, guardrails and Validation checklist below are written from
+the **building** perspective (`anlegen`/`port`); an existing instrument is
+**managed with the same material**: `ändern` reworks it under the same
+rules and keeps its declared mode, `health-check` audits it find-only
+(validation, guardrails and the consistency check: named techniques ↔
+description ↔ graph), `minen` reads it for patterns and catalogue gaps and
+rates how well its techniques and parameters fit its stated idea given the
+current architecture — never building, never reworking.
 
 ---
 
