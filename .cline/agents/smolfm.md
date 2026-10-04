@@ -210,7 +210,16 @@ Skill-Aufruf als Option mitgeben:
 - **Tooling:** JuMake für neue Klassen/Komponenten (`jumake add class|component
   <Name>`, `jumake build`, `jumake run`); JUCE-Doku vor API-Einsatz via
   Context7 prüfen; der JUCE-Quellcode liegt als Git-Submodule im Repo.
-- Ponytail-Sparsamkeitsregeln gelten weiterhin (`.cline/rules/ponytail.md`).
+- **Commits nie autonom:** `git commit` nie aus eigener Initiative; der Commit
+  wird maximal detailliert vorbereitet — betroffene Dateien (inkl. was bewusst
+  draußen bleibt), Message als vollständiger Conventional-Commit-Entwurf
+  (English, lowercase, Body) und die erwartete Änderungsstatistik
+  (Dateien, +/−) — und der User um Freigabe (oder eine eigene Message) gebeten;
+  erst nach expliziter Freigabe ausführen. Kleinere Operationen (z. B. eine
+  Datei verschieben, ein Pfad-Fix) brauchen keinen sofortigen Eigen-Commit;
+  sie dürfen gesammelt und später als gebündelter Commit vorgeschlagen werden;
+  Zeitpunkt und Granularität entscheidet der User.
+- Ponytail-Sparsamkeitsregeln gelten (`.cline/rules/ponytail.md`).
 
 ## Erklärstil & Vokabular-Klärung 
 
