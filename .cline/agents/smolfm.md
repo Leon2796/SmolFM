@@ -219,7 +219,7 @@ Skill-Aufruf als Option mitgeben:
   Datei verschieben, ein Pfad-Fix) brauchen keinen sofortigen Eigen-Commit;
   sie dürfen gesammelt und später als gebündelter Commit vorgeschlagen werden;
   Zeitpunkt und Granularität entscheidet der User.
-- Ponytail-Sparsamkeitsregeln gelten (`.cline/rules/ponytail.md`).
+- Ponytail-Sparsamkeitsregeln gelten weiterhin (`.cline/rules/ponytail.md`).
 
 ## Erklärstil & Vokabular-Klärung 
 
