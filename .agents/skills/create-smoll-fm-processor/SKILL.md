@@ -227,9 +227,26 @@ match the existing pattern).
 ### 9. Documentation — `doc/processors/FooProcessor.md`
 
 **Template is mandatory**: `doc/processor-template.md` defines the fixed
-4-section structure; do not reorder or rename.  Copy the file and fill it in.
-The file path is referenced by the NodeType annotation (`docReference`) in
-`doc/formats/smolfm.xsd` - keep the annotation and the file name in sync.
+4-section structure; never reorder, rename or drop sections.  Copy the file
+and fill it in.  The file path is referenced by the NodeType annotation
+(`docReference`) in `doc/formats/smolfm.xsd` - keep the annotation and the
+file name in sync.
+
+Standing template rules (binding for every task under this skill):
+
+- **Update docs in the same work step.**  Docs and code must never drift
+  apart: with a new processor *and* with every change to an existing one
+  (ports added/removed, changed parameter-flow types, new parameters, new
+  UI functions) the matching `doc/processors/*.md` file is updated **in the
+  same work step**, not as a follow-up.
+- **Reference symbols only.**  Name fields, types and functions with their
+  file paths; keep long code routines and implementation detail out of the
+  prose (formal math belongs to section 3).
+- **New UI functionality (section 2).**  Section 2 holds GUI mode toggles
+  and styling options.  When such a feature appears for the first time,
+  extend the template itself (new column or subsection in section 2) and
+  afterwards migrate **all** `doc/processors/*.md` files to the new
+  structure.
 Sections:
 
 1. **Ports & real parameters** — copy the tables, replace names; if no
@@ -307,6 +324,10 @@ show it, but no generated instrument will ever wire it in.
   tick. Check where the existing processors sit before yours.
 - **UI only binds the last instance** if you forget the loop/`maxFoos`
   budget — every visible `fooN` slider would control `foo0`.
+- **Doc drift**: changing a processor (ports, parameter types, params, UI
+  functions) without updating its `doc/processors/*.md` in the same work
+  step — the template rule makes the same-step update mandatory, docs and
+  code must never diverge.
 
 ---
 

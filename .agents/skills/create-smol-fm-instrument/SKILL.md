@@ -41,6 +41,29 @@ instrument, not when it merely runs.
 
 ---
 
+## No FX bus — both cases are mandatory
+
+SmolFM has **no FX bus**: the graph is the only place where signal
+processing happens, and `output` is the only summing point.  Effect
+modelling (delay, flanger, chorus, …) must therefore be expressible
+**directly inside the instrument graph** — never as a separate effects
+chain outside it.
+
+Every design consideration checks **both cases**:
+
+1. **Instrument case** — the voicing of the onset (attack dynamics,
+   accents, ghost notes, pitch movement).
+2. **Effect case** — the same element as an effect stage inside the graph
+   (per-note control, e.g. velocity → delay time/mix/feedback).
+
+Rejecting an element with only "that's an effect case, not an instrument
+case" is **not a valid justification**.  Effect cases are built in with the
+instrument, or consciously deferred with a solid technical justification and
+noted in the improvement plan (`doc/improvement-plans/`) — not silently
+dropped.
+
+---
+
 ## Workflow (follow in order)
 
 1. **Understand the target sound.**  From the user's description (genre,
@@ -284,6 +307,10 @@ never write a value outside them.
   `<?xml version="1.0" encoding="UTF-8"?>` as the first line.
 - Fanning several wires into one input port — the engine's input holds a
   single source, so every wire but the last is silently dropped on load.
+- Writing off an effect case with "that's an effect case, not an instrument
+  case" — both cases are mandatory; an effect case is either built into the
+  graph or consciously deferred with a technical justification and noted in
+  the improvement plan (see "No FX bus — both cases are mandatory").
 
 ## Boundaries
 
