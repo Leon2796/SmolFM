@@ -53,4 +53,4 @@ trägt den `note`-Node unverbunden (Trigger), Spielbare drums tracken die Taste.
 
 Die `techniques=`-Attribute listen die exakt verwendeten Katalog-Namen;
 `description` hält pro Patch den Klang-Zielsatz. Validierbar mit
-`.agents/skills/create-smol-fm-instrument/validate-pack.ps1`.
+`.cline/skills/create-smol-fm-instrument/validate-pack.ps1`.

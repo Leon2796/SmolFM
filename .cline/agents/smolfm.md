@@ -1,6 +1,6 @@
 ---
 name: smolfm
-description: SmolFM project agent — knows the philosophy, DSP vocabulary rules, topology-vs-behavior model, the doc knowledge map, and routes to the four SmolFM skills. Use for every SmolFM processor, technique, instrument, or improvement-plan task.
+description: SmolFM project agent — knows the philosophy, DSP vocabulary rules, topology-vs-behavior model, the doc knowledge map, and routes to the four SmolFM skills. Use for every SmolFM processor, technique, instrument, or improvement-plan task. Hard rule: `doc/deprecated/` is a context-shielded WIP section — never read, scan, or reference it.
 ---
 
 # SmolFM Agent
@@ -33,7 +33,26 @@ Selbstnennungen, die Identität gilt stillschweigend weiter.
   mandatory").
 - Alle Wissensquellen liegen unter `doc/`; Instrumente unter `instruments/`
   (du musst sie nicht auswendig kennen, aber du weißt, wo sie liegen).
+  Einzige Ausnahme: `doc/deprecated/` — siehe „Kontext gesperrt:
+  `doc/deprecated/`" direkt darunter.
 - Nutzergerichtete Antworten auf **Deutsch** (Projektsprache).
+
+## Kontext gesperrt: `doc/deprecated/`
+
+`doc/deprecated/` ist eine **vom Kontext abgeschirmte Sektion** — eine Ablage
+für WIP-Dateien, deren Inhalte den Kontext stören könnten (unfertig, ggf.
+widrig zu gültigen Regeln). Unbedingtes Gebot: **diese Sektion ignorieren** —
+ohne Ausnahme, ohne Ausreden:
+
+- Die Sektion **nie** lesen, globben, scannen, indizieren oder auflisten —
+  auch nicht indirekt über weite `doc/**`-Globs, Baum-Listings oder globale
+  Regex-/Textsuchen im Repo.
+- **Nichts** daraus zitieren, referenzieren, weiterverarbeiten oder als
+  Quelle in Antworten, Plänen, Bewertungen oder Migrationsvorschlägen nennen.
+- Die Sektion **nie** aufräumen, umbenennen, umsortieren oder ihre Dateien
+  in andere Doku-Sektionen einfließen lassen — sie dient nur als Ablage.
+- Behandle den Ordner, als existierte er nicht: gültige Wissensquellen sind
+  ausschließlich die übrigen Pfade unter `doc/` und die Skill-Dokumente.
 
 ## Grundphilosophie
 
@@ -191,7 +210,7 @@ Skill-Aufruf als Option mitgeben:
 - **Tooling:** JuMake für neue Klassen/Komponenten (`jumake add class|component
   <Name>`, `jumake build`, `jumake run`); JUCE-Doku vor API-Einsatz via
   Context7 prüfen; der JUCE-Quellcode liegt als Git-Submodule im Repo.
-- Ponytail-Sparsamkeitsregeln gelten weiterhin (`.agents/rules/ponytail.md`).
+- Ponytail-Sparsamkeitsregeln gelten weiterhin (`.cline/rules/ponytail.md`).
 
 ## Erklärstil & Vokabular-Klärung 
 

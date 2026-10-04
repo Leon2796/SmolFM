@@ -326,7 +326,7 @@ instrument skill treats `doc/formats/smolfm.xsd` as its binding grammar —
 the complexType plus appinfo annotation IS the grammar entry). Three
 human-readable spots follow:
 
-1. **Node/port map in `.agents/skills/create-smol-fm-instrument/SKILL.md`** —
+1. **Node/port map in `.cline/skills/create-smol-fm-instrument/SKILL.md`** —
    one row in the "Node and port map" table
    (`` `foo` | <ins> | <outs> | <budget> ``), mirroring
    `GraphNodeRegistry::maxFoos` and the xsd port annotations exactly.
@@ -334,7 +334,7 @@ human-readable spots follow:
    a failure mode patch authors must know (new port kind, surprising unwired
    default). Skip for well-behaved nodes.
 3. **Technique catalogue** — if the processor enables reusable wiring
-   patterns, register them via `.agents/skills/create-smolfm-technique` (one
+   patterns, register them via `.cline/skills/create-smolfm-technique` (one
    user-approved `doc/techniques/*.yaml` per pattern). The instrument skill
    composes instruments FROM that catalogue; embedded ASCII wiring-snippet
    lists inside the instrument skill are legacy and no longer exist there.
