@@ -11,6 +11,27 @@ technique:
     involved; the hat is tuned by its static square frequencies and the
     envelope re-fires on every keypress.
 
+  tutorial: |
+    Square-Hat — die TR-808-Becken-Kette der Drum-Maschinen-Literatur:
+    zwei statische Squares in unharmatischem Abstand multiplizieren im
+    Ringprodukt zum metallischen Partikelfeld. Wofür dient die Verdrahtung?
+    Beide Squares (statisch, ohne Note-Draht) speisen den Ring — nur
+    Seitenbänder überleben, kein eigener Grundton; ein Hochpass schneidet
+    den Körper weg, und eine ultraschnelle ADSR gatet das Zischenband.
+    Was ist das Ziel? Geschlossene Hi-Hat-Ticks und offene Hat-Washes
+    aus einer Kette: die Decay-Länge entscheidet — klicknah liest das
+    Ohr die Geschlossene, gestreckt über eine halbe Sekunde das Zischen
+    eines Cymbals; die Drum-Tonhöhe lebt in den statischen Square-
+    Frequenzen, die Hüllkurve feuert auf jeden Keypress — das Kit bleibt
+    pitch-stabil. Der Gang des Signals: (1) Die untere und obere
+    Square-Welle treffen sich im Ring. (2) Das Ringprodukt liefert das
+    dichte metallische Partikelfeld. (3) Der Hochpass behält das Sizzle-Band.
+    (4) Die Percussion-Envelope gatet — near-zero Attack, Decay als
+    Beckenlänge. (5) Der Ausgang erhält die Hat. Verwandt:
+    noise-metal-wash ist die diffuse Rausch-Alternative;
+    osc-sum-bus erlaubt mehrere Sizzle-Ketten hinter EINEM geteilten
+    Filter via Addierer-Bus.
+
   involved_nodes:
     - type: osc
       role: First metal square in static mode; the lower tone of the pair.
@@ -66,6 +87,12 @@ technique:
       static mode with waveform square, so the pair carries no note
       connection; the drum pitch lives in the static frequencies, the
       envelope supplies the per-keypress trigger.
+
+  graph_ascii: |
+      (osc · static square A) ──out──▶ ring.in1
+      (osc · static square B) ──out──▶ (ring.in2)
+      (ring · sideband metal) ──out──▶ (filter · hp sizzle) ──out──▶ (adsr · hat gate) ──out──▶ (output)
+      no note wire · decay 0.02-0.06 s closed, 0.2-0.5 s open
 
   parameters:
     - name: square pair frequencies

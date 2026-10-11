@@ -14,6 +14,31 @@ technique:
     technique treats each band as its own percussion voice inside one
     drum; the decay ladder is the sound-design core, not the balance.
 
+  tutorial: |
+    Bandgated Percussion — im Drum-Synthesizerbau die übliche Zerlegung
+    eines Schlags in Frequenzbänder mit je eigener Ausklanglänge. Wofür
+    dient die Verdrahtung? Eine statische Rausch-Quelle fächert in vier
+    Bandpass-Filter — Körper, Knock, Crack, Luft — und jedes Band hängt
+    hinter einem eigenen kurzen ADSR-Gate mit gestaffelter Decay-Treppe.
+    Was ist das Ziel? Jeder Hit wandert klanglich durchs Spektrum: der
+    Crack blitzt am Einsatz und stirbt zuerst, der Knock folgt, der
+    Körper atmet dahinter und die Luft schwingt am längsten nach — das
+    Spektrum wandert in der Zeit, ohne dass eine Cutoff sich bewegt; die
+    Decay-Treppe ordnet, was wann weiterlebt. Der Gang des Signals:
+    (1) Die Rausch-Quelle speist alle Bänder parallel mit demselben
+    Auslöser. (2) Jeder Bandpass zentriert seinen Bereich — Rumpf, Knall,
+    Spitze, Obertonglimmer — der Cutoff selbst hängt den Ton fest, die
+    Quelle bleibt ungetrackt und tonstabil. (3) Die Gates formen: kürzeste
+    Decays für die Crack-Helligkeit, die längste Kurve für das Nachklingen
+    der Luft. (4) Der Ausgang summiert jedes Band auf eigenem Eingang; die
+    Levels trimmen die Treppe. Velocity auf die Band-Filter lässt Akzente
+    die Bänder heller öffnen. Nachbarschaft im Katalog:
+    parallel-band-split summiert komplementäre Bänder zu einer Stimme,
+    static-formant-pair färbt zwei Vokal-Formanten, metal-hat-squares
+    formt eine einzige gefilterte Kette mit einem Gate — hier bekommen
+    vier Bänder vier eigenständige Gates, die Zeitachse ist die neue
+    Dimension.
+
   involved_nodes:
     - type: osc
       role: Excitation in static mode with waveform noise; one source fans
@@ -71,6 +96,13 @@ technique:
       behind another.  note.vel -> filter-i.vel (velocity) keys the
       accents per band; envelopes fire on note events while the exciter
       runs free (static mode).
+
+  graph_ascii: |
+      (osc · static noise exciter) ──out──┬─▶ (filter 1 · body)  ──▶ (adsr 1 · long gate)   ──▶ (output)
+                                          ├─▶ (filter 2 · knock) ──▶ (adsr 2 · mid gate)    ──▶ (output)
+                                          ├─▶ (filter 3 · crack) ──▶ (adsr 3 · short gate) ──▶ (output)
+                                          └─▶ (filter 4 · air)   ──▶ (adsr 4 · air tail)   ──▶ (output)
+      optional: (note) ──vel──▶ filter.vel_i          the decay ladder orders the spectrum
 
   parameters:
     - name: band centres

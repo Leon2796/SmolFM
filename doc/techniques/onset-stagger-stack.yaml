@@ -15,6 +15,30 @@ technique:
     and body-then-carpet depth that perfectly aligned layers cannot
     produce.
 
+  tutorial: |
+    Gestaffelter Einsatz-Stack — die akustische Schlag-Sortierung aus
+    Orchesterliteratur und Drum-Synthese: Stabklick zuerst, Tonal-
+    Körper wenige Millisekunden später, Rauschteppich zuletzt. Wofür
+    dient die Verdrahtung? Jede Schicht hat eigene Hüllkurve, dahinter
+    ein Delay-Knoten als reine Abtast-Verschiebung (Sync aus, Mix 1.0,
+    Feedback 0 — kein Echo, keine Wiederholung). Was ist das Ziel? Zu-
+    nächst Headroom: die Spitzen der Schichten decken sich nie ganz,
+    der Master bleibt trocken, wo die synchrone Mischung brennen würde.
+    und hörbar: ein Atem-Aufbau — Flam-, Klick-nach-Schlag-Akzente und
+    Körper-dann-Teppich-Tiefe, die exakt ausgerichtete Schichten nicht
+    liefern. Der Gang des Signals: (1) Die Note feuert alle Schicht-
+    Hüllkurven gleichzeitig. (2) Jede Schicht formt ihre Komponente —
+    Tick-Band, Tonal-Körper samt Obertönen, Teppich-Rauschen.
+    (3) Der Delay-Knoten verschiebt die Schicht um ihr Einsatz-Offset
+    (1..30 ms). (4) Der Trim wirkt als Velocity-Accent, der Ausgang summiert
+    auf eigenen Eingängen. Regel: das Offset muss ins Decay passen
+    (unter ca. 40 % der Schicht-Decay) — die verschobene Schicht bleibt
+    nur für Decay-minus-Offset hörbar. Verwandt: multi-burst-clap
+    gliedert Taps INNERHALB eines Bandes (Wiederholungen), hier
+    sortieren Offsets getrennte Materialsorten; stereo-haas-branch-
+    delay verschiebt eine gespaltene Seite für Räumlichkeit — dieselbe
+    Geometrie, hier für Artikulation statt Breite im Mono.
+
   involved_nodes:
     - type: note
       role: Keyboard send; triggers every layer envelope and carries the
@@ -85,6 +109,10 @@ technique:
       1..2000 ms time parameter).  The layer envelopes fire together at
       note-on; the offsets order the audible onsets.  Layers share only
       the note event — no cross-layer wires exist.
+
+  graph_ascii: |
+      layer i: (osc_i) [→ (filter_i)] ──▶ (adsr_i · gate) ──▶ (delay_i · 1-30 ms shift · mix 1.0 · fb 0) ──▶ (gain_i · vel VCA) ──▶ output.inK
+      envelopes fire together · the offsets order tick → body → carpet
 
   parameters:
     - name: onset offsets

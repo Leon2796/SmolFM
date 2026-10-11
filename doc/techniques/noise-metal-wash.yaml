@@ -15,6 +15,34 @@ technique:
     ungated); the envelopes are the only note-dependent elements, so short
     host gates cannot clip a wash.
 
+  tutorial: |
+    Rausch-Metall-Wash — die Cymbal-Familie der Schlagwerk-Synthese:
+    diffuses Rauschgewebe plus inharmonische Resonanzklänge als
+    angeschlagenes Metall, statt einen einzigen klingenden Bandpass die
+    ganze Stimme tragen zu lassen. Wofür dient die Verdrahtung? Eine
+    unentwegte Rausch-Quelle (ohne Notendraht — phasenfrei läuft sie
+    ungedrosselt) spaltet in zwei parallele Bandpässe, einen hellen
+    Sizzle-Band und einen tieferen Körper-Band, jeder von einer harten
+    ADSR geschlossen; Millisekunden-Klicks regen darüber einen oder zwei
+    inharmonische Resonatoren an, deren Klingeln mit exponentiellem t60
+    ausklingt. Was ist das Ziel? Zugeschlagenes, diffuses Metall: die
+    Bänder liefern das Gewebe, die Resonatoren den Klingelglanz —
+    Bandzentren und Klingen-Tonhöhen sind statisch, die Decay-Zeiten
+    allein entscheiden zwischen geschlossenem Tick, offenem Wash und
+    Crash; die Velocity stärkt Lautheit und Klingellänge, niemals den
+    Filter-Cutoff. Der Gang des Signals: (1) Das Rauschen speist beide
+    Wasch-Bänder und die Klick-Gates. (2) Jedes Band klingt in seiner
+    ADSR — der Körper decayt schneller, die Wash-Ebene wandert
+    abwärts. (3) Die Resonatoren singen auf ihren statischen
+    inharmonischen Tonhöhen, die Velocity wächst ihre Klingellänge.
+    (4) Der Ausgang summiert je Layer auf eigenem Eingang. Verwandt:
+    metal-hat-squares synthetisiert Metall aus statischen Square-
+    Seitenbändern (deterministisch, chime-artig — tonal by design),
+    resonator-body-strike verfolgt die geschlagene Klingen-Tonhöhe
+    mit der Taste — hier gehört der Klingelton zum Instrument,
+    tuned-noise-percussion ringt eine einzelne Bandpass-Schale als
+    ganze Trommel.
+
   involved_nodes:
     - type: osc
       role: White noise in static mode without note wire; the shared excitation.
@@ -77,6 +105,12 @@ technique:
       occupies output.in4 when the voice needs two inharmonic pings.
       note.vel wires to every gain.vel and resonator.vel; no wire ever
       reaches a filter.vel.
+
+  graph_ascii: |
+      (osc · static white noise · no note wire) ──out──┬─▶ (filter A · bp sizzle) ──▶ (adsr A) ──▶ (gain A) ──▶ output.in1
+                                                       ├─▶ (filter B · bp body)   ──▶ (adsr B) ──▶ (gain B) ──▶ output.in2
+                                                       └─▶ (adsr C · ms click)  ──▶ (resonator · inharmonic ping) ──▶ (gain ping) ──▶ output.in3
+      (note.vel) ──▶ every gain.vel + resonator.vel · never a filter.vel
 
   parameters:
     - name: band centres

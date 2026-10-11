@@ -9,6 +9,23 @@ technique:
     a phase-locked, key-locked inharmonic dyad that beats coherently
     instead of drifting apart.
 
+  tutorial: |
+    Geteilter Modulator (Shared-Modulator-Duo) — aus der FM-Werkkunst das
+    phasenverriegelte Zwillingspaar: ein Modulator bedient zwei FM-Stufen.
+    Wofür dient die Verdrahtung? Das Tastensend fächert seine Frequenz in
+    beide FM-Stufen, der statische Modulator speist beide Signalebenso;
+    jede Stufe trägt ihren eigenen Amount, zwei Carrier rendern je ein
+    eigenes Spektrum. Was ist das Ziel? Ein phasen- und tonverankertes
+    Dyad, das nicht driftet — glockenspielartige Doppelhalter, die auf
+    der Taste bleiben; der Spektrumunterschied entsteht allein über die
+    Amounts. Der Gang des Signals: (1) Die Note fächert in beide FM-
+    Stufen, (2) der geteilte Modulator speist beide, (3) die Carrier
+    rendert je ihr Spektrum, (4) der Ausgang summiert beide im
+    Ausgangs-Eingang. Geschwister: classic-two-op-fm (eins zu eins),
+    chained-fm-cascade (Serie) — hier paralleler Modulator;
+    fscale-organ-stack fächert Partialien, sub-instrument-layering
+    ganze Stimmen — hier teilt sich das Skelett vor dem Rendern.
+
   involved_nodes:
     - type: note
       role: Keyboard send; base frequency for both FM stages.
@@ -67,6 +84,12 @@ technique:
       fm2.out -> osc-b.note_in (frequency).  osc-a.out and osc-b.out feed
       two dedicated output inputs (signal).  One modulator, two parallel
       FM stages, no cascade between them.
+
+  graph_ascii: |
+      (note) ──out──▶ fm1.freq_in ──▶ (fm1) ──▶ (osc · carrier A) ──▶ output.in1
+             └─out──▶ fm2.freq_in ──▶ (fm2) ──▶ (osc · carrier B) ──▶ output.in2
+      (osc · shared static modulator) ──out──┬─▶ fm1.modulator_in
+                                             └─▶ fm2.modulator_in
 
   parameters:
     - name: modulator staticfreq

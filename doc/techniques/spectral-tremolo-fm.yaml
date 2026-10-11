@@ -11,6 +11,25 @@ technique:
     Synth One terms this is exactly the fmLFO destination: the LFO targets
     the FM index, not the pitch.
 
+  tutorial: |
+    Spektral-Tremolo — das FM-Index-Atmen, in Synth-One-Sprache genau die
+    fmLFO-Zielfunktion: die LFO zielt auf den Modulationsindex, nicht auf
+    die Tonhöhe. Wofür dient die Verdrahtung? Eine langsame LFO schwingt
+    auf amount_mod_in der FM-Stufe, während Carrier und Modulator
+    verankert bleiben — nur die Tiefe pulsiert (amount × (1 + m)).
+    Was ist das Ziel? Atmende Fülle ohne Tonhöhenwandern: die Seitenbänder
+    schwellen und weichen an Ort und Stelle, der Ton pendelt zwischen
+    hohler Sinus-Schlichtheit und glänzender Klangfülle im Takt des
+    Index-Reglers; kreuzt die Schwingung den Nullpunkt, kippt die
+    Klangfarbe zwischen Glanz und Reinheit. Der Gang des Signals:
+    (1) Die Note stimmt den Carrier. (2) Der Modulator-Osc (tasten-
+    verfolgt) liefert das Modulationssignal. (3) Die LFO schaukelt den
+    Index — die Spektralfülle atmet, die Tonhöhe bleibt exakt, der
+    Carrier rendert, der Ausgang übernimmt. Geschwister:
+    lfo-vibrato-fm speist dieselbe LFO in die Frequenz, perlin-drift-
+    modulation verstimmst organisch über den Modulator, index-envelope-
+    fm umhüllt denselben Anschluss.
+
   involved_nodes:
     - type: note
       role: Keyboard send; pitches the carrier.
@@ -50,6 +69,11 @@ technique:
       carrier-osc.out -> output.in1 (signal).  The index wobble rides only
       on amount_mod_in; carrier and modulator ratios stay static.
 
+  graph_ascii: |
+      (note) ──out──▶ (fm.freq_in) ──out──▶ (osc · carrier.note_in) ──out──▶ (output)
+      (osc · lfo breathing) ──out──▶ (fm.amount_mod_in)
+      (osc · modulator) ──out──▶ (fm.modulator_in)      spectral swell at fixed pitch
+
   parameters:
     - name: breathing rate
       role: |
@@ -73,7 +97,7 @@ technique:
         while the perceived pitch stays exact.
     - name: socket-siblings
       description: |
-        lvo-vibrato-fm feeds the LFO into the frequency via a second small
+        lfo-vibrato-fm feeds the LFO into the frequency via a second small
         FM stage (pitch moves); perlin-drift-modulation detunes organically
         through the modulator.  Here the LFO targets amount_mod_in instead:
         depth motion at fixed pitch is the sole purpose.  index-envelope-fm

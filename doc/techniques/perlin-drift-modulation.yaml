@@ -11,6 +11,25 @@ technique:
     Sine in the same socket gives periodic vibrato; the noise family gives
     organic drift that never loops.
 
+  tutorial: |
+    Perlin-Pitch-Drift — die lebendige, unvollkommene Intonation der
+    analogen Literatur: der Modulator ist keine fest geformte Kurve,
+    sondern wandernder Rausch (perlin/simplex). Wofür dient die
+    Verdrahtung? Der Noise-Familien-Osc läuft im LFO-Modus in den
+    Modulator-Eingang der FM-Stufe, deren Ausgang die Carrier-Note
+    steuert. Was ist das Ziel? Ein Tonschwanken ohne Schleifenlänge:
+    die Tonhöhe lehnt, driftet und kehrt zurück ohne Phasen-Artefakte —
+    im Gegensatz zum eingesperrten Sinuszyklus des Vibratos; die FM
+    rechnet f·(1 + amount·Modulator), das Drift-Band bleibt also ein
+    festes musikalisches Intervall auf jeder Taste, kein festes Hertz-
+    Band. Der Gang des Signals: (1) Die Note speist die FM-Mitte.
+    (2) Der Drift-Osc gibt das nicht wiederkehrende Modulationssignal.
+    (3) Die FM-Stufe bindet seine Wirkung tastenproportional an den
+    Ton, der Carrier rendert die driftende Wellenform, der Ausgang
+    übernimmt. Geschwister: Sinus im selben Anschluss =
+    lfo-vibrato-fm (periodischer Trill); eine Drift-Stufe darf
+    mehrere FM-Stufen speisen, für gemeinsames Wandern über Stimmen.
+
   involved_nodes:
     - type: note
       role: MIDI note source; carrier frequency for the FM stage.
@@ -59,6 +78,10 @@ technique:
       carrier.note_in (frequency).  carrier.out -> output (signal).  The
       drift source runs free of the note; only the proportional FM stage
       ties its effect back to the played frequency.
+
+  graph_ascii: |
+      (note) ──out──▶ (fm.freq_in) ──out──▶ (osc · carrier.note_in) ──out──▶ (output)
+      (osc · lfo perlin drift) ──out──▶ (fm.modulator_in)       non-repeating pitch drift
 
   parameters:
     - name: drift rate

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="keyed-dual-resonator-drum" description="Minimal example instance of the technique keyed-dual-resonator-drum from the SmolFM technique catalogue." techniques="keyed-dual-resonator-drum">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" />
+      <Node id="adsr0" attack="0.001" release="0.12" sustain="0.0" decay="0.35" />
+      <Node id="gain0" factor="1.2" />
+      <Node id="fscale0" factor="0.75" />
+      <Node id="fscale1" factor="0.75" />
+      <Node id="osc1" />
+      <Node id="adsr1" attack="0.001" release="0.2" sustain="0.0" decay="0.5" />
+      <Node id="gain1" factor="1.2" />
+      <Node id="osc2" waveform="noise" mode="static" />
+      <Node id="filter0" mode="bp" cutoff="220" resonance="0.4" />
+      <Node id="adsr2" attack="0.001" release="0.05" sustain="0.0" decay="0.2" />
+      <Node id="gain2" factor="0.8" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="note" fromPort="out" to="fscale1" toPort="freq_in" />
+      <Wire from="fscale1" fromPort="out" to="osc1" toPort="note_in" />
+      <Wire from="osc1" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="adsr1" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="osc2" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="adsr2" toPort="in" />
+      <Wire from="adsr2" fromPort="out" to="gain2" toPort="in" />
+      <Wire from="note" fromPort="vel" to="gain0" toPort="vel" />
+      <Wire from="note" fromPort="vel" to="gain1" toPort="vel" />
+      <Wire from="note" fromPort="vel" to="gain2" toPort="vel" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="gain1" fromPort="out" to="output" toPort="in2" />
+      <Wire from="gain2" fromPort="out" to="output" toPort="in3" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="320" />
+      <Box id="osc0" x="720" y="80" />
+      <Box id="adsr0" x="1050" y="80" />
+      <Box id="gain0" x="1380" y="80" />
+      <Box id="fscale0" x="390" y="80" />
+      <Box id="fscale1" x="390" y="320" />
+      <Box id="osc1" x="720" y="320" />
+      <Box id="adsr1" x="1050" y="320" />
+      <Box id="gain1" x="1380" y="320" />
+      <Box id="osc2" x="60" y="80" />
+      <Box id="filter0" x="390" y="560" />
+      <Box id="adsr2" x="720" y="560" />
+      <Box id="gain2" x="1050" y="560" />
+      <Box id="output" x="1710" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

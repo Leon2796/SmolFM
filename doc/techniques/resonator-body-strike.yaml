@@ -16,6 +16,33 @@ technique:
     recirculate circuit-style damping, as in the 808's multi-feedback
     Bridged-T bass-drum network.
 
+  tutorial: |
+    Körper-Anschlag-Resonator — die struck-body-Synthese der
+    Schlagwerk-Literatur, im 808-Erbe die Bridged-T-Bassdrum: ein kurzer,
+    harter Anregungsklick trifft den Resonator, dessen eigenes
+    Klangkörper-Polpaar mit einer ausklingenden Fast-Sinus-Antwort
+    singt. Wofür dient die Verdrahtung? Ein Noise- oder Square-Klick
+    (hinter seinem Strike-Gate mit 2-20 ms Decay) tippt Energie in den
+    Resonator; tune verfolgt die gespielte Taste, und die Klingenlänge
+    IST die Resonator-Decay (Pole-Radius — keine Amplituden-Hüllkurve
+    dahinter). Was ist das Ziel? Ganze Register aus einer Topologie:
+    gestimmte Körper singen auf jeder Taste natürlich exponentiell aus;
+    die Velocity wächst über das Spread die Klingellänge (die
+    Decay-über-Vin-Hälfte des 808-Accents), der Körper-Gain trägt die
+    Lautheitshälfte. Der Gang des Signals: (1) Die Note stimmt den
+    Körper über resonator.tune und speist beide Velocity-Eingänge.
+    (2) Der Klick schlägt an. (3) Der Polkörper antwortet mit seiner
+    eigenen, ausklingenden Tonhöhe — das Ende des Signals ist das Ende
+    des Ausklangs. (4) Optional wickelt ein begrenztes Feedback den
+    Körper (exciter → feedback → resonator, Rücklese des Vortick-Frames)
+    — schaltungsgerechte Dämpfung wie im 808-Bridged-T-Netz. Applied im
+    Katalog: tr-808 Bassdrum (Loop-Form), Toms und Congas (Direkt-
+    Form). Geschwister: sine-dive-kick nähert den Körper mit Pitch-
+    Tiefgang plus Amplituden-Hüllkurve; tuned-noise-percussion ringt
+    eine Bandpass-Schale; modal-hammer-ping treibt Resonanz-
+    Modulation mit einer Rampe — hier singt das eigene Polpaar mit
+    Decay als Zeitregler.
+
   involved_nodes:
     - type: note
       role: Keyboard send; pitches the body via resonator.tune, carries velocity.
@@ -82,6 +109,20 @@ technique:
       reads the body's previous tick.  resonator0.out -> gain0.in ->
       output.in1.  No envelope on the body path: the voice stays alive only
       as long as the tail rings (voice-lifetime tail estimate).
+
+  graph_ascii: |
+      (note) ──out──▶ (resonator.tune)         key-tracked body pitch
+      (osc · click exciter) ──out──▶ (adsr · strike gate) ──out──▶ (gain · beater) ──▶ resonator.in
+      (resonator · singing body) ──out──▶ (gain · accent VCA) ──▶ (output)
+      ┄ loop form: resonator.out ──▶ feedback.fb_in (recirculate, per-pass damping)
+      (note.vel) ──▶ resonator.vel (decay spread) + body gain.vel
+
+  used_by:                    # mirrored imports registry — checked both ways
+    - name: tuned-strike-excitation
+      detail: |
+        imports the struck-body topology (strike chain, key track, vel
+        spread) and swaps the broadband click for a note-coherent sine
+        impulse plus a noise-garnish blend.
 
   parameters:
     - name: strike gate

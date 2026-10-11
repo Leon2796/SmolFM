@@ -10,6 +10,26 @@ technique:
     summing bus.  The merged frame stays a single signal, so it can still
     be trimmed or filtered downstream as one wire.
 
+  tutorial: |
+    Doppelter Echo-Platz — das Dual-Delay der Studio-Literatur: beide
+    Kanäle tragen völlig unabhängige Echostreifen statt einer geteilten
+    Summe. Wofür dient die Verdrahtung? Der Splitter teilt die zentrierte
+    Stimme seitenrein; jede Seite läuft durch ihre eigene Delay-Linie mit
+    eigener Zeit, eigenem Feedback und eigenem Mix; der Merger packt beide
+    Linien in ein Stereobbild. Was ist das Ziel? Ein räumlich getrenntes
+    Echofeld: jedes Ohr hört seinen eigenen Echo-Rhythmus und Ausklang-
+    Zustand — das Stereobbild ist der Unterschied der beiden Echo-Muster,
+    nicht zwei Kopien desselben; weichen die Seitenzeiten ab, entstehen
+    Off-Beat-Texturen. Der Gang des Signals: (1) Die Note stimmt die
+    zentrierte Stimme. (2) Der Splitter trennt. (3) Jede Delay-Linie
+    wirft ihren Schweif — die Linien teilen keinen Zustand, tauschen nie
+    Inhalt. (4) Der Merger fasst beide Linien zusammen (die Zweige
+    treffen sich nur kanalübergreifend am Merger — kein Summierungskamm
+    je Kanal, auch wenn beide Zeiten übereinstimmen). (5) Der Ausgang
+    trägt das gefasste Feld — als einzelner Draht kann es weiterhin
+    gemeinsam getrimmt oder gefiltert werden; optional bleibt eine
+    trockene Kopie als Mittel-Anker.
+
   involved_nodes:
     - type: note
       role: Keyboard send driving the voice.
@@ -80,6 +100,12 @@ technique:
       keeps its own delay state and the lines never exchange content.  A
       dry copy of osc.out may fan out to a free output input as a centered
       anchor.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · voice) ──out──▶ (split.in)
+      (split.outL) ──▶ (delay L · own time/fb/mix) ──▶ merge.in1
+      (split.outR) ──▶ (delay R · independent) ──▶ (merge.in2)
+      (merge) ──out──▶ (output)        one echo rhythm per ear
 
   parameters:
     - name: left delay time

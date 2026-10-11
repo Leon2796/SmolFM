@@ -11,6 +11,28 @@ technique:
     the percussive instrument emerges from the delay geometry itself and
     the hard envelope only bounds the hit.
 
+  tutorial: |
+    Handklatsch-Mehrfachschlag — der Clap-Sound der Drum-Machine-Literatur,
+    gebaut aus gestaffelten Mikro-Echos: ein Rauschteppich wird in der
+    Klatsch-Richtung aufgestimmt und die kurzen Serien-Delays zittern
+    ihn mehrfach. Wofür dient die Verdrahtung? Rauschen läuft in einen
+    auf die Klatschzone gestimmten Bandpass; das gestimmte Anknallen
+    durchläuft zwei kurze serielle Delays (~20 ms und ~30 ms), alle
+    innerhalb einer kurzen Gesamthüllkurve. Was ist das Ziel? Der
+    mehrfach-artikulierte Stutter einer Menschenhand: der Knall bei 0 ms,
+    sein Echo bei ~20 ms, die erneute Artikulation bei ~30 ms und alle
+    Überläufer — die Tap-Muster IST das Instrument, nicht ein Echo um
+    eine gespielte Stimme. Der Gang des Signals: (1) Das statische
+    Rauschen liefert den atonalen Auslöser. (2) Der Bandpass zentriert
+    die Klatschzone — Cutoff die Zone, Resonanz der Zisch. (3) Die
+    Serien-Taps gliedern: jeder Tap verschiebt und wiederholt innerhalb
+    des Hüllkurven-Decays. (4) Die Hüllkurve begrenzt den ganzen Tap-
+    Cluster zu einem Schlag. (5) Der Ausgang erhält den gegateten Clap.
+    Geschwister: burst-delay-resonance kreist Wiederholungen um eine
+    gespielte Stimme (Raum), tuned-noise-percussion gatet eine einzige
+    Schale — hier gliedert die Tap-Geometrie den gestimmten Rausch in
+    einen Flam-Cluster.
+
   involved_nodes:
     - type: osc
       role: Noise source in static mode; the excitation of the clap.
@@ -66,6 +88,11 @@ technique:
       Both delays run free time (sync off) with times that keep every echo
       inside one envelope decay; the note events gate the envelope only,
       the oscillator and filter carry no note connection.
+
+  graph_ascii: |
+      (osc · static noise) ──out──▶ (filter · bp clap band) ──out──▶ (delay A · first tap)
+      (delay A) ──out──▶ (delay B · second tap) ──out──▶ (adsr · burst gate) ──out──▶ (output)
+      taps, not echoes · one decay bounds the whole cluster
 
   parameters:
     - name: band-pass cutoff and resonance

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="TR-909 Crash"
+         description="909-Crash als sehr helle noise-metal-wash: Oszillatorbank bis 1580 Hz, starker Drive-Akzent, Bandpass 10800 Hz und langem Wash-Decay um 3.4 s"
+         techniques="metal-hat-squares, noise-metal-wash, 808-accent-gain, 808-accent-drive-shaper">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" waveform="square" mode="static" staticfreq="263" />
+      <Node id="osc1" waveform="square" mode="static" staticfreq="400" />
+      <Node id="osc2" waveform="square" mode="static" staticfreq="620" />
+      <Node id="osc3" waveform="square" mode="static" staticfreq="455" />
+      <Node id="osc4" waveform="square" mode="static" staticfreq="720" />
+      <Node id="osc5" waveform="square" mode="static" staticfreq="900" />
+      <Node id="osc6" waveform="square" mode="static" staticfreq="1230" />
+      <Node id="osc7" waveform="square" mode="static" staticfreq="1580" />
+      <Node id="add0" />
+      <Node id="add1" />
+      <Node id="add2" />
+      <Node id="add3" />
+      <Node id="add4" />
+      <Node id="add5" />
+      <Node id="add6" />
+      <Node id="shape0" shape="soft" drive="0.5" />
+      <Node id="filter0" mode="bp" cutoff="10800" resonance="0.58" />
+      <Node id="adsr0" attack="0.001" decay="3.4" sustain="0" release="0.4" />
+      <Node id="gain0" factor="0.46" />
+      <Node id="osc8" waveform="noise" mode="static" staticfreq="9000" />
+      <Node id="adsr1" attack="0.001" decay="3.6" sustain="0" release="0.35" />
+      <Node id="filter1" mode="hp" cutoff="7200" resonance="0.25" />
+      <Node id="gain1" factor="0.36" />
+      <Node id="vsc0" curve="sqrt" scale="2.6" />
+      <Node id="output" level="0.75" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="add0" toPort="in1" />
+      <Wire from="osc1" fromPort="out" to="add0" toPort="in2" />
+      <Wire from="osc2" fromPort="out" to="add1" toPort="in1" />
+      <Wire from="osc3" fromPort="out" to="add1" toPort="in2" />
+      <Wire from="osc4" fromPort="out" to="add2" toPort="in1" />
+      <Wire from="osc5" fromPort="out" to="add2" toPort="in2" />
+      <Wire from="osc6" fromPort="out" to="add3" toPort="in1" />
+      <Wire from="osc7" fromPort="out" to="add3" toPort="in2" />
+      <Wire from="add0" fromPort="out" to="add4" toPort="in1" />
+      <Wire from="add1" fromPort="out" to="add4" toPort="in2" />
+      <Wire from="add2" fromPort="out" to="add5" toPort="in1" />
+      <Wire from="add3" fromPort="out" to="add5" toPort="in2" />
+      <Wire from="add4" fromPort="out" to="add6" toPort="in1" />
+      <Wire from="add5" fromPort="out" to="add6" toPort="in2" />
+      <Wire from="add6" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="osc8" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="adsr1" fromPort="out" to="filter1" toPort="in" />
+      <Wire from="filter1" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="gain1" fromPort="out" to="output" toPort="in2" />
+      <Wire from="note" fromPort="vel" to="vsc0" toPort="vel_in" />
+      <Wire from="vsc0" fromPort="out" to="gain0" toPort="vel" />
+      <Wire from="vsc0" fromPort="out" to="gain1" toPort="vel" />
+      <Wire from="vsc0" fromPort="out" to="shape0" toPort="vel" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="osc0" x="380" y="60" />
+      <Box id="osc1" x="380" y="200" />
+      <Box id="osc2" x="380" y="340" />
+      <Box id="osc3" x="380" y="480" />
+      <Box id="osc4" x="380" y="620" />
+      <Box id="osc5" x="380" y="760" />
+      <Box id="osc6" x="380" y="900" />
+      <Box id="osc7" x="380" y="1040" />
+      <Box id="add0" x="700" y="60" />
+      <Box id="add1" x="700" y="340" />
+      <Box id="add2" x="700" y="620" />
+      <Box id="add3" x="700" y="900" />
+      <Box id="add4" x="1020" y="200" />
+      <Box id="add5" x="1020" y="620" />
+      <Box id="add6" x="1340" y="340" />
+      <Box id="shape0" x="1660" y="340" />
+      <Box id="filter0" x="1980" y="340" />
+      <Box id="adsr0" x="2300" y="340" />
+      <Box id="gain0" x="2620" y="340" />
+      <Box id="osc8" x="380" y="1340" />
+      <Box id="adsr1" x="700" y="1340" />
+      <Box id="filter1" x="1020" y="1340" />
+      <Box id="gain1" x="1340" y="1340" />
+      <Box id="vsc0" x="60" y="1620" />
+      <Box id="output" x="2940" y="340" />
+    </Boxes>
+  </Layout>
+</SmolFM>

@@ -9,6 +9,25 @@ technique:
     fold react extremely to drive changes, the step lands as a textural
     stutter inside the note: distortion becomes a percussion instrument.
 
+  tutorial: |
+    Grit-Stepper — der rhythmische Verzerrungs-Schalter der Werk-Literatur:
+    ein Square-LFO springt den Wave-Shaper-Antrieb hart zwischen zwei
+    Zuständen. Wofür dient die Verdrahtung? Die Square-Spannung sitzt auf
+    drive_mod_in: jede LFO-Halbperiode knallt die Transferkurve zwischen
+    sauber/weich und voll angetrieben — abtastscharf, weil die
+    Antriebsmultiplikation sofort wirkt. Was ist das Ziel? Rhythmus-Korn
+    bei konstantem Pegel: die Verzerrung selbst wird zum Percussion-
+    Instrument — harte Distortion-Stutter per Note, zwei Klangfarben-
+    Zustände pro Periode (Basis-Drive und doppelter), deren Spektren
+    zwischen zwei Oberwellen-Familien wechseln. Der Gang des Signals:
+    (1) Die Note stimmt die Quellstimme. (2) Die Square-LFO schaltet:
+    Kante auf Kante wechselt der Drive — sample-scharf, kein Verlauf.
+    (3) Der Shaper formt mit dem gerade gültigen Antrieb — clean/grit
+    alternieren im Steptakt. (4) Der Ausgang trägt das gesteppte Signal.
+    Geschwister des Square-Anschlusses: gain-gate-chops steppert die
+    Lautheit (Volumenrhythmus), hier steppert die Verzerrung bei festem
+    Level; drive-envelope-growl ist die umhüllte Verwandtschaft.
+
   involved_nodes:
     - type: note
       role: Keyboard send; pitches the stepped voice.
@@ -42,6 +61,10 @@ technique:
       source-osc.out -> shape.in (signal).  shape.out -> output.in1
       (signal).  Each LFO half-period is one drive state; the transition
       is sample-sharp because the drive multiply is instantaneous.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · source) ──out──▶ (shape · waveshaper) ──out──▶ (output)
+      (osc · lfo square step) ──out──▶ (shape.drive_mod_in)    two drive states, sample-sharp
 
   parameters:
     - name: step rate

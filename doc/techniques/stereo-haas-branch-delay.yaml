@@ -10,6 +10,27 @@ technique:
     the delay time.  The whole stereo image then runs through the merger's
     single output, so it can still be trimmed or filtered as one frame.
 
+  tutorial: |
+    Haas-Verzweigung — der Haas-Effekt (Präzedenz-Effekt, Haas 1949) aus
+    der Hörsychologie-Literatur: ein paar Millisekunden Verzögerung auf
+    nur einer Seite lokalisiert die Schallquelle dort, wo zuerst Energie
+    ankommt. Wofür dient die Verdrahtung? Der Splitter teilt die Stimme
+    seitenrein; der linke Zweig läuft direkt in den Merger, der rechte
+    erst durch ein kurzes free-running Delay (sync aus). Was ist das
+    Ziel? Eine breite Phantomschallquelle aus einem einzigen mono
+    Draht: unter ungefähr 30 ms dominiert der zuerst ankommende Kanal
+    der Lokalisierung — die Delay-Zeit wird zum Positionsregler
+    (0 ms rezentriert, ~20 ms schiebt das Bild fest zur direkten,
+    linken Seite); verlässt das Offset das Präzedenzfenster, liest es
+    sich als diskreter Doppelschlag. Der Gang des Signals: (1) Die
+    Note stimmt die Stimme samt Obertönen. (2) Der Splitter trennt.
+    (3) Der linke Kanal bleibt abtastexakt, der rechte verweilt
+    kurz. (4) Der Merger baut das Stereobbild — die Zweige treffen
+    sich nur kanalübergreifend, kein Summierungskamm trübt eine Seite:
+    links der Trockenklang, rechts nur die verzögerte Kopie.
+    (5) Der Ausgang trägt das Bild; ein Delay je Seite erweitert das
+    Muster zu beidseitigen Haas-Paaren.
+
   involved_nodes:
     - type: note
       role: Keyboard send driving the voice.
@@ -70,6 +91,12 @@ technique:
       (signal).  delay.out -> merge.in2 (signal).  merge.out -> output
       (signal).  Only the right branch carries delay state; the left
       branch stays sample-exact.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · voice) ──out──▶ (split.in)
+      (split.outL) ──direct──▶ merge.in1
+      (split.outR) ──▶ (delay · 1-20 ms, fb 0) ──▶ (merge.in2)
+      (merge) ──out──▶ (output)        precedence widens the phantom source
 
   parameters:
     - name: delay time

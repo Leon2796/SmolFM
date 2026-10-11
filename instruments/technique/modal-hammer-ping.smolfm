@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="modal-hammer-ping" description="Minimal example instance of the technique modal-hammer-ping from the SmolFM technique catalogue." techniques="modal-hammer-ping">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" staticfreq="400" mode="static" />
+      <Node id="adsr0" attack="0.001" release="0.1" sustain="0.0" decay="0.25" />
+      <Node id="osc1" waveform="noise" />
+      <Node id="filter0" mode="bp" cutoff="900" resonance="0.75" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="filter0" toPort="cutoff_mod_in" />
+      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="filter0" toPort="resonance_mod_in" />
+      <Wire from="osc1" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="560" />
+      <Box id="osc0" x="60" y="80" />
+      <Box id="adsr0" x="390" y="80" />
+      <Box id="osc1" x="60" y="320" />
+      <Box id="filter0" x="720" y="80" />
+      <Box id="output" x="1050" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

@@ -9,6 +9,25 @@ technique:
     octave-detuned third voice it becomes an escalating riser stack.  The
     saw-to-gain socket is the loudest simple riser the graph offers.
 
+  tutorial: |
+    Ratchet-Riser — der endlose Aufbau-Riser der Dance-Literatur: als
+    Sägezahn auf dem Lautstärke-Anschluss; jeder Perioden-Zyklus klettert
+    der Pegel stufenlos von Stille (oder ruhigem Boden) auf Volllast und
+    schnappt zurück. Wofür dient die Verdrahtung? Die Saw-LFO sitzt auf
+    factor_mod_in des Gains; ihr Anstieg wird zur Pegelrampe, ihr Reset
+    zum Ein-Sample-Snap. Was ist das Ziel? Endlose Bar-Aufbauten ohne
+    jeden Sequenzer — eine Lautheits-Kurbel, die sich selbst dreht, je
+    nach Periodendauer; gestapelt mit Oktav-Zweigen wächst der Riser als
+    Stack. Der Gang des Signals: (1) Die Note stimmt die Riser-Stimme.
+    (2) Der Saw-Ramp multipliziert den Faktor mit (1 + m) abtastweise —
+    der Sweep läuft von Faktor bis zum Doppelten, der Reset fällt auf
+    den Boden. (3) Das Ohr liest die Intensitätstreppe genau auf der
+    LFO-Periode — der Ratchet-Pump. (4) Der Ausgang trägt die steigende
+    Ebene. Geschwister des Anschlusses: gain-gate-chops (binär),
+    gain-drift-swell (Perlin); fadsr-pitch-drop risert die Tonhöhe statt
+    des Levels; auto-sweep-resonance rampert dieselbe Sägezahn-Idee auf Q
+    — Level und Q zusammen ist ein natürliches Ensemble-Riser-Paar.
+
   involved_nodes:
     - type: note
       role: Keyboard send; pitches the riser voice.
@@ -44,6 +63,10 @@ technique:
       to its floor.  For a rising STACK, feed a third voice through
       fscale-detune-unison-style octave branches and mix all through this
       gain.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · pad voice) ──out──▶ (gain · VCA) ──out──▶ (output)
+      (osc · lfo saw climb) ──out──▶ (gain.factor_mod_in)        climb to crest · snap to floor
 
   parameters:
     - name: climb period

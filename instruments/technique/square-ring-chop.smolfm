@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="square-ring-chop" description="Minimal example instance of the technique square-ring-chop from the SmolFM technique catalogue." techniques="square-ring-chop">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" />
+      <Node id="osc1" waveform="square" mode="lfo" lforate="6.0" />
+      <Node id="ring0" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="ring0" toPort="in1" />
+      <Wire from="osc1" fromPort="out" to="ring0" toPort="in2" />
+      <Wire from="ring0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="320" />
+      <Box id="osc0" x="390" y="80" />
+      <Box id="osc1" x="60" y="80" />
+      <Box id="ring0" x="720" y="80" />
+      <Box id="output" x="1050" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

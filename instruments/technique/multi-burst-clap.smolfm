@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="multi-burst-clap" description="Minimal example instance of the technique multi-burst-clap from the SmolFM technique catalogue." techniques="multi-burst-clap">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" waveform="noise" mode="static" />
+      <Node id="filter0" mode="bp" cutoff="1100" resonance="0.8" />
+      <Node id="delay0" time="25" mix="0.5" feedback="0.4" />
+      <Node id="delay1" time="12" mix="1.0" feedback="0.0" />
+      <Node id="adsr0" attack="0.001" release="0.02" sustain="0.0" decay="0.12" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="delay0" toPort="in" />
+      <Wire from="delay0" fromPort="out" to="delay1" toPort="in" />
+      <Wire from="delay1" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="320" />
+      <Box id="osc0" x="60" y="80" />
+      <Box id="filter0" x="390" y="80" />
+      <Box id="delay0" x="720" y="80" />
+      <Box id="delay1" x="1050" y="80" />
+      <Box id="adsr0" x="1380" y="80" />
+      <Box id="output" x="1710" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

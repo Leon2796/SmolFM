@@ -7,6 +7,18 @@ technique:
     produces a slow amplitude beating between the partials, a modulation-free
     way to widen and warm a tone.
 
+  tutorial: |
+    Statische Verstimmung — die klassische zwei-Osc-Schwebung der
+    Orgelliteratur: zwei statisch verstimmte Oscillatoren, deren kleine
+    Hertz-Distanz langsam pocht. Wofür dient die Verdrahtung? Zwei
+    statische Oscs liegen wenige Hertz auseinander, treffen sich an
+    zwei Ausgangs-Eingängen. Was ist das Ziel? Wärme und Breitung ganz
+    ohne Modulator — die Rate ist die Differenz beider staticfreq; je
+    enger die Frequenzen, desto langsamer das Pochen. Der Gang: beide
+    mischen sich erst am Ausgang, dort pocht es — fette statische
+    Drones, die keiner Taste folgen; fscale-detune-unison verfolgt
+    dagegen die Taste.
+
   involved_nodes:
     - type: osc
       role: First static oscillator; anchors the base frequency.
@@ -28,6 +40,11 @@ technique:
       osc A -> output.in1 (signal).  osc B -> output.in2 (signal).  Both
       oscillators run in static mode, no note port and no modulation — the
       pair lives directly on the master output inputs.
+
+  graph_ascii: |
+      (osc A · static fA) ──out──▶ output.in1
+      (osc B · static fB = fA + Δ) ──out──▶ (output.in2)
+      beat rate = |fA − fB| · no note wire, no modulator
 
   parameters:
     - name: staticfreq a

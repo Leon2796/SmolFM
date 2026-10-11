@@ -51,6 +51,10 @@
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
+      <Node id="filter0" cutoff="1400" resonance="0.2" mode="lp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
       <Node id="adsr0" attack="0.003" decay="0.15" sustain="0.9" release="0.08">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
@@ -71,7 +75,8 @@
       <Wire from="add0" fromPort="out" to="add1" toPort="in1" />
       <Wire from="gain2" fromPort="out" to="add1" toPort="in2" />
       <Wire from="add1" fromPort="out" to="shape0" toPort="in" />
-      <Wire from="shape0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="adsr0" toPort="in" />
       <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
     </Connections>
   </Graph>
@@ -89,8 +94,9 @@
       <Box id="add0" x="1340" y="60" />
       <Box id="add1" x="1340" y="240" />
       <Box id="shape0" x="1340" y="380" />
-      <Box id="adsr0" x="1660" y="60" />
-      <Box id="output" x="1980" y="60" />
+      <Box id="filter0" x="1660" y="380" />
+      <Box id="adsr0" x="1980" y="60" />
+      <Box id="output" x="2300" y="60" />
     </Boxes>
   </Layout>
 </SmolFM>

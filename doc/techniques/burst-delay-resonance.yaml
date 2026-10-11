@@ -9,6 +9,24 @@ technique:
     window between the slapback doublers and the beat-locked tail delays
     turns the repeats into a rhythm of decaying bursts.
 
+  tutorial: |
+    Burst-Delay-Resonanz — das Dub-Echo der Studioszene, das sich eine
+    Anheb-Stufe hält, damit die Wiederholungen nicht verstreichen. Wofür
+    dient die Verdrahtung? Die Stimme speist ein Delay mit mittlerer
+    freier Zeit (150..450 ms) und starkem Feedback; die Echo-Strecke läuft
+    vor dem Ausgang durch ein Gain, das die ausklingende Energie wieder
+    anhebt. Was ist das Ziel? Ein repetierender Puls-Stream mit langem,
+    gedämpftem Schweif — Dub-Tunnel-Rhythmus aus einer einzigen Stimme.
+    Der Gang des Signals: (1) Die Stimme liefert Wellenform und
+    Transienten. (2) Das Delay wirft diskrete Echos im Burst-Fenster;
+    das Feedback zählt die Wiederholungen, der Mix lässt die trockene
+    Stimme Vortritt. (3) Die Gain-Stufe hebt die Echo-Strecke erneut an,
+    bevor sie unter dem Trockensignal versinkt — die Bursts bleiben
+    vorgedrückt. (4) Der Ausgang mischt den verstärkten Streifen. In der
+    Delay-Familie sitzt dieser Streifen zwischen den schnellen Kopisten
+    (slapback, 30-80 ms) und dem beatgebundenen Tempo-Tail — frei wählbar
+    und rhythmisch diskret hörbar.
+
   involved_nodes:
     - type: osc
       role: Voice oscillator in pitch mode; the burst source.
@@ -48,6 +66,9 @@ technique:
       delay.out -> gain.in (signal).  gain.out -> output (signal).  A
       single serial strand: the dry signal is folded into the delay mix,
       the bursts carry the voice character out.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · voice) ──out──▶ (delay · burst engine) ──out──▶ (gain · tail boost) ──out──▶ (output)
 
   parameters:
     - name: delay time

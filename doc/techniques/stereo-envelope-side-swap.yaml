@@ -10,6 +10,26 @@ technique:
     accordingly.  The merged frame stays a single signal, so the whole
     rotating image can still pass one further serial stage.
 
+  tutorial: |
+    Seitenwechsel per Hüllkurve — die Pan-Envelope-Rotation der
+    Mischtechnik-Literatur: zwei komplementäre ADSR lenken die Amplitude
+    der Seitenzweige, sodass die Lautheit über die Notendauer wandert.
+    Wofür dient die Verdrahtung? Der Splitter teilt die zentrierte Stimme
+    seitenrein; jede Seite läuft durch ihre eigene ADSR; der Merger fasst
+    beide in ein Stereobbild. Was ist das Ziel? Der Klang tritt von einer
+    Seite ein, wandert zur anderen und verlässt dort — Anschlags- und
+    Ausklang-Kontur zwischen den Kanälen: Ruf-und-Antwort-Konturen auf
+    wiederholten Noten, asymmetrische Decays, die Noten einseitig
+    zerrinnen lassen; die Pegel-Rotation folgt den Envelope-Kurven,
+    keiner Audiomodulation. Der Gang des Signals: (1) Die Note triggert
+    beide Hüllkurven zugleich. (2) Jede ADSR formt nur ihre reine Seite
+    — komplementär eingestellt, überwiegt bald links, bald rechts.
+    (3) Der Merger baut das wandernde Stereobbild. (4) Der Ausgang
+    trägt es — als ein Draht darf das rotierende Bild noch eine weitere
+    serielle Stufe durchlaufen. Velocity skaliert weiterhin die Gesamt-
+    lautheit; zwei ADSR und ein Splitter/Merger-Paar kosten nur ein
+    Instanz-Fenster.
+
   involved_nodes:
     - type: note
       role: Keyboard send driving the voice and triggering both envelopes.
@@ -77,6 +97,12 @@ technique:
       (signal).  adsr-left.out -> merge.in1, adsr-right.out -> merge.in2
       (signal).  merge.out -> output (signal).  Both envelopes are
       note-triggered and run side-specific attack/decay/sustain/release.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · voice) ──out──▶ (split.in)
+      (split.outL) ──▶ (adsr L · contour) ──▶ merge.in1
+      (split.outR) ──▶ (adsr R · mirrored contour) ──▶ (merge.in2)
+      (merge) ──out──▶ (output)        the image rotates with the note
 
   parameters:
     - name: left envelope

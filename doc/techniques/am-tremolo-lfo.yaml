@@ -7,6 +7,18 @@ technique:
     so the amount parameter sets the tremolo depth and the LFO rate sets the
     wobble speed.
 
+  tutorial: |
+    Tremolo — die periodische Amplitudenschwankung aus der Amp- und Orgel-
+    Literatur, auf dem Synthesizer als AM-Verdrahtung. Wofür dient die
+    Verdrahtung? Ein LFO-Oscillator sitzt auf dem Modulator-Eingang der
+    AM-Stufe und schaukelt die Amplitude des Trägers um das Trockenniveau.
+    Was ist das Ziel? Das Ohr liest ein pulsierendes Wechseln der Lautheit
+    — Tempo ist die LFO-Rate, Tiefe ist der Amount. Der Gang des Signals:
+    (1) Der Träger trägt die Wellenform samt Obertönen. (2) Die AM-Stufe
+    mischt die bipolare LFO-Spannung ins Gain: niedrige Rates atmen breit,
+    mittlere pulsieren klassisch, hohe flackern maschinengewehr-artig —
+    bei halber Tiefe bleibt die Stimme hörbar, bei voller taucht sie.
+
   involved_nodes:
     - type: osc
       role: Carrier in pitch or static mode; provides the signal to tremolo.
@@ -39,6 +51,11 @@ technique:
       carrier.out -> am.carrier_in (signal).  lfo.out -> am.modulator_in
       (signal).  am.out -> output (signal).  The AM stage is the only
       processor; its depth is the amount parameter.
+
+  graph_ascii: |
+      (osc · carrier) ──out──▶ (am.carrier_in)
+      (osc · LFO) ──out──▶ (am.modulator_in)
+      (am) ──out──▶ (output)              amount = depth · lfo rate = speed
 
   parameters:
     - name: am amount

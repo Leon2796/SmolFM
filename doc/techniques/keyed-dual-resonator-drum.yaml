@@ -13,6 +13,29 @@ technique:
     tom pairs, congas and clave-like shells become a playable, pitched
     instrument family instead of fixed one-shots.
 
+  tutorial: |
+    Tastengebundene Zweikörper-Trommel — die verallgemeinerte 808-Snare
+    (zwei Klangkörper 185/330 Hz neben dem aufgestimmten Rauschteppich),
+    hier auf jede Taste verfolgt. Wofür dient die Verdrahtung? Zwei Sinus-
+    Stimmen bilden die Trommelkörper, jede verfolgt die gespielte Taste
+    durch eigene Skalenstufen in leicht unharmatischem Verhältnis; eine
+    dritte statische Rauschschicht läuft durch einen resonanten Bandpass
+    als Teppich. Was ist das Ziel? Aus festen One-Shots wird eine
+    spielbare, gestimmte Instrumentenfamilie — Snare, Tom-Paare, Congas
+    und Clave-artige Schalen transponieren mit der Tastatur, während
+    ihre Körper-Intervallkonstante bleibt. Der Gang des Signals:
+    (1) Die Note speist beide Körperskalen; ihre Velos speisen jede
+    Layer-Trim-Stufe. (2) Die Körper-Oscs rendern die Körperwellen samt
+    Obertönen. (3) Jede Kurz-Decay-Hüllkurve gatet ihren Körper —
+    fast ohne Attack, Sustain 0, Längen unterschiedlich. (4) Der
+    Rauschteppich läuft (tuned-noise-percussion-Kette unverändert)
+    durch Bandpass, das knappe Gate und seinen Trim. (5) Der Ausgang
+    summiert die drei Schichten auf eigenen Eingängen. Verwandt:
+    sine-dive-kick lässt je Schlag einen Körper abtauchen — hier
+    bleiben die Körper gestimmt und statisch gepaart;
+    static-formant-pair filtert EIN Signal durch zwei Bänder — hier
+    rendert jedes Band eigenen Ursprung.
+
   involved_nodes:
     - type: note
       role: Keyboard send; body register for both tone layers and accent velocity.
@@ -95,6 +118,12 @@ technique:
       (signal).  The three layers stay parallel and meet only at the
       master output's summing point.
 
+  graph_ascii: |
+      (note) ──out──┬──▶ (fscale-a · ×1) ──▶ (osc · body A) ──▶ (adsr-a · gate) ──▶ (gain-a) ──▶ output.in1
+                    └──▶ (fscale-b · interval) ──▶ (osc · body B) ──▶ (adsr-b · gate) ──▶ (gain-b) ──▶ output.in2
+      (osc · static noise) ──▶ (filter · bp) ──▶ (adsr-c · gate) ──▶ (gain-c) ──▶ output.in3
+      (note) ──vel──▶ every gain.vel · carpet chain = tuned-noise-percussion unchanged
+
   parameters:
     - name: body ratio
       role: |
@@ -162,3 +191,13 @@ technique:
     - shell timbre stays fixed while the register moves everywhere
     - accent dynamics shared by bodies and carpet through the vel wires
     - inharmonic two-body colour, wooden or metallic by the ratio choice
+
+  imports:
+    - name: tuned-noise-percussion
+      reuses: |
+        The carpet chain unchanged: static noise osc -> bp filter (static
+        cutoff tuning) -> snappiest adsr gate -> trim gain -> output input.
+      delta: |
+        The added content: the two key-tracked gated tone bodies (fscale
+        factor pair around the played note) beside that carpet, and the
+        per-layer vel accent wires.

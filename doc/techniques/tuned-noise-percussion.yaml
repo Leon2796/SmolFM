@@ -9,6 +9,25 @@ technique:
     sounding body and the envelope only gates it - every keypress fires a
     synthetic membrane hit pitched by the static cutoff, not by the note.
 
+  tutorial: |
+    Aufgestimmtes Rausch-Percussion — die Felltrommel der Noise-Synthese:
+    ein Bandpass mit statischem Cutoff IST das Fell, die Hüllkurve nur
+    sein Gatter. Wofür dient die Verdrahtung? Ein Noise-Oscillator läuft
+    in den Bandpass, dessen statischer Cutoff die Trommel-Tonhöhe legt
+    (die Resonanz die Klarheit); der Filter sitzt VOR der Hüllkurve —
+    der Resonanzklang des Bandpasses ist der tönende Körper, die harte
+    ADSR (Attack nahe null, kurzes Decay, Sustain 0) gatet ihn nur.
+    Was ist das Ziel? Jeder Keypress feuert einen synthetischen
+    Membran-Hit, gestimmt von der statischen Cutoff, nicht von der
+    Note — die Drum bleibt pitch-fix im Kit. Der Gang des Signals:
+    (1) Das Rauschen liefert das breite, atonale Anregerspektrum,
+    (2) der Bandpass zentriert und singt, (3) die Percussion-Envelope
+    gatet mit schnellem Anschlag, (4) der Ausgang trägt den Hit.
+    Verwandt: die subtraktive Stimmenkette rendert erst (der Note
+    folgend) und filtert dann — hier kommt das Filter zuerst und der
+    Ton lebt im statischen Cutoff; keyed-dual-resonator-drum baut
+    darauf als Teppichschicht auf.
+
   involved_nodes:
     - type: osc
       role: Noise oscillator; the excitation source of the drum.
@@ -46,6 +65,16 @@ technique:
       adsr.out -> output (signal).  The note events drive the envelope
       internally; the oscillator carries no note connection, the drum
       pitch lives in the static filter cutoff.
+
+  graph_ascii: |
+      (osc · static noise) ──out──▶ (filter · bp, static cutoff = tone) ──out──▶ (adsr · hit gate) ──out──▶ (output)
+      filter before envelope · the band ring IS the body
+
+  used_by:                    # mirrored imports registry — checked both ways
+    - name: keyed-dual-resonator-drum
+      detail: |
+        partial import: the tuned carpet chain (noise -> bp -> adsr gate)
+        serves as the untracked resonance bed behind its two tone bodies.
 
   parameters:
     - name: filter mode and cutoff

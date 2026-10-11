@@ -9,6 +9,21 @@ technique:
     even multiples.  A high-pass filter removes the DC floor and leaves a
     clean, key-locked octave-up voice generated without any scale stage.
 
+  tutorial: |
+    Selbst-Ring-Oktave — die Frequenzverdopplung durch Quadrierung:
+    eine einzige Stimme speist beide Ring-Eingänge, das Produkt mit
+    sich selbst ist ihr Quadrat. Wofür dient die Verdrahtung? Der
+    Osc-Ausgang läuft auf ring.in1 UND ring.in2; das Quadrat eines
+    Sinus lautet (1 − cos(2ωt))/2 — DC-Boden plus exakt eine
+    Oktavoberwelle. Was ist das Ziel? Eine saubere, tonverankerte
+    Oktavoberstimme ganz ohne fscale-Stufe; reiche Wellenformen
+    schieben ihre Partikel auf die geraden Vielfachen (klarinettische
+    Betonung). Der Gang des Signals: (1) Die Note stimmt den Osc,
+    (2) beide Eingänge tragen denselben Draht, (3) der Hochpass
+    entfernt den DC-Boden, (4) der Ausgang übernimmt — osc-ring-mod-
+    cross bildet Paarungen zweier Oscs ab; Budget: ein Osc, ein Ring,
+    ein Filter.
+
   involved_nodes:
     - type: note
       role: Keyboard send; provides the voice pitch.
@@ -58,6 +73,11 @@ technique:
       and osc.out -> ring.in2 (signal); both ring inputs carry the same
       wire.  ring.out -> filter.in (signal), filter.out -> output
       (signal).  One source, one self-product stage, one DC-block stage.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · voice) ──out──┬─▶ ring.in1
+                                           └─▶ ring.in2        same wire on both inputs
+      (ring · squared waveform) ──out──▶ (filter · hp DC-block) ──▶ (output)
 
   parameters:
     - name: oscillator waveform

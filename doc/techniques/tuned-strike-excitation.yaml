@@ -19,6 +19,42 @@ technique:
     diode) that Voltage Drums solves closed-form per sample with the
     Wright-omega equation.
 
+  tutorial: |
+    Aufgestimmter Anreger — die Strike-Regie der Schlagwerk-Literatur
+    (Driftbox baut seine Tom- und Conga-Körper exakt so: Sinuskörper plus
+    Rauschkopf; der 808 hat keinen Zufalls-Anreger, sein Trigger läuft
+    durch ein deterministisches Pulsformer-Netz — Kondensator, zwei
+    Widerstände, Clamp-Diode). Wofür dient die Verdrahtung? Ein kurzer
+    Impuls aus dem Sinus-Oscillator — im pitch-Modus auf derselben Note,
+    die der tune-Anschluss verfolgt — trifft den Resonator: kohärent zur
+    Klangkörper-Resonanz, also mit bestimmter Klangenergie je Hit. Was
+    ist das Ziel? Treffsicherheit: nacktes Breitband-Rauschen durch ein
+    schmales Körperband samplet nur B·T ≪ 1 des Zufalls — die gefangene
+    Klangenergie wird je Schlag zur Zufallsgröße ("manchmal laut, manchmal
+    leise bei gleicher Velocity"); hier folgt die Klangenergie nur noch
+    den Velocity-Gesetzen. Raw-Noise darf als ruhige, hochpassgefilterte
+    Anschlags-Garnitur bleiben — Streuung lebt dann in der Farbe, nie im
+    Pegel (das Blend-Paar skaliert die Zufälligkeit, statt sie abzu-
+    schaffen; auf der Engine-Seite steckt der interne Body-Strike
+    (strikelevel/striketime, strike_vel) im Resonator-Knoten selbst, das
+    tr808-bass-drum-Verfahren nutzt ihn kalibriert). Der Gang des
+    Signals: (1) Die Note fächert in Anreger-Osc und Resonator-tune.
+    (2) Der kohärente Sinusstoß wird kurz gegatet und landet am Körpereingang.
+    (3) Der Körper singt mit seiner Ausklingcharakteristik; die Velocity
+    verteilt Klingenlänge und Lautheit wie in resonator-body-strike.
+    (4) Der Ausgang trägt den Hit. Verwandtschaft: dieses Werk importiert
+    die Körper-Topologie des resonator-body-strike und macht die
+    Anregerregel selbst zum Thema; tuned-noise-percussion ringt statt
+    dessen eine statische Bandpass-Schale — hier ist die Streuung
+    beherrscht statt gewürfelt.
+
+    Referenzrahmen: die Anregungsdauern der Literatur liegen im
+    Impulsbereich — Millisekunden-Gates und kalibrierte Strike-
+    Fenster; Voltage-80 rechnet das Pulsformer-Netz geschlossen
+    per Sample aus, 8W8s Bridged-T klingt rund 80 ms mit dem Loop
+    als Restträger. Das Blend-Paar bleibt patch-seitig verfügbar,
+    wo Rausch-Garnitur gewollt ist — Farbe, nie der Energiekanal;
+    die Klingenenergie folgt allein den Velocity-Gesetzen.
   involved_nodes:
     - type: note
       role: Keyboard source; fans out to BOTH the strike oscillator's pitch
@@ -32,7 +68,7 @@ technique:
         0.02-0.03 s); the same node style gates the optional noise garnish.
     - type: gain
       role: Strike level into the body entry; a parallel second gain scales
-        the noise garnish — the blend pair is the randomness knob: r = 0 full
+        the noise garnish — the blend pair is the randomness knob — r = 0 full
         coherence, r = 1 full noise, ring-level variance grows with r^2.
     - type: add
       role: Sums the coherent impulse and the noise garnish into the single
@@ -87,6 +123,12 @@ technique:
       body as in resonator-body-strike (feedback before the resonator, the
       return edge carries the one-sample delay).  Body out -> accent gain ->
       output.
+
+  graph_ascii: |
+      (note) ──out──┬─▶ (osc · sine strike tone) ──▶ (adsr · impulse gate) ──▶ (add.in1)
+                    ├─▶ (resonator.tune)
+                    └─┄ noise garnish: (filter bp · tracked cutoff) ──▶ (gain · r) ──▶ (add.in2)
+      (add · blend pair) ──out──▶ (resonator.in · struck body, key-tracked) ──▶ (output)
 
   parameters:
     - name: impulse gate
@@ -160,3 +202,14 @@ technique:
     - hit-level predictability: ring energy follows the velocity laws only
     - natural hand-spread available via the blend pair without losing control
     - strikes that ignite the body instead of gambling on a short noise window
+
+  imports:
+    - name: resonator-body-strike
+      reuses: |
+        The struck-body topology: key-tracked resonator.tune, velocity
+        decay spread via resonator.vel, body gain with vel, and the optional
+        bounded feedback loop around it.
+      delta: |
+        The strike side is the subject: a coherent sine impulse on the same
+        note, an impulse-length band from the references and the blend pair
+        that scales randomness instead of abolishing it.

@@ -11,6 +11,27 @@ technique:
     stays playable across the low keyboard instead of living at one static
     cutoff.
 
+  tutorial: |
+    Kick mit Pitch-Dive — der klassische Drum-Machine-Kick der
+    Drum-Computer-Literatur: die Tonhöhe stürzt vom Anschlags-Peak
+    aufs Körper-Register, und der Dive trägt Anschlagsklick und
+    fallenden Körper in einem. Wofür dient die Verdrahtung? Die Note
+    läuft durch den F-ADSR: der Attack-Peak pitcht (Up) ein bis zwei
+    Oktaven über das Körper-Register, das Decay taucht zurück auf die
+    unverschobene Basis (Down); dahinter schließt eine Amplituden-
+    Hüllkurve mit Sustain 0 den Hit. Was ist das Ziel? Ein spielbares
+    Drum-Fundament: das Körper-Register IST die gespielte Note — der
+    Kick transponiert über die tiefe Tastatur; der Beater-Klick
+    entsteht aus dem Peak, ganz ohne zweite Schicht. Der Gang des
+    Signals: (1) Die Note speist den Pitch-Envelope, (2) die tauchende
+    Frequenz stimmt den Sinuskörper — beide Hüllkurven feuern auf
+    jeden Keypress zusammen, (3) die Kick-ADSR formt die Länge
+    (Decay = Drum-Länge, Sustain 0), (4) der Ausgang erhält den
+    Kick. Importiert fadsr-pitch-drop (dasselbe Up/Down-Verständnis,
+    dort melodischer Gestus auf Dauerton-Stimmen);
+    tuned-noise-percussion baut Felltrommeln aus Rauschen — hier
+    entsteht der Körper aus der tauchenden Sinuswelle, ganz ohne Filter.
+
   involved_nodes:
     - type: note
       role: Keyboard send; provides the kick body register.
@@ -61,6 +82,10 @@ technique:
       down-factor base while the amplitude envelope closes, so attack and
       decay of both stages move together as one drum hit.
 
+  graph_ascii: |
+      (note) ──out──▶ (fadsr · dive env) ──out──▶ (osc · sine body.note_in) ──out──▶ (adsr · kick gate) ──out──▶ (output)
+      attack peak = beater click · decay dives back to the body register
+
   parameters:
     - name: attack peak factor
       role: |
@@ -105,3 +130,13 @@ technique:
     - drum-machine kick with a playable body register
     - beater click from the attack peak without a second layer
     - sub-dropping tails when the down factor dips below 1
+
+  imports:
+    - name: fadsr-pitch-drop
+      reuses: |
+        The note -> fadsr -> osc pitch path with its up/down factor
+        semantics (attack peak above, tail at or below the base).
+      delta: |
+        One-shot drum semantics instead of a gesture on sustained voices:
+        sustain 0 on both envelopes, decay equals the drum length, the base
+        register is the played note.

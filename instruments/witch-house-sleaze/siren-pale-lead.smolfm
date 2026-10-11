@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3" name="Siren Pale Lead" description="Pale siren sine lead: a 0.22 Hz perlin drift breathes the pitch through a proportional FM stage, the voice releasing long and splitting into a 285 ms delayed right branch for width." techniques="perlin-drift-modulation,stereo-haas-branch-delay">
+<SmolFM version="3" name="Siren Pale Lead" description="Pale siren sine lead: a 0.22 Hz perlin drift breathes the pitch through a proportional FM stage, the voice releasing long and splitting with a 15 ms pure right-branch shift for width." techniques="perlin-drift-modulation,stereo-haas-branch-delay">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -30,7 +30,7 @@
         <Pin id="outL" direction="out" type="signal" />
         <Pin id="outR" direction="out" type="signal" />
       </Node>
-      <Node id="delay0" time="285" feedback="0.4" mix="0.3" sync="off">
+      <Node id="delay0" time="15" feedback="0.0" mix="1.0" sync="off">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>

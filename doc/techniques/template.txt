@@ -7,6 +7,22 @@ technique:
     and how it generally affects the resulting sound. 
 	Keep the idea conformative with the possibilies given the .xsd format file.>
 
+  tutorial: |               # MANDATORY — German on-ramp for DSP beginners,
+                            # sits directly after the idea block (never at
+                            # the file end): the sound-design instructor
+                            # speaking to the apprentice
+    <German tutorial for THIS technique, ≈ twice the `idea` block.  It
+    must open by naming the technique in its real-world terms (the
+    technique exists in the literature — never file-meta), then always
+    answer the two questions: what is this wiring normally used for
+    on a synthesizer, and what is the goal of using it.  Then
+    introduce the key terms and ideas in plain psychoacoustic wording
+    (Schwebungen, Maskierung, Rauheit, Obertöne, Transienten — not synth
+    slang), walk the signal in graph order (source → stages → ear) and
+    name each stage's audible effect, and tie the reuse relations in
+    plain words — what `imports`/`used_by` share, which `instances` play
+    this pattern and how.>
+
   involved_nodes:
     - type: <NodeType>
       role: <role of this node within the technique>
@@ -22,6 +38,13 @@ technique:
 	  E.g. can be a certain send or input patterns, but also a full subgraph(s). Just describe 
 	  the implied topology.>
 
+  graph_ascii: |            # MANDATORY in every technique
+    <ASCII drawing of the real sub-graph, 1:1 derivable from
+    involved_nodes/involved_ports/topology.  Boxes as (type · role),
+    one line per wire with its port id; ┄ = optional/mentioned-only,
+    ╳ = unwired node; an importer draws [ import: <name> ] as
+    one collapsed box plus its own external wiring points.>
+
   parameters:
     - name: <parameter>
       role: |
@@ -35,6 +58,34 @@ technique:
 
   perceptual_effects:
     - <effect>
+
+  imports:                  # optional — parts reused from another technique
+    - name: <technique name>
+      reuses: |
+        <Which part of the imported technique's graph/parameters is reused>
+      delta: |
+        <What this technique adds or changes beyond the reuse>
+                            # full duplicate: omit involved_nodes/involved_ports/
+                            # topology/parameters — the import replaces them
+
+  used_by:                  # mandatory whenever another file lists you in its imports
+    - name: <importing technique>
+      detail: |
+        <What that technique takes from this graph — the mirror of its
+        import entry, kept in sync both ways (checked by check-catalog.ps1)>
+
+  instances:                # summarizing/pattern techniques only
+    - name: <technique name>
+      pattern: <which driver pattern>
+      graph_ascii: |
+        <Concrete ASCII of THIS instance's course — driver, target socket,
+        render path (same notation as the top-level graph_ascii)>
+      verlauf: |
+        <The more specific course of the abstract pattern in this graph>
+      tonal: |
+        <The instance's tonal footprint: timbre, movement, how it reads>
+
+
 	
 	
 -------------------------------------------------------------

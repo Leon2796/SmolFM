@@ -10,6 +10,22 @@ technique:
     this is the loudness half of the 808 accent (the old central voice
     velocity scaling is gone).
 
+  tutorial: |
+    Der 808-Accent als echte Verdrahtung — im Studio unter velocity-controlled
+    gain bekannt, ein VCA, der der Anschlagstärke folgt. Wofür dient die
+    Verdrahtung? Die Noten-Quelle gibt die gespielte Velocity (0-1) als
+    eigenen Bereich aus, und jede Gain-Stufe multipliziert ihre Ebene damit.
+    Was ist das Ziel? Harte Schläge öffnen die Ebene, weiche drücken sie
+    hinunter — Lautheitsdynamik pro Note. Die Verdrahtung entscheidet,
+    WELCHE Ebene auf den Akzent antwortet: nicht verbundene Velocity-
+    Eingänge lesen 1.0 und klingen unverändert — Ebenen optieren einzeln.
+    Der Gang des Signals: (1) Die Note liefert Tonhöhe und Anschlagstärke.
+    (2) Die Gain-Stufe skaliert ihr Level mit der Velocity — jeder Keystroke
+    ein eigenes Level, Ghost Notes ducken sich. (3) Der Ausgang übernimmt;
+    Das ist die Lautheitshalbseite des 808-Accents; die
+    Timbrehälfte (Analog-Overdrive bei harten Hits) steckt in
+    808-accent-drive-shaper und 808-accent-fm-brightness.
+
   involved_nodes:
     - type: note
       role: MIDI source; emits pitch (out) and velocity (vel).
@@ -40,6 +56,10 @@ technique:
       gain.out -> output.in1 (signal).  note.vel -> gain.vel (velocity).
       The vel wire is a per-layer choice: several gains may share one note
       node, each gain answering the accent only when wired.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · layer source) ──out──▶ (gain · accent VCA) ──out──▶ (output)
+        └──vel──▶ (gain.vel)          the vel wire is a per-layer opt-in
 
   parameters:
     - name: base factor

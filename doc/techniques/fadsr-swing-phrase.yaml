@@ -8,6 +8,22 @@ technique:
     decay stamps a bluesy pitch lean onto every keypress, and the release
     time draws the tail back down to the lower edge of the band.
 
+  tutorial: |
+    Pitch-Lean-Phrase — der zweiseitige Pitch-Bend aus der Blues- und Jazz-
+    Literatur: die Tonhöhe lehnt sich über die Taste und setzt sich unter
+    ihr ab. Wofür dient die Verdrahtung? Der F-ADSR hält eine zweiseitige
+    Faktorband: Up sitzt über 1, Down unter 1; die Stimme folgt der
+    Hüllkurve, nicht einer Uhr. Was ist das Ziel? Ein bluestoniger Lean
+    auf jeden Tastendruck — schneller, kurzer Angriff stemmt die Spitze,
+    das kurz danach liegende Decay senkt flach unter die Note, und das
+    Release zieht den Schweif zur unteren Bandkante. Der Gang des Signals:
+    (1) Die Note speist den Pitch-Envelope. (2) Dessen geschwungene
+    Frequenz stimmt die Stimme — auf, über, ab. (3) Der Osc rendert die
+    wandernde Wellenform samt Obertönen. (4) Der Ausgang erhält die
+    lehnende Phrase. Im Vergleich: lfo-vibrato-fm pendelt periodisch auf
+    die Uhr; fadsr-pitch-drop fällt nur einseitig — hier umrahmt das Band
+    die gespielte Tonhöhe von beiden Seiten, die Phrase folgt dem Ausdruck.
+
   involved_nodes:
     - type: note
       role: MIDI note source; base frequency of the phrase.
@@ -43,6 +59,10 @@ technique:
       note -> fadsr.freq_in (frequency).  fadsr.out -> osc.note_in
       (frequency).  osc.out -> output (signal).  The envelope lives alone
       in the frequency path; its factor band defines the swing.
+
+  graph_ascii: |
+      (note) ──out──▶ (fadsr · pitch env) ──out──▶ (osc · voice.note_in) ──out──▶ (output)
+      up > 1 leans sharp · down < 1 settles flat-below
 
   parameters:
     - name: fadsr up

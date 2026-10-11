@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="TR-909 Mid Tom"
+         description="909-Mid-Tom aus resonator-body-strike: Doppel-Resonanz (150 Hz + 225 Hz) mit mittlerem Decay, leichtem Drive und Velocity-Accent auf Strike und Gain"
+         techniques="resonator-body-strike, tuned-strike-excitation, 808-accent-gain, 808-accent-drive-shaper">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="resonator0" tune="150" q="0.5" decay="0.8" spread="1.25" strikelevel="1.25" striketime="0.009" />
+      <Node id="resonator1" tune="225" q="0.55" decay="0.55" spread="0.9" strikelevel="0.9" striketime="0.007" />
+      <Node id="shape0" shape="soft" drive="0.28" />
+      <Node id="gain0" factor="0.46" />
+      <Node id="gain1" factor="0.32" />
+      <Node id="vsc0" curve="sqrt" scale="2.2" />
+      <Node id="output" level="0.75" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="resonator0" toPort="tune" />
+      <Wire from="resonator0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="resonator1" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="gain1" fromPort="out" to="output" toPort="in2" />
+      <Wire from="note" fromPort="vel" to="vsc0" toPort="vel_in" />
+      <Wire from="vsc0" fromPort="out" to="resonator0" toPort="strike_vel" />
+      <Wire from="vsc0" fromPort="out" to="resonator1" toPort="strike_vel" />
+      <Wire from="vsc0" fromPort="out" to="gain0" toPort="vel" />
+      <Wire from="vsc0" fromPort="out" to="gain1" toPort="vel" />
+      <Wire from="vsc0" fromPort="out" to="shape0" toPort="vel" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="resonator0" x="380" y="60" />
+      <Box id="resonator1" x="380" y="380" />
+      <Box id="shape0" x="700" y="60" />
+      <Box id="gain0" x="1020" y="60" />
+      <Box id="gain1" x="700" y="380" />
+      <Box id="vsc0" x="60" y="700" />
+      <Box id="output" x="1340" y="220" />
+    </Boxes>
+  </Layout>
+</SmolFM>

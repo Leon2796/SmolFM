@@ -7,6 +7,20 @@ technique:
     frequencies) and no carrier, so the character is defined entirely by the
     two oscillator frequencies and waveforms.
 
+  tutorial: |
+    Ringmodulation — der robotische Glockenklang der Werk- und Studio-
+    Literatur: zwei Oszillatoren werden abtastweise multipliziert, übrig
+    bleiben nur die Seitenbänder. Wofür dient die Verdrahtung? Eingang A
+    (meist statisch) und Eingang B (statisch oder LFO) treffen sich im
+    Ringmultiplikator, dessen Produkt zum Ausgang geht. Was ist das
+    Ziel? Metallische, inharmonische Klänge ohne Träger — nur Summe und
+    Differenz überleben, bei gleichen Frequenzen verschwindet alles.
+    Der Gang des Signals: (1)-(2) beide Oscs liefern Wellenformen samt
+    Obertönen, (3) der Ring multipliziert — kein Carrier-Teil bleibt.
+    Verwandt: am-sideband-pairing spannt bipolar vor (Träger hörbar),
+    difference-tone-bass erzeugt den Differenzgrundton — hier driftet
+    der Ring frei zwischen den Tasten.
+
   involved_nodes:
     - type: osc
       role: First ring input; usually static mode to fix its frequency.
@@ -39,6 +53,11 @@ technique:
       osc A -> ring.in1 (signal).  osc B -> ring.in2 (signal).
       ring.out -> output (signal).  No other modulation path; the technique
       is a pure two-input multiplication.
+
+  graph_ascii: |
+      (osc A · usually static) ──out──▶ (ring.in1)
+      (osc B · static or LFO) ──out──▶ (ring.in2)
+      (ring · product) ──out──▶ (output)        only sidebands survive (fA ± fB)
 
   parameters:
     - name: oscillator a staticfreq

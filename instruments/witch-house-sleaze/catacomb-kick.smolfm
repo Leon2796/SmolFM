@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3" name="Catacomb Kick" description="Deeper catacomb kick: a harder-clipped long-dive sine body answered by an octave-below thud doubled through a short resonant delay." techniques="sine-dive-kick,burst-delay-resonance,sub-instrument-layering">
+<SmolFM version="3" name="Catacomb Kick" description="Deeper catacomb kick: a harder-clipped long-dive sine body answered by an octave-below thud doubled through a short slapback delay." techniques="sine-dive-kick,delay-slapback-doubler,sub-instrument-layering">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -39,7 +39,7 @@
         <Pin id="vel" direction="in" type="velocity" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="delay0" time="34" feedback="0.25" mix="0.3">
+      <Node id="delay0" time="34" feedback="0.25" mix="0.3" sync="off">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>

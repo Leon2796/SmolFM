@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="band-envelope-choreography" description="Minimal example instance of the technique band-envelope-choreography from the SmolFM technique catalogue." techniques="band-envelope-choreography">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" waveform="noise" mode="static" />
+      <Node id="filter0" mode="lp" cutoff="300" resonance="0.4" />
+      <Node id="adsr0" attack="0.002" release="0.3" sustain="0.0" decay="0.7" />
+      <Node id="filter1" mode="bp" cutoff="900" resonance="0.4" />
+      <Node id="adsr1" attack="0.001" release="0.12" sustain="0.0" decay="0.25" />
+      <Node id="filter2" mode="hp" cutoff="3500" resonance="0.3" />
+      <Node id="adsr2" attack="0.001" release="0.05" sustain="0.0" decay="0.09" />
+      <Node id="filter3" mode="hp" cutoff="8000" resonance="0.3" />
+      <Node id="adsr3" attack="0.001" release="0.2" sustain="0.0" decay="0.15" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="osc0" fromPort="out" to="filter1" toPort="in" />
+      <Wire from="osc0" fromPort="out" to="filter2" toPort="in" />
+      <Wire from="osc0" fromPort="out" to="filter3" toPort="in" />
+      <Wire from="note" fromPort="vel" to="filter0" toPort="vel" />
+      <Wire from="note" fromPort="vel" to="filter1" toPort="vel" />
+      <Wire from="note" fromPort="vel" to="filter2" toPort="vel" />
+      <Wire from="note" fromPort="vel" to="filter3" toPort="vel" />
+      <Wire from="filter0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="filter1" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="filter2" fromPort="out" to="adsr2" toPort="in" />
+      <Wire from="filter3" fromPort="out" to="adsr3" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="adsr1" fromPort="out" to="output" toPort="in2" />
+      <Wire from="adsr2" fromPort="out" to="output" toPort="in3" />
+      <Wire from="adsr3" fromPort="out" to="output" toPort="in4" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="320" />
+      <Box id="osc0" x="60" y="80" />
+      <Box id="filter0" x="390" y="80" />
+      <Box id="adsr0" x="720" y="80" />
+      <Box id="filter1" x="390" y="320" />
+      <Box id="adsr1" x="720" y="320" />
+      <Box id="filter2" x="390" y="560" />
+      <Box id="adsr2" x="720" y="560" />
+      <Box id="filter3" x="390" y="800" />
+      <Box id="adsr3" x="720" y="800" />
+      <Box id="output" x="1050" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

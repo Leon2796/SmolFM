@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="serial-drive-filter-sculpt" description="Minimal example instance of the technique serial-drive-filter-sculpt from the SmolFM technique catalogue." techniques="serial-drive-filter-sculpt">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" waveform="saw" />
+      <Node id="shape0" shape="hard" drive="0.6" />
+      <Node id="filter0" mode="lp" cutoff="2200" resonance="0.3" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="80" />
+      <Box id="osc0" x="390" y="80" />
+      <Box id="shape0" x="720" y="80" />
+      <Box id="filter0" x="1050" y="80" />
+      <Box id="output" x="1380" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="tuned-strike-excitation" description="Minimal example instance of the technique tuned-strike-excitation from the SmolFM technique catalogue." techniques="tuned-strike-excitation">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" waveform="sine" />
+      <Node id="adsr0" attack="0.001" release="0.01" sustain="0.0" decay="0.025" />
+      <Node id="gain0" factor="2.4" />
+      <Node id="resonator0" q="0.6" decay="1.2" tune="220" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="resonator0" toPort="tune" />
+      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="resonator0" toPort="in" />
+      <Wire from="note" fromPort="vel" to="resonator0" toPort="vel" />
+      <Wire from="resonator0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="80" />
+      <Box id="osc0" x="390" y="80" />
+      <Box id="adsr0" x="720" y="80" />
+      <Box id="gain0" x="1050" y="80" />
+      <Box id="resonator0" x="1380" y="80" />
+      <Box id="output" x="1710" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

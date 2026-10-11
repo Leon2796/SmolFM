@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="TR-909 Snare Drum"
+         description="909-Snare aus keyed-dual-resonator-drum: zwei gestimmte Resonanz-Töne (170 Hz + 330 Hz) plus gefilterte Noise-Snare-Bürste, alles mit Velocity-Accent"
+         techniques="keyed-dual-resonator-drum, tuned-noise-percussion, 808-accent-gain">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="resonator0" tune="170" q="0.62" decay="0.24" spread="1.1" strikelevel="1.1" striketime="0.003" />
+      <Node id="resonator1" tune="330" q="0.68" decay="0.16" spread="0.85" strikelevel="0.85" striketime="0.002" />
+      <Node id="shape0" shape="soft" drive="0.45" />
+      <Node id="gain0" factor="0.46" />
+      <Node id="gain1" factor="0.3" />
+      <Node id="osc0" waveform="noise" mode="static" staticfreq="4800" />
+      <Node id="adsr0" attack="0.001" decay="0.42" sustain="0" release="0.06" />
+      <Node id="filter0" mode="bp" cutoff="2400" resonance="0.35" />
+      <Node id="gain2" factor="0.42" />
+      <Node id="vsc0" curve="sqrt" scale="2.3" />
+      <Node id="output" level="0.78" />
+    </Nodes>
+    <Connections>
+      <Wire from="resonator0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="resonator1" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="gain1" fromPort="out" to="output" toPort="in2" />
+      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="gain2" toPort="in" />
+      <Wire from="gain2" fromPort="out" to="output" toPort="in3" />
+      <Wire from="note" fromPort="vel" to="vsc0" toPort="vel_in" />
+      <Wire from="vsc0" fromPort="out" to="resonator0" toPort="strike_vel" />
+      <Wire from="vsc0" fromPort="out" to="resonator1" toPort="strike_vel" />
+      <Wire from="vsc0" fromPort="out" to="gain0" toPort="vel" />
+      <Wire from="vsc0" fromPort="out" to="gain1" toPort="vel" />
+      <Wire from="vsc0" fromPort="out" to="gain2" toPort="vel" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="resonator0" x="380" y="60" />
+      <Box id="resonator1" x="380" y="380" />
+      <Box id="shape0" x="700" y="60" />
+      <Box id="gain0" x="1020" y="60" />
+      <Box id="gain1" x="700" y="380" />
+      <Box id="osc0" x="380" y="700" />
+      <Box id="adsr0" x="700" y="700" />
+      <Box id="filter0" x="1020" y="700" />
+      <Box id="gain2" x="1340" y="700" />
+      <Box id="vsc0" x="60" y="1020" />
+      <Box id="output" x="1340" y="220" />
+    </Boxes>
+  </Layout>
+</SmolFM>

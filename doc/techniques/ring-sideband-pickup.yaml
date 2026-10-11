@@ -9,6 +9,26 @@ technique:
     clangorous ring product collapses into one clean, melodic, inharmonic
     tone that stays locked to the key.
 
+  tutorial: |
+    Seitenband-Auswahl — aus dem Ringprodukt des clangorösen Paars
+    wird eine einzige, saubere melodische Teiltönung gepickt (im
+    Studio unter sideband filtering bekannt). Wofür dient die
+    Verdrahtung? Zwei tonverankerte Stimmen — die rohe Note und eine
+    über fscale um Faktor r verankerte Intervallkopie — speisen den
+    Ringmodulator; nur Summe (f·(1+r)) und Differenz (f·(1−r)) bleiben,
+    und ein Bandpass pickt per tastenverfolgtem Cutoff (Zweite Skalen-
+    stufe mit Faktor 1 + r) genau das Summenband. Was ist das Ziel?
+    Aus dem klangrohen Ringpaar kollabiert eine einzelne, melodische,
+    inharmonische Tonhöhe — ein abstimmbares Glocken-Partial, das mit
+    der Taste bleibt. Der Gang des Signals: (1) Die Note speist Grund-
+    ton, Intervall- und Pickup-Skalen, (2) die beiden Oscs rendern
+    ihre Stimmen und der Ring multipliziert abtastweise (kein Carrier
+    überlebt), (3) der Bandpass wählt mit verfolgtem Cutoff das
+    Summenband, (4) der Ausgang trägt die gepickte Tonhöhe. Verwandt:
+    osc-ring-mod-cross behält die ganze clangoröse Paarung,
+    difference-tone-bass landet auf der Differenzseite als Bass —
+    hier arbeitet die Summenband-Auswahl über beliebige Intervalle.
+
   involved_nodes:
     - type: note
       role: Keyboard send; the pitch reference for both ring inputs and the
@@ -92,6 +112,13 @@ technique:
       fscale2.out -> filter.cutoff_mod_in (frequency).  filter.out ->
       output (signal).  The filter runs in bp mode; resonance sharpens
       the pick.
+
+  graph_ascii: |
+      (note) ──out──┬──▶ (osc · fundamental) ──out──▶ ring.in1
+                    ├──▶ (fscale · interval r) ──▶ (osc · interval voice) ──out──▶ ring.in2
+                    └──▶ (fscale · 1 + r) ──out──▶ (filter.cutoff_mod_in · bp pickup)
+      (ring · sideband pair) ──out──▶ (filter.in) → (filter.out) ──▶ (output)
+      exact pick of the sum sideband across every key
 
   parameters:
     - name: interval factor

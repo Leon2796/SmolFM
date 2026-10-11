@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="flanger-delay-line" description="Minimal example instance of the technique flanger-delay-line from the SmolFM technique catalogue." techniques="flanger-delay-line">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" waveform="saw" />
+      <Node id="adsr0" attack="0.002" release="0.2" sustain="0.6" decay="0.4" />
+      <Node id="delay0" time="6" mix="0.5" feedback="0.0" />
+      <Node id="osc1" waveform="sine" mode="lfo" lforate="0.3" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="delay0" toPort="in" />
+      <Wire from="osc1" fromPort="out" to="delay0" toPort="time_mod_in" />
+      <Wire from="delay0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="320" />
+      <Box id="osc0" x="390" y="80" />
+      <Box id="adsr0" x="720" y="80" />
+      <Box id="delay0" x="1050" y="80" />
+      <Box id="osc1" x="60" y="80" />
+      <Box id="output" x="1380" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

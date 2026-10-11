@@ -9,6 +9,24 @@ technique:
     drifting out of phase (fscale-detune-unison wired INTO this socket) the
     breathing becomes spatial without stereo width.
 
+  tutorial: |
+    Organische Pegel-Gezeiten — der Zufallsdrift (Perlin) auf dem Lautstärke-
+    Antrieb, wie die Random-Modulationsliteratur atmende Fließpegel
+    beschreibt. Wofür dient die Verdrahtung? Eine langsame Perlin-LFO
+    (0.05..0.3 Hz) sitzt auf factor_mod_in des Gain-Knotens und wandert
+    den Pegel einer gehaltenen Stimme organisch auf und ab. Was ist das
+    Ziel? Keine ADSR-Nachstimmung, kein Tremolo-Muster: das Level bewegt
+    sich wie eine Tide — mal lauter, mal scheu — ohne sich je zu
+    wiederholen. Der Gang des Signals: (1) Die Note stimmt die
+    Dauerstimme samt Obertönen. (2) Der Perlin-Drift multipliziert den
+    statischen Faktor mit (1 + m) abtastweise; er verweilt meist in der
+    Fenstermitte, das Niveau pendelt stetig. (3) Der Ausgang erhält die
+    atmende Ebene. Geschwister am selben Anschluss: am-tremolo-lfo
+    wobbelt periodisch mit AM-Abdrift, gain-gate-chops hackt binär mit
+    der Square, gain-ratchet-riser rampert — hier atmet Perlin. Ein Klang:
+    zwei verstimmte Stimmen mit eigenen Perlin-Zweigen in zwei Gains
+    geben der Atmung räumliches Leben ohne Stereobreite.
+
   involved_nodes:
     - type: note
       role: Keyboard send; pitches the drifting voice.
@@ -42,6 +60,10 @@ technique:
       -> gain.in (signal).  gain.out -> output.in1 (signal).  The gain is
       the only moving node; everything else is a steady sustained voice.
 
+  graph_ascii: |
+      (note) ──out──▶ (osc · sustained voice) ──out──▶ (gain · VCA) ──out──▶ (output)
+      (osc · lfo perlin drift) ──out──▶ (gain.factor_mod_in)        level wanders like a tide
+
   parameters:
     - name: drift rate
       role: |
@@ -66,7 +88,7 @@ technique:
         factor over long stretches.
     - name: socket-siblings
       description: |
-        am-tremolo (AM socket) tremolos with a repeating LFO depth and
+        am-tremolo-lfo (AM socket) tremolos with a repeating LFO depth and
         carrier offset semantics; here perlin moves a clean multiplicative
         VCA with no carrier residue.  gain-gate-chops hard-clips with a
         square; gain-ratchet-riser ramps.  Same factor_mod_in socket,

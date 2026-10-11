@@ -9,6 +9,24 @@ technique:
     fundamental at all — the missing fundamental made literal, and it stays
     locked to the key.
 
+  tutorial: |
+    Differenzton-Bass — die Spektralversion des psychologischen
+    Missing-Fundamental-Effekts: zwei hohe Stimmen erzeugen im
+    Ringmodulator den fehlenden Grundton als Differenzseite. Wofür dient
+    die Verdrahtung? Eine Noten-Quelle speist über Ratio-Teiler zwei
+    hohe, ton-gebundene Stimmen (4x und 5x der Note), deren Produkt nur
+    die Seitenbänder 9x und 1x behält. Was ist das Ziel? Tiefer Bass,
+    der aus lauter hohen Partikeln entsteht — die Differenzseite 1x ist
+    exakt die gespielte Note und bleibt auf jeder Taste verankert. Der
+    Gang des Signals: (1) Die Note fächert in die 4x- und 5x-Skalen.
+    (2) Beide Oscs spielen ihre hohen Teilwellen samt Obertönen. (3) Der Ringmultiplikator unterdrückt
+    Teilwellen samt Obertönen. (3) Der Ringmultiplikator unterdrückt
+    beide Träger vollständig — übrig bleiben Summe 9x und Differenz 1x.
+    (4) Der Ausgang mischt das Produkt, optional mit ruhigem Trocken-
+    Ton als Hör-Referenz. Anders als das vorgespannte Seitenband-Pärchen
+    am-sideband-pairing bleibt hier kein Carrier übrig — anders als das
+    statische osc-ring-mod-cross wandert der Differenzton mit der Taste.
+
   involved_nodes:
     - type: note
       role: Keyboard send; both ring inputs and the perceived fundamental
@@ -78,6 +96,12 @@ technique:
       osc-b.out -> ring.in2 (signal); ring.out -> output (signal).
       Optionally a third voice carries a quiet dry fundamental on its own
       output input as a mixing reference.
+
+  graph_ascii: |
+      (note) ──out──┬──▶ (fscale · ×4) ──out──▶ (osc · voice A) ──out──▶ ring.in1
+                    └──▶ (fscale · ×5) ──out──▶ (osc · voice B) ──out──▶ ring.in2
+      (ring · difference product) ──out──▶ (output)
+      ┄ optional dry-fundamental voice on its own output input
 
   parameters:
     - name: upper ratios

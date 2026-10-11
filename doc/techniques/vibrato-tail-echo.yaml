@@ -9,6 +9,23 @@ technique:
     note holds, the more repeats accumulate the wobble; release into an
     echoing tail and the shimmer blooms purely in the delay.
 
+  tutorial: |
+    Vibrato-Schweif-Echo — das Band-Wow der Tape- und Chorus-Literatur:
+    der Ton bleibt fest, seine Echos schimmern — der Schweif vibriert
+    auf sich selbst. Wofür dient die Verdrahtung? Eine mäßig schnelle
+    Sinus-LFO (1..6 Hz) sitzt auf time_mod_in des Delays, Feedback hoch,
+    Basis 120..400 ms; jede Wiederholung liest die wandernde Linie an
+    leicht anderem Punkt. Was ist das Ziel? Vintage-Bandschimmern:
+    die Note bleibt exakt, beim Release häufen die Wiederholungen ihr
+    Wow an — je länger der Ton hält, desto mehr Kopien teilen den
+    Wobble; der trockene Weg bleibt unbeirrt. Der Gang des Signals:
+    (1) Die Note hält die Stimme samt Obertönen, (2) das Delay schreibt
+    frische Kopien, solange der Ton klingt, (3) nach dem Release liest
+    es die wobbelnde Linie — der Schimmer stapelt sich. Geschwister:
+    lfo-vibrato-fm vibriert die NOTE, hier nur die Echos;
+    flanger-delay-line ist der schnelle kleine, dub-wobble-echo-drift
+    der Perlin-Cousin.
+
   involved_nodes:
     - type: note
       role: Keyboard send; pitches the held voice.
@@ -46,6 +63,11 @@ technique:
       so the moving read point adds small pitch excursions to each
       successive repeat while feedback stacks them.
 
+  graph_ascii: |
+      (note) ──out──▶ (osc · voice) ──out──▶ (adsr ┄ optional) ──▶ (delay.in)
+      (osc · lfo sine tail wobble) ──out──▶ (delay.time_mod_in)    each repeat reads from a moving line
+      (delay · echo line) ──out──▶ (output)
+
   parameters:
     - name: tail wobble rate
       role: |
@@ -77,7 +99,7 @@ technique:
         change at the source.
     - name: socket-siblings
       description: |
-        lvo-vibrato-fm vibratos the NOTE's pitch through an FM stage; this
+        lfo-vibrato-fm vibratos the NOTE's pitch through an FM stage; this
         technique vibratos only the delay repeats — the source stays
         exact.  flanger-delay-line is the fast small-time sibling;
         dub-wobble-echo-drift is its perlin cousin.

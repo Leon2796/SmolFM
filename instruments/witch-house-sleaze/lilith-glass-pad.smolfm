@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3" name="Lilith Glass Pad" description="Lilith glass pad: two two-operator FM voices — one at the raw key, one microdetuned at 0.9983x — both modulated by tempered 2.76x sine partners, summed and widened by a 260 ms Haas echo branch." techniques="classic-two-op-fm,fscale-detune-unison,stereo-haas-branch-delay">
+<SmolFM version="3" name="Lilith Glass Pad" description="Lilith glass pad: two two-operator FM voices — one at the raw key, one microdetuned at 0.9983x — both modulated by tempered 2.76x sine partners, summed and widened by a clean 17 ms Haas branch." techniques="classic-two-op-fm,fscale-detune-unison,stereo-haas-branch-delay">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -65,7 +65,7 @@
         <Pin id="outL" direction="out" type="signal" />
         <Pin id="outR" direction="out" type="signal" />
       </Node>
-      <Node id="delay0" time="260" feedback="0.32" mix="0.25" sync="off">
+      <Node id="delay0" time="17" feedback="0.0" mix="1.0" sync="off">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>

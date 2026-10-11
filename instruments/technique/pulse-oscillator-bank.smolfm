@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="pulse-oscillator-bank" description="Minimal example instance of the technique pulse-oscillator-bank from the SmolFM technique catalogue." techniques="pulse-oscillator-bank">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" staticfreq="205.3" waveform="square" mode="static" />
+      <Node id="osc1" staticfreq="304.4" waveform="square" mode="static" />
+      <Node id="osc2" staticfreq="369.6" waveform="square" mode="static" />
+      <Node id="osc3" staticfreq="522.7" waveform="square" mode="static" />
+      <Node id="osc4" staticfreq="540.0" waveform="square" mode="static" />
+      <Node id="osc5" staticfreq="800.0" waveform="square" mode="static" />
+      <Node id="add0" />
+      <Node id="add1" />
+      <Node id="add2" />
+      <Node id="add3" />
+      <Node id="add4" />
+      <Node id="filter0" mode="bp" cutoff="900" resonance="0.5" />
+      <Node id="adsr0" attack="0.001" release="0.05" sustain="0.0" decay="0.18" />
+      <Node id="gain0" factor="1.1" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="add0" toPort="in1" />
+      <Wire from="osc1" fromPort="out" to="add0" toPort="in2" />
+      <Wire from="add0" fromPort="out" to="add1" toPort="in1" />
+      <Wire from="osc2" fromPort="out" to="add1" toPort="in2" />
+      <Wire from="add1" fromPort="out" to="add2" toPort="in1" />
+      <Wire from="osc3" fromPort="out" to="add2" toPort="in2" />
+      <Wire from="add2" fromPort="out" to="add3" toPort="in1" />
+      <Wire from="osc4" fromPort="out" to="add3" toPort="in2" />
+      <Wire from="add3" fromPort="out" to="add4" toPort="in1" />
+      <Wire from="osc5" fromPort="out" to="add4" toPort="in2" />
+      <Wire from="add4" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="note" fromPort="vel" to="gain0" toPort="vel" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="1520" />
+      <Box id="osc0" x="60" y="80" />
+      <Box id="osc1" x="60" y="320" />
+      <Box id="osc2" x="60" y="560" />
+      <Box id="osc3" x="60" y="800" />
+      <Box id="osc4" x="60" y="1040" />
+      <Box id="osc5" x="60" y="1280" />
+      <Box id="add0" x="390" y="80" />
+      <Box id="add1" x="720" y="80" />
+      <Box id="add2" x="1050" y="80" />
+      <Box id="add3" x="1380" y="80" />
+      <Box id="add4" x="1710" y="80" />
+      <Box id="filter0" x="2040" y="80" />
+      <Box id="adsr0" x="2370" y="80" />
+      <Box id="gain0" x="2700" y="80" />
+      <Box id="output" x="3030" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

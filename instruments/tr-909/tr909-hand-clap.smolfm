@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="TR-909 Hand Clap"
+         description="909-Handclap aus multi-burst-clap: drei gestaffelte Noise-Bursts über Serien-Delays mit kurzen Envelopes, Bandpass um 1100 Hz und Velocity-Accent auf Gain und Shaper"
+         techniques="multi-burst-clap, tuned-noise-percussion, 808-accent-gain, 808-accent-drive-shaper">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" waveform="noise" mode="static" staticfreq="1100" />
+      <Node id="shape0" shape="soft" drive="0.5" />
+      <Node id="delay0" time="25" feedback="0" mix="1" />
+      <Node id="delay1" time="25" feedback="0" mix="1" />
+      <Node id="adsr0" attack="0.001" decay="0.035" sustain="0" release="0.012" />
+      <Node id="adsr1" attack="0.001" decay="0.035" sustain="0" release="0.012" />
+      <Node id="adsr2" attack="0.001" decay="0.05" sustain="0" release="0.02" />
+      <Node id="gain0" factor="0.42" />
+      <Node id="gain1" factor="0.4" />
+      <Node id="gain2" factor="0.46" />
+      <Node id="vsc0" curve="sqrt" scale="2.4" />
+      <Node id="output" level="0.72" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="delay0" toPort="in" />
+      <Wire from="delay0" fromPort="out" to="delay1" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="delay0" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="delay1" fromPort="out" to="adsr2" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="adsr1" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="adsr2" fromPort="out" to="gain2" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="gain1" fromPort="out" to="output" toPort="in2" />
+      <Wire from="gain2" fromPort="out" to="output" toPort="in3" />
+      <Wire from="note" fromPort="vel" to="vsc0" toPort="vel_in" />
+      <Wire from="vsc0" fromPort="out" to="gain0" toPort="vel" />
+      <Wire from="vsc0" fromPort="out" to="gain1" toPort="vel" />
+      <Wire from="vsc0" fromPort="out" to="gain2" toPort="vel" />
+      <Wire from="vsc0" fromPort="out" to="shape0" toPort="vel" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="osc0" x="380" y="60" />
+      <Box id="shape0" x="700" y="60" />
+      <Box id="delay0" x="1020" y="60" />
+      <Box id="delay1" x="1340" y="60" />
+      <Box id="adsr0" x="1020" y="380" />
+      <Box id="adsr1" x="1340" y="380" />
+      <Box id="adsr2" x="1660" y="380" />
+      <Box id="gain0" x="1020" y="700" />
+      <Box id="gain1" x="1340" y="700" />
+      <Box id="gain2" x="1660" y="700" />
+      <Box id="vsc0" x="60" y="700" />
+      <Box id="output" x="1980" y="380" />
+    </Boxes>
+  </Layout>
+</SmolFM>

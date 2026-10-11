@@ -11,6 +11,28 @@ technique:
     Static mode keeps the modulator ratio hard-locked so every note dives
     the same way.
 
+  tutorial: |
+    Through-Zero-FM — das TZFM der FM-Literatur: eine tiefe Modulations-
+    tiefe schwingt den Frequenzfaktor (1 + a·m) sauber durch Null — die
+    momentane Carrier-Frequenz kreuzt 0 Hz, wird negativ, und der
+    Phasenspeicher läuft rückwärts. Wofür dient die Verdrahtung? Die
+    Note ist die Mitte, ein statischer Sinus-Modulator auf musikalischem
+    Ratio und einer FM-Stufe, deren Tiefe tief genug fürs Durchkreuzen
+    ist; der Carrier integriert die vorzeichenbehaftete Frequenz direkt.
+    Was ist das Ziel? Tiefsinnvolle Tauchgänge: die Stimme stürzt durch
+    die Stille in einen phasenverkehrten Aufstieg, statt am Nullpunkt
+    zu ersticken — Gong-artige Sweeps ohne Stall, clean umgekehrte
+    Phasenglitzer statt FM-Foldover-Rauschen; Saw-, Square- und
+    Triangle-Carrier falten knallfrei, weil das Umbrechen diskonti-
+    nuumsfrei ist (der Carrier klemmt die momentane Frequenz nur bei
+    ±fs/2). Der Gang des Signals: (1) Die Note speist die FM-Mitte.
+    (2) Der statische Modulator gibt die Vollausschlag-Kurve — der Ratio
+    bleibt hard-locked, jede Note taucht gleich. (3) Die FM-Stufe
+    rechnet die vorzeichenbehaftete Frequenz. (4) Der Carrier integriert
+    — rückwärts, wenn negativ — und rendert die Wellenform. (5) Der
+    Ausgang trägt das Ergebnis. Nur wenn eine glatte einseitige
+    Schwingung gewollt ist, bleibt der Amount unter 1.5.
+
   involved_nodes:
     - type: note
       role: Keyboard send; the carrier centre frequency.
@@ -50,6 +72,10 @@ technique:
       fm.modulator_in (signal).  fm.out -> carrier-osc.note_in (frequency).
       carrier-osc.out -> output.in1 (signal).  One FM stage and one carrier
       integrate the signed frequency directly; no extra nodes are needed.
+
+  graph_ascii: |
+      (note) ──out──▶ (fm.freq_in) ──out──▶ (osc · carrier.note_in) ──out──▶ (output)
+      (osc · static sine modulator) ──out──▶ (fm.modulator_in)     amount ≥ 2.2 folds (1 + a·m) through zero
 
   parameters:
     - name: fm amount

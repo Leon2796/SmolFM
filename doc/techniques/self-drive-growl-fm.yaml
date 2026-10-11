@@ -10,6 +10,28 @@ technique:
     rendered by the voice it feeds.  This is an envelope-follower effect
     built from wiring alone: amplitude becomes timbre.
 
+  tutorial: |
+    Selbsttreibendes Growl-FM — der Hüllkurvenfolger der Studio-Literatur,
+    hier aus reiner Verdrahtung: die eigene, gerenderte Welle des Carriers
+    steuert den Modulationsindex ihrer eigenen FM-Stufe. Wofür dient die
+    Verdrahtung? Der Carrier-Ausgang fächert zurück auf amount_mod_in —
+    die Stufe hört buchstäblich sich selbst zu. Was ist das Ziel?
+    Dynamikgesteuerte Klangfarbe: leise Passagen bleiben nahe der
+    statischen Basis sauber, laute Spitzen heben den Index, und die
+    Seitenbänder brüllen auf — Amplitude wird Timbre, ganz ohne
+    Envelope-Follower-Prozessor. Der Gang des Signals: (1) Die Note
+    speist die FM-Stufe, der Modulator (tastenverfolgt) das
+    Modulationssignal. (2) Die FM-Stufe moduliert die Carrier-Frequenz;
+    der gerenderte Ton multipliziert abtastweise den Basis-Amount mit
+    (1 + Wellenwert): laute Wellenberge bekommen zusätzliche Auslenkung,
+    das Growl wächst buchstäblich aus der eigenen Wellenform.
+    (3) Die nachgelagerte ADSR formt die Artikulation — das Growl stirbt
+    in den sauberen Schweif, der Ausgang trägt das Ergebnis.
+    Geschwister: shaped-modulator-fm umhüllt das Modulatorsignal für
+    Seitendichte; self-ring-octave-double speist ein Ring-Eingang mit
+    demselben Draht für Spektralfaltung — hier ist der Index-Anschluss
+    die Audio-Feedback-Variante.
+
   involved_nodes:
     - type: note
       role: Keyboard send; pitches the carrier chain.
@@ -49,6 +71,11 @@ technique:
       adsr.in (signal), adsr.out -> output.in1 (signal).  One wire makes the
       stage dynamics-aware: the effective amount is amount * (1 + m) with m
       = the carrier's own rendered value, clamped [-1,+1].
+
+  graph_ascii: |
+      (note) ──out──▶ (fm.freq_in) ──out──▶ (osc · carrier.note_in) ──out──┬─▶ (adsr · amp) ──▶ (output)
+      (osc · modulator) ──out──▶ (fm.modulator_in)                          └─▶ (fm.amount_mod_in)  self-drive
+      own rendered signal multiplies the index per sample
 
   parameters:
     - name: base fm amount

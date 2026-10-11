@@ -11,6 +11,29 @@ technique:
     per chain.  The adder sums both stereo channels; merging is channel
     routing (merger), balancing is gain — this technique only adds signals.
 
+  tutorial: |
+    Summen-Bus — das Mischpult-Prinzip der Studiotechnik: mehrere
+    parallele Ketten werden per Addierern zu EINEM Mono-Bus gefaltet,
+    BEVOR eine geteilte nachgelagerte Stufe (Filter, Shaper, Hüllkurve,
+    Delay) ihn verarbeitet. Wofür dient die Verdrahtung? Die Ketten
+    laufen paarweise in Addierer: zwei Quellen in den ersten, dessen
+    Ausgang plus die nächste in den zweiten — N Klangquellen brauchen
+    genau N-1 Addierer. Was ist das Ziel? Ein einziges resonantes
+    Klanggebäude für den ganzen Cluster — ein gemeinsamer Sculptor formt
+    die Summe, statt pro Kette einen Filter
+    zu verbrennen; die Filter-Slots bleiben frei für weitere Stimmen.
+    Der Gang des Signals: (1) Jede parallele Quelle liefert seine
+    Kette samt Obertönen. (2) Die Addierer falten Kette für Kette
+    in den laufenden Bus. (3) Der geteilte Sculptor formt den Bus —
+    Sweeps und Resonanz gelten dem ganzen Stack. (4) Der Ausgang
+    erhält den gefalteten Cluster. Wichtig im Format: merge routet
+    Kanäle seitenrein (in1 links, in2 rechts) und summiert NICHT —
+    nur add baut einen audio-summernden Bus. Verwandt:
+    layer-gain-staging balanciert direkt an den acht Ausgangs-
+    Eingängen ohne Addierer; parallel-band-split spaltet EIN Signal
+    in zwei Filter-Weiten — hier die Gegenbewegung: viele Signale
+    zu einer Weite (Summe, ein geteilter Sculptor).
+
   involved_nodes:
     - type: osc
       role: One parallel source per chain; each source may itself lead a
@@ -49,6 +72,18 @@ technique:
       voices.  The merge node is NOT a substitute: merge routes channels
       side-pure (in1 -> left, in2 -> right) and does not sum; only add
       builds one audio-summing bus.
+
+  graph_ascii: |
+      (osc1) ──out──▶ (add0.in1)
+      (osc2) ──out──▶ (add0.in2) ──▶ (add0.out) ──▶ (add1.in1)
+      (osc3) ──out──▶ (add1.in2) ──▶ (add1.out) ──▶ (filter · shared sculptor)
+      fold pairwise: N sources · N-1 adders · merge = routing, add = summing
+
+  used_by:                    # mirrored imports registry — checked both ways
+    - name: pulse-oscillator-bank
+      detail: |
+        imports the pairwise-add folding form: its square row folds onto
+        the same mono bus in front of the shared voiced band passes.
 
   parameters:
     - name: shared filter cutoff and resonance

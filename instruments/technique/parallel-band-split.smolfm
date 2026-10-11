@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="parallel-band-split" description="Minimal example instance of the technique parallel-band-split from the SmolFM technique catalogue." techniques="parallel-band-split">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" waveform="saw" />
+      <Node id="filter0" mode="lp" cutoff="400" resonance="0.3" />
+      <Node id="filter1" mode="bp" cutoff="1500" resonance="0.4" />
+      <Node id="filter2" mode="hp" cutoff="4000" resonance="0.3" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="osc0" fromPort="out" to="filter1" toPort="in" />
+      <Wire from="osc0" fromPort="out" to="filter2" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="filter1" fromPort="out" to="output" toPort="in2" />
+      <Wire from="filter2" fromPort="out" to="output" toPort="in3" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="80" />
+      <Box id="osc0" x="390" y="80" />
+      <Box id="filter0" x="720" y="80" />
+      <Box id="filter1" x="720" y="320" />
+      <Box id="filter2" x="720" y="560" />
+      <Box id="output" x="1050" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

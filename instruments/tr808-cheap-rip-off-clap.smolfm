@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="tr808-cheap-rip-off-clap" description="(Erhaltener alter Stand des Original-Patches als Sicherung, Rueckfallebene zum Phase-2-Neubau tr808-hand-clap) 808-Style Hand-Clap: breites Rausch-Band 1,05 kHz, zu einem 3-Tap-Cluster (die trockene Quelle plus 14/31-ms-Kopien parallel addiert, reine Taps - mix 1,0 / fb 0 = kammfilterfrei; Echo-Feedback am Noise = quasi-periodische Segmente = metallisch), Envelope nach den Taps begrenzt den Cluster, plus diffuser 200-ms-Tail; Velocity-Akzent lauter." techniques="multi-burst-clap, 808-accent-gain">
+  <Graph>
+    <Nodes>
+      <Node id="note">
+        <Pin id="out" direction="out" type="frequency" />
+        <Pin id="vel" direction="out" type="velocity" />
+      </Node>
+      <Node id="osc0" waveform="noise" mode="static" staticfreq="6000">
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="filter0" cutoff="1050" resonance="0.4" mode="bp">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay0" time="14" feedback="0" mix="1.0" sync="off" division="quarter">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay1" time="31" feedback="0" mix="1.0" sync="off" division="quarter">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="add0">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="add1">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.001" decay="0.3" sustain="0.0" release="0.06">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.5">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr1" attack="0.004" decay="0.2" sustain="0.0" release="0.06">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain1" factor="0.3">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="output" level="0.85" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="delay0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="delay1" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="add0" toPort="in1" />
+      <Wire from="delay0" fromPort="out" to="add0" toPort="in2" />
+      <Wire from="add0" fromPort="out" to="add1" toPort="in1" />
+      <Wire from="delay1" fromPort="out" to="add1" toPort="in2" />
+      <Wire from="add1" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="filter0" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="adsr1" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="gain1" fromPort="out" to="output" toPort="in2" />
+      <Wire from="note" fromPort="vel" to="gain0" toPort="vel" />
+      <Wire from="note" fromPort="vel" to="gain1" toPort="vel" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="osc0" x="60" y="380" />
+      <Box id="filter0" x="360" y="60" />
+      <Box id="delay0" x="680" y="60" />
+      <Box id="delay1" x="1000" y="60" />
+      <Box id="add0" x="680" y="380" />
+      <Box id="add1" x="680" y="700" />
+      <Box id="adsr0" x="1320" y="60" />
+      <Box id="gain0" x="1640" y="60" />
+      <Box id="adsr1" x="1000" y="380" />
+      <Box id="gain1" x="1320" y="380" />
+      <Box id="output" x="1960" y="60" />
+    </Boxes>
+  </Layout>
+</SmolFM>

@@ -9,6 +9,25 @@ technique:
     fall back together on release — stereo width that blooms and collapses
     with a pitch envelope instead of a static detune or a modulation LFO.
 
+  tutorial: |
+    Pitch-Envelope-Breitung — der spiegelsymmetrische Tonöffner der
+    Stereo-Literatur: zwei Pitch-Envelope mit gespiegelten Peak-Faktoren
+    streben auseinander und fallen zusammen. Wofür dient die Verdrahtung?
+    Die Note fächert in zwei F-ADSR (links lehnt über 1, rechts unter 1),
+    jeder speist seinen eigenen Carrier, der Merger weist die Carrier
+    gegenüberliegenden Seiten zu — ohne fscale und Splitter: das
+    Envelope-Paar ist die Breitungsmechanik. Was ist das Ziel? Notenweise
+    Blüte: die Kanäle entfernen sich Anschlag und Decay lang um eine
+    singende Intervall-Distanz und fallen am Release zusammen — die
+    Driftgeschwindigkeit ist die Steigung der Hüllkurve, die Notenenden
+    zentriert (beide Envelope fallen auf Down = 1). Der Gang des Signals:
+    (1) Die Note speist beide Hüllkurven, (2) die gelehnende und die
+    gesenkte Frequenz stimmen ihre Carrier, (3) der Merger platziert
+    die Senkung rechts und die Lehnung links, (4) der Ausgang trägt die
+    geweitete Ebene. Verwandt: stereo-micropitch-spread (statische
+    fscale-Faktoren), stereo-fm-depth-split (FM-Index-Split) — hier
+    ist die Breite selbst event-geformt.
+
   involved_nodes:
     - type: note
       role: Keyboard send; feeds both envelope branches.
@@ -62,6 +81,11 @@ technique:
       merge.in1 (signal), osc-right.out -> merge.in2 (signal).  merge.out
       -> output.in1 (signal).  No fscale, no splitter: the envelope pair is
       the whole spread mechanism.
+
+  graph_ascii: |
+      (note) ──out──┬─▶ (fadsr L · up > 1) ──▶ (osc L) ──▶ merge.in1
+                    └─▶ (fadsr R · up < 1) ──▶ (osc R) ──▶ (merge.in2)
+      (merge) ──out──▶ (output)        width blooms at the peak · folds shut on release
 
   parameters:
     - name: up pair

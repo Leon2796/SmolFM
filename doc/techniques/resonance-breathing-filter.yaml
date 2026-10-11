@@ -11,6 +11,26 @@ technique:
     classic modulated-resonance synth parameter, but rides only on existing
     nodes: the perlin voice IS the modulator.
 
+  tutorial: |
+    Resonanzatmung — der modulierte-Resonanz-Regler der Synth-Literatur,
+    getrieben von organischem Rausch statt einer Uhr: Perlin öffnet und
+    schließt die Filter-Q langsam und ohne jede Wiederholung. Wofür dient
+    die Verdrahtung? Der Perlin-Osc (LFO-Modus) sitzt auf resonance_mod_in;
+    der Cutoff bleibt statisch oder tastenverfolgt — NUR die Resonanz
+    atmet (res × (1 + m), klemmt bei ±1). Was ist das Ziel? Ein Filter-
+    Wesen, das nie wiederholt: mal sauberes Plateau, mal pfeifendes
+    Selbstschwingen — nahe einer Basisresonanz von 0.5 streift die Q
+    innerhalb eines Atemzugs beides, ganz ohne Tonhöhen-Bewegung, ganz
+    ohne Comb- oder Chorus-Artefakte: reine Q-Bewegung. Der Gang des
+    Signals: (1) Die Note verankert die Stimme (und optional den Cutoff
+    als tastenverfolgte Mitte). (2) Der Perlin-Drift speist den Q-
+    Anschluss mit glattem, nicht wiederkehrendem Band. (3) Das Filter
+    formt — je nach Atemzug sauber, knarrend oder singend.
+    (4) Der Ausgang erhält die atmende Ebene. Geschwister:
+    perlin-cutoff-drift bewegt denselben Organismus auf der Cutoff-Seite,
+    key-tracking-filter nur die Tasten-Verfolgung — kombiniert atmen
+    Cutoff und Q gekoppelt.
+
   involved_nodes:
     - type: note
       role: Keyboard send; tracks the filter cutoff to the played key.
@@ -47,6 +67,13 @@ technique:
       filter.in (signal).  filter.out -> output.in1 (signal).  One perlin
       voice is enough; its waveform choice ("perlin") makes the drift
       smooth and non-repeating.
+
+  graph_ascii: |
+      (osc · lfo perlin breath) ──out──▶ (filter.resonance_mod_in)
+      (note) ──out──▶ (osc · voice.note_in)
+      (osc · voice) ──out──▶ (filter.in)
+      (filter) ──out──▶ (output)
+      ┄ (note) ──out──▶ (filter.cutoff_mod_in)      optional key tracking
 
   parameters:
     - name: perlin lfo rate

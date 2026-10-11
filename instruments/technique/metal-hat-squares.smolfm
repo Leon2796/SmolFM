@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="metal-hat-squares" description="Minimal example instance of the technique metal-hat-squares from the SmolFM technique catalogue." techniques="metal-hat-squares">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" staticfreq="205.3" waveform="square" mode="static" />
+      <Node id="osc1" staticfreq="304.4" waveform="square" mode="static" />
+      <Node id="ring0" />
+      <Node id="filter0" mode="hp" cutoff="6000" resonance="0.3" />
+      <Node id="adsr0" attack="0.001" release="0.06" sustain="0.0" decay="0.04" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="ring0" toPort="in1" />
+      <Wire from="osc1" fromPort="out" to="ring0" toPort="in2" />
+      <Wire from="ring0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="560" />
+      <Box id="osc0" x="60" y="80" />
+      <Box id="osc1" x="60" y="320" />
+      <Box id="ring0" x="390" y="80" />
+      <Box id="filter0" x="720" y="80" />
+      <Box id="adsr0" x="1050" y="80" />
+      <Box id="output" x="1380" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

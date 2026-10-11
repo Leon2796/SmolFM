@@ -10,6 +10,27 @@ technique:
     of an asymmetric two-operator patch.  Both carriers stay locked to the
     same played note, so the channels stay tonally related.
 
+  tutorial: |
+    Seitengetrennte FM-Tiefe — das asymmetric Two-Operator-Patch der FM-
+    Literatur als Stereo-Wesen: ein geteilter Modulator betreibt zwei
+    FM-Stufen mit unterschiedlicher Tiefe auf zwei identischen Carriern.
+    Wofür dient die Verdrahtung? Die Notenfrequenz speist beide Carrier
+    und den Modulator; der Splitter teilt das Modulatorsignal seitenrein
+    in zwei FM-Stufen; der Merger fasst die beiden Carrier-Wellen in ein
+    Stereobbild. Was ist das Ziel? Kanalabhängige Spektraldichte: beide
+    Kanäle bleiben tonal verwandt (gleiche Note, gleiche Wellenform),
+    aber ihre Modulationstiefe — und damit die spektrale Helligkeit —
+    unterscheidet sich seitenweise; gleiche Amounts ergeben exakt den
+    klassischen zentrierten FM-Ton; die Differenz der Amounts öffnet das
+    sich wandelnde Funkeln. Der Gang des Signals: (1) Die Note speist
+    Modulator und beide Carrier. (2) Der Splitter trennt das
+    Modulatorsignal. (3) Jede FM-Stufe umschließt ihren Carrier mit
+    ihrer Tiefe — Achtung Kollaps-Regel: ein reiner Seitenzweig (v, 0)
+    trägt HALBE Modulationstiefe bei gleichem Amount (Mittelwert-Regel
+    der FM-Stufe) — per-seiten Amounts doppelt setzen oder die Halbierung
+    bewusst als Fein-Tiefe nutzen. (4) Der Merger baut das Stereobbild,
+    der Ausgang trägt es.
+
   involved_nodes:
     - type: note
       role: Keyboard send; drives both carriers (and the modulator trace).
@@ -102,6 +123,13 @@ technique:
       fm-right.out -> right carrier.note_in (frequency).  carrier outputs
       -> merge.in1 / merge.in2 (signal).  merge.out -> output (signal).
       Two independent FM paths share one note and one modulator source.
+
+  graph_ascii: |
+      (note) ──out──┬─▶ (fm L.freq_in) ──▶ (osc · carrier L) ──▶ merge.in1
+                    ├─▶ (fm R.freq_in) ──▶ (osc · carrier R) ──▶ merge.in2
+                    └─▶ (osc · modulator.note_in) ──out──▶ (split.in)
+      (split.outL) ──▶ fm L.modulator_in · (split.outR) ──▶ fm R.modulator_in
+      (merge) ──out──▶ (output)        per-side FM depth from one modulator split
 
   parameters:
     - name: left FM amount

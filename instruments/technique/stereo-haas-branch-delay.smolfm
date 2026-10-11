@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="stereo-haas-branch-delay" description="Minimal example instance of the technique stereo-haas-branch-delay from the SmolFM technique catalogue." techniques="stereo-haas-branch-delay">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" />
+      <Node id="split0" />
+      <Node id="delay0" time="15" mix="1.0" feedback="0.0" />
+      <Node id="merge0" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="split0" toPort="in" />
+      <Wire from="split0" fromPort="outL" to="merge0" toPort="in1" />
+      <Wire from="split0" fromPort="outR" to="delay0" toPort="in" />
+      <Wire from="delay0" fromPort="out" to="merge0" toPort="in2" />
+      <Wire from="merge0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="80" />
+      <Box id="osc0" x="390" y="80" />
+      <Box id="split0" x="720" y="80" />
+      <Box id="delay0" x="1050" y="80" />
+      <Box id="merge0" x="1380" y="80" />
+      <Box id="output" x="1710" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

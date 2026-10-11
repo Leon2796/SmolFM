@@ -9,6 +9,22 @@ technique:
     spectrum stays harmonic, with inharmonic ratios it turns bell-like, and
     the amount parameter scales the spectral complexity.
 
+  tutorial: |
+    Zwei-Operator-FM — der klassische FM-Glockenklang aus dem FM-Kochbuch
+    (Chowning-Tradition): ein Modulator formt die Trägerfrequenz.
+    Wofür dient die Verdrahtung? Die Note liefert die Basisfrequenz, ein
+    statischer Modulator-Oscillator gibt die Modulationsspannung, die FM-
+    Stage verformt die Frequenz, und ein pitch-mode Carrier rendert das
+    Ergebnis hörbar. Was ist das Ziel? Hörbare Spektrumsteuerung per
+    Knopf: ganzzahlige Ratios halten das Spektrum harmonisch — Marimba,
+    Glocke, E-Piano; nicht-ganzzahlige Ratios kippen es ins Bellige,
+    Metallische. Der Gang des Signals: (1) Die Note tritt in die FM-Stage.
+    (2) Der statische Modulator moduliert sie — die Frequenzauslenkung
+    wächst linear mit dem Amount. (3) Der Carrier rendert die modulierte
+    Frequenz samt neu entstandenen Obertönen. (4) Der Ausgang übernimmt.
+    Amount 0 lässt schlicht die Notenfrequenz durch; bei vollen Werten
+    türmt sich die Helligkeit mit dem Index.
+
   involved_nodes:
     - type: note
       role: MIDI note source; provides the base frequency.
@@ -52,6 +68,11 @@ technique:
       (signal).  fm.out -> carrier.note_in (frequency).  carrier.out -> output
       (signal).  The FM stage lives entirely in the frequency domain; the
       modulator oscillator is the only signal source feeding it.
+
+  graph_ascii: |
+      (note) ──out──▶ (fm) ──out──▶ (osc · carrier.note_in) ──out──▶ (output)
+                        ▲
+      (osc · static modulator) ──out──▶ fm.modulator_in     ratio = staticfreq / note
 
   parameters:
     - name: fm amount

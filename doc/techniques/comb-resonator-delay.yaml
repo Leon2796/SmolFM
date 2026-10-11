@@ -9,6 +9,24 @@ technique:
     cancel - the delay becomes a static comb resonator, a pipe the voice
     rings in.
 
+  tutorial: |
+    Comb-Resonator — der Delay als Klangkörper: Im Delay-Werk der Literatur
+    klingt die Mikroverzögerung unter 25 ms nicht mehr als Echo, sondern
+    als Rohr- oder Federresonanz. Wofür dient die Verdrahtung? Die Stimme
+    läuft in eine Zelle mit Mikro-Zeit und starkem Feedback; der interne
+    Mix summiert Original und Wiederholung abtastweise. Was ist das Ziel?
+    Eine feste Resonanzfärbung — Frequenzen im Abstand von 1000/Zeit Hz
+    verstärken sich zu stehenden Peaks, die Zwischenräume löschen aus; das
+    Ohr hört ein metallisches Rohr hinter der Stimme. Der Gang des
+    Signals: (1) Der Osc gibt Wellenform samt Obertönen. (2) Die Zelle
+    mischt: die periodische Überlagerung kämmt das Spektrum, das Feedback
+    zählt die Anteile nach — beim Gleiten der Melodie wandern Schwebungen
+    durch das Obertongitter. (3) Der Ausgang erhält die resonante Ebene.
+    Halbierung der Zeit verdoppelt den Peak-Abstand: Tuning in Oktaven-
+    schritten, Feedback als Schärfe-Regler. Als Delay-Domain-Resonator
+    ergänzt diese Technik die Filter-Resonatoren des Katalogs
+    (subtractive-voice-chain, serial-drive-filter-sculpt).
+
   involved_nodes:
     - type: osc
       role: Voice oscillator in pitch or static mode; the signal being
@@ -40,6 +58,10 @@ technique:
       sums dry signal and repeat, feedback recirculates the repeat, and
       sync stays off so the resonance distance stays fixed in
       milliseconds.
+
+  graph_ascii: |
+      (osc · voice) ──out──▶ (delay · comb engine) ──out──▶ (output)
+                             ▲ mix + feedback recirculate inside the node
 
   parameters:
     - name: delay time

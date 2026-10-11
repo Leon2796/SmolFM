@@ -7,6 +7,19 @@ technique:
     reads as a doubling of the voice rather than an echo, thickening the
     sound without any modulation.
 
+  tutorial: |
+    Slapback-Delay — der kurze Doppelschatten aus der Rockabilly- und
+    Guitar-Amp-Literatur, als reiner Verzögerungs-Verdoppler verdrahtet.
+    Wofür dient die Verdrahtung? Das trockene Signal läuft in eine Zelle
+    mit kurzer Zeit, niedrigem Feedback und halbem Mix — genau eine
+    frühe Wiederholung kehrt knapp hinter dem Einsatz. Was ist das
+    Ziel? Eine breiter, dicker klingende Stimme ohne jede Modulation.
+    Der Gang: (1) Osc samt Obertönen und Transienten, (2) die Kopie
+    kehrt bei 30..80 ms als Doppelschatten zurück — Mix um 0.5 hält
+    das Original vorne, Feedback unter 0.4 nur ein Echo, (3) der
+    Ausgang summiert beide; mehr Feedback macht daraus ein
+    wiederholendes Echo der delay-patterns-Familie.
+
   involved_nodes:
     - type: osc
       role: Dry signal source in pitch or static mode.
@@ -31,6 +44,10 @@ technique:
       osc -> delay.in (signal).  delay.out -> output (signal).  The delay's
       internal feedback buffer produces the repeat; no external wiring is
       needed.  Sync stays off for a fixed slapback distance.
+
+  graph_ascii: |
+      (osc · dry source) ──out──▶ (delay · single tap) ──out──▶ (output)
+                                  ▲ internal feedback keeps one repeat
 
   parameters:
     - name: delay time

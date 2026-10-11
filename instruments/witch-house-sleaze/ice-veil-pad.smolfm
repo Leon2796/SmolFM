@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3" name="Ice Veil Pad" description="Ice-veil pad: two microdetuned saws summed through a series low-pass plus notch, slow tremolo breathing, then channel-true Haas split with a 19 ms pure shift for froth width." techniques="fscale-detune-unison,serial-drive-filter-sculpt,am-tremolo-lfo,stereo-haas-branch-delay">
+<SmolFM version="3" name="Ice Veil Pad" description="Ice-veil pad: two microdetuned saws summed through a soft drive stage into a series low-pass plus notch, slow tremolo breathing, then channel-true Haas split with a 19 ms pure shift for froth width." techniques="fscale-detune-unison,serial-drive-filter-sculpt,am-tremolo-lfo,stereo-haas-branch-delay">
   <Graph>
     <Nodes>
       <Node id="note">
@@ -32,6 +32,10 @@
       <Node id="add0">
         <Pin id="in1" direction="in" type="signal" />
         <Pin id="in2" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="shape0" drive="0.15" shape="soft">
+        <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
       <Node id="filter0" cutoff="3400" resonance="0.2" mode="lp">
@@ -79,7 +83,8 @@
       <Wire from="osc1" fromPort="out" to="gain1" toPort="in" />
       <Wire from="gain0" fromPort="out" to="add0" toPort="in1" />
       <Wire from="gain1" fromPort="out" to="add0" toPort="in2" />
-      <Wire from="add0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="add0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="filter0" toPort="in" />
       <Wire from="filter0" fromPort="out" to="filter1" toPort="in" />
       <Wire from="filter1" fromPort="out" to="adsr0" toPort="in" />
       <Wire from="adsr0" fromPort="out" to="am0" toPort="carrier_in" />
@@ -101,6 +106,7 @@
       <Box id="gain0" x="1020" y="60" />
       <Box id="gain1" x="1020" y="380" />
       <Box id="add0" x="1020" y="240" />
+      <Box id="shape0" x="1340" y="240" />
       <Box id="filter0" x="1340" y="60" />
       <Box id="filter1" x="1340" y="380" />
       <Box id="adsr0" x="1660" y="60" />

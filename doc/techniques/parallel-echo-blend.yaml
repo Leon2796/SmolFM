@@ -9,6 +9,22 @@ technique:
     behind it - a spatial blend built from the mix, not from the delay mix
     knob alone.
 
+  tutorial: |
+    Echo-Send-Blend — das Send-Return-Prinzip der Mischpult-Literatur:
+    die Stimme fächert in eine trockene Ebene und eine Echo-Ebene, jede
+    mit eigenem Pegel. Wofür dient die Verdrahtung? Ein Draht fächert
+    in zwei Stränge — trockener Trim, Echostrang über Delay samt
+    eigenem Trim; beide auf separaten Ausgangs-Eingängen, sie
+    berühren sich nie. Was ist das Ziel? Die Stimme steht klar vorn,
+    die Echoebene atmet dahinter — Tiefe aus der Strangbalance, nicht
+    vom Delay-Mix-Regler allein. Der Gang des Signals: (1) Der Osc
+    liefert die Wellenform samt Obertönen, (2) der trockene Strang
+    passiert nur seinen Trim, (3) der Echostrang läuft durch Zelle
+    (freie Zeit) und Trim, (4) der Ausgang summiert beide. Verwandt:
+    tempo-synced-delay-tail und double-delay-space kaskadieren bzw.
+    beatbinden — hier bleibt eine Zelle, die Tiefe lebt in der
+    Balance; parallel-band-split fächert spektral, hier räumlich.
+
   involved_nodes:
     - type: osc
       role: Voice oscillator in pitch mode; the shared source of both
@@ -58,6 +74,11 @@ technique:
       delay.out -> echo trim.in (signal).  dry trim.out -> output.in1,
       echo trim.out -> output.in2 (signal).  The strands never touch: the
       dry path bypasses the delay entirely.
+
+  graph_ascii: |
+      (osc · voice) ──out──┬─▶ (gain · dry trim) ────────────────────▶ output.in1
+                           └─▶ (delay · echo layer) ──▶ (gain · echo trim) ──▶ output.in2
+      strand balance = the depth control · dry bypasses the delay
 
   parameters:
     - name: delay time

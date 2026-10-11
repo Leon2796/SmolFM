@@ -8,6 +8,20 @@ technique:
     Timbre sweeps keep a constant loudness while the curve traversal
     changes, and the master stays clip-free.
 
+  tutorial: |
+    Gain-Staging in Serie — das Vor-/Nachstell-Regime der Studio-Ketten:
+    ein Pre-Gain positioniert den Arbeitspunkt auf der Transferkurve des
+    Nichtlinear-Werkzeugs, ein Trim-Gain stellt dahinter den Pegel her.
+    Wofür dient die Verdrahtung? Osc → Gain0 (Pre) → Shape → Gain1 (Trim)
+    → Ausgang; Pre und Drive wirken multiplikativ an der Shape-Eingabe.
+    Was ist das Ziel? Konstante Lautheit bei wandernder Kurvenfärbung:
+    mehr Pre traversiert die Kurve härter (frühere Sättigung, mehr
+    Folds) ohne den Drive zu rühren; mehr Pre bei weniger Trim hält die
+    Lautheit und wechselt nur die Farbe. Der Gang des Signals: (1) Die
+    Note stimmt die Quelle, (2) der Pre-Gain setzt den Arbeitspunkt,
+    (3) der Shape faltet oder verzerrt, (4) der Trim stellt die Ebene
+    wieder her (Faktor 0 stummschaltet), der Ausgang übernimmt.
+
   involved_nodes:
     - type: note
       role: Pitch source for the staged voice.
@@ -65,6 +79,10 @@ technique:
       gain1.out -> output.in1 (signal).  Two serial gain stages wrap the
       nonlinear stage: the pre gain sets how hard the curve is traversed,
       the trim stage restores the level behind it.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · source) ──out──▶ (gain · pre) ──out──▶ (shape · curve) ──out──▶ (gain · trim) ──out──▶ (output)
+      pre = operating point · trim = headroom guard
 
   parameters:
     - name: pre gain factor

@@ -9,6 +9,24 @@ technique:
     socket makes it a timbre contour, so pluck-to-growl transitions and
     biting-then-calm leads come from the same wiring as a filter sweep.
 
+  tutorial: |
+    Antrieb per Hüllkurve — die umhüllte Transferkurve, in der Studio-
+    Literatur als envelope-controlled waveshaping bekannt: die Drive-Menge
+    wird zur Klangfarben-Kontur statt zum statischen Regler. Wofür dient
+    die Verdrahtung? Eine statische Quelle speist eine ADSR, deren Verlauf
+    auf den drive_mod_in des Shapers landet; abtastweise multipliziert die
+    Hüllkurve den statischen Antrieb mit (1 + m). Was ist das Ziel? Der
+    Übergang Pluck-zu-Growl aus derselben Verdrahtung wie ein Filter-Sweep:
+    die Noten starten clean und wachsen in die Verzerrung — oder beginnen
+    mit vollem Biss und entspannen in reinen Ton. Der Gang des Signals:
+    (1) Die Noten-Quelle stimmt die Quellstimme. (2) Die ±1-Konstante
+    speist die ADSR, ihre Antriebs-Hüllkurve folgt einem eigenen Zeitplan;
+    (3) der Shaper formt mit dem laufenden Antrieb — Oberwellendichte
+    wandert exakt mit der Kurve (bis (1 + 9·Drive) Oberwellen). Der
+    Ausgang trägt die Ebene. Geschwister: shaped-modulator-fm formt das
+    FM-Modulatorsignal, serial-drive-filter-sculpt setzt einen statischen
+    Shape; index-envelope-fm ist dasselbe Konzept im FM-Bereich.
+
   involved_nodes:
     - type: note
       role: Keyboard send; pitches the shaped voice.
@@ -44,6 +62,10 @@ technique:
       source-osc.out -> shape.in (signal).  shape.out -> output.in1
       (signal).  The static drive sets the envelope's centre; the ADSR
       swings it toward clean and toward growl on its own schedule.
+
+  graph_ascii: |
+      (osc · static ±1) ──out──▶ (adsr · drive env) ──out──▶ (shape.drive_mod_in)
+      (note) ──out──▶ (osc · source) ──out──▶ (shape · waveshaper) ──out──▶ (output)
 
   parameters:
     - name: drive base and envelope shape

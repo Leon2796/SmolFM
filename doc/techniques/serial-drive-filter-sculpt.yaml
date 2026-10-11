@@ -7,6 +7,18 @@ technique:
     The order matters — shaping before filtering produces denser, driven
     filter colours than filtering alone.
 
+  tutorial: |
+    Drive-Filter-Kette — die klassische subtraktive Verzerrungsfolge:
+    erst faltet der Shaper Oberwellen ins Signal, dann formt das Filter
+    das verzerrte Spektrum. Wofür dient die Verdrahtung? Osc → Shape →
+    Filter → Ausgang; die Reihenfolge ist der Klang. Was ist das Ziel?
+    Angetriebene Farben bei steuerbarer Lautheit — Drive öffnen und
+    Cutoff schließen hält das Volumen, wechselt nur die Farbe. Der Gang
+    des Signals: (1) Quelle samt Obertönen, (2) der Shaper faltet und
+    verzerrt, (3) das Filter selektiert, der Ausgang trägt das Ergebnis —
+    Geschwister mit drift-drive-texture, drive-envelope-growl und
+    shaped-modulator-fm (dort Shaper im FM-Modulationsweg).
+
   involved_nodes:
     - type: osc
       role: Sound source in pitch or static mode; raw input for the shaper.
@@ -41,6 +53,10 @@ technique:
       filter.out -> output (signal).  Straight serial chain; the drive stage
       precedes the filter so the distortion products are filtered, not
       filtered then distorted.
+
+  graph_ascii: |
+      (osc · source) ──out──▶ (shape · drive) ──out──▶ (filter · sculptor) ──out──▶ (output)
+      shaping before filtering · drive products get sculpted
 
   parameters:
     - name: drive

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="static-formant-pair" description="Minimal example instance of the technique static-formant-pair from the SmolFM technique catalogue." techniques="static-formant-pair">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" waveform="saw" />
+      <Node id="filter0" mode="bp" cutoff="700" resonance="0.5" />
+      <Node id="gain0" factor="0.8" />
+      <Node id="filter1" mode="bp" cutoff="1220" resonance="0.5" />
+      <Node id="gain1" factor="0.6" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="osc0" fromPort="out" to="filter1" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="filter1" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="gain1" fromPort="out" to="output" toPort="in2" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="80" />
+      <Box id="osc0" x="390" y="80" />
+      <Box id="filter0" x="720" y="80" />
+      <Box id="gain0" x="1050" y="80" />
+      <Box id="filter1" x="720" y="320" />
+      <Box id="gain1" x="1050" y="320" />
+      <Box id="output" x="1380" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

@@ -9,6 +9,22 @@ technique:
     shade, and moving the two centres morphs the timbre between vowel
     colours while the resonance parameter sharpens the formant peaks.
 
+  tutorial: |
+    Vokal-Formanten-Paar — die feste Formantenfärbung der
+    Vokalsynthese-Literatur: zwei Bandpässe sitzen auf festen
+    Vokalzentren und färben jede Note mit demselben Vokalschatten.
+    Wofür dient die Verdrahtung? Ein einziger Osc fächert in zwei
+    Bandpässe mit statischen Formanten-Cutoffs; beide Bänder laufen
+    durch eigene Trims und landen auf separaten Ausgangs-Eingängen —
+    gemischt, nicht kaskadiert. Was ist das Ziel? Ein fester vokaler
+    Schatten über die ganze Tastatur: die Resonanz schärft die
+    Formantspitzen, beide Zentren gemeinsam bewegt morpht zwischen
+    Vokalfarben. Der Gang des Signals: (1) Die Note stimmt die Stimme,
+    (2) beide Bänder filtern dieselbe Wellenform parallel, (3) die
+    Trims balancieren, (4) der Ausgang summiert. Verwandt:
+    subtractive-voice-chain (Serie), parallel-band-split (komplementär)
+    — hier ergeben zwei resonante Formanten eine Vokalfarbe.
+
   involved_nodes:
     - type: note
       role: MIDI note source; voice pitch.
@@ -71,6 +87,11 @@ technique:
       filter.out -> upper trim.in (signal).  Both trim outputs land on
       separate output inputs (signal).  No serial chain: the two bands are
       mixed, not cascaded.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · voice) ──out──┬─▶ (filter bp · vowel F1) ──▶ (gain · trim) ──▶ output.in1
+                                           └─▶ (filter bp · vowel F2) ──▶ (gain · trim) ──▶ output.in2
+      two static formants = fixed vocal shade
 
   parameters:
     - name: lower cutoff

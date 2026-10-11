@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="index-envelope-fm" description="Minimal example instance of the technique index-envelope-fm from the SmolFM technique catalogue." techniques="index-envelope-fm">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="fm0" amount="2.0" />
+      <Node id="osc0" />
+      <Node id="osc1" staticfreq="220" mode="static" />
+      <Node id="adsr0" attack="0.002" release="0.3" sustain="0.0" decay="0.5" />
+      <Node id="osc2" staticfreq="880" mode="static" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fm0" toPort="freq_in" />
+      <Wire from="fm0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc1" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="fm0" toPort="amount_mod_in" />
+      <Wire from="osc2" fromPort="out" to="fm0" toPort="modulator_in" />
+      <Wire from="osc0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="560" />
+      <Box id="fm0" x="720" y="80" />
+      <Box id="osc0" x="1050" y="80" />
+      <Box id="osc1" x="60" y="80" />
+      <Box id="adsr0" x="390" y="80" />
+      <Box id="osc2" x="60" y="320" />
+      <Box id="output" x="1380" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

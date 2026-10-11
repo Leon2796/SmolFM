@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="sine-dive-kick" description="Minimal example instance of the technique sine-dive-kick from the SmolFM technique catalogue." techniques="sine-dive-kick">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="fadsr0" release="0.1" attack="0.001" up="2.0" decay="0.30" sustain="0.0" down="1.0" />
+      <Node id="osc0" />
+      <Node id="adsr0" attack="0.001" release="0.08" sustain="0.0" decay="0.25" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fadsr0" toPort="freq_in" />
+      <Wire from="fadsr0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="80" />
+      <Box id="fadsr0" x="390" y="80" />
+      <Box id="osc0" x="720" y="80" />
+      <Box id="adsr0" x="1050" y="80" />
+      <Box id="output" x="1380" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

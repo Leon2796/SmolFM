@@ -7,6 +7,20 @@ technique:
     frequency and the Down factor transposes the sustain tail, so attack and
     decay shape a fast pitch drop from the start value to the final one.
 
+  tutorial: |
+    Pitch-Drop-Hüllkurve — die klassische Pitch-Envelope der Drum-
+    Maschinen (808-artige Sub-Drops): Up- und Down-Faktor spannen das
+    Tonhöhenfenster jeder Note. Wofür dient die Verdrahtung? Die Note
+    tritt in den F-ADSR, dessen skalierte Ausgangsfrequenz den Carrier
+    ansteuert; eine Amplituden-Hüllkurve formt das Signal dahinter.
+    Was ist das Ziel? Ein schneller Tonhöhen-Gestus pro Note — die
+    Attack peilt über Up über die Basis, das Decay senkt aufs Down-
+    Niveau: Startfrequenz = Note×Up, Endfrequenz = Note×Down, deren
+    Verhältnis das Intervall der Senkung. Der Gang des Signals: (1) Die
+    Note speist den F-ADSR, (2) der Carrier rendert die wandernde
+    Wellenform samt Obertönen, (3) die ADSR formt die Lautheit und der
+    Ausgang übernimmt; das Release lässt den Fall klingen.
+
   involved_nodes:
     - type: note
       role: MIDI note source; provides the base frequency.
@@ -49,6 +63,16 @@ technique:
       (frequency).  carrier.out -> adsr.in (signal).  adsr.out -> output
       (signal).  The pitch envelope sits between the note source and the
       carrier; the amplitude envelope sits behind the carrier.
+
+  graph_ascii: |
+      (note) ──out──▶ (fadsr · pitch env) ──out──▶ (osc · carrier.note_in) ──out──▶ (adsr · amp) ──out──▶ (output)
+      up = attack-peak factor · down = tail factor
+
+  used_by:                    # mirrored imports registry — checked both ways
+    - name: sine-dive-kick
+      detail: |
+        imports the note -> fadsr -> osc pitch path and reframes its drop
+        as the drum hit: attack peak = beater click, sustain 0.
 
   parameters:
     - name: fadsr attack

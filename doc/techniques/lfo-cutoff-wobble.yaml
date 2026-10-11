@@ -9,6 +9,26 @@ technique:
     and closes rhythmically at the LFO rate while its centre tracks the
     played key.
 
+  tutorial: |
+    Filter-Wobble — das Auto-Wah und der Dub-Wobble der Literatur: das
+    Filter öffnet und schließt rhythmisch im Takt einer LFO, während seine
+    Mitte der gespielten Taste folgt. Wofür dient die Verdrahtung? Der
+    Tastensend speist eine FM-Stufe als Brücke, deren Modulator eine LFO
+    ist; der FM-Ausgang — eine echte Frequenz — landet auf cutoff_mod_in.
+    Warum die Brücke? Eine Osc-Out ist ein Signal und darf den Frequenz-
+    Anschlüsse nicht direkt speisen; die FM-Stufe macht daraus eine
+    zulässige Frequenzquelle. Was ist das Ziel? Tastenverfolgte
+    Rhythmusfärbung — der FM-Mittelwert rechnet out = f·(1 + amount·LFO),
+    also skaliert die Wobble-Breite proportional mit der Taste; ein
+    optionaler Skaler vor der FM-Mitte legt das Zentrum fest (z. B. eine
+    Oktave darunter). Der Gang des Signals: (1) Die Note speist FM-Mitte
+    und Stimme. (2) Die LFO gibt das Wobble-Signal — unter 5 Hz liest es
+    als Sweep, mittlere Rates als Wobble, hohe als Brummen. (3) Das SVF
+    formt mit dem wobbelnden Cutoff — lp/bp/hp/notch wählt das Wesen.
+    (4) Der Ausgang erhält das getönte Signal. Das periodische
+    Geschwister-Farb-Spiel: fadsr-cutoff-sweep wischt transient, hier
+    pendelt die LFO dauerhaft.
+
   involved_nodes:
     - type: note
       role: Keyboard send; base frequency for the audio voice and the wobble
@@ -73,6 +93,12 @@ technique:
       is a signal and cannot drive the frequency-domain cutoff port
       directly; the FM stage is the bridge that turns it into a permitted
       frequency source.
+
+  graph_ascii: |
+      (note) ──out──┬──▶ (fm.freq_in · wobble centre) ──out──▶ (filter.cutoff_mod_in)
+                    └──▶ (osc · audio voice) ──out──▶ (filter.in)
+      (osc · LFO) ──out──▶ (fm.modulator_in)      FM stage bridges signal → frequency
+      (filter) ──out──▶ (output)
 
   parameters:
     - name: wobble depth

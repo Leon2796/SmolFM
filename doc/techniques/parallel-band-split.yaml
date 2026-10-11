@@ -9,6 +9,25 @@ technique:
     spectrum while every band can be trimmed, boosted or muted
     independently.
 
+  tutorial: |
+    Band-Split — die Crossover-Regie der Tonstudio-Literatur: eine Stimme
+    teilt sich in drei parallele Filterbänder (low-pass, band-pass,
+    high-pass), jedes mit eigener statischer Cutoff und eigenem Pegel am
+    Ausgang. Wofür dient die Verdrahtung? Das Stimmensignal fächert nach
+    dem Rendern in drei Bandfilter, ihre Ausgänge landen auf eigenen
+    Ausgangs-Eingängen. Was ist das Ziel? Komplementäres Klangbild-
+    Trimmen: die Bänder sind Schnitt-Mengen desselben Signals — ihre
+    Summe rekonstruiert das Spektrum, allein die Bandbalance formt:
+    Mitte gezogen klingt hohl, nur Mitten nasal, Tiefe gezogen dünn.
+    Der Gang des Signals: (1) Die Note stimmt die eine Stimme.
+    (2) Jedes Bandfilter schneidet seinen Bereich — Bass, Mitte, Höhen —
+    mit eigener Kante und Resonanz. (3) Die Pegel je Ausgangs-Eingang
+    balancieren, verstärken oder stummschalten ihr Band. (4) Der Master
+    trägt die Summe. Das serielle Gegenstück:
+    subtractive-voice-chain filtert den EINEN Weg kaskadierend, hier
+    spaltet die Parallelschaltung auf. Bis zu acht Bänder bleiben unter
+    einem Ausgang.
+
   involved_nodes:
     - type: note
       role: Keyboard send driving the single voice.
@@ -64,6 +83,12 @@ technique:
       instance per band).  The three filter.out ports feed three dedicated
       output inputs (signal); each filter's static cutoff defines its band
       edge, each output input level its band balance.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · voice) ──out──┬─▶ (filter lp · low band)  ──▶ output.in1
+                                           ├─▶ (filter bp · mid band)  ──▶ output.in2
+                                           └─▶ (filter hp · high band) ──▶ output.in3
+      static cutoffs carve the band edges · per-input levels = crossover mixer
 
   parameters:
     - name: band cutoffs

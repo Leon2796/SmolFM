@@ -14,7 +14,7 @@ trägt den `note`-Node unverbunden (Trigger), Spielbare drums tracken die Taste.
 | Instrument | Klangbild | Techniken |
 |---|---|---|
 | `ritual-kick.smolfm` | Ritual-Kick: soft-geclippte Dive-Sine + Stick-Noise | sine-dive-kick, serial-drive-filter-sculpt, sub-instrument-layering |
-| `catacomb-kick.smolfm` | Größenraum-Kick: harter Long-Dive + Delay-Doppelfunk | sine-dive-kick, burst-delay-resonance, sub-instrument-layering |
+| `catacomb-kick.smolfm` | Größenraum-Kick: harter Long-Dive + Slapback-Doppelfunk | sine-dive-kick, delay-slapback-doubler, sub-instrument-layering |
 | `hex-hat.smolfm` | Closed Hat: inharmonisches Square-Square-Ring, HP-Sizzle | metal-hat-squares |
 | `veil-open-hat.smolfm` | Open Hat mit 220-ms-Schimmer-Echo | metal-hat-squares |
 | `noir-snare.smolfm` | Noir-Snare: gestaffelte Onsets (1/8/19 ms), vel-akzentuiert | onset-stagger-stack, tuned-noise-percussion, sub-instrument-layering |
@@ -39,7 +39,7 @@ trägt den `note`-Node unverbunden (Trigger), Spielbare drums tracken die Taste.
 | `ice-veil-pad.smolfm` | Eis-Schleier: Microdetune-Saws, Notch-Hollow, Haas 19 ms | fscale-detune-unison, serial-drive-filter-sculpt, am-tremolo-lfo, stereo-haas-branch-delay |
 | `ghost-choir-pad.smolfm` | Ghost-Chor: temperierte Dreiecks-Partials, Vokal-BP | fscale-organ-stack, subtractive-voice-chain, am-tremolo-lfo, fscale-temper-beating |
 | `vhs-graveyard-pad.smolfm` | VHS-Friedhof: Perlin-Cutoff-Drift, Twin-Delay-Space | fscale-detune-unison, perlin-cutoff-drift, serial-drive-filter-sculpt, double-delay-space |
-| `lilith-glass-pad.smolfm` | Glas-FM-Pad: zwei 2-OP-Voices (2.76/2.769), Haas 260 ms | classic-two-op-fm, fscale-detune-unison, stereo-haas-branch-delay |
+| `lilith-glass-pad.smolfm` | Glas-FM-Pad: zwei 2-OP-Voices (2.76/2.769), Haas 17 ms | classic-two-op-fm, fscale-detune-unison, stereo-haas-branch-delay |
 | `ritual-drone.smolfm` | Ritual-Drohne: Quint-/Sub-Saw-Stack, Perlin-Gain-Swell | fscale-interval-power-stack, gain-drift-swell, fscale-detune-unison |
 
 ## Leads (5)
@@ -48,7 +48,7 @@ trägt den `note`-Node unverbunden (Trigger), Spielbare drums tracken die Taste.
 | `hex-bell-lead.smolfm` | Hex-Bell: 3.5545/1.1886 FM-Kaskade + Slapback | chained-fm-cascade, delay-slapback-doubler |
 | `teeth-saw-lead.smolfm` | Teeth-Saw: korreliertes Vibrato über Microdetune-Saws | lfo-vibrato-fm, fscale-detune-unison, serial-drive-filter-sculpt |
 | `cult-punk-lead.smolfm` | Cult-Punk: HP+LP-Square, Snappy-Gate, Eighths-Echo | subtractive-voice-chain, tempo-synced-delay-tail |
-| `siren-pale-lead.smolfm` | Pale Siren: Perlin-Drift-Sine + 285-ms-Rechtszweig | perlin-drift-modulation, stereo-haas-branch-delay |
+| `siren-pale-lead.smolfm` | Pale Siren: Perlin-Drift-Sine + 15-ms-Haas-Rechtszweig | perlin-drift-modulation, stereo-haas-branch-delay |
 | `gnawl-fold-lead.smolfm` | Gnawl: Fold-Shaper mit Drive-Envelope + 2.003x-Octave | drive-envelope-growl, fold-wave-oscillator, fscale-interval-power-stack, sub-instrument-layering |
 
 Die `techniques=`-Attribute listen die exakt verwendeten Katalog-Namen;

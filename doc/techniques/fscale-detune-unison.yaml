@@ -13,6 +13,27 @@ technique:
     on every key, because each oscillator integrates the momentary input
     frequency sample by sample.
 
+  tutorial: |
+    Unisono-Verstimmung — der klassische Dual-Osc-Detune aus Hardware- und
+    Software-Synths (z. B. Synth Ones morph2Detuning/detuningMultiplier),
+    hier als ausdrückliche Verdrahtung statt als Osc-interner Regler.
+    Wofür dient die Verdrahtung? Ein Tastensend fächert in zwei oder drei
+    note-gebundene Stimmen; jede verstimmte Stimme läuft durch einen
+    Frequenzteiler, dessen Faktor wenige Cents neben 1 liegt (Faktor =
+    2^(Cents/1200)), symmetrisch um die Mitte. Was ist das Ziel? Ein
+    tastenverfolgtes Schwebungsbreiten-Stack: summiert schlagen die
+    Stimmen mit Rate f·|r2−r1| — ein ±5-Cent-Paar bei 220 Hz pocht mit
+    rund 1.27 Hz: unten breit-langsam, oben sanfter schneller, auf jeder
+    Taste phasenexakt. Der Gang des Signals: (1) Die Note speist den
+    Anker-Osc direkt und beide Cent-Stufen. (2) Die verstimmten Oscs
+    rendert die Cents-Nebenwerte, der Anker den rohen Ton. (3) Alle drei
+    Komponenten treffen sich erst am Ausgang, jeder auf eigenem Eingang —
+    die per-Input-Levels sind die Lautstärkeregler des Unisono-Stacks. Optional
+    wandert ein Zweig weiter durch eine kleine FM (Synth Ones detuneLFO-
+    Gegenstück) und driftet um sein Cent-Offset. Verwandt:
+    static-detune-beating verstimmst statische Oscs in Hz — hier verankert
+    die Tastenverfolgung die Schwebung am gespielten Ton.
+
   involved_nodes:
     - type: note
       role: Keyboard send; the single pitch reference all detuned voices track.
@@ -81,6 +102,12 @@ technique:
       an LFO-mode oscillator feeding fm.modulator_in at a small amount, and
       that voice drifts around its cent offset over time.
 
+  graph_ascii: |
+      (note) ──out──┬──▶ (osc0 · anchor) ─────────────────▶ output.in1
+                    ├──▶ (fscale0 · +cents) ──▶ (osc1) ──▶ output.in2
+                    └──▶ (fscale1 · −cents) ──▶ (osc2) ──▶ output.in3
+      beat rate = f·|r2 − r1| · ┄ optional LFM branch adds organic drift
+
   parameters:
     - name: detune factors
       role: |
@@ -138,7 +165,7 @@ technique:
         for keyed beating; fscale-temper-beating pins its offsets to musical
         intervals (pure vs tempered), where here the cents are free artistic
         choice; pitch-related-instrument frames the general note-send
-        family.  A moving detune reuses the lvo-vibrato-fm socket with the
+        family.  A moving detune reuses the lfo-vibrato-fm socket with the
         LFO routed into the branch FM stage.
     - name: budget
       description: |

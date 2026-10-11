@@ -12,6 +12,31 @@ technique:
     chord voicing or drone — fifths, octaves, fourths — locked to the
     played note everywhere on the keyboard.
 
+  tutorial: |
+    Intervall-Stack — Power-Chords, Bordun und Dudelsack als eine Taste:
+    benannte temperierte Intervalle stapeln Akkord-Töne über der
+    Notenfrequenz. Wofür dient die Verdrahtung? Der Tastensend fächert
+    über Intervall-Teiler (Quinte, Oktave, Quarte, je nach Auswahl) in
+    eigene Stimmen, jede auf eigenem Ausgangs-Eingang mit eigenem Level.
+    Was ist das Ziel? Ein akkordisch klingender Ein-Tasten-Stack, der auf
+    jeder Taste exakt temperiert bleibt — anders als die reine
+    Oberreihen der fscale-organ-stack (rational ganzklingen) sitzt hier
+    jeder Zweig ein benanntes 12-TET-Intervall entfernt: das liest das
+    Ohr als Akkord- oder Drone-Voicing, nicht als Obertonfärbung. Der
+    Gang des Signals: (1) Die Note speist alle Intervall-Zweige.
+    (2) Jede Stimme spielt ihren Abstand von der Taste — Gesamt-Distanz
+    = Intervallratio 2^(k/12) mal Faktor 0..10. (3) Alle Komponenten
+    treffen sich an den eigenen Ausgangs-Eingängen; die Levels balancieren
+    den Stack. Klangbild: gestapelte offene Quinten und Oktaven,
+    Akkordtönung, die dem Keyboard in exakt
+    temperierten Ratios folgt, optional reingetrimmt über den Faktor für
+    reine Quinten-Stimmen.
+
+    Intervall mal Faktor setzt den Gesamt-Abstand (2^(k/12) × 0..10):
+    benannte Intervalle platzieren musikalisch, der Faktor trimmt
+    Cents oder dehnt inharmonisch. Verwandte im Katalog sind
+    fscale-organ-stack (rationale Oberreihen) und
+    fscale-temper-beating (Schwebungs-Absicht).
   involved_nodes:
     - type: note
       role: Keyboard send; the single pitch reference every interval branch derives from.
@@ -52,6 +77,12 @@ technique:
       inputs (signal); the per-input levels are the mix faders and the
       master level scales the whole stack.  Branches are strictly
       parallel and share only the note send.
+
+  graph_ascii: |
+      (note) ──out──┬──▶ (osc0 · fundamental)          ──▶ output.in1
+                    ├──▶ (fscale1 · fifth_up)  ──▶ (osc1) ─▶ output.in2
+                    └──▶ (fscale2 · octave_up) ──▶ (osc2) ─▶ output.in3
+      per-input levels = chord balance
 
   parameters:
     - name: interval per branch

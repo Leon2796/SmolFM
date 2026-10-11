@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="fscale-fadsr-pitch-jump" description="Minimal example instance of the technique fscale-fadsr-pitch-jump from the SmolFM technique catalogue." techniques="fscale-fadsr-pitch-jump">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="fscale0" interval="fifth_up" />
+      <Node id="fadsr0" release="0.1" attack="0.001" up="1.03" decay="0.2" sustain="0.0" down="0.97" />
+      <Node id="osc0" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fscale0" toPort="freq_in" />
+      <Wire from="fscale0" fromPort="out" to="fadsr0" toPort="freq_in" />
+      <Wire from="fadsr0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="80" />
+      <Box id="fscale0" x="390" y="80" />
+      <Box id="fadsr0" x="720" y="80" />
+      <Box id="osc0" x="1050" y="80" />
+      <Box id="output" x="1380" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

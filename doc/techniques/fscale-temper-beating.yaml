@@ -11,6 +11,28 @@ technique:
     proportional to the note frequency and the tone breathes like a
     celeste organ register, note for note, without any modulator.
 
+  tutorial: |
+    Temper-Schwebung — das Celeste-Register der Orgel-Literatur: zwei
+    tastenverfolgte Zweige liegen eine definierte Cent-Distanz auseinander,
+    einer reingesetzt auf den reinen Faktor, einer auf das benannte
+    temperierte Intervall. Wofür dient die Verdrahtung? Der Tastensend
+    speist beide fscale-Zweige: der reine Zweig hält den rationalen Faktor
+    (z. B. 1.5), der Temper-Zweig das exakte 12-TET-Intervall (fifth_up =
+    2^(7/12) ≈ 1.4983) — knapp zwei Cent auseinander. Was ist das Ziel?
+    Ein langsames, tastenproportionales Pochen: die Schwebungsrate ist
+    die Frequenzdifferenz, für die Quinte rund 0.0017·f — etwa 0.37 Hz
+    bei A3, 0.74 Hz bei A4; der Ton atmet notenweise wie das Celeste
+    einer Orgel, ohne jeden Modulator. Der Gang des Signals: (1) Die
+    Note fächert in beide Teiler. (2) Beide Oscs rendert ihre knapp
+    differenten Tonhöhen samt Obertönen. (3) Am Ausgang summiert die
+    Paarung — das langsame Schweben entsteht aus der Interferenz,
+    je Level ein Balancier-Regel. Stimmen beide Zweige exakt überein,
+    verstummt das Pochen — der Temper-Offset wird als alleiniger
+    Ursprung hörbar sichtbar. Verwandt: static-detune-beating
+    verstimmst statische Oscs in Hertz, tastenlos — hier verfolgt
+    jeder Zweig die Taste, fscale-organ-stack stapelt ohne Schwebungs-
+    Absicht.
+
   involved_nodes:
     - type: note
       role: Keyboard send; the single pitch reference both branches track.
@@ -65,6 +87,11 @@ technique:
       output.in1 (signal), osc2.out -> output.in2 (signal).  The two
       branches are parallel and share only the note send; no modulation
       nodes are involved.
+
+  graph_ascii: |
+      (note) ──out──┬──▶ (fscale1 · pure factor 1.5)  ──▶ (osc1) ──▶ output.in1
+                    └──▶ (fscale2 · fifth_up 1.4983) ──▶ (osc2) ──▶ output.in2
+      beat rate ≈ f·(1.5 − 2^(7/12)) · key-tracked celeste breath
 
   parameters:
     - name: pure factor

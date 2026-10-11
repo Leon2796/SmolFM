@@ -8,6 +8,21 @@ technique:
     duller thud on ghost notes — the accent decides the brightness, the
     noise envelope decides the length.
 
+  tutorial: |
+    Filter-Snap je nach Anschlag — das velocity-gesteuerte Filter (VCF-Ver-
+    halten), das am 808-Snare-Noise das typische Snap liefert. Wofür dient
+    die Verdrahtung? Die Anschlagstärke skaliert die Cutoff-Frequenz eines
+    Filters, sodass Helligkeit der Spielweise folgt. Was ist das Ziel?
+    Betonte Hits lassen das Rausch-Fenster weit aufstoßen — frische
+    Transienten und helle Oberwellen stürzen herein; soft angeschlagene
+    Ghost Notes hören nur den dumpfen Rumpf, der Rhythmus bleibt lesbar.
+    Der Gang des Signals: (1) Die percussive Quelle liefert Rauschen samt
+    Einsatz-Transienten. (2) Das Filter formt — Vollgas-Cutoff bei Akzenten,
+    dunkler Thud bei sanften Schlägen. (3) Der Ausgang erhält die getönte
+    Ebene. Zusammen mit 808-accent-gain akzentuiert Lautheit und Helligkeit
+    wie auf dem Original — die Basis-Cutoff bleibt Anker für getrennte
+    Sweeps über cutoff_mod_in.
+
   involved_nodes:
     - type: note
       role: MIDI source; feeds pitch, the accent velocity and (via an osc)
@@ -33,6 +48,11 @@ technique:
       filter.vel (velocity).  filter.out -> output.in1 (signal).
       cutoff_mod_in remains available for a separate envelope/LFO sweep —
       it replaces the base cutoff before velocity scales it.
+
+  graph_ascii: |
+      (note) ──vel──▶ (filter.vel)             accent scales cutoff per note
+      (osc · noise/percussive source) ──out──▶ (filter · tone) ──out──▶ (output)
+      (cutoff_mod_in ┄┄ stays free for a separate sweep)
 
   parameters:
     - name: base cutoff

@@ -9,6 +9,26 @@ technique:
     key.  The LFO rate sets the trill speed and the amount sets its width -
     the classic expressive vibrato of a lead voice.
 
+  tutorial: |
+    Vibrato — das klassische expressive Sing-Spiel der Streicher- und
+    Lead-Literatur: eine Sinus-LFO wischt periodisch um die Tonhöhe, und
+    die Breite bleibt pro Taste ein festes musikalisches Intervall. Wofür
+    dient die Verdrahtung? Die Sinus-LFO läuft in den Modulator-Eingang
+    der FM-Stufe, deren Ausgang die Carrier-Note steuert; der FM-Mittlung
+    out = f·(1 + amount·LFO) macht die Wobble-Breite proportional zur
+    gespielten Note. Was ist das Ziel? Lebendige Leads: unter 2 Hz ein
+    langsames Tonhöhen-Atmen, in der Mitte das klassische Vibrato-Trill
+    (Rate = LFO, Breite = Amount), breit aufgedreht jammert es sirren-
+    artig über den Halbton hinaus. Der Gang des Signals: (1) Die Note
+    speist die FM-Mitte. (2) Die Sinus-LFO gibt das periodische
+    Modulationssignal — der Takt ist die Rate, nicht die Uhr irgendeines
+    Zufalls. (3) Die FM-Stufe wandelt in tastenproportionale Tonhöhe.
+    (4) Der Carrier rendert die schwingende Wellenform, der Ausgang
+    übernimmt. Verwandt: perlin-drift-modulation speist denselben
+    Anschlüsse mit Nicht-Wiederhol-Drift statt festem Takt; eine LFO
+    kann mehrere FM-Stufen speisen, für gleiche Vibrato über ganze
+    Stimmen-Gruppen.
+
   involved_nodes:
     - type: note
       role: MIDI note source; carrier frequency for the FM stage.
@@ -56,6 +76,10 @@ technique:
       -> fm.modulator_in (signal).  fm.out -> carrier.note_in (frequency).
       carrier.out -> output (signal).  The vibrato source runs free of the
       note; the proportional FM stage scales its depth to the played key.
+
+  graph_ascii: |
+      (note) ──out──▶ (fm.freq_in) ──out──▶ (osc · carrier.note_in) ──out──▶ (output)
+      (osc · sine LFO) ──out──▶ (fm.modulator_in)      depth = amount × note · rate = speed
 
   parameters:
     - name: lfo rate

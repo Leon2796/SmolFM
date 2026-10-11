@@ -7,6 +7,17 @@ technique:
     mid feedback and half mix the voice leaves a musical echo tail that
     repeats on the beat.
 
+  tutorial: |
+    Tempo-Sync-Echo — das beatgebundene Delay der Dub-Literatur: die
+    Wiederholungsdistanz ist eine Notenlänge, keine freien Millisekunden.
+    Wofür dient die Verdrahtung? Das trockene Signal läuft in eine Zelle
+    mit Sync an — die Division (Halbe, Achtel, ...) wird zum Abstand.
+    Was ist das Ziel? Ein musikalischer Nachklang auf dem Raster; ein
+    Division-Wechsel halbiert oder verdoppelt den Abstand hörbar. Der
+    Gang: (1) Quelle samt Obertönen, (2) die Zelle wirft beatgebundene
+    Wiederholungen, (3) das Feedback zählt die Takte, (4) der Ausgang
+    mischt Trocken und Schweif — Varianten im delay-patterns-Register.
+
   involved_nodes:
     - type: osc
       role: Dry signal source in pitch or static mode.
@@ -31,6 +42,10 @@ technique:
       osc -> delay.in (signal).  delay.out -> output (signal).  The delay is
       the only processor; sync on turns the time parameter off and the
       division into the repeat distance.
+
+  graph_ascii: |
+      (osc · dry source) ──out──▶ (delay · sync on, division) ──out──▶ (output)
+                                  ▲ feedback stacks beat-locked repeats
 
   parameters:
     - name: sync

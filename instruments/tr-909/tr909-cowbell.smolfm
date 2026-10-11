@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="TR-909 Cowbell"
+         description="909-Cowbell als osc-sum-bus: zwei helle statische Quader-Partialien (540/800 Hz) durch Drive und Bandpass um 1700 Hz mit kurzen Metall-Decay und Velocity-Accent"
+         techniques="osc-sum-bus, 808-accent-gain, 808-accent-drive-shaper">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" waveform="square" mode="static" staticfreq="540" />
+      <Node id="osc1" waveform="square" mode="static" staticfreq="800" />
+      <Node id="add0" />
+      <Node id="shape0" shape="soft" drive="0.45" />
+      <Node id="filter0" mode="bp" cutoff="1700" resonance="0.55" />
+      <Node id="adsr0" attack="0.001" decay="0.25" sustain="0" release="0.05" />
+      <Node id="gain0" factor="0.44" />
+      <Node id="vsc0" curve="sqrt" scale="2.3" />
+      <Node id="output" level="0.72" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="add0" toPort="in1" />
+      <Wire from="osc1" fromPort="out" to="add0" toPort="in2" />
+      <Wire from="add0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="note" fromPort="vel" to="vsc0" toPort="vel_in" />
+      <Wire from="vsc0" fromPort="out" to="gain0" toPort="vel" />
+      <Wire from="vsc0" fromPort="out" to="shape0" toPort="vel" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="osc0" x="380" y="60" />
+      <Box id="osc1" x="380" y="380" />
+      <Box id="add0" x="700" y="220" />
+      <Box id="shape0" x="1020" y="220" />
+      <Box id="filter0" x="1340" y="220" />
+      <Box id="adsr0" x="1660" y="220" />
+      <Box id="gain0" x="1980" y="220" />
+      <Box id="vsc0" x="60" y="700" />
+      <Box id="output" x="2300" y="220" />
+    </Boxes>
+  </Layout>
+</SmolFM>

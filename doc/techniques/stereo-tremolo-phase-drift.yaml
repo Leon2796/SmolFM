@@ -10,6 +10,25 @@ technique:
     shrinks and drifts — tremolo that breathes into stereo instead of
     pulsing in place.
 
+  tutorial: |
+    Stereo-Tremolo-Phasedrift — das tremolierende Breitwerden der
+    Mischtechnik-Literatur: zwei fast gleich schnelle Tremolo-LFO atmen
+    die Seiten mit kleinem Rateschub — der Bildschwerpunkt wandert,
+    statt zu pumpen. Wofür dient die Verdrahtung? Der Splitter teilt
+    die Stimme seitenrein; jede Seite läuft in ihre eigene AM-Stufe,
+    deren Modulator ein eigener LFO mit gleicher Wellenform, Rate um
+    ein differierend ist; der Merger vereint beide. Was ist das Ziel?
+    Lautheits-Tremolo, das in die Breite atmet: die LFO-Phasen starten
+    bei Note-on verschränkt (Bild dead-center) und driften über die
+    Phase auseinander — danach schwellt und wandert die Kanal-Imbalance.
+    Der Gang des Signals: (1) Die Note stimmt die geteilte Stimme,
+    (2) die AM-Stufen atmen jede reine Seite mit ihrer Tiefenkontur,
+    (3) der Merger vereint, der Ausgang trägt das Bild; Monosicher —
+    der Downmix faltet zu einem gewöhnlichen gemeinsamen Tremolo.
+    Verwandt: am-tremolo-lfo (zentriert), stereo-side-gain-widener
+    (statische Balance) — hier bewegt sich die Tiefe, die Breite
+    zittert.
+
   involved_nodes:
     - type: note
       role: Keyboard send; pitches the split voice.
@@ -68,6 +87,12 @@ technique:
       merge.in1, am-right.out -> merge.in2 (signal).  merge.out ->
       output.in1 (signal).  Everything after the merger acts on both sides
       jointly.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · voice) ──out──▶ (split.in)
+      left side:  split.outL ──▶ am-L.carrier_in    (osc · LFO A, rate)        ──▶ am-L.modulator_in ──▶ merge.in1
+      right side: split.outR ──▶ am-R.carrier_in    (osc · LFO B, rate + delta) ──▶ am-R.modulator_in ──▶ merge.in2
+      (merge) ──out──▶ (output)     phases reset on note-on · the delta drifts the width open
 
   parameters:
     - name: tremolo rate pair

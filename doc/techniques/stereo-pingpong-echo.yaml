@@ -10,6 +10,25 @@ technique:
     composed entirely from the standard delay node, without any feedback
     wiring in the graph.
 
+  tutorial: |
+    Ping-Pong-Echo — das Bounce-Echo der Studio-Literatur, aus vier
+    Standard-Delay-Knoten gebaut: die Seiten des Splitters speisen
+    gestaffelte Taps bei t, 2t, 3t und 4t, und die per-Kanal-Summen
+    des Ausgangs sortieren die ungeraden Taps nach links, die
+    geraden nach rechts. Wofür dient die Verdrahtung? Der Splitter
+    teilt die Stimme seitenrein; der linke Zweig speist Delay 1 (t)
+    und Delay 3 (3t), der rechte Delay 2 (2t) und Delay 4 (4t); jeder
+    Tap landet auf eigenem Ausgangs-Eingang. Was ist das Ziel?
+    Dub-artige Bewegung zwischen den Ohren ohne Phasenartefakte —
+    ganz ohne Feedback-Verdrahtung, denn der Graph ist zyklenfrei:
+    das feste Vier-Tap-Fenster ist die Grenze, für den echten
+    Kreuzfeedback-Schweif braucht es den pingpong-Knotenmodus. Der
+    Gang des Signals: (1) Die Note stimmt die Stimme, (2) der
+    Splitter verteilt die Tap-Quellen, (3) die vier Zellen werfen
+    ihre gestaffelten Taps, optional eine trockene Kopie als
+    Mittel-Anker, (4) die Ausgangs-Per-Kanal-Summen wählen die Taps
+    seitenweise — der Bounce-Abstand ist die Basiszeit t.
+
   involved_nodes:
     - type: note
       role: Keyboard send driving the voice.
@@ -87,6 +106,12 @@ technique:
       free output input as the dry signal.  No merger is needed: the
       output's per-channel summing places the odd taps left and the even
       taps right.
+
+  graph_ascii: |
+      (osc · voice) ──out──▶ (split.in)
+      (split.outL) ──fan-out──▶ (delay t)  ──▶ output.in1 · (delay 3t) ──▶ output.in3   odd taps = left
+      (split.outR) ──fan-out──▶ (delay 2t) ──▶ output.in2 · (delay 4t) ──▶ output.in4   even taps = right
+      per-channel sums alternate the bounce · no feedback wiring
 
   parameters:
     - name: tap time t

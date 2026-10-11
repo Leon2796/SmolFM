@@ -11,6 +11,29 @@ technique:
     the modulation ramp.  This is the closest the graph gets to modal
     synthesis without a new processor.
 
+  tutorial: |
+    Hammer-Ping — die modale Anschlags-Synthese der Instrumentenbau-
+    Literatur, soweit ohne neuen Prozessor möglich: ein konstantes
+    Quellsignal läuft durch eine ADSR und treibt die Resonanz des Filters
+    als Anschlagsrampe, während ein Noise-Burst durch den tastenverfolgten
+    Cutoff läuft. Wofür dient die Verdrahtung? Die ADSR-getriebene Quelle
+    (statischer Osc → ADSR) landet auf resonance_mod_in; der Noise-
+    Impuls läuft in filter.in. Was ist das Ziel? Gestimmte Körper-Pings:
+    die Hüllkurvenspitze spitzt die Q genau dann, wenn der Breitband-
+    Impuls das Filter trifft — der Körper klingt auf seiner eigenen
+    Resonanzfrequenz wie eine angeschlagene Platte; Marimba bis Gong
+    nach Envelope-Länge. Der Gang des Signals: (1) Die Note verankert
+    die Ping-Tonhöhe über den Cutoff-Tracking. (2) Der Noise-Burst
+    liefert das breite Anreger-Spektrum. (3) Die Hammer-Hüllkurve
+    spitzt die Resonanz — effektive Q = res × (1 + m); die Attacke-
+    Decay-Kürze ist der Hammerimpuls. (4) Das Filter klingt aus —
+    nach dem Impuls singt der Körper, solange die Hammerhüllkurve
+    hält. (5) Der Ausgang trägt den Ping. Verwandt:
+    tuned-noise-percussion lässt die Resonanz statisch (Tonhöhe =
+    Filter-Cutoff); fadsr-cutoff-sweep treibt den Cutoff — hier ist
+    die dritte Achse die Resonanzhüllkurve selbst, gebaut aus
+    statischem Osc und ADSR.
+
   involved_nodes:
     - type: note
       role: Keyboard send; pitches the filter's resonant frequency through cutoff tracking.
@@ -56,6 +79,13 @@ technique:
       shapes the constant into a 0..1 control ramp with its own attack,
       decay, sustain and release; a short attack and decay produce the
       hammer impulse on the resonance.
+
+  graph_ascii: |
+      (note) ──out──▶ (filter.cutoff_mod_in)        tracked ping pitch
+      (osc · static ±1) ──out──▶ (adsr · hammer env) ──out──▶ (filter.resonance_mod_in)
+      (osc · noise burst) ──out──▶ (filter.in)
+      (filter) ──out──▶ (output)
+      ╳ (fadsr · optional decay trim on the cutoff)  node listed, unwired in this topology
 
   parameters:
     - name: hammer envelope

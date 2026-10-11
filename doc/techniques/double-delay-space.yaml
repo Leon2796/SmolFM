@@ -7,6 +7,20 @@ technique:
     repeats that repeat again — one path, two echo distances, a complex
     decaying space.
 
+  tutorial: |
+    Doppelter Echo-Raum — zwei Delays in Serie, im Studio als Slapback-into-
+    Tail-Kette bekannt. Wofür dient die Verdrahtung? Die kurze Zelle wirft
+    den schnellen Slapback, die lange Zelle wiederholt danach sowohl das
+    Trockensignal als auch diesen Slapback noch einmal. Was ist das Ziel?
+    Ein komplexer Ausklang mit zwei hörbaren Abständen — plus deren Summe
+    und Differenz — hinter einer einzigen Stimme. Der Gang des Signals:
+    (1) Der Osc liefert die Wellenform samt Obertönen. (2) Die kurze Zelle
+    antwortet knapp hinter dem Einsatz. (3) Die lange Zelle baut den weiten
+    Schweif und wiederholt auch den Slapback — das Muster verdichtet sich
+    zu einem decayschattierten Raum. (4) Der Ausgang mischt die Ebene.
+    Kehrt man die Reihenfolge um, wandert der enge Tap hinter den weiten
+    Schweif — die Reihenfolge der Abstände ist Teil des Klangs.
+
   involved_nodes:
     - type: osc
       role: Dry signal source in pitch or static mode.
@@ -40,6 +54,9 @@ technique:
       delay1.out -> output (signal).  Two serial stages with independent
       time, feedback and mix; the second stage repeats the first stage's
       repeats as well.
+
+  graph_ascii: |
+      (osc · dry source) ──out──▶ (delay 0 · slapback) ──out──▶ (delay 1 · long tail) ──out──▶ (output)
 
   parameters:
     - name: first stage time

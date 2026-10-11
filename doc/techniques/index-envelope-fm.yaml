@@ -11,6 +11,25 @@ technique:
     multiplies it (1 + m) sample by sample, and the spectrum evolves while
     the pitch stays locked.
 
+  tutorial: |
+    Index-Hüllkurve — die DX-Klassiker der FM-Literatur: der Modulations-
+    index selbst folgt einer Hüllkurve, während die Tonhöhe verankert
+    bleibt. Wofür dient die Verdrahtung? Eine statische Quelle speist
+    eine ADSR, deren Verlauf auf amount_mod_in der FM-Stufe landet;
+    abtastweise multipliziert der Index den Basis-Amount mit (1 + m).
+    Was ist das Ziel? Das Spektrum blüht, die Pitch sitzt fest: die Note
+    beginnt mit geschlossenem Index als klarer Sinus und blüht in volle
+    Seitenband-Fülle — oder öffnet hell und schließt in reinen Ton.
+    Der Gang des Signals: (1) Die Notenfrequenz tritt in die FM-Stufe.
+    (2) Der statische Osc liefert die ±1-Konstante, die ADSR formt sie
+    in die Index-Rampe. (3) Der Modulator-Osc gibt das Modulationssignal;
+    die FM-Stufe mischt beides mit dem laufenden Index. (4) Der Carrier
+    rendert die wandelnde Wellenform, der Ausgang trägt sie. Im Katalog
+    ist dies die FM-Verwandtschaft des Drive-Hüllkurven-Konzepts
+    (drive-envelope-growl) — dort formt die Hüllkurve den Wave-Shaper-
+    Antrieb, hier den Modulationsindex; shaped-modulator-fm formt
+    stattdessen das Modulatorsignal selbst.
+
   involved_nodes:
     - type: note
       role: Keyboard send; pitches the FM centre through the carrier path.
@@ -56,6 +75,11 @@ technique:
       (signal).  The envelope is a patch: a static oscillator provides the
       constant the ADSR needs as input, and that shaped constant becomes
       the per-sample multiplier on the index.
+
+  graph_ascii: |
+      (osc · static ±1) ──out──▶ (adsr · index env) ──out──▶ (fm.amount_mod_in)
+      (note) ──out──▶ (fm.freq_in) ──out──▶ (osc · carrier.note_in) ──out──▶ (output)
+      (osc · modulator) ──out──▶ (fm.modulator_in)       pitch stays locked · index blooms
 
   parameters:
     - name: base fm amount

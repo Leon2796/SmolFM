@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="am-tremolo-lfo" description="Minimal example instance of the technique am-tremolo-lfo from the SmolFM technique catalogue." techniques="am-tremolo-lfo">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" />
+      <Node id="osc1" waveform="sine" mode="lfo" lforate="5.5" />
+      <Node id="am0" amount="0.7" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="am0" toPort="carrier_in" />
+      <Wire from="osc1" fromPort="out" to="am0" toPort="modulator_in" />
+      <Wire from="am0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="560" />
+      <Box id="osc0" x="60" y="80" />
+      <Box id="osc1" x="60" y="320" />
+      <Box id="am0" x="390" y="80" />
+      <Box id="output" x="720" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

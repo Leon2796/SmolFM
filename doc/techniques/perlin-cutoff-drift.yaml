@@ -9,6 +9,23 @@ technique:
     base frequency - the voice breathes through a filter that never loops,
     while periodic sine wobbling would flicker on a fixed cycle.
 
+  tutorial: |
+    Perlin-Cutoff-Drift — das organische Filteratmen der Random-
+    Literatur: eine Noise-Familien-LFO schaukelt die Cutoff-Frequenz
+    ohne festes Muster. Wofür dient die Verdrahtung? Der Drift-Osc
+    (perlin/simplex, LFO-Modus) läuft in den Modulator-Eingang einer
+    FM-Stufe; der FM-Ausgang — eine echte Frequenz — ersetzt auf
+    cutoff_mod_in den statischen Cutoff (Mitte × (1 + amount ×
+    Modulator)). Was ist das Ziel? Nie wiederkehrende Klangbewegung:
+    die Stimme atmet durch ein Filter ohne festen Zyklus — langsame
+    Klangschattierung, bei höheren Rates rastlose Flickerei. Der Gang
+    des Signals: (1) Die Note speist die FM-Mitte, (2) der Drift gibt
+    das wandernde Band (proportional zur Mitte), (3) das Filter formt
+    mit lebendem Cutoff. Geschwister: lfo-cutoff-wobble (periodisch),
+    fadsr-cutoff-sweep (deterministisch), perlin-drift-modulation
+    (Tonhöhe), perlin-tremolo-breath (Lautheit) — die Drift hier
+    sitzt in der Klangfarbe.
+
   involved_nodes:
     - type: note
       role: MIDI note source; base frequency for the drift FM stage.
@@ -69,6 +86,12 @@ technique:
       (signal).  filter.out -> output (signal).  The modulation input
       overrides the static cutoff, so the drift is the live cutoff and the
       static cutoff parameter is the untouched base centre.
+
+  graph_ascii: |
+      (note) ──out──▶ (fm.freq_in · centre) ──out──▶ (filter.cutoff_mod_in)
+      (osc · lfo perlin drift) ──out──▶ (fm.modulator_in)
+      (osc · voice) ──out──▶ (filter.in) → (filter.out) ──▶ (output)
+      non-repeating cutoff wander · FM bridge turns signal → frequency
 
   parameters:
     - name: drift rate

@@ -1,0 +1,289 @@
+technique:
+  name: delay-patterns
+
+  idea: |
+    A sibling summarizing registry of the catalogue: the recurring
+    DELAY-LINE patterns are abstracted here — a voice strand runs through
+    delay cell(s) whose character is set by time (free milliseconds or
+    tempo-synced division), feedback and mix, optionally extended by
+    further serial stages or parallel strands, until the strand(s) reach
+    the output.  This file holds the abstract skeleton, and its
+    instances: section lists every catalogue technique whose technique
+    identity is such a delay-line pattern: linear time-axis identity —
+    resonator colour, doubling, beat tail, two-stage space, boosted
+    bursts, metrical polyrhythm, blended echo — not a driver pattern.
+    Each instance carries its own concrete `graph_ascii` (the specific
+    course of the pattern in THAT graph), a `verlauf` short description
+    and a `tonal` line with its tonal footprint.  It is a reference
+    entry: no single render, no instrument instantiates it directly —
+    new delay-line techniques anchor into one of the family bars below
+    and register as its instance.  Delays that serve as a modulated
+    TARGET inside a driver pattern (flanger-delay-line, vibrato-tail-
+    echo, dub-wobble-echo-drift) keep their home in driver-patterns —
+    each technique identity registers in exactly one registry.
+
+  tutorial: |
+    Verzögerung — im Studio meist Delay oder Echo genannt — zählt zu
+    den ältesten Studioeffekten überhaupt. Wofür benutzt man die
+    Verdrahtung? Die Zelle
+    verschiebt eine Kopie der Stimme in die Zeit — der Standard-Einsatz
+    am Synthesizer ist das Echo: die Wiederholung als slapback-Verdopplung
+    unter die Stimme, als Schweif auf den Beat oder als Resonanzfärbung
+    unter dem Klang. Was ist das Ziel? Das Ohr liest jede Kopie als
+    spätere, kleinere Energie — die Stimme gewinnt Tiefe und Nachklang,
+    ohne dass eine zweite Quelle hinzukommt. Der Verlauf bleibt dabei
+    immer derselbe —
+    (osc · voice) ──out──▶ (delay · time · feedback · mix) ──out──▶ (output) —
+    und innerhalb des Knotens kehren mix und feedback die Wiederholungen
+    zurück. Was die Klänge unterscheidet, ist allein das Regime von Zeit,
+    Wiederholungsanzahl und Mischung.
+    Schritt für Schritt entlang des Graphen:
+    1) Die Stimme betritt die Zelle: Wellenform samt Obertönen und den
+       Transienten des Einsatzes. Alles spätere Hörbare baut darauf auf —
+       fehlt ein Oberton im Eingang, fehlt er in jeder Wiederholung.
+    2) time bestimmt den Abstand und damit das D1-Regime, das das Ohr liest:
+       - comb-resonator-delay: unter 25 ms verschmilzt die Wiederholung mit
+         dem Trockensignal. Die periodische Überlagerung kämmt das Spektrum
+         in stehende Peaks (Abstand 1000 ms/Zeit in Hz) und dazwischen
+         liegende Auslöschungen; auf gehaltenen Tönen liest sich das als
+         metallische Rohr- oder Federresonanz, beim Gleiten der Stimme
+         wandern Schwebungen durch das Obertongitter.
+       - delay-slapback-doubler: 30..80 ms trennen die Wiederholung als
+         diskrete Kopie knapp hinter dem Einsatz. Niedriges feedback hält
+         nur ein bis zwei Echos; jede Attacke bekommt einen doppelten
+         Schatten — die Stimme wirkt verdoppelt und breiter, ganz ohne
+         Modulation.
+       - tempo-synced-delay-tail: Sync bindet die Zeit an Noten-Teilungen.
+         Das Echo sitzt auf dem Beat; wechselt die Division, halbiert oder
+         verdoppelt sich der Abstand hörbar — ein musikalisches Nachklingen
+         hinter jedem Einsatz.
+    3) feedback zählt die Wiederholungen (Einzelkopie, getakteter Schweif,
+       stehende Resonanz), mix mischt sie unter das Trockene.
+    D2 verlängert den Verlauf um eine zweite Stufe: double-delay-space
+    zerfällt darin in Abschnitte und baut einen langen Schweif,
+    burst-delay-resonance hebt kurze Wiederholungsbündel wieder an.
+    D3 gabelt die Stimme in unabhängige Stränge:
+    division-polyrhythm-echo fährt verschiedene Noten-Teilungen, deren
+    nicht zusammentreffende Einsätze wie Schwebungen gegeneinander
+    wandern; der parallel-echo-blend mischt Trocken- und Echostrang
+    zur Balance.
+    Einbindung: alle sieben Instanzen hängen als Bars unter dem
+    Wurzel-Skelett delay-pattern; ihre Zellen importieren dasselbe
+    Zeit-Feedback-Mix-Gerüst. Die drei Techniken, deren Identität ein
+    Driver auf dieser Zelle ist (flanger-delay-line, vibrato-tail-echo,
+    dub-wobble-echo-drift), stehen als Nachbarn in driver-patterns; die
+    Ein-Mitgliedschafts-Regel prüft check-catalog.ps1 katalogweit.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send driving the voice (present where the instance
+        tracks the played note).
+    - type: osc
+      role: Voice or dry-signal source that feeds the line(s).
+    - type: delay
+      role: The delay cell(s); time, feedback, mix and sync define the
+        strand's course.
+    - type: gain
+      role: Strand trim or strand re-lift stage in fanout and boost
+        lines.
+    - type: output
+      role: Summing endpoint, or per-channel summer in fanout lines.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the voice (frequency).
+    - node_role: Voice source
+      port: note_in
+      role: Receives the played note (frequency).
+    - node_role: Voice source
+      port: out
+      role: Dry signal into the cell(s) and strand(s) (signal).
+    - node_role: Delay cell
+      port: in
+      role: Receives the strand source (signal).
+    - node_role: Delay cell
+      port: out
+      role: Repeat/echo strand onward (signal).
+    - node_role: Trim stage
+      port: in
+      role: Receives a strand (signal).
+    - node_role: Trim stage
+      port: out
+      role: Scaled strand onward (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input per strand, or per-channel sums in fanout
+        lines (signal).
+
+  topology:
+    description: |
+      Abstract skeleton: (osc · voice) ──out──▶ (delay · time/fb/mix)
+      ──out──▶ (output) — one serial cell.  Variations register as
+      instances: the same cell in a different parameter regime (comb
+      below 25 ms, slapback doubling at 30..80 ms, sync on for
+      beat-locked tails); a serial second stage behind the cell (a
+      long-tail delay, or a gain that re-lifts the strand); or a
+      parallel fan-out where the voice splits into independent strands
+      that only meet at the output (two sync divisions, dry versus echo
+      strand).
+
+  graph_ascii: |
+      (osc · voice) ──out──▶ (delay · time · feedback · mix) ──out──▶ (output)
+                             ▲ feedback recirculates inside the node
+      D2 adds a serial stage behind the cell; D3 fans the voice into
+      parallel strands that meet at the output
+      each instance below carries its own concrete ascii: which regime,
+      which stages, which strand layout
+
+  parameters:
+    - name: cell character
+      role: |
+        The pattern's shape parameters per cell: time (free ms or sync
+        division), feedback (repeat count) and mix (strand balance).
+
+  relationships:
+    - name: identity-rule
+      description: |
+        Same cell wiring with the same time/feedback/sync regime and the
+        same perceptual Verlauf = duplicate (resolve by adaptation); a
+        different regime at the same wiring = a family member in another
+        bar.  Techniques whose identity is a driver pattern acting on a
+        delay (delay as modulated target) belong to driver-patterns.
+    - name: member-scope
+      description: |
+        Single membership per technique identity: an instance registered
+        here may not also appear as an instance in driver-patterns or
+        stereo-branch-patterns (checked catalogue-wide by
+        check-catalog.ps1).  The three driver-over-delay techniques are
+        cited as neighbours only: flanger-delay-line, vibrato-tail-echo,
+        dub-wobble-echo-drift.
+
+  perceptual_effects:
+    - one readable map over the catalogue's delay-line families
+    - faster duplicate audits through the regime x wiring x Verlauf
+      identity rule
+    - new delay-line techniques anchor into an existing family bar before
+      they may grow the catalogue
+
+  instances:
+    # ── technique tree ──────────────────────────────────────────────────
+    # delay-pattern (root skeleton) — the family bars below are its
+    # instances at the coarse grain
+    #   ├─ D1 single-cell line  · 3 — one delay cell; the identity is the
+    #   │     time/feedback/sync regime (comb · slapback · beat tail)
+    #   ├─ D2 serial stages     · 2 — a second stage extends the line
+    #   │     (long-tail delay · strand re-lift)
+    #   └─ D3 parallel fanout   · 2 — strands run independently and meet
+    #         at the output (two sync divisions · dry vs echo strand)
+    # third level: each `- name:` entry below ◁ is a  its family bar
+    # neighbours (registered in driver-patterns — delay as modulated
+    # target, not re-listed here, single membership gate):
+    # flanger-delay-line · vibrato-tail-echo · dub-wobble-echo-drift
+    # ── D1 single-cell delay lines ─────────────────────────────────────
+    #   family node: single-cell-line  ◁ is a  delay-pattern
+    #   course: voice ──▶ one delay cell ──▶ output; the regime of time,
+    #   feedback and sync decides whether the repeat reads as resonance,
+    #   doubling or a beat-locked tail; 3 instances.
+    - name: comb-resonator-delay
+      pattern: D1 · single cell · free time < 25 ms · strong feedback · sync off — comb regime
+      graph_ascii: |
+        (osc · voice) ──out──▶ (delay · comb engine) ──out──▶ (output)
+                               ▲ mix + feedback recirculate inside the node
+      verlauf: |
+        Fixed millisecond distance below 25 ms; mix and feedback
+        recirculate the repeat until it fuses with the dry signal into a
+        standing resonance — no distinct echo at any time.
+      tonal: |
+        Metallic pipe or spring resonance behind the voice; static comb
+        peaks at 1000/time Hz, hollow flanger sheen on pitched tones.
+
+    - name: delay-slapback-doubler
+      pattern: D1 · single cell · free 30..80 ms · low feedback · half mix — slapback regime
+      graph_ascii: |
+        (osc · dry source) ──out──▶ (delay · single tap) ──out──▶ (output)
+                                    ▲ internal feedback keeps one repeat
+      verlauf: |
+        One discrete early repetition right after the onset, then the
+        path falls quiet; feedback below 0.4 holds at most one to two
+        repeats, and the repeat keeps a fixed free distance.
+      tonal: |
+        Doubled, wider voice without any modulation — rockabilly-style
+        slapback onset, subtle thickness on static tones.
+
+    - name: tempo-synced-delay-tail
+      pattern: D1 · single cell · sync on (division) · mid feedback — beat tail regime
+      graph_ascii: |
+        (osc · dry source) ──out──▶ (delay · sync on, division) ──out──▶ (output)
+                                    ▲ feedback stacks beat-locked repeats
+      verlauf: |
+        The repeat distance is the chosen note division of the current
+        tempo; the tail repeats on the beat, and a switch of the division
+        halves or doubles the spacing.
+      tonal: |
+        Musical echo tail locked to the tempo — dub-style quarter and
+        eighth repeats, a wide afterglow behind every note.
+
+    # ── D2 serial stage delays ──────────────────────────────────────────
+    #   family node: serial-stage-lines  ◁ is a  delay-pattern
+    #   course: voice ──▶ delay cell ──▶ second stage ──▶ output; the
+    #   second stage extends or reshapes the line; 2 instances.
+
+    - name: double-delay-space
+      pattern: D2 · serial stages · slapback stage → long tail stage
+      graph_ascii: |
+        (osc · dry source) ──out──▶ (delay 0 · slapback) ──out──▶ (delay 1 · long tail) ──out──▶ (output)
+      verlauf: |
+        Two distances in one path: the short slapback echoes first, then
+        the long stage repeats the dry signal and the slapback — the
+        pattern contains both distances plus sum and difference spacing.
+      tonal: |
+        Layered slapback plus wide tail — a complex, decaying echo space
+        with two audible distances.
+    - name: burst-delay-resonance
+      pattern: D2 · serial stages · strong-feedback delay → gain re-lift of the strand
+      graph_ascii: |
+        (note) ──out──▶ (osc · voice) ──out──▶ (delay · burst engine) ──out──▶ (gain · tail boost) ──out──▶ (output)
+      verlauf: |
+        Mid free times (150..450 ms) space the repeats at an echo rate;
+        feedback recirculates a long decay while the gain stage lifts the
+        fading strand back up burst after burst.
+      tonal: |
+        Punchy repeating pulse bursts with a long tail — dub-tunnel
+        rhythm from one voice, forward-pressed echo energy.
+
+    # ── D3 parallel fanout delays ───────────────────────────────────────
+    #   family node: parallel-fanout-lines  ◁ is a  delay-pattern
+    #   course: the voice fans out into independent strands that meet
+    #   only at the output; the fanout layout defines the behaviour;
+    #   2 instances.
+
+    - name: division-polyrhythm-echo
+      pattern: D3 · parallel fanout · two synced delay lines on different divisions
+      graph_ascii: |
+        (osc · dry voice) ──out──┬──▶ (delay A · coarse division) ──out──▶ output.in1
+                                 └──▶ (delay B · fine division)   ──out──▶ output.in2
+
+        both lines sync on · no line modulates the other
+      verlauf: |
+        Two tempo-locked tails at independent divisions run in parallel;
+        powers-of-two division pairs fold every repeat overlap onto one
+        common metrical grid.
+      tonal: |
+        Polyrhythmic echo mesh — a slow echo frame filled with fine
+        metrical dust, always on the grid, never drifting.
+
+    - name: parallel-echo-blend
+      pattern: D3 · parallel fanout · dry trim strand vs delay — echo trim strand
+      graph_ascii: |
+        (osc · voice) ──out──┬─▶ (gain · dry trim) ────────────────────▶ output.in1
+                             └─▶ (delay · echo layer) ──▶ (gain · echo trim) ──▶ output.in2
+
+        strand balance = the depth control · dry bypasses the delay
+      verlauf: |
+        The dry strand stays instant while the echo strand repeats on its
+        own free time and feedback; the balance lives in the two strand
+        trims, not in the delay mix.
+      tonal: |
+        Voice clearly in front, echo layer breathing behind; a detached
+        spatial wash at long times and higher feedback.

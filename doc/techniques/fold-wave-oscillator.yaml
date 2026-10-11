@@ -8,6 +8,22 @@ technique:
     square-like richness to dense, metallic spectra — without any filter in
     the path.
 
+  tutorial: |
+    Faltwellen-Oscillator — der Wavefolder der analogen Werkstatt
+    (Buchla-Tradition): der Wave-Shaper ist der Klangfarbengenerator
+    selbst, das gefaltete Spektrum ist die Stimme. Wofür dient die
+    Verdrahtung? Ein schlichter Oscillator läuft direkt in den Fold-
+    Modus-Shaper; der Drive faltet die Wellenform über sich selbst —
+    von fast sauberem Sinus über quadratischem Reichtum bis zu dichten,
+    metallischen Spektren. Was ist das Ziel? Schrittweise Timbre-Morpho-
+    logie ganz ohne Filter: jede Faltstufe verdoppelt die hörbare
+    Oberwellendichte, die Drive-Position wählt die Stufe. Der Gang des
+    Signals: (1) Der Osc liefert die einfache Wellenform, (2) der Shaper
+    faltet schrittweise auf, (3) der Ausgang erhält die gefaltete Stimme —
+    Drive gegen das Ausgangsniveau aussteuern. Geschwister:
+    serial-drive-filter-sculpt (Shaper vor Filter),
+    noise-drive-percussion (Rausch-Folds für One-Shots).
+
   involved_nodes:
     - type: osc
       role: Source in pitch or static mode; plain waveform input for the
@@ -37,6 +53,10 @@ technique:
       osc.out -> shape.in (signal).  shape.out -> output (signal).  A
       two-stage serial path; the fold shaping defines the voice and no
       filter stage follows it.
+
+  graph_ascii: |
+      (osc · source) ──out──▶ (shape · fold, drive) ──out──▶ (output)
+                              ▲ drive = the timbre control · no filter follows
 
   parameters:
     - name: drive

@@ -11,6 +11,28 @@ technique:
     the sideband grid wanders with the key instead of drifting; the free
     factor on top trims or stretches the ratio in cents.
 
+  tutorial: |
+    Intervall-geformter FM-Modulator — die Intervallverankerung der
+    FM-Literatur: der Modulator verfolgt die Taste durch ein benanntes
+    12-TET-Intervall, der Träger bleibt auf der rohen Note. Wofür dient
+    die Verdrahtung? Die Note speist das FM-Stufenzentrum und — über den
+    Intervallteiler — den Modulator-Oscillator; dessen Ratio zum Träger
+    ist auf jeder Taste genau benannt (Quinte, Terz, Oktave), ein freier
+    Faktor darauf trimmt Cents oder dehnt inharmonisch. Was ist das Ziel?
+    Ein reproduzierbares relatives Spektrum: die Seitenband-Grid wandert
+    tastenverfolgt statt zu driften, wie es ein statisch auf Hertz
+    eingestellter Modulator nur an einer einzigen Note treffen würde.
+    Der Gang des Signals: (1) Die Note fächert in FM-Mitte und
+    Intervallteiler. (2) Der Intervall-Osc rendert das intervalsgelockte
+    Modulationssignal. (3) Die FM-Stufe umringt die rohe Trägermitte mit
+    den Abweichungen. (4) Der Carrier rendert die modulierte Wellenform,
+    der Ausgang übernimmt. Klanglich: ein hohler Quinten-Klang, der seine
+    Farbe auf jeder Taste behält; Glocken- und Blech-Grids auf exakt
+    musikalischen Ratios; Cents-Verschiebungen als inharmonisches
+    Farbfeld. Geschwister: fscale-fm-harmonic-shift schiebt das ganze
+    Cluster auf eine Oberwelle; classic-two-op-fm hält die Modulator-
+    Frequenz statisch in Hertz.
+
   involved_nodes:
     - type: note
       role: MIDI note source; feeds both the FM centre and the modulator branch.
@@ -68,6 +90,11 @@ technique:
       (frequency), carrier.out -> output (signal).  The interval lives
       only in the modulator branch, so the carrier centre follows the
       raw key while the modulation ratio is named and exact.
+
+  graph_ascii: |
+      (note) ──out──┬──▶ (fm.freq_in) ──out──▶ (osc · carrier.note_in) ──out──▶ (output)
+                    └──▶ (fscale · named interval) ──out──▶ (osc · modulator.note_in) ──out──▶ (fm.modulator_in)
+      carrier on the raw key · modulator ratio locked by the interval
 
   parameters:
     - name: modulator interval

@@ -14,6 +14,27 @@ technique:
     the F-ADSR articulates timbre in the frequency domain — a transient,
     note-tracked filter sweep rather than periodic wobble or pitch glide.
 
+  tutorial: |
+    Die Filter-Hüllkurve — der klassische Cutoff-Sweep der subtraktiven
+    Synthese, hier in der F-Reihe (F-ADSR) im Frequenzbereich verdrahtet.
+    Wofür dient die Verdrahtung? Die Noten-Quelle speist beide: die Stimme
+    mit Tonhöhe und einen F-ADSR, dessen Frequenzausgang als lebender
+    Cutoff auf cutoff_mod_in des Filters landet. Was ist das Ziel? Eine
+    transiente, tastenverfolgte Filteröffnung — das Filter öffnet und
+    schließt entlang einer ADSR-Gestalt, und weil die Hüllkurve die
+    Notenfrequenz skaliert, wandert das durchgestrichene Band mit jeder
+    Taste proportional mit. Solche Formant-artige Regionen folgen der
+    Melodie statt an einer festen Hz-Kante zu kleben. Der Gang des
+    Signals: (1) Die Note trifft gleichzeitig Hüllkurve und Stimme.
+    (2) Der F-ADSR multipliziert die Notenfrequenz mit seiner ADSR-Kurve
+    — der Ausgang ist der Cutoff in Hz; angeschlossen ersetzt er den
+    statischen Cutoff vollständig. (3) Das SVF formt die Stimme — lp/bp/
+    hp/notch wählt die Charakteristik. (4) Der Ausgang erhält den
+    gewischten Klang. Verwandtschaft: fadsr-fm-spectrum-sweep wischt
+    dasselbe Envelope-Familiengestell übers FM-Spektrum, fadsr-pitch-drop
+    über die Tonhöhe; das periodische Gegenstück mit Dauerwobble ist
+    lfo-cutoff-wobble. Ein Envelope darf mehr Filter gleichzeitig treiben.
+
   involved_nodes:
     - type: note
       role: MIDI note source; base frequency for both the envelope and the
@@ -68,6 +89,11 @@ technique:
       and the audio path meet only at the filter — while cutoff_mod_in is
       connected its value IS the cutoff in Hz, so the static cutoff
       parameter is ignored.
+
+  graph_ascii: |
+      (note) ──out──┬──▶ (fadsr · pitch env) ──out──▶ (filter.cutoff_mod_in)
+                    └──▶ (osc · voice) ──out──▶ (filter.in)
+      (filter) ──out──▶ (output)         cutoff port replaces the static value entirely
 
   parameters:
     - name: envelope factors

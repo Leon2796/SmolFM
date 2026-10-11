@@ -1,0 +1,341 @@
+technique:
+  name: stereo-branch-patterns
+
+  idea: |
+    A sibling summarizing registry of the catalogue: the recurring STEREO
+    BRANCH patterns are abstracted here — a splitter divides one signal
+    into its two pure side branches, each side runs through its own
+    per-side stage (or stays sample-exact), and a merger recombines the
+    branches into one stereo frame; variants drop the merger for the
+    output's per-channel sums or move the split upstream to a modulator.
+    This file holds the abstract skeleton, and its instances: section
+    lists every catalogue technique whose technique identity is this
+    split -> per-side stage -> merge routing: channel separation is the
+    technique itself (spectral split, level width, per-side echo fields,
+    precedence offset, per-side fm depth, bouncing taps), not a driver
+    pattern.  Each instance carries its own concrete `graph_ascii` (the
+    specific course of the pattern in THAT graph), a `verlauf` short
+    description and a `tonal` line with its tonal footprint.  It is a
+    reference entry: no single render, no instrument instantiates it
+    directly — new stereo-branch techniques anchor into one of the
+    family bars below and register as its instance.  The stereo
+    techniques that ride the same routing axis with drivers inside
+    (stereo-envelope-side-swap, stereo-pitch-envelope-spread,
+    stereo-micropitch-spread, stereo-tremolo-phase-drift) keep their
+    home in driver-patterns — each technique identity registers in
+    exactly one registry.
+
+  tutorial: |
+    Das Studio nennt dieses Muster Stereo-Widening: eine einzige Stimme
+    wird geteilt, je Seite gleichartig oder ungleichartig bearbeitet und
+    als Stereo-Gefüge wieder zusammengeführt. Wofür benutzt man die
+    Verdrahtung? Man teilt
+    die Stimme mit split in zwei reine Seitenäste, lässt beide ungleich
+    weiterlaufen und führt sie mit merge wieder zusammen — der Standard-Weg
+    am Synthesizer, aus einer mittigen Mono-Stimme Stereo zu machen. Was
+    ist das Ziel? Das Ohr ortet aus dem Abstand der Kanäle: die Quelle
+    wird breit, weit und räumlich — solange die Seiten verschieden
+    bleiben. Der Verlauf: (osc · voice) ──out──▶ (split · in);
+    split.outL und split.outR speisen je eine Stufe pro Seite, deren
+    Ausgänge auf merge.in1/in2 landen, und merge.out fährt das
+    Stereo-Gefüge zum Ausgang.
+    Schritt für Schritt entlang des Graphen:
+    1) Die Stimme erreicht split. Bleiben beide Seiten identisch, fallen
+       die Kanäle zu einem einzigen Phantom mittig zusammen — Verzweigung
+       allein hört man nicht.
+    2) Die Stufenpaare der S1-Familie erzeugen die Variation:
+       - stereo-complementary-filter-pan: links ein Tiefpass, rechts ein
+         Hochpass, beide auf gemeinsamem Cutoff. Der Sweep schiebt
+         Schallenergie von Kanal zu Kanal; die Obertöne bleiben links und
+         rechts ungleich hell, und das Ohr liest diese spektrale Asymmetrie
+         als Lage statt als Färbung — Filterung, die wie Panorama klingt.
+       - stereo-side-gain-widener: nur die Pegel unterscheiden sich. Das
+         Trim-Verhältnis platziert die Phantomquelle auf der L-R-Achse;
+         geht ein Trim gegen null, rückt die Stimme hart auf die
+         Gegenseite — Reine Intensitätsdifferenz ohne jeden Zeitverlauf.
+       - stereo-dual-delay-field: jede Seite erhält ihr eigenes
+         Zeit-Feedback-Mix-Rezept; ungleiche, nicht harmonisch gekoppelte
+          Zeiten entkoppeln die Echorhythmen — ein Puls pro Ohr; die
+          Pulsgitter wandern als Schwebungen gegeneinander und öffnen
+          einen auseinanderfallenden Nachhallraum.
+    3) merge fügt die Seiten wieder zusammen; die Varianten verschieben
+       oder umgehen diesen Knoten:
+       - stereo-haas-branch-delay (S2): ein Seitenast bleibt mustergetreu
+         direkt, der andere trägt die Stufe. Die direkte Hälfte verankert
+         das Klangereignis an seinem Ort (Haas-Präzedenz), die wenige
+         Millisekunden später eintreffende Kopie verbreitert dahinter —
+         die Transienten bleiben im Direktast sitzen, das Bild bleibt fest.
+       - stereo-fm-depth-split (S3): die Verzweigung verlagert sich vor den
+         Osc auf den Modulator; die Stufen werden zu einem FM-Paar, das
+         zwei Träger mit ungleicher Modulationstiefe biegt. Jede Seite
+         erhält ein eigenes Obertonspektrum; diese Spektralasymmetrie
+         trägt die Breite — Rauheit dort, wo die Tiefen auseinanderlaufen.
+       - stereo-pingpong-echo (S4): ohne Merger summiert der Ausgang je
+         Kanal selbst; die Echotaps schlagen abwechselnd links und rechts
+         ein, und mit jeder Tap-Zeit springt die Wiederholung von Ohr zu
+         Ohr — Bewegung, ohne dass die Quelle wandert.
+    Einbindung: die sechs Instanzen hängen an vier Bars — S1 mit drei
+    Stufenpaaren, S2/S3/S4 einzeln — unter dem Wurzel-Skelett
+    stereo-branch-pattern. Die vier Techniken, deren Identität Driver auf
+    dieser split/merge-Achse sind (stereo-envelope-side-swap,
+    stereo-pitch-envelope-spread, stereo-micropitch-spread,
+    stereo-tremolo-phase-drift), stehen in driver-patterns; die
+    Ein-Mitgliedschafts-Regel prüft check-catalog.ps1 katalogweit.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send driving the voice (and the modulator trace).
+    - type: osc
+      role: The centered source that is split (voice or modulator), plus
+        the carrier pair in the depth-split variant.
+    - type: split
+      role: Produces the pure left branch (outL) and the pure right
+        branch (outR).
+    - type: filter
+      role: Per-side stage — the lp/hp pair in the complementary
+        variant.
+    - type: gain
+      role: Per-side stage — the trim pair in the level-widener variant.
+    - type: delay
+      role: Per-side stage — the echo-field pair, the asymmetric side in
+        the direct-plus-staged variant, the taps in the merge-free
+        fanout.
+    - type: fm
+      role: Per-side stage — the fm pair in the depth-split variant.
+    - type: merge
+      role: Recombines the two branches into one stereo frame (absent
+        in the merge-free variant).
+    - type: output
+      role: Master endpoint for the merged frame, or per-channel summer.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the voice, the modulator and the
+        carriers (frequency).
+    - node_role: Source oscillator
+      port: note_in
+      role: Receives the played note so ratios stay fixed (frequency).
+    - node_role: Source oscillator
+      port: out
+      role: Centered signal into the splitter input (signal).
+    - node_role: Splitter
+      port: in
+      role: Receives the signal to divide (signal).
+    - node_role: Splitter
+      port: outL
+      role: Left-only branch into the left-side stage (signal).
+    - node_role: Splitter
+      port: outR
+      role: Right-only branch into the right-side stage (signal).
+    - node_role: Per-side stage
+      port: in (filter/gain/delay)
+      role: Receives that side's branch (signal).
+    - node_role: Per-side stage
+      port: out
+      role: Processed branch onward (signal, or frequency from an fm
+        stage towards a carrier).
+    - node_role: FM stage
+      port: freq_in
+      role: Receives the base frequency (frequency).
+    - node_role: FM stage
+      port: modulator_in
+      role: Receives that side's modulator branch (signal).
+    - node_role: Carrier oscillator
+      port: note_in
+      role: Renders the side's waveform from the bent frequency
+        (frequency).
+    - node_role: Merger
+      port: in1
+      role: Contributes the left channel (signal).
+    - node_role: Merger
+      port: in2
+      role: Contributes the right channel (signal).
+    - node_role: Merger
+      port: out
+      role: Combined stereo frame towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the merged frame, or per-tap inputs in
+        the merge-free variant (signal).
+
+  topology:
+    description: |
+      Abstract skeleton: (osc · voice) ──out──▶ (split.in);
+      split.outL and split.outR feed the per-side stage pair; the
+      pair's outputs land on merge.in1/in2 and merge.out runs on to the
+      output as one stereo frame.  Variations register as instances:
+      the stage pair's kind (filter · gain · delay); an asymmetric
+      layout where one side stays direct; a split upstream of the voice
+      (the modulator is divided, the stages are an fm pair bending two
+      carriers); or no merger at all — the output's per-channel sums
+      place the branches.
+
+  graph_ascii: |
+      (osc · voice) ──out──▶ (split · in)
+      (split.outL) ──▶ [ per-side stage L ] ──▶ merge.in1
+      (split.outR) ──▶ [ per-side stage R ] ──▶ merge.in2
+      (merge · stereo frame) ──out──▶ (output)
+      S2: one side stays direct · S3: the split sits on the modulator
+      (stages = fm pair + carriers) · S4: no merge — output per-channel
+      sums place the branches
+      each instance below carries its own concrete ascii: which stage
+      kind, which side is staged, where the branches meet
+  parameters:
+    - name: branch character
+      role: |
+        The pattern's shape parameters per variant: the per-side stage
+        kind and its settings (cutoff pair, trim ratio, echo times), or
+        the per-side offsets (fm amounts, tap times).
+
+  relationships:
+    - name: identity-rule
+      description: |
+        Same split/merge routing with the same per-side stage and the
+        same perceptual Verlauf = duplicate (resolve by adaptation); a
+        different per-side stage at the same routing = a family member
+        in another bar.  Techniques whose identity is a driver pattern
+        on this same routing axis belong to driver-patterns.
+    - name: member-scope
+      description: |
+        Single membership per technique identity: an instance registered
+        here may not also appear as an instance in driver-patterns or
+        delay-patterns (checked catalogue-wide by check-catalog.ps1).
+        The four driver-driven stereo spread techniques are cited as
+        neighbours only: stereo-envelope-side-swap,
+        stereo-pitch-envelope-spread, stereo-micropitch-spread,
+        stereo-tremolo-phase-drift.
+
+  perceptual_effects:
+    - one readable map over the catalogue's stereo-routing families
+    - faster duplicate audits through the routing x stage x Verlauf
+      identity rule
+    - new stereo-branch techniques anchor into an existing family bar
+      before they may grow the catalogue
+
+  instances:
+    # ── technique tree ──────────────────────────────────────────────────
+    # stereo-branch-pattern (root skeleton) — the family bars below are
+    # its instances at the coarse grain
+    #   ├─ S1 stage-pair branches   · 3 — one per-side stage of one kind
+    #   │     (filter pair · gain pair · delay pair)
+    #   ├─ S2 direct-plus-staged    · 1 — one side stays sample-exact
+    #   │     (haas precedence)
+    #   ├─ S3 split-upstream        · 1 — the modulator is split; stages
+    #   │     are an fm pair bending two carriers
+    #   └─ S4 merge-free fanout     · 1 — the output's per-channel sums
+    #         replace the merger (pingpong taps)
+    # third level: each `- name:` entry below ◁ is a  its family bar
+    # neighbours (registered in driver-patterns — same split/merge axis
+    # with drivers inside, not re-listed here, single membership gate):
+    # stereo-envelope-side-swap · stereo-pitch-envelope-spread ·
+    # stereo-micropitch-spread · stereo-tremolo-phase-drift
+    # ── S1 stage-pair branches ────────────────────────────────────────
+    #   family node: stage-pair-branches  ◁ is a  stereo-branch-pattern
+    #   course: split, then an identical-kind stage per side, then merge;
+    #   the stage kind's parameters define the stereo behaviour;
+    #   3 instances.
+    - name: stereo-complementary-filter-pan
+      pattern: S1 · filter pair (lp left · hp right) per side · shared cutoff sweep
+      graph_ascii: |
+        (note) ──out──▶ (osc · voice) ──out──▶ (split.in)
+        (split.outL) ──▶ (filter · lp left) ──▶ merge.in1
+        (split.outR) ──▶ (filter · hp right) ──▶ (merge.in2)
+        (merge · stereo frame) ──out──▶ (output)     complementary sweeps read as pan
+      verlauf: |
+        Both filters track the same cutoff: the sweep moves spectral
+        energy from one channel to the other — filtering that reads as
+        panning.
+      tonal: |
+        Cutoff sweep as a stereo pan move without a panner; asymmetric
+        warmth vs brightness; resonant formant split when sides diverge.
+
+    - name: stereo-side-gain-widener
+      pattern: S1 · gain pair (trim L · trim R) per side · level ratio = width
+      graph_ascii: |
+        (note) ──out──▶ (osc · voice) ──out──▶ (split.in)
+        (split.outL) ──▶ (gain L · trim) ──▶ merge.in1
+        (split.outR) ──▶ (gain R · trim) ──▶ (merge.in2)
+        (merge) ──out──▶ (output)        level ratio = width · equal trims = bit-transparent
+      verlauf: |
+        Static per-side levels; the trim ratio places the phantom source
+        along the left-right axis, with no time course at all.
+      tonal: |
+        Level-difference widening of a mono voice; soft phantom shift off
+        center, hard side focus when one trim goes to zero.
+
+    - name: stereo-dual-delay-field
+      pattern: S1 · delay pair (own time/feedback/mix per side) → merge
+      graph_ascii: |
+        (note) ──out──▶ (osc · voice) ──out──▶ (split.in)
+        (split.outL) ──▶ (delay L · own time/fb/mix) ──▶ merge.in1
+        (split.outR) ──▶ (delay R · independent) ──▶ (merge.in2)
+        (merge) ──out──▶ (output)        one echo rhythm per ear
+      verlauf: |
+        Two independent echo lines with their own time, feedback and mix;
+        unequal, non-harmonic times decouple the channel rhythms.
+      tonal: |
+        Spatially separated echo fields, one rhythm per ear — a wide
+        decaying space from one mono voice.
+
+    # ── S2 direct-plus-staged branch ──────────────────────────────────
+    #   family node: direct-plus-staged-branch  ◁ is a  stereo-branch-pattern
+    #   course: one side bypasses its stage entirely; the staged side's
+    #   offset defines the image; 1 instance.
+
+    - name: stereo-haas-branch-delay
+      pattern: S2 · direct left side vs right side through 1..20 ms delay (fb 0)
+      graph_ascii: |
+        (note) ──out──▶ (osc · voice) ──out──▶ (split.in)
+        (split.outL) ──direct──▶ merge.in1
+        (split.outR) ──▶ (delay · 1-20 ms, fb 0) ──▶ (merge.in2)
+        (merge) ──out──▶ (output)        precedence widens the phantom source
+      verlauf: |
+        Only the right branch carries delay state; the left stays
+        sample-exact.  The constant millisecond offset turns delay time
+        into a position control inside the precedence window.
+      tonal: |
+        Wide phantom source from one mono voice (Haas); a discrete double
+        tap once the offset leaves the precedence window.
+    # ── S3 split-upstream branches ──────────────────────────────────────
+    #   family node: split-upstream-branches  ◁ is a  stereo-branch-pattern
+    #   course: the split divides the modulator, not the voice; the stage
+    #   pair is an fm pair bending two identical carriers; 1 instance.
+
+    - name: stereo-fm-depth-split
+      pattern: S3 · split on the modulator · fm pair per side → 2 carriers → merge
+      graph_ascii: |
+        (note) ──out──┬─▶ (fm L.freq_in) ──▶ (osc · carrier L) ──▶ merge.in1
+                      ├─▶ (fm R.freq_in) ──▶ (osc · carrier R) ──▶ merge.in2
+                      └─▶ (osc · modulator.note_in) ──out──▶ (split.in)
+
+        (split.outL) ──▶ fm L.modulator_in · (split.outR) ──▶ fm R.modulator_in
+
+        (merge) ──out──▶ (output)        per-side FM depth from one modulator split
+      verlauf: |
+        One modulator split into two branches drives two fm stages; both
+        carriers stay locked to the played note — only the per-side
+        amounts diverge.
+      tonal: |
+        Channel-dependent spectral density from one modulator; asymmetric
+        FM brightness, evolving shimmer when the depths differ strongly.
+
+    # ── S4 merge-free fanout ────────────────────────────────────────────
+    #   family node: merge-free-fanout  ◁ is a  stereo-branch-pattern
+    #   course: the branches land on separate output inputs; the
+    #   output's per-channel sums do the placing; 1 instance (pingpong).
+
+    - name: stereo-pingpong-echo
+      pattern: S4 · 4 taps (t · 2t · 3t · 4t) → output per-channel sums, no merge
+      graph_ascii: |
+        (osc · voice) ──out──▶ (split.in)
+        (split.outL) ──fan-out──▶ (delay t)  ──▶ output.in1 · (delay 3t) ──▶ output.in3   odd taps = left
+        (split.outR) ──fan-out──▶ (delay 2t) ──▶ output.in2 · (delay 4t) ──▶ output.in4   even taps = right
+        per-channel sums alternate the bounce · no feedback wiring
+      verlauf: |
+        Staggered taps at t, 2t, 3t and 4t sorted by the output's
+        per-channel summing; the bounce distance equals the base t, the
+        window ends at 4t — an acyclic graph carries no feedback loop.
+      tonal: |
+        Echo bouncing between the ears without phase artefacts; dub-style
+        movement from a single note hit, a clean finite window.

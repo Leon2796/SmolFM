@@ -7,6 +7,18 @@ technique:
     never repeats, the level swells and recedes organically instead of
     pulsing on a grid: the voice breathes at the drift rate.
 
+  tutorial: |
+    Atmendes Tremolo — die organische Amplitudenatmung der Random-
+    Literatur: statt eines festen Pulses atmet die Lautheit wie eine
+    Tide. Wofür dient die Verdrahtung? Ein Perlin- oder Simplex-Osc
+    läuft in den Modulator-Eingang der AM-Stufe und schwankt die
+    Amplitude eines gehaltenen Carriers — der Modulator wiederholt
+    sich nie. Was ist das Ziel? Pegel schwellen ohne hörbaren Zyklus —
+    der periodische Geschwister (am-tremolo-lfo) pulst exakt auf der
+    LFO-Rate. Der Gang: Carrier samt Obertönen → AM-Stufe mit dem nie
+    wiederkehrenden Driftband (Tiefe = Amount, Tempo = Rate) →
+    Ausgang.
+
   involved_nodes:
     - type: osc
       role: Carrier in pitch or static mode; the sustained signal to
@@ -45,6 +57,11 @@ technique:
       am.modulator_in (signal).  am.out -> output (signal).  The AM stage
       is the only processor; its depth is the amount parameter and the
       drift voice's rate sets the breathing speed.
+
+  graph_ascii: |
+      (osc · carrier) ──out──▶ (am.carrier_in)
+      (osc · lfo perlin drift) ──out──▶ (am.modulator_in)
+      (am) ──out──▶ (output)        biased AM · breath without any cycle
 
   parameters:
     - name: am amount

@@ -10,6 +10,28 @@ technique:
     the classic level-based stereo widener — while the two branches stay a
     single mixed stream that can still be processed serially after the merge.
 
+  tutorial: |
+    Seitenpegel-Breiter — der klassische level-difference Stereo-Widener
+    der Mischtechnik-Literatur: ungleiche Trim-Gains auf den reinen
+    Seitenzweigen erzeugen eine Pegeldifferenz zwischen den Kanälen.
+    Wofür dient die Verdrahtung? Der Splitter teilt die Stimme seitenrein;
+    jeder Zweig läuft durch sein eigenes Gain; der Merger fasst beide in
+    ein Stereobbild auf EINEM Ausgangs-Eingang zusammen. Was ist das
+    Ziel? Pegeldifferenz-Breitung mit Kontrolle: gleiche Gains bleiben
+    bit-transparent (identisch links und rechts); ungleiche verschieben
+    die Phantomquelle weich von der Mitte, ein Trim auf null fokussiert
+    hart auf die Seite. Die Trim-Ratio (links/rechts) platziert die
+    Quelle auf der L-R-Achse — erst die Ratio tunen, dann beide Trims
+    zusammen reskalieren, damit die wahrgenommene Lautheit im
+    Sweet-Spot bleibt. Der Gang des Signals: (1) Die Note stimmt die
+    zentrierte Stimme. (2) Der Splitter trennt seitenrein.
+    (3) Jedes Gain skaliert seine Seite. (4) Der Merger rekonstruiert
+    das Stereobbild. (5) Der Ausgang trägt den Rahmen — anders als
+    zwei Stänge auf separaten Ausgangs-Eingängen bleibt das gefasste
+    Bild ein einzelner Draht, der noch eine weitere serielle Stufe
+    (Gain, Filter, Delay) vor dem Ausgang passieren kann, ohne das
+    Stereopaar neu zu spalten.
+
   involved_nodes:
     - type: note
       role: Keyboard send driving the voice.
@@ -80,6 +102,12 @@ technique:
       merge.out -> output.in1 (signal).  Each branch carries exactly one
       channel, so the trims act per side; nothing crosses channels between
       the splitter and the merger.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · voice) ──out──▶ (split.in)
+      (split.outL) ──▶ (gain L · trim) ──▶ merge.in1
+      (split.outR) ──▶ (gain R · trim) ──▶ (merge.in2)
+      (merge) ──out──▶ (output)        level ratio = width · equal trims = bit-transparent
 
   parameters:
     - name: left trim

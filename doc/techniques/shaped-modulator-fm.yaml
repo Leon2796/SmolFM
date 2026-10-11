@@ -12,6 +12,29 @@ technique:
     modulation path; serial-drive-filter-sculpt instead shapes the audio
     path behind the voice, colouring the rendered signal itself.
 
+  tutorial: |
+    Geformter FM-Modulator — der Wellenformer im FM-Operator, wie es die
+    FM-Werkkunst als shaped modulator kennt: Drive und Fold reichern das
+    Modulationssignal mit Oberwellen an, bevor der Index wirkt. Wofür
+    dient die Verdrahtung? Der Shaper sitzt zwischen Modulator-Osc und
+    dem modulator_in der FM-Stufe; die Carrier-Verhältnisse (Ratio,
+    Amount) bleiben unangetastet. Was ist das Ziel? Eine Spektral-
+    dichte-Regulierung ÜBER dem FM-Index: derselbe Index erzeugt mit
+    geformtem Modulator ein dichteres, helleres Seitenbandgewebe —
+    ein stufenloser Morph vom sauberen Zwei-Operator-FM zu knurrenden
+    Spektren, während der Carrier-Weg unberührt sauber bleibt (die
+    Farbwechsel erreichen die Ausgabe nur durch die
+    Modulationsrechnung). Der Gang des Signals: (1) Die Note speist
+    die FM-Mitte. (2) Der Modulator-Osc liefert seine Rohwellenform;
+    der Shaper faltet sie — das Modulationssignal trägt nun eigene
+    Oberwellen. (3) Die FM-Stufe multipliziert Note × (1 + amount ×
+    geformte Kurve) — die Seitenbänder erben den Shape-Reichtum,
+    metallic Index-Ripples aus gefalteten Modulatoren. (4) Der
+    Carrier rendert die verfärbte Wellenform, der Ausgang übernimmt.
+    Verwandt: serial-drive-filter-sculpt formt den Klangweg HINTER
+    der Stimme (färbt das gerenderte Signal selbst), classic-two-op-fm
+    ist die ungeformte Basis — hier liegt der Shape im Modulationsweg.
+
   involved_nodes:
     - type: note
       role: MIDI note source; carrier frequency for the FM stage.
@@ -69,6 +92,11 @@ technique:
       shaper lives in the modulation path only — the audio path stays
       clean, and the timbre changes arrive exclusively through the
       frequency arithmetic.
+
+  graph_ascii: |
+      (osc · modulator) ──out──▶ (shape · in modulator path) ──out──▶ (fm.modulator_in)
+      (note) ──out──▶ (fm.freq_in) ──out──▶ (osc · carrier.note_in) ──out──▶ (output)
+      shaper colours the modulator · carrier path stays clean
 
   parameters:
     - name: fm amount

@@ -9,6 +9,25 @@ technique:
     and the voice articulates a stamped pitch jump that dives or settles
     when the key is released.
 
+  tutorial: |
+    Transposition plus Pitch-Hüllkurve — die Verkettung des statischen
+    Intervall-Sprungs mit der Pitch-Envelope: erst hebt der Frequenzteiler
+    jede Note um einen festen Faktor, dann schwingt der F-ADSR die
+    verschobene Tonhöhe zwischen seinen Faktoren aus. Wofür dient die
+    Verdrahtung? Seriell im Frequenzweg: Note → fscale → fadsr → Stimme.
+    Was ist das Ziel? Ein percussiver Tonhöhen-Stempel über der verschobe-
+    nen Basis — Oktav-auf-Anschläge, und beim Loslassen einer Taste taucht
+    die Stimme ein festes Intervall unter dem gestempelten Ton (Down z. B.
+    0.5 = eine Oktave darunter, nicht unter der Tastatur). Der Gang des
+    Signals: (1) Die Note tritt in den Teiler. (2) Die verschobene
+    Frequenz speist die Pitch-Envelope, die sie zwischen Up und Down
+    ausschwingt — Up über 1 gibt ein scharfes Anschlags-Lean. (3) Der
+    Osc rendert die springende Wellenform samt Obertönen. (4) Der
+    Ausgang erhält die springende Stimme. Die Kombination ist das
+    Besondere: fadsr-pitch-drop schwingt unverschoben einseitig,
+    fscale-fm-harmonic-shift verschiebt ohne Hüllkurve — hier beides
+    in einem Frequenzpfad.
+
   involved_nodes:
     - type: note
       role: MIDI note source; base frequency for the chain.
@@ -53,6 +72,10 @@ technique:
       (frequency).  fadsr.out -> osc.note_in (frequency).  osc.out ->
       output (signal).  Two serial stages in the frequency path: the static
       shift first, the per-note envelope second.
+
+  graph_ascii: |
+      (note) ──out──▶ (fscale · static interval) ──out──▶ (fadsr · pitch env) ──out──▶ (osc · voice.note_in) ──out──▶ (output)
+      shift first · envelope swing second
 
   parameters:
     - name: fscale factor

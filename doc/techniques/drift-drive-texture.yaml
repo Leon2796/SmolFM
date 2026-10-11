@@ -9,6 +9,22 @@ technique:
     Combined with perlin on the cutoff (perlin-cutoff-drift) the whole
     character drifts as one organism.
 
+  tutorial: |
+    Drift-Verzerrung — der organische Zufallsdrift (Perlin) ins
+    Verzerrungsmaß, wie die Random-Modulation wandernde Texturen
+    beschreibt. Wofür dient die Verdrahtung? Ein Perlin-Oscillator
+    (langsam, 0.05..0.3 Hz) sitzt auf dem drive_mod_in des Wave-Shapers;
+    nur die Antriebsmenge wandert, Shape und Stimme bleiben konstant.
+    Was ist das Ziel? Saturation, die nie in ein Muster fällt — der Ton
+    gleitet zwischen warmer Sättigung und aggressivem Fold, Material,
+    das sich umformt: langsame Pads und Drones. Der Gang des Signals:
+    (1) Die Note stimmt die Quellstimme; der Perlin-Drift multipliziert
+    den Drive mit (1 + m) abtastweise, meist in der Fenstermitte.
+    (2) Der Shaper formt mit dem laufenden Antrieb — Oberwellendichte
+    wächst und schrumpft organisch, der Ausgang atmet mit. Kombinierbar:
+    perlin-cutoff-drift (Cutoff) und resonance-breathing-filter (Q) sind
+    Drift-Anschlüsse desselben Organismus.
+
   involved_nodes:
     - type: note
       role: Keyboard send; pitches the source.
@@ -41,6 +57,10 @@ technique:
       mode, lfoRate 0.05..0.3 Hz) -> shape.drive_mod_in (signal).
       source-osc.out -> shape.in (signal).  shape.out -> output.in1
       (signal).  Only the drive wanders; shape and source voice stay put.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · source) ──out──▶ (shape · waveshaper) ──out──▶ (output)
+      (osc · lfo perlin drift) ──out──▶ (shape.drive_mod_in)     drive wanders, never repeating
 
   parameters:
     - name: drift rate

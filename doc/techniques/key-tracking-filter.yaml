@@ -13,6 +13,25 @@ technique:
     fadsr-cutoff-sweep sweeps the band over time, this technique holds the
     band in a fixed relationship and lets the melody move it.
 
+  tutorial: |
+    Tastenverfolgtes Filter — das proportionale Filter der Synth-Literatur
+    (key tracking): die Notenfrequenz selbst ist das Cutoff-Steuersignal,
+    optional über einen Ratio-Teiler skaliert. Wofür dient die Verdrahtung?
+    Das Tastensend speist Stimme und — direkt oder über fscale —
+    cutoff_mod_in; angeschlossen ersetzt der lebende Wert den statischen
+    Cutoff vollständig. Was ist das Ziel? Dieselbe relative Färbung auf
+    jeder Taste: Cutoff geteilt durch Grundton bleibt fest — tiefe Noten
+    dunkeln nicht unbegründet ab, hohe werden nicht unbegründet hell; das
+    Spektrum gehört zum Instrument, nicht zur Taste, und formant-artige
+    Betonungen folgen der Melodie. Keine Hüllkurve, kein LFO: die gespielte
+    Melodie IST der Frequenzverlauf. Der Gang des Signals: (1) Die Note
+    fächert in Stimme und Steuerteiler. (2) Das SVF formt mit lebendem
+    Cutoff — lp/bp/hp/notch wählt die Charakter; extreme Faktoren klemmen
+    am hörbaren Boden (20..20000 Hz). (3) Der Ausgang erhält die
+    verfolgte Ebene. Gegenüber fadsr-cutoff-sweep (der das Band über die
+    Zeit wischt) hält diese Verdrahtung die Band-Beziehung fest und lässt
+    die Melodie sie bewegen.
+
   involved_nodes:
     - type: note
       role: MIDI note source; its out port fans out to the voice and to the
@@ -68,6 +87,11 @@ technique:
       output (signal).  The control wire lives entirely in the frequency
       domain and meets the audio path only at the filter, where the
       tracked value replaces the static cutoff.
+
+  graph_ascii: |
+      (note) ──out──┬──▶ (osc · voice) ──out──▶ (filter.in)
+                    └────▶ (filter.cutoff_mod_in)      ┄ or via (fscale · ratio) first
+      (filter) ──out──▶ (output)         live cutoff replaces the static value
 
   parameters:
     - name: tracking ratio

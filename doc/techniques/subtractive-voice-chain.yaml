@@ -8,6 +8,20 @@ technique:
     the articulation — the standard oscillator-filter-envelope chain of
     subtractive synthesis, expressed directly in the .smolfm graph.
 
+  tutorial: |
+    Subtraktive Stimmenkette — die Urkette der subtraktiven Synthese-
+    Literatur: reicher Osc, Filter, Hüllkurve. Wofür dient die
+    Verdrahtung? Der sägezahnige Osc (reiche Obertöne) läuft ins Filter,
+    das oberhalb des Cutoffs dämpft; dahinter formt die ADSR die
+    Amplitude je Note. Was ist das Ziel? Die klassische Stimme — Cutoff
+    und Resonanz wählen die Klangfarbe aus dem Obertonspektrum aus,
+    die Hüllkurve die Artikulation. Der Gang des Signals: (1) Der Osc
+    liefert die obertonreiche Wellenform, (2) das Filter attenuiert —
+    lp/bp/notch wählt hohle oder nasale Farben, (3) die ADSR formt die
+    Lautheit nach dem Tastenereignis (Sustain 0 plus kurzes Decay
+    macht Pads zum Pluck), (4) der Ausgang übernimmt. Referenzkette,
+    gegen die die Parallel-Split-Techniken ihre Alternativen setzen.
+
   involved_nodes:
     - type: osc
       role: Sound source in pitch mode; saw (or square) carries rich overtones
@@ -41,6 +55,9 @@ technique:
       osc.out -> filter.in (signal).  filter.out -> adsr.in (signal).
       adsr.out -> output (signal).  A straight serial signal path; the
       filter sits behind the oscillator, the envelope behind the filter.
+
+  graph_ascii: |
+      (osc · rich source) ──out──▶ (filter · tone) ──out──▶ (adsr · amp) ──out──▶ (output)
 
   parameters:
     - name: cutoff

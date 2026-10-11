@@ -7,6 +7,19 @@ technique:
     keeps its headroom and the master level stays a global fader over the
     whole stack.
 
+  tutorial: |
+    Gain-Staging über Schichten — das klassische Kanal-Trim der Studio-
+    Praxis vor dem Master-Fader. Wofür dient die Verdrahtung? Jede
+    Layer-Kette endet in einem eigenen Trim-Gain vor ihrem Ausgangs-
+    Eingang, und der Summierer sammelt bis zu acht getrimmte Schichten.
+    Was ist das Ziel? Headroom: die Trims halten Level mal Summe der
+    Eingänge in Volllast (auch einzeln saubere Layer kippen summiert);
+    der Master skaliert danach den Stack ohne das Gleichgewicht. Der
+    Gang des Signals: (1) Die geteilte Pitch-Quelle hält alle Layer-Oscs
+    in Ton; jeder Layer-Osc liefert sein Layer samt Obertönen, sein
+    Trim balanciert ihn gegen den Stack, Faktor 0 stummschaltet.
+    (4) Der Ausgang summiert und multipliziert mit dem Master-Level.
+
   involved_nodes:
     - type: note
       role: Shared pitch source for the stacked layers.
@@ -49,6 +62,10 @@ technique:
       sum by the master level.  Each layer chain may itself carry fuller
       internal staging; this technique fixes only the balance in front of
       the sum.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc_i · layer i) ──out──▶ (gain_i · trim) ──out──▶ output.inI
+      one trim gain per layer chain · up to eight layers sum at the master
 
   parameters:
     - name: layer trim factors

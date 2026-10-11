@@ -21,6 +21,47 @@ technique:
     coloration is the accepted trade-off of the square approximation until
     a pulse/duty mode lands on osc.
 
+  tutorial: |
+    Die 808-Puls-Oscillator-Bank — die sechs geteilten Puls-Oscillatoren aus
+    den Roland Service Notes bzw. den Cowbell- und Cymbal-Modellen von
+    Werner/Abel/Smith, hier als sechs statische Squares auf exakt den
+    Bank-Frequenzen 205.3 / 304.4 / 369.6 / 522.7 / 540 / 800 Hz. Wofür
+    dient die Verdrahtung? Die sechs Klangquellen werden paarweise über
+    Addierer (fünf für sechs Stimmen) zu EINEM deterministischen, von
+    Natur aus inharmonischen Cluster gefaltet; welche Untermengen aktiv
+    sind, definiert die Stimme — Cowbell nutzt "2 von 6" (800 und 540 Hz),
+    Hihat und Cymbal alle sechs. Was ist das Ziel? Der metallische
+    Schlagwerk-Chor der Hardware aus einer Bank: die Bus-Kette speist
+    Stimmen-spezifische Bandpässe samt Decay-Leiter, die Square-Näherung
+    (das echte Puls-/Duty-Wesen ist im osc noch nicht aussprechbar) akzeptiert
+    den phasenverriegelten Chime-Einschlag als bewussten Trade-off, bis ein
+    Puls-Modus landet. Der Gang des Signals: (1) Die statischen Squares
+    liefern ihre Teilwellen — stimmfest, kein Drift, jede Note leitet
+    dieselben Phasen her. (2) Die Addierer falten den Bank-Bus. (3) Der
+    Bandpass (bei Cymbals ein Fächer mit Decay-Leiter plus Hochpass) färbt
+    das Cluster; die Hüllkurve gatet. (4) Der Trim-Gain trägt die einzige
+    Velocity-Antwort — Velocity geht NUR in Gains, niemals in Filter-Velos:
+    der fc×vel-Rückgang der ~10-kHz-Bänder (dokumentiert im 808-Gap-
+    Report) darf nicht wiederholt werden. (5) Der Ausgang summiert die
+    gated Zweige. Verwandt: osc-sum-bus definiert das paarweise Faltungs-
+    muster allgemein; metal-hat-squares ist der ring-modulierte Zwei-Square-
+    Verwandte, noise-metal-wash die diffuse Rausch-Alternative.
+
+    Die Bank ist nur die Tonquelle: was daraus eine Cowbell, ein Hat
+    oder ein Cymbal macht, entscheidet die downstream-Kette — welcher
+    Bereich des Busses gefiltert wird, welche Decay-Leiter das Gate
+    schließt. Die Untermengen definieren die Identität: zwei von sechs
+    Squares hinter einem schmalen Bandpass lesen als Cowbell-Glocke,
+    alle sechs hinter Fächer und Leiter als Cymbal-Spektrum, das durch
+    seine Bänder wandert. Velocity geht ausschließlich in die Gains —
+    die Lautheitshälfte des 808-Accents; Filter bleiben statisch, denn
+    der fc×vel-Rückgang ist dokumentiert und darf nicht wiederkehren.
+    Kein Osc driftet, jede Note leitet dieselben Phasen her — der
+    phasenverriegelte Chime-Einschlag ist der akzeptierte Trade-off
+    der Square-Annäherung, bis ein Puls-/Duty-Modus auf osc landet.
+    Als Faltungsform gilt das osc-sum-bus-Muster (sechs Quellen, fünf
+    Addierer); metal-hat-squares ist der ringmodulierte Zwei-Square-
+    Verwandte, noise-metal-wash die diffuse Rausch-Alternative.
   involved_nodes:
     - type: osc
       role: One static-mode bank square per bank voice; the six roles sit
@@ -79,6 +120,12 @@ technique:
       Every gated branch -> gain.in -> output.in_i (signal); gain.vel and
       only gain.vel takes note.vel.  Filters, oscillators and bus stay
       static per note.
+
+  graph_ascii: |
+      (note.out) ──▶ every bank square.note_in (carries no dynamics)
+      (osc · 6 static squares: 205.3/304.4/369.6/522.7/540/800) ──fold pairwise──> (filter · voice bp, static)
+                                                                  ──▶ (adsr · gate) ──▶ (gain · vel VCA) ──▶ output.inK
+      bus-parent = osc-sum-bus shape · 5 adders for 6 squares · subsets = voice identity
 
   parameters:
     - name: bank frequencies
@@ -157,3 +204,13 @@ technique:
     - cowbell chime from the 2-of-6 subset behind a narrow band pass
     - closed tick and open wash from one bank with different envelopes
     - cymbal spectrum that migrates through the decay ladder of its bands
+
+  imports:
+    - name: osc-sum-bus
+      reuses: |
+        The pairwise adder folding shape itself: N sources fold through
+        N-1 add stages into one bus in front of one shared sculptor.
+      delta: |
+        The bank pins the sources to the exact 808 service-note squares and
+        the metallic percussion voice; the shared downstream is a band-pass
+        + gate + trim per voice subset.

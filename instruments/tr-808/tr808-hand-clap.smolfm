@@ -1,23 +1,68 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3" name="tr808-hand-clap" description="808-Style Hand-Clap: breites Rausch-Band 1,05 kHz, zu einem 3-Tap-Cluster (die trockene Quelle plus 14/31-ms-Kopien parallel addiert, reine Taps - mix 1,0 / fb 0 = kammfilterfrei; Echo-Feedback am Noise = quasi-periodische Segmente = metallisch), Envelope nach den Taps begrenzt den Cluster, plus diffuser 200-ms-Tail; Velocity-Akzent lauter." techniques="multi-burst-clap, 808-accent-gain">
+<SmolFM version="3" name="tr808-hand-clap" description="808-Hand-Clap als Phase-4-Erneuerung nach der Cascadia-Analyse des Original-Clap-Kreises (808-Service-Manual Seite 6; alter Stand als Sicherung unter tr808-cheap-rip-off-clap.smolfm): weisses Rauschen (osc0) splittet auf zwei parallele Envelope-Pfade vor EINEM gemeinsamen Bandpass (filter0, mode bp, cutoff 1000 Hz exakt wie die 1000-Hz/B5+21c-Lage des Artikels, resonance 0,45 in der Katalog-Lage 0,4..0,7; das echte Tail liefert der Reverb-Pfad); Pfad 1 Sawtooth-Snap = der 30-ms-Puls mit drei 10-ms-Zyklen laut Artikel: drei schnelle Burst-Gates (adsr0/adsr1/adsr2, 0,001/0,010/0/0,01) bei Onsets 0/10/20 ms, danach die finale ununterbrochene Entladung von 20 ms (adsr3, 0,001/0,020/0/0,01) bei Onset 30 ms; onset-stagger-stack-Offsets NACH dem Gate (delay1/delay3/delay5 = 10/20/30 ms, mix 1,0, feedback 0 = reine Schiebung), Vorlauf-Delays delay0/delay2/delay4 = 12/24/45 ms VOR den Gates, damit jedes Rausch-Fenster disjunkt bleibt statt dieselbe Sammlung zu wiederholen (loest die Kopier-Differenz der Delays-Taps); Pfad 2 Fake-Reverb = glatte 100-ms-Huellkurve (adsr4, 0,001/0,100/0/0,01) als eigener Mixer-Anteil ueber gain1 (0,65); add0/add1 sammeln die Burst-Paare, add2 summiert beide, add3 mischt den Reverb-Anteil und treibt filter0 (Phase-4-Architektur-Fix: der resonator ist laut ResonatorProcessor.h ein angeregter gedampfter Toenalkoerper, kein Bandpass - Stage-B-Daempfung kB = ln(1000)/(pi*f0*t60) ergab bei tune 1000/decay 0,075 ein Q ~ 34 mit ~29 Hz Bandbreite, das Rausch-Spektrum wird nur als Anregungs-Energie verbraucht, Ausgabe = abklingender 1-kHz-Nahe-Sinus, daher das Glocken/Piepen; im 808-Artikel ist die 1000-Hz-Lage ein linearer Bandpass, der das Rauschen durchreicht - Katalog multi-burst-clap: filter bp 900..1600 Hz resonance 0,4..0,7, Muster riot-clap/neon-hex-clap/maracas); Akzent reine Lautstaerke: vsc0 (sqrt, scale 1,0) auf gain0.vel (Faktor 0,5) = 808-accent-gain, kein vel am Filter (Lage wie riot-clap); Output 0,85; erster Treffer nach Laden sammelt fuer die Vorlauf-Fenster den Delay-Zustand, ab dem zweiten Treffer echte Rausch-Historie." techniques="multi-burst-clap, onset-stagger-stack, tuned-noise-percussion, 808-accent-gain">
   <Graph>
     <Nodes>
       <Node id="note">
         <Pin id="out" direction="out" type="frequency" />
         <Pin id="vel" direction="out" type="velocity" />
       </Node>
+      <Node id="vsc0" curve="sqrt" scale="1.0">
+        <Pin id="vel_in" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="velocity" />
+      </Node>
       <Node id="osc0" waveform="noise" mode="static" staticfreq="6000">
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="filter0" cutoff="1050" resonance="0.4" mode="bp">
+      <Node id="delay0" time="12" feedback="0" mix="1.0" sync="off" division="quarter">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="delay0" time="14" feedback="0" mix="1.0" sync="off" division="quarter">
+      <Node id="delay1" time="10" feedback="0" mix="1.0" sync="off" division="quarter">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="delay1" time="31" feedback="0" mix="1.0" sync="off" division="quarter">
+      <Node id="delay2" time="24" feedback="0" mix="1.0" sync="off" division="quarter">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay3" time="20" feedback="0" mix="1.0" sync="off" division="quarter">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay4" time="45" feedback="0" mix="1.0" sync="off" division="quarter">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="delay5" time="30" feedback="0" mix="1.0" sync="off" division="quarter">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr0" attack="0.001" decay="0.010" sustain="0.0" release="0.01">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr1" attack="0.001" decay="0.010" sustain="0.0" release="0.01">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr2" attack="0.001" decay="0.010" sustain="0.0" release="0.01">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr3" attack="0.001" decay="0.020" sustain="0.0" release="0.01">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="adsr4" attack="0.001" decay="0.100" sustain="0.0" release="0.01">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="0.5">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain1" factor="0.65">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
@@ -31,58 +76,74 @@
         <Pin id="in2" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="adsr0" attack="0.001" decay="0.3" sustain="0.0" release="0.06">
-        <Pin id="in" direction="in" type="signal" />
+      <Node id="add2">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="gain0" factor="0.5">
-        <Pin id="in" direction="in" type="signal" />
-        <Pin id="vel" direction="in" type="velocity" />
+      <Node id="add3">
+        <Pin id="in1" direction="in" type="signal" />
+        <Pin id="in2" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="adsr1" attack="0.004" decay="0.2" sustain="0.0" release="0.06">
+      <Node id="filter0" cutoff="1000" resonance="0.45" mode="bp">
         <Pin id="in" direction="in" type="signal" />
-        <Pin id="out" direction="out" type="signal" />
-      </Node>
-      <Node id="gain1" factor="0.3">
-        <Pin id="in" direction="in" type="signal" />
-        <Pin id="vel" direction="in" type="velocity" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
       <Node id="output" level="0.85" />
     </Nodes>
     <Connections>
-      <Wire from="osc0" fromPort="out" to="filter0" toPort="in" />
-      <Wire from="filter0" fromPort="out" to="delay0" toPort="in" />
-      <Wire from="filter0" fromPort="out" to="delay1" toPort="in" />
-      <Wire from="filter0" fromPort="out" to="add0" toPort="in1" />
-      <Wire from="delay0" fromPort="out" to="add0" toPort="in2" />
-      <Wire from="add0" fromPort="out" to="add1" toPort="in1" />
-      <Wire from="delay1" fromPort="out" to="add1" toPort="in2" />
-      <Wire from="add1" fromPort="out" to="adsr0" toPort="in" />
-      <Wire from="adsr0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="note" fromPort="vel" to="vsc0" toPort="vel_in" />
+      <Wire from="vsc0" fromPort="out" to="gain0" toPort="vel" />
+      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="osc0" fromPort="out" to="adsr4" toPort="in" />
+      <Wire from="osc0" fromPort="out" to="delay0" toPort="in" />
+      <Wire from="delay0" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="osc0" fromPort="out" to="delay2" toPort="in" />
+      <Wire from="delay2" fromPort="out" to="adsr2" toPort="in" />
+      <Wire from="osc0" fromPort="out" to="delay4" toPort="in" />
+      <Wire from="delay4" fromPort="out" to="adsr3" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="add0" toPort="in1" />
+      <Wire from="adsr1" fromPort="out" to="delay1" toPort="in" />
+      <Wire from="delay1" fromPort="out" to="add0" toPort="in2" />
+      <Wire from="adsr2" fromPort="out" to="delay3" toPort="in" />
+      <Wire from="delay3" fromPort="out" to="add1" toPort="in1" />
+      <Wire from="adsr3" fromPort="out" to="delay5" toPort="in" />
+      <Wire from="delay5" fromPort="out" to="add1" toPort="in2" />
+      <Wire from="add0" fromPort="out" to="add2" toPort="in1" />
+      <Wire from="add1" fromPort="out" to="add2" toPort="in2" />
+      <Wire from="adsr4" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="add2" fromPort="out" to="add3" toPort="in1" />
+      <Wire from="gain1" fromPort="out" to="add3" toPort="in2" />
+      <Wire from="add3" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="gain0" toPort="in" />
       <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
-      <Wire from="filter0" fromPort="out" to="adsr1" toPort="in" />
-      <Wire from="adsr1" fromPort="out" to="gain1" toPort="in" />
-      <Wire from="gain1" fromPort="out" to="output" toPort="in2" />
-      <Wire from="note" fromPort="vel" to="gain0" toPort="vel" />
-      <Wire from="note" fromPort="vel" to="gain1" toPort="vel" />
     </Connections>
   </Graph>
   <Layout>
     <Boxes>
       <Box id="note" x="60" y="60" />
-      <Box id="osc0" x="60" y="380" />
-      <Box id="filter0" x="360" y="60" />
-      <Box id="delay0" x="680" y="60" />
-      <Box id="delay1" x="1000" y="60" />
-      <Box id="add0" x="680" y="380" />
-      <Box id="add1" x="680" y="700" />
-      <Box id="adsr0" x="1320" y="60" />
-      <Box id="gain0" x="1640" y="60" />
-      <Box id="adsr1" x="1000" y="380" />
-      <Box id="gain1" x="1320" y="380" />
-      <Box id="output" x="1960" y="60" />
+      <Box id="vsc0" x="60" y="840" />
+      <Box id="osc0" x="60" y="440" />
+      <Box id="delay0" x="380" y="100" />
+      <Box id="delay2" x="380" y="300" />
+      <Box id="delay4" x="380" y="500" />
+      <Box id="adsr4" x="380" y="700" />
+      <Box id="adsr0" x="760" y="60" />
+      <Box id="adsr1" x="760" y="200" />
+      <Box id="adsr2" x="760" y="340" />
+      <Box id="adsr3" x="760" y="480" />
+      <Box id="delay1" x="1100" y="200" />
+      <Box id="delay3" x="1100" y="340" />
+      <Box id="delay5" x="1100" y="480" />
+      <Box id="gain1" x="1100" y="680" />
+      <Box id="add0" x="1420" y="150" />
+      <Box id="add1" x="1420" y="410" />
+      <Box id="add2" x="1700" y="280" />
+      <Box id="add3" x="1960" y="360" />
+      <Box id="filter0" x="2200" y="360" />
+      <Box id="gain0" x="2200" y="640" />
+      <Box id="output" x="2480" y="360" />
     </Boxes>
   </Layout>
 </SmolFM>

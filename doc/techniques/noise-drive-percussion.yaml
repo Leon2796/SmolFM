@@ -7,6 +7,18 @@ technique:
     result into a percussive one-shot.  No pitch port is involved; the voice
     is entirely shaped by drive and envelope.
 
+  tutorial: |
+    Geformte Rausch-Percussion — die atonale Noise-Schlagwerkrolle der
+    Drum-Synth-Literatur: Hi-Hats, Snarekörper und Shaker aus geformtem
+    Rauschen. Wofür dient die Verdrahtung? Ein statischer Noise-Osc
+    liefert die tonlose Quelle, der Shaper formt ihr Spektrum per Drive,
+    eine kurze ADSR schneidet den One-Shot. Was ist das Ziel? Atonale
+    Schlagwerk ganz ohne Tonhöhe — der Drive ordnet das Rauschen, Attack
+    nahe null, Decay als Klanglänge. Der Gang: (1) Rauschen liefert
+    breites Anregerspektrum samt Transienten, (2) Shaper formt und ADSR
+    gatet, der Ausgang trägt den One-Shot; Geschwister: fold-wave-
+    oscillator, tuned-noise-percussion (Schale).
+
   involved_nodes:
     - type: osc
       role: Noise source in static mode with waveform noise.
@@ -39,6 +51,9 @@ technique:
       noise oscillator -> shape.in (signal).  shape.out -> adsr.in (signal).
       adsr.out -> output (signal).  A straight serial path; no pitch source,
       no modulation — the envelope is the only musical control.
+
+  graph_ascii: |
+      (osc · static noise) ──out──▶ (shape · drive) ──out──▶ (adsr · perc gate) ──out──▶ (output)
 
   parameters:
     - name: drive

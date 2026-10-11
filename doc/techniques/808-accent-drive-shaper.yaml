@@ -8,6 +8,21 @@ technique:
     brighter and harsher because the analog stages overdrive — a velocity
     wire into shape.vel reproduces exactly that behaviour inside the graph.
 
+  tutorial: |
+    Accent-Timbre im Stil des TR-808: Im Original klingen betonte Schläge
+    heller und scharfer, weil die analogen Stufen den härteren Anschlag ins
+    Overdrive drücken. Wofür dient die Verdrahtung? Die Anschlagstärke jeder
+    Note steuert direkt den Drive eines Wave-Shapers — die Sättigungstiefe
+    hängt an der Spielweise. Was ist das Ziel? Harte Hits drücken tiefer in
+    die Kennlinie und brechen mit hellen Oberwellen; weiche Ghost Notes
+    bleiben sauber und rund. Der Gang des Signals: (1) Die Stimme liefert
+    Wellenform, Obertöne und Einsatz-Transienten. (2) Der Wave-Shaper
+    verzerrt je nach Velocity — mehr Anschlag heißt mehr Oberwellendichte,
+    das Ohr liest knackige, analoge Härte. (3) Der Ausgang transportiert die
+    gefärbte Ebene weiter. Zusammen mit 808-accent-gain (die Lautheit des
+    Akzents) entsteht so das komplette Accent-Verhalten der Drum-Maschine
+    aus reiner Verdrahtung.
+
   involved_nodes:
     - type: note
       role: MIDI source; feeds pitch and the accent velocity.
@@ -32,6 +47,11 @@ technique:
       note.vel -> shape.vel (velocity).  shape.out carries the shaped
       layer into whatever follows (output or tone stage).  Drive
       modulation (envelope, LFO) composes multiplicatively with velocity.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · source) ──out──▶ (shape · saturator) ──out──▶ (output)
+        │                                        ▲
+        └──── vel (velocity) ────────────────────┘   accent scales the drive
 
   parameters:
     - name: base drive

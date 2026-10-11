@@ -2,81 +2,51 @@ technique:
   name: auto-sweep-resonance
 
   idea: |
-    A saw-shaped oscillatory frequency source drives the filter's
-    resonance_mod_in as a repeated down-ramp: each cycle the resonance
-    starts closed and climbs to full drive, then snaps back.  Against a
-    note-tracked cutoff this reads as a cyclic "squelch-and-snap" — an
-    automatic resonance sweep that turns every note into a rhythmic filter
-    zipper without touching cutoff, pitch or amplitude.  One LFO voice
-    replaces an entire pattern generator.
+    A saw-shaped LFO sweeps the filter's resonance as a repeated ramp: each
+    cycle the Q starts closed and climbs to full drive, then snaps back — a
+    cyclic "squelch-and-snap" that turns every note into a rhythmic filter
+    zipper without touching pitch or amplitude.  The ramp pattern is the
+    saw-resonance-pulse graph in full; this technique keeps it as an explicit
+    technique import and holds only its own sound-design framing.  It is the
+    same klang as saw-resonance-pulse — keep this entry as the name-compatibility alias and prefer the original for new instruments.
 
-  involved_nodes:
-    - type: note
-      role: Keyboard send; key-tracks the cutoff through the static cutoff scale.
-    - type: osc
-      role: Sweep oscillator in lfo mode; saw waveform makes the per-cycle ramp.
-    - type: filter
-      role: Multi-mode filter; resonance_mod_in receives the ramp.
-    - type: osc
-      role: Voice oscillator feeding the filter.
-    - type: output
-      role: Master endpoint.
+  tutorial: |
+    Auto-Sweep-Resonanz — der zyklische Resonanzsweep, in der Literatur als
+    rhythmisches Filter-Zipper bzw. Q-Rampe bekannt. Wofür dient die
+    Verdrahtung? Eine Sägezahn-LFO rampt die Resonanz (Q) des Filters pro
+    Zyklus von geschlossen auf volle Antrieb und schnappt zurück. Was ist
+    das Ziel? Jede Note wird zum rhythmischen Filter-Zipper — Squelch und
+    Snap im Takt der Rampe, ohne Tonhöhe oder Lautheit anzutasten. Der
+    Gang des Signals: (1) Die Stimme spielt ihre Wellenform samt Obertönen.
+    (2) Das Filter formt: die kletternde Q öffnet die Resonanzpeaks, das
+    Ohr liest aufsteigende Rauheit und den Snap beim Rücksetzten; übersteigt
+    die Rampe die Schwelle, pingt Selbstschwingen. (3) Der Ausgang trägt
+    das Ergebnis. Die graf bleibt wortwörtlich die von
+    saw-resonance-pulse — voller Import desselben Klangbilds; dieser
+    Eintrag dient als Namenskompatibilitäts-Alias, für neue Instrumente
+    lieber das Original.
 
-  involved_ports:
-    - node_role: Keyboard send
-      port: out
-      role: Key-tracking base for the static cutoff scale (frequency).
-    - node_role: Sweep oscillator
-      port: out
-      role: Ramp signal into resonance_mod_in (signal).
-    - node_role: Multi-mode filter
-      port: resonance_mod_in
-      role: Multiplies the static resonance by (1 + m) per sample (signal).
-    - node_role: Voice oscillator
-      port: out
-      role: Source signal into the filter input (signal).
+  imports:
+    - name: saw-resonance-pulse
+      reuses: |
+        The complete graph: ramp osc (lfo mode, saw) -> filter.resonance_mod_in,
+        voice osc -> filter.in, filter.out -> output, voice pitched by the
+        keyboard note, optional note -> filter.cutoff_mod_in key tracking.
+        Also the parameter roles (ramp rate, static resonance, cutoff, filter
+        mode) and the ramp-to-snap relationship.
+      delta: |
+        Framing only: the "squelch-and-snap" wording and the pattern-generator
+        reading of the ramp.  (The former "key-tracked cutoff through the
+        static scale" claim and the stale osc/filter <= 8 budgets were faults
+        of this duplicated copy; the import carries the wired original — its
+        optional key-track wire and its correct budget 16s.)
 
-  topology:
-    description: |
-      osc-sweep.out (lfo mode, lfoRate = sweep period, waveform saw, lfo
-      amplitude via staticfreq-free ramp) -> filter.resonance_mod_in
-      (signal).  osc-voice.out -> filter.in (signal).  filter.out ->
-      output.in1 (signal).  The saw's fall from +amplitude to -amplitude
-      maps to a resonance climb across the effective (1 + m) window; the
-      exact range follows from the lfo amplitude scaling.
-
-  parameters:
-    - name: sweep rate
-      role: |
-        Osc lfoRate 0.01..50 Hz = one resonance climb per cycle.  Sub-harmonic
-        rates (0.5 Hz, 1 Hz) read as rhythmic; audio-rate becomes a rough
-        sideband texture.
-    - name: static resonance
-      role: |
-        Centre value 0..1; the ramp swings it across (1 + m).  0.4..0.6
-        crosses the self-oscillation threshold once per cycle.
-    - name: waveform
-      role: |
-        Saw = linear climb with hard reset; perlin drifts; sine breathes
-        symmetrically — but only saw produces the characteristic climb-and-snap.
-
-  relationships:
-    - name: ramp-to-snap
-      description: |
-        Over one cycle the effective resonance sweeps res..(res*2) clamped
-        to 1; the moment it crosses the self-oscillation onset the filtered
-        note rings by itself, then collapses at the saw's reset — a per-cycle
-        ping.
-    - name: socket-siblings
-      description: |
-        fadsr-cutoff-sweep sweeps the cutoff with an envelope; perlin-
-        cutoff-drift wanders the cutoff organically; key-tracking-filter
-        scales the cutoff with the key.  This technique leaves cutoff and
-        pitch alone and automates only the resonance as a repeated ramp —
-        the closest analog a pattern generator would produce, without one.
-    - name: budget
-      description: |
-        Registry budgets: note = 1, osc <= 8 (two used), filter <= 8, output = 1.
+  graph_ascii: |
+      [ import: saw-resonance-pulse ] — full graph verbatim:
+        (osc · lfo saw ramp) ──out──▶ (filter.resonance_mod_in)
+        (osc · steady voice) ──out──▶ (filter.in)
+        (filter) ──out──▶ (output)
+        (note) ──out──▶ (osc.note_in)    ┄ and optional ──▶ (filter.cutoff_mod_in)
 
   perceptual_effects:
     - cyclic squelch-and-snap on every note, rhythmic without any sequencer

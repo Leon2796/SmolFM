@@ -1,0 +1,956 @@
+technique:
+  name: driver-patterns
+
+  idea: |
+    The summarizing technique of the catalogue: the recurring DRIVER patterns
+    are abstracted here once — a driver node (osc in lfo mode, a perlin/simplex
+    drift oscillator, an adsr/fadsr event generator, a static ratio or offset
+    source, a velocity wire, a key-track wire, or the audio signal itself)
+    shapes a parameter of a target processor through a mod socket or a
+    standard tone path.  This file holds the abstract skeleton, and its
+    instances list carries every catalogue technique whose technique
+    identity is one of these patterns — techniques that only borrow a
+    pattern as an ancillary stage inside another family (layered staging,
+    whole-layer velocity scaling) stay standalone and are not registered.
+    Two sibling registries apply the same summarizing treatment to other
+    recurring skeletons: delay-patterns (single-cell, serial and parallel
+    delay lines) and stereo-branch-patterns (split -> per-side stage ->
+    merge routing); each technique identity registers as an instance in
+    exactly one registry.  Each instance carries its own concrete
+    `graph_ascii` (the specific course of the pattern in THAT graph), its
+    `verlauf` short description and a `tonal` line with its tonal
+    footprint.  It is a reference entry: no single render, no
+    instrument instantiates it directly — new techniques that fit an existing
+    pattern register here, true duplications become imports or aliases
+    (see the SKILL's technique-import rules).  Read as a tree, this
+    registry is two abstraction levels: the root skeleton is a — a named
+    family bar (M1–M7); each family bar holds its registered instances.
+
+  tutorial: |
+    Modulation heißt das Muster im Studio: In der Patchkabel-Synthese
+    steuert eine Quell-Einheit per Spannung eine Buchse einer anderen —
+    bei uns läuft neben dem Audio-Draht in jeder Technik eine zweite
+    Leitung, deren Quelle in eine Buchse der Audio-Schaltung speist.
+    Wofür benutzt man die Verdrahtung? Man
+    treibt damit ein Verhalten, das ein fester Regler nicht hinbekommt —
+    das Filter atmet mit dem LFO, die Hüllkurve schlägt auf jede Note zu,
+    das Key-Tracking wandert mit der Taste. Was ist das Ziel? Der Klang
+    soll mit der Quelle leben: Lebendigkeit und Dynamik je Note, statt
+    eines ein für alle Mal festgesetzten Klangbilds. Wer die Verdrahtung liest,
+    fragt nicht, welche
+    Zelle klingt, sondern wer welche Buchse mit welchem Verlauf steuert;
+    die Familien M1–M7 sortieren 63 Instanzen nach der Art dieser Quelle.
+    Der Graph bleibt in allen Familien zweigleisig: der Audio-Draht führt
+    (note) ──▶ (osc) ──▶ (output), der Steuer-Draht legt von seiner Quelle
+    in eine Buchse der Zielzelle — am.modulator_in, gain.trim,
+    filter.cutoff_mod_in, delay.time, fm.index. Hörbar wird der Driver,
+    wenn der Verlauf der Quelle zum Verlauf des Klangs wird:
+    - M1 periodic-lfo · 13: ein festgetakteter Zyklus (Sine, Rechteck,
+      Säge) ist der ganze Verlauf. Auf am/gain liest er sich als
+      rhythmisches Auf und Ab der Lautheit, auf filter als wechselnde
+      Obertonschärfe, auf fm als Schwanken der spektralen Breite; nahe am
+      Hörbereich kippt die Bewegung von Rhythmus in Rauheit.
+    - M2 perlin-drift · 7: aperiodisches Umherwandern — kein Raster, keine
+      Periode, nie eine Wiederholung. Die Buchse atmet unvorhersehbar:
+      Resonanz atmet, Delay-Zeiten driften, die Farbe bleibt lebendig,
+      ohne dass sich je ein Puls einprägt.
+    - M3 event-envelope · 16: ein einmaliger Einschlag pro Note. ADSR formt
+      in der Signal-Domäne die Hüllkurve der Transienten — hart oder weich
+      angestoßen, rasch oder lang verklungen; FADSR spiegelt denselben
+      Verlauf in die Frequenz-Domäne, und gestaffelte Paare lassen zwei
+      Verläufe gegeneinander fallen.
+    - M4 static-ratio · 19: ein Konstantwert, der nichts bewegt, aber alles
+      bestimmt. Verhältniszahlen ordnen die FM-Obertöne — harmonische
+      Verhältnisse klingen tonal, irrationale erzeugen dichte Rauheit;
+      Verstimmungs-Paare schlagen als Schwebungen, Ring-Konstanten
+      kalibrieren die Verrechnung.
+    - M5 velocity-accent · 4: note.vel, die Schlagstärke der Note, steuert
+      die eigene Buchse der Zielzelle. Betonungen springen lauter, heller
+      oder tiefer heraus, Ghost-Noten bleiben geduckt darunter — Dynamik,
+      die mit Maskierung spielt: laute Schläge überstrahlen die leisen.
+    - M6 key-track · 2: die Notenfrequenz (± Verhältnis) folgt mit. Das
+      gefärbte Obertonspektrum bleibt über alle Lagen hinweg dasselbe —
+      die Färbung wandert mit der Tonhöhe, statt sich zu verschieben.
+    - M7 self-feedback · 2: das gerenderte Signal selbst treibt eine
+      Buchse seines eigenen Wegs. Lautere Phasen vertiefen die eigenen
+      Seitenbänder (Growl), das Quadrat des Signals hebt die Oktave —
+      das Material füttert sein eigenes Klangbild.
+    Einbindung: 63 Instanzen hängen an sieben Bars unter dem Wurzel-Skelett
+    driver-pattern. Sieben Techniken, die die Nachbar-Registries als
+    Nachbarn nennen, sind hier zu Hause — auf Delay-Zellen
+    flanger-delay-line, vibrato-tail-echo, dub-wobble-echo-drift, auf der
+    split/merge-Achse stereo-envelope-side-swap, stereo-pitch-envelope-spread,
+    stereo-micropitch-spread, stereo-tremolo-phase-drift; die
+    Ein-Mitgliedschafts-Regel prüft check-catalog.ps1 katalogweit.
+
+  involved_nodes:
+    - type: osc
+      role: Driver in lfo mode (periodic or aperiodic perlin/simplex waveform)
+        or the signal source being shaped.
+    - type: adsr
+      role: Event-envelope driver for signal-domain targets.
+    - type: fadsr
+      role: Event-envelope driver for frequency-domain targets.
+    - type: note
+      role: Key-track and velocity driver source.
+    - type: fm
+      role: Bridge stage (signal -> frequency) and frequency-domain target.
+    - type: am
+      role: Modulation stage as target (carrier + driver at modulator_in).
+    - type: gain
+      role: VCA as target (factor_mod_in or vel scaling).
+    - type: filter
+      role: Filter as target (cutoff_mod_in, resonance_mod_in, vel).
+    - type: shape
+      role: Waveshaper as target (drive_mod_in, vel).
+    - type: delay
+      role: Delay as target (time_mod_in).
+    - type: ring
+      role: Ring multiplier as target (ratio pair, chop, self product).
+    - type: resonator
+      role: Resonator as target/event body (tune key-track, vel spread, strike).
+    - type: fscale
+      role: Static ratio/offset driver stage and tracking scale.
+    - type: output
+      role: Standard summing endpoint of the shaped voice.
+
+  involved_ports:
+    - node_role: Driver
+      port: out
+      role: The shape or ratio into the target's mod socket (signal or frequency).
+    - node_role: Filter
+      port: cutoff_mod_in
+      role: Live cutoff target socket; connected, it replaces the static cutoff
+        (frequency).
+    - node_role: Filter
+      port: resonance_mod_in
+      role: Q target socket; multiplies the static resonance by (1 + m) (signal).
+    - node_role: Gain
+      port: factor_mod_in
+      role: Level target socket; multiplies the static factor by (1 + m) (signal).
+    - node_role: FM stage
+      port: modulator_in / amount_mod_in / freq_in
+      role: Signal, index and carrier-frequency sockets of the frequency domain.
+    - node_role: AM stage
+      port: modulator_in
+      role: Depth socket of the amplitude domain.
+    - node_role: Shape
+      port: drive_mod_in
+      role: Distortion-amount target socket (signal).
+    - node_role: Delay
+      port: time_mod_in
+      role: Echo-time target socket (signal).
+    - node_role: Note source
+      port: out / vel
+      role: Key-track (frequency) and velocity-accent (velocity) driver outputs.
+    - node_role: Target processors
+      port: vel
+      role: Per-note velocity scaling sockets (velocity).
+
+  topology:
+    description: |
+      Abstract skeleton: a driver node generates the parameter course (its
+      waveform/ratio/envelope/velocity defines the SHAPE) and lands on the
+      target socket; the audio source renders the signal through the target
+      processor towards the output.  Variations register as instances: same
+      skeleton, different driver shape (periodic loop, non-repeating drift,
+      one-shot event, static ratio/offset, per-note velocity, key track,
+      audio self-feedback) and/or different target socket (Q, cutoff, level,
+      index, depth, drive, echo time, pitch, resonator decay).
+
+  graph_ascii: |
+      [ driver · shape = waveform · envelope · ratio · velocity · key · own signal ]
+        ───▶ (target socket: Q · cutoff · level · index · depth · drive · time · pitch)
+      (osc · source) ──out──▶ [ target processor ] ───▶ (output)
+      (note) ┄ optional key-track / velocity into driver or target
+      each instance below carries its own concrete ascii: which shape, which socket, which course
+
+  parameters:
+    - name: driver character
+      role: |
+        The pattern's shape parameter per category: waveform + rate for
+        oscillators, ADSR/R times for event envelopes, factor for ratio
+        stages, per-note velocity for accents, tracking scale for key track.
+
+  relationships:
+    - name: identity-rule
+      description: |
+        Same driver pattern into the same target socket with the same
+        perceptual Verlauf = duplicate (resolve by import/alias or
+        adaptation).  Same socket with a different driver pattern = a
+        legitimate sibling; different socket with the same pattern = its own
+        family member.  This identity rule is what the instances list
+        documents per entry.
+
+  perceptual_effects:
+    - one readable map over the catalogue's modulation families
+    - faster duplicate audits through the pattern x socket x Verlauf identity rule
+    - new techniques anchor into an existing pattern family before they may
+      grow the catalogue
+
+  instances:
+    # ── technique tree ──────────────────────────────────────────────────
+    # driver-pattern (root skeleton)  ◁ is a  the seven family bars below
+    #   ├─ M1 periodic-lfo     · 13 — repeating fixed-rate lfo cycle
+    #   ├─ M2 perlin-drift     ·  7 — aperiodic perlin/simplex wander
+    #   ├─ M3 event-envelope   · 16 — one-shot adsr/fadsr event per note
+    #   ├─ M4 static-ratio     · 19 — constant ratio/offset, no time course
+    #   ├─ M5 velocity-accent  ·  4 — per-note accent (note.vel sockets)
+    #   ├─ M6 key-track        ·  2 — proportional frequency from the key
+    #   └─ M7 self-feedback    ·  2 — the voice's own signal is the driver
+    # third level: each family bar ◁ is a  its registered instances below
+    # ── M1 periodic LFO drivers ──────────────────────────────────────
+    #   family node: periodic-lfo   ◁ is a  driver-pattern
+    #   course: fixed-rate repeating cycle (osc · lfo, sine/square/saw) —
+    #   the loop is the entire course; sockets below: am, gain, filter,
+    #   delay, shape, fm; 13 instances.
+    - name: am-tremolo-lfo
+      pattern: periodic LFO -> am.modulator_in
+      graph_ascii: |
+        (osc · lfo sine) ──out──▶ (am.modulator_in)
+        (osc · carrier) ──▶ (am · biased product) ──out──▶ (output)
+        depth = amount · level breathing at the lfo rate
+      verlauf: |
+        Bipolar swing around the dry level at the LFO rate; amount = depth.
+      tonal: |
+        Classic tremolo — loudness pulses at the rate while pitch and
+        spectrum stand still; deep amounts add gentle sideband grind.
+    - name: lfo-vibrato-fm
+      pattern: periodic LFO -> fm.modulator_in -> carrier
+      graph_ascii: |
+        (osc · lfo sine) ──out──▶ (fm.modulator_in)
+        (note) ─freq_in──▶ (fm · 1 + a·m) ──out──▶ (osc · carrier.note_in)
+        deviation = amount x note on every key
+      verlauf: |
+        Proportional pitch wobble; deviation = amount x note on every key.
+      tonal: |
+        Key-proportional vibrato — a wobble you can hum against; the
+        spectrum stays clean unless the amount grows large.
+    - name: lfo-cutoff-wobble
+      pattern: periodic LFO -> FM bridge -> filter.cutoff_mod_in
+      graph_ascii: |
+        (osc · lfo) ──out──▶ (fm.modulator_in) ──out──▶ (filter.cutoff_mod_in)
+        (osc · voice) ──▶ (filter · sweep around key centre) ──▶ (output)
+      verlauf: |
+        Rhythmic cutoff sweep around the key-tracked centre; the FM stage
+        bridges signal into the frequency-domain socket.
+      tonal: |
+        Rhythmic wah/wobble of timbre — dark-to-open sweeps that ride the
+        key-tracked centre; resonance colours the sweep edges.
+    - name: saw-resonance-pulse
+      pattern: periodic LFO (saw) -> filter.resonance_mod_in
+      graph_ascii: |
+        (osc · lfo saw) ──out──▶ (filter.resonance_mod_in)
+        (osc · voice) ──▶ (filter · Q rebuilt 0 -> clamp each ramp) ──▶ (output)
+      verlauf: |
+        Q rebuilds from 0 to the clamp each ramp cycle and snaps shut; the
+        crest rides into or over self-oscillation once per cycle.
+      tonal: |
+        One whistle-zap per cycle — Q climbs into (or over)
+        self-oscillation and snaps to silence over a steady dark core.
+    - name: flanger-delay-line
+      pattern: periodic LFO (fast small sine) -> delay.time_mod_in
+      graph_ascii: |
+        (osc · lfo, fast small sine) ──out──▶ (delay.time_mod_in)
+        (osc · voice) ──▶ (delay · t dives to the 1-sample floor and back) ──▶ (output)
+      verlauf: |
+        The line dives toward the 1-sample minimum and back each cycle;
+        comb notches sweep as a bucket-brigade swoosh.
+      tonal: |
+        Bucket-brigade flanger — comb notches sweep through the spectrum
+        once per cycle, a jet swoosh under the unchanged dry tone.
+    - name: vibrato-tail-echo
+      pattern: periodic LFO -> delay.time_mod_in (high feedback)
+      graph_ascii: |
+        (osc · lfo) ──out──▶ (delay.time_mod_in)
+        (osc · voice) ──▶ (delay · high feedback) ──▶ (output)
+        every repeat taps a moving line position
+      verlauf: |
+        Each successive repeat reads from a moving line position; the
+        shimmer compounds across the tail, the dry note stays steady.
+      tonal: |
+        Steady dry note over a shimmering tail — repeats wobble in pitch
+        and smear, compounding into a watery echo wash.
+    - name: gain-gate-chops
+      pattern: periodic LFO (square) -> gain.factor_mod_in
+      graph_ascii: |
+        (osc · lfo square) ──out──▶ (gain.factor_mod_in)
+        (osc · voice) ──▶ (gain · 0 vs 2x base per half-period) ──▶ (output)
+      verlauf: |
+        Hard gate: level holds at 0 and 2x base on alternating half-periods.
+      tonal: |
+        Hard on/off chop — full level and silence alternate sample-sharp;
+        a synth-hocket rhythm gate over the unchanged voice.
+    - name: gain-ratchet-riser
+      pattern: periodic LFO (saw) -> gain.factor_mod_in
+      graph_ascii: |
+        (osc · lfo saw) ──out──▶ (gain.factor_mod_in)
+        (osc · voice) ──▶ (gain · climbs to the crest, snaps to floor) ──▶ (output)
+      verlauf: |
+        Level climbs linearly to the crest and snaps to the floor; an
+        endless volume ratchet.
+      tonal: |
+        Endless rising swell that drops to silence and restarts — a
+        pumping ratchet build-up at the saw rate.
+    - name: pulse-stepper-grit
+      pattern: periodic LFO (square) -> shape.drive_mod_in
+      graph_ascii: |
+        (osc · lfo square) ──out──▶ (shape.drive_mod_in)
+        (osc · voice) ──▶ (shape · two drive states per half-period) ──▶ (output)
+      verlauf: |
+        Two drive states alternate sample-sharp; the transfer curve stutters
+        between clean and driven.
+      tonal: |
+        Timbre flips between clean and fully driven at the square's edges —
+        gritty gated distortion, no loudness movement.
+    - name: spectral-tremolo-fm
+      pattern: periodic LFO -> fm.amount_mod_in
+      graph_ascii: |
+        (osc · lfo) ──out──▶ (fm.amount_mod_in)
+        (note) ─freq_in──▶ (fm) ──out──▶ (osc · carrier) ──▶ (output)
+        index swells base -> peak -> base per cycle
+      verlauf: |
+        Sideband richness pumps at fixed pitch between sine and full bloom.
+      tonal: |
+        Spectral pump at fixed pitch — sideband richness blooms and
+        collapses back toward the clean sine; brightness, not loudness.
+    - name: square-ring-chop
+      pattern: periodic LFO (square) -> ring.in2
+      graph_ascii: |
+        (osc · lfo square, ±1) ──out──▶ (ring.in2)
+        (osc · voice) ──in1──▶ (ring · unbiased product) ──out──▶ (output)
+        each edge flips voice <-> polarity-inverted voice
+      verlauf: |
+        Unbiased product alternates voice and polarity-flipped voice per
+        edge; hard chop instead of biased swell.
+      tonal: |
+        Hard chop instead of a swell — the voice alternates with its
+        polarity twin; buzzy hollow ring as soon as a bias sneaks in.
+    - name: stereo-tremolo-phase-drift
+      pattern: two rate-offset periodic LFOs -> AM sides
+      graph_ascii: |
+        (osc · lfo L rate) ──out──▶ (amL.modulator_in)
+        (osc · lfo R rate + drift) ──out──▶ (amR.modulator_in)
+        (voice) ─▶ (amL / amR) ─▶ (split branches) ─▶ (merge L/R) ─▶ (output)
+        ┄ phases reset on note-on
+      verlauf: |
+        Phases reset on note-on, so the frame opens centred; the small rate
+        detune slowly slides the width open and shut.
+      tonal: |
+        Stereo heartbeat — width opens from the centre after each note-on
+        and slowly breathes open and shut by the rate detune.
+    - name: auto-sweep-resonance
+      pattern: periodic LFO (saw) -> filter.resonance_mod_in (imports saw-resonance-pulse)
+      graph_ascii: |
+        [ import: saw-resonance-pulse ]
+        (osc · lfo saw) ──out──▶ (filter.resonance_mod_in)
+        (osc · voice) ──▶ (filter · Q 0 -> clamp -> snap per cycle) ──▶ (output)
+      verlauf: |
+        The same ramp, re-framed as the cyclic squelch-and-snap; full
+        duplicate, kept as the name-compatibility alias.
+      tonal: |
+        The same cyclic squelch-and-snap — ramp into self-oscillation,
+        snap shut; kept only as the name-compatible alias.
+
+    # ── M2 aperiodic perlin / simplex drift drivers ─────────────────────
+    #   family node: perlin-drift   ◁ is a  driver-pattern
+    #   course: aperiodic perlin/simplex wander — no loop, no grid, never
+    #   repeats; same sockets as M1 without the clock; 7 instances.
+    - name: resonance-breathing-filter
+      pattern: perlin drift -> filter.resonance_mod_in
+      graph_ascii: |
+        (osc · perlin drift) ──out──▶ (filter.resonance_mod_in)
+        (osc · voice) ──▶ (filter · Q wanders around centre) ──▶ (output)
+      verlauf: |
+        Q breathes around the static centre without any cycle; plateau and
+        self-oscillation crest arrive unrepeatably.
+      tonal: |
+        Organic Q-breathing — plateau, hum and self-oscillation crest
+        arrive unrepeatably; no cycle to anticipate.
+    - name: perlin-cutoff-drift
+      pattern: perlin drift -> FM bridge -> filter.cutoff_mod_in
+      graph_ascii: |
+        (osc · perlin drift) ──out──▶ (fm.modulator_in) ──▶ (filter.cutoff_mod_in)
+        (osc · voice) ──▶ (filter · sweeps around key centre, never loops) ──▶ (output)
+      verlauf: |
+        Cutoff wanders proportionally around its centre; the sweep never
+        loops, the voice breathes through the filter.
+      tonal: |
+        Unrepeating wah-drift — the voice breathes darker and brighter
+        around the key without a detectable period.
+    - name: perlin-drift-modulation
+      pattern: perlin drift -> fm.modulator_in -> carrier
+      graph_ascii: |
+        (osc · perlin drift) ──out──▶ (fm.modulator_in)
+        (note) ─freq_in──▶ (fm · 1 + a·m) ──▶ (osc · carrier) ──▶ (output)
+      verlauf: |
+        Intonation drifts smoothly, depth scales with the key; no phase
+        artefacts from a locked vibrato cycle.
+      tonal: |
+        Human intonation wobble — smooth non-cyclic detune whose depth
+        scales with the key, no vibrato phase artefact.
+    - name: perlin-tremolo-breath
+      pattern: perlin drift -> am.modulator_in
+      graph_ascii: |
+        (osc · perlin drift + bias) ──out──▶ (am.modulator_in)
+        (osc · voice) ──▶ (am · biased product) ──▶ (output)
+      verlauf: |
+        Biased AM: the level swells and recedes organically while the voice
+        stays audible at any depth.
+      tonal: |
+        Organic swell over an always-audible voice — biased AM breath with
+        no tremolo grid and no full cutoff.
+    - name: gain-drift-swell
+      pattern: perlin drift -> gain.factor_mod_in
+      graph_ascii: |
+        (osc · perlin drift) ──out──▶ (gain.factor_mod_in)
+        (osc · voice) ──▶ (gain · multiplicative tide ~0..1.2x) ──▶ (output)
+      verlauf: |
+        Clean multiplicative VCA tide between near-silence and about 1.2x
+        the base factor; no retriggers, no tremolo grid.
+      tonal: |
+        Clean VCA tide — near-silence to a gentle swell and back, no
+        retrigger, transparent colorless level movement.
+    - name: drift-drive-texture
+      pattern: perlin drift -> shape.drive_mod_in
+      graph_ascii: |
+        (osc · perlin drift) ──out──▶ (shape.drive_mod_in)
+        (osc · voice) ──▶ (shape · transfer position wanders) ──▶ (output)
+      verlauf: |
+        The transfer position wanders; tone slides between warm saturation
+        and metallic fold like slowly changing material.
+      tonal: |
+        Texture that slides between warm saturation and metallic fold —
+        slowly changing drive material, no edges.
+    - name: dub-wobble-echo-drift
+      pattern: perlin drift -> delay.time_mod_in (sync on)
+      graph_ascii: |
+        (osc · perlin drift, sync on) ──out──▶ (delay.time_mod_in)
+        (osc · voice) ──▶ (delay · grid breathes x (1 + m)) ──▶ (output)
+      verlauf: |
+        The synced echo grid breathes by (1 + m) around the division; the
+        resampling smears the repeats' pitch, tape-dub style.
+      tonal: |
+        Dub echo whose synced division slowly breathes — repeats smear in
+        pitch, tape-style, without leaving the grid.
+
+    # ── M3 event envelopes / strike impulses ────────────────────────────
+    #   family node: event-envelope ◁ is a  driver-pattern
+    #   course: one-shot event per note trigger — adsr in the signal
+    #   domain, fadsr in the frequency domain; mirrored pairs, staggered
+    #   ladders, perc chains, strikes; 16 instances.
+    - name: adsr-amp-envelope
+      pattern: event envelope in the signal path
+      graph_ascii: |
+        (osc · voice) ──▶ (adsr.in) ──out──▶ (output)
+        A/D hold the note form, R fades after key-up
+      verlauf: |
+        One ADSR per note multiplies the voice directly; sustain holds,
+        release fades after key-up.
+      tonal: |
+        The standard speaking voice — pluck, decay, hold and release shape
+        one amplitude contour per keypress; timbre untouched.
+    - name: index-envelope-fm
+      pattern: event envelope (static ±1 + adsr) -> fm.amount_mod_in
+      graph_ascii: |
+        (static ±1 source) ──▶ (adsr) ──out──▶ (fm.amount_mod_in)
+        (note) ─freq_in──▶ (fm) ──▶ (osc · carrier) ──▶ (output)
+        index blooms base -> ~2x -> base on the envelope
+      verlauf: |
+        The index blooms from a closed base to 2x and back on the
+        envelope's own schedule; pitch stays locked.
+      tonal: |
+        Per-note brightness bloom — the spectrum opens to full sideband
+        colour and closes again while pitch stays locked.
+    - name: drive-envelope-growl
+      pattern: event envelope (static ±1 + adsr) -> shape.drive_mod_in
+      graph_ascii: |
+        (static ±1 source) ──▶ (adsr) ──out──▶ (shape.drive_mod_in)
+        (osc · voice) ──▶ (shape · drive rides the envelope) ──▶ (output)
+      verlauf: |
+        Drive swings between clean and growl per note; the curve becomes a
+        timbre contour.
+      tonal: |
+        Growl contour per note — clean attack into gristle and back; the
+        envelope becomes a timbre curve, not a level curve.
+    - name: modal-hammer-ping
+      pattern: event envelope (static ±1 + adsr) -> filter.resonance_mod_in
+      graph_ascii: |
+        (static ±1 source) ──▶ (adsr Q spike) ──▶ (filter.resonance_mod_in)
+        (osc · noise burst) ──▶ (filter · bp, cutoff = key) ──▶ (output)
+        ┄ optional fadsr trims the decaying ping
+      verlauf: |
+        Q spikes exactly when the noise burst hits the key-tracked filter;
+        the body rings at its resonant pitch and dies with the envelope
+        (optional fadsr trims the decaying ping).
+      tonal: |
+        Struck-modeled ping at the played key — bright noise attack, a
+        resonant body that rings and dies with the Q envelope.
+    - name: fadsr-cutoff-sweep
+      pattern: event envelope -> filter.cutoff_mod_in
+      graph_ascii: |
+        (note) ─▶ (fadsr) ──out──▶ (filter.cutoff_mod_in)
+        (osc · voice) ──▶ (filter · sweep = note x factor along A/D/S/R) ──▶ (output)
+      verlauf: |
+        The live cutoff travels as note x factor along A/D/S/R; the swept
+        band follows the keyboard.
+      tonal: |
+        Key-proportional filter sweep per note — pluck-to-pad timbre arcs
+        that stay in key; the swept band follows the keyboard.
+    - name: fadsr-fm-spectrum-sweep
+      pattern: event envelope in front of fm.freq_in
+      graph_ascii: |
+        (note) ─▶ (fadsr) ──out──▶ (fm.freq_in)
+        (osc · mod @ static ratio x f) ──out──▶ (fm.modulator_in)
+        (fm) ──▶ (osc · carrier) ──▶ (output)
+        the whole sideband cluster travels with the factor
+      verlauf: |
+        The whole FM sideband cluster travels with the sweep and re-locks
+        against the static modulator ratio.
+      tonal: |
+        The whole FM spectrum sweeps and re-locks against the static ratio —
+        gong-like rise and decay characters in one voice.
+    - name: fadsr-pitch-drop
+      pattern: event envelope between note and carrier
+      graph_ascii: |
+        (note) ─▶ (fadsr · up -> down) ──out──▶ (osc · carrier.note_in)
+        (osc) ──▶ (adsr · amp) ──▶ (output)
+        one A-D travel per note; release tail after key-up
+      verlauf: |
+        Attack peak at note x up, decay settles at note x down; one drop or
+        rise per note.
+      tonal: |
+        808-style drops and risers — sub dives and per-note pitch sweeps
+        with fixed start/end intervals from the factors.
+    - name: fadsr-swing-phrase
+      pattern: event envelope with a two-sided factor band
+      graph_ascii: |
+        (note) ─▶ (fadsr · two-sided factor band) ──out──▶ (osc · carrier.note_in)
+        rise sits above the key, settle below, release returns
+      verlauf: |
+        The voice leans sharp during the rise and settles flat-below on
+        release; the phrase, not a clock, moves it.
+      tonal: |
+        Vocal intonation lean — the phrase leans sharp on the rise and
+        settles flat-below; it feels played, not clocked.
+    - name: fscale-fadsr-pitch-jump
+      pattern: static shift + event envelope in series
+      graph_ascii: |
+        (note) ─▶ (fscale · stamped interval) ─▶ (fadsr · swing) ──out──▶ (osc · carrier.note_in)
+        release dives relative to the stamped note
+      verlauf: |
+        The scale stage stamps an interval first, the envelope swings the
+        shifted pitch; release dives relative to the stamped note.
+      tonal: |
+        Named intervals that swing — jumps land in the stamped register,
+        releases dive beneath it; musical key-locked gestures.
+    - name: sine-dive-kick
+      pattern: event envelope (imports fadsr-pitch-drop's pitch path)
+      graph_ascii: |
+        [ import: fadsr-pitch-drop ]
+        (note) ─▶ (fadsr · attack peak = beater) ──▶ (osc · sine) ──▶ (output)
+        sustain 0 closes the hit after the dive
+      verlauf: |
+        Attack peak = beater click, decay dives back to the body register;
+        sustain 0 closes one drum hit.
+      tonal: |
+        One drum hit per keypress — click transient, exponential dive into
+        the body register, clean close.
+    - name: stereo-envelope-side-swap
+      pattern: two mirrored event envelopes -> split branches
+      graph_ascii: |
+        (osc · voice) ──▶ (split L/R)
+        L: (adsr · mirror) ──▶ (merge L)     R: (adsr · mirror) ──▶ (merge R)
+        balance rotates L -> R across the note
+      verlauf: |
+        Channel balance rotates across the note; the image leaves one side
+        and arrives at the other.
+      tonal: |
+        The image leaves one side and arrives at the other — motion per
+        note with zero pitch or timbre change.
+    - name: stereo-pitch-envelope-spread
+      pattern: two mirrored event envelopes -> merge sides
+      graph_ascii: |
+        (note) ─▶ (fadsr +f mirrored / −f) ─▶ (split branches) ─▶ (merge L/R) ─▶ (output)
+        width blooms to the peak, folds shut on release
+      verlauf: |
+        Width blooms to the envelope peak and folds shut on release; both
+        channels return to the key.
+      tonal: |
+        Width blooms with the envelope peak and folds back onto the key on
+        release — big, then centered, phase-safe.
+    - name: band-envelope-choreography
+      pattern: staggered event envelopes over parallel bp bands
+      graph_ascii: |
+        (osc · voice) ─▶ (bp crack) ─▶ (adsr fast)  ─▶ (output)
+                      ─▶ (bp body) ─▶ (adsr mid)   ─▶ (output)
+                      ─▶ (bp air)  ─▶ (adsr slow)  ─▶ (output)
+        cutoffs never move — the decay ladder orders time
+      verlauf: |
+        A decay ladder orders the spectrum: crack first, body behind it,
+        air outliving both; the cutoffs never move.
+      tonal: |
+        Choreographed spectrum — noise crack first, body behind it, air
+        outliving both; each band stays on its static pitch.
+    - name: am-sidechain-duck
+      pattern: event envelope (perc chain) -> am.modulator_in
+      graph_ascii: |
+        (osc · perc pulse chain) ──out──▶ (am.modulator_in)
+        (osc · pad carrier) ──▶ (am · dip per pulse) ──▶ (output)
+        pulse decay = duck length
+      verlauf: |
+        Every perc pulse pulls the pad's carrier gain down; pulse decay
+        equals the duck length.
+      tonal: |
+        Sidechain pumping from the graph itself — the pad dips under every
+        perc pulse and breathes back within the duck length.
+    - name: resonator-body-strike
+      pattern: strike impulse into the resonator body (+ key-track, vel)
+      graph_ascii: |
+        (note) ─out──▶ (resonator.tune)      (note.vel) ─▶ (resonator.vel, gain.vel)
+        (osc · click) ─▶ (adsr strike) ─▶ (gain beater) ─▶ (resonator) ─▶ (gain accent) ─▶ (output)
+        ┄ loop form: resonator.out ─▶ feedback.fb_in (damped recirculation)
+      verlauf: |
+        A click tips energy into the pole pair; the body answers with its
+        own exponential ring, vel spreads the decay, tune tracks the key.
+      tonal: |
+        Struck bodies singing the key — natural exponential ring, accents
+        decay longer and louder, optional circuit-flavoured loop damping.
+    - name: tuned-strike-excitation
+      pattern: coherent strike impulse (imports resonator-body-strike)
+      graph_ascii: |
+        [ import: resonator-body-strike ]
+        (osc · sine impulse, note-coherent) ─▶ strike chain ─▶ (resonator) ──▶ (output)
+        ┄ (noise garnish blend) ─▶ strike chain in
+      verlauf: |
+        A note-coherent sine impulse ignites the body deterministically; the
+        blend pair mixes in the noise garnish as the randomness knob.
+      tonal: |
+        Deterministic pitch-locked strike — the coherent sine ignites the
+        body cleanly; the noise blend knob adds randomness garnish.
+
+    # ── M4 static ratio / offset drivers ────────────────────────────────
+    #   family node: static-ratio   ◁ is a  driver-pattern
+    #   course: constant value — static ratio/offset stages (fscale,
+    #   static sources) hold the course; FM ratios, detune/temper pairs,
+    #   ring inputs, pitch stacks; 19 instances.
+    - name: classic-two-op-fm
+      pattern: static modulator ratio -> fm.modulator_in
+      graph_ascii: |
+        (osc · mod @ ratio x f) ──out──▶ (fm.modulator_in)
+        (note) ─freq_in──▶ (fm · 1 + a·m) ──▶ (osc · carrier) ──▶ (output)
+        sidebands at ±ratio of the key
+      verlauf: |
+        The sideband pair sits at ±ratio of the key; amount scales spectral
+        complexity, integer ratios stay harmonic.
+      tonal: |
+        Textbook two-operator FM — sine bell to hollow brass by index;
+        ratio and amount alone define the colour, key-locked.
+    - name: chained-fm-cascade
+      pattern: two static modulator ratios in series
+      graph_ascii: |
+        (osc · mod @ r1·f) ──▶ (fm stage 1) ──▶ (osc · inner carrier) ──▶ (fm stage 2 @ r2)
+        (fm stage 2) ──▶ (osc · carrier) ──▶ (output)
+        the second index acts on an already-modulated frequency
+      verlauf: |
+        The second index acts on an already-modulated frequency; deviation
+        products fragment the spectrum.
+      tonal: |
+        Fragmented cascade spectra — deviation products of two ratios;
+        buzzer-to-gong territory, dense and irregular.
+    - name: fm-shared-modulator-duo
+      pattern: one static modulator fanned into two FM stages
+      graph_ascii: |
+        (osc · one ratio mod) ──┬─▶ (fm A · amount aA) ──▶ (osc cA) ──┐
+                                └─▶ (fm B · amount aB) ──▶ (osc cB) ──┴─▶ (add) ─▶ (output)
+      verlauf: |
+        Two phase-locked sideband families under one ratio; the per-stage
+        amounts, not a second stage, create the dyad's difference.
+      tonal: |
+        Phase-locked twin spectra under one ratio — the two amounts, not a
+        second modulator, carve the dyad's difference.
+    - name: fscale-interval-modulator-fm
+      pattern: named 12-TET interval inside the modulator branch
+      graph_ascii: |
+        (note) ─▶ (fscale · named 12-TET interval) ─▶ (osc · mod) ──▶ (fm.modulator_in)
+        (note) ─freq_in──▶ (fm · cents trim) ──▶ (osc · carrier) ──▶ (output)
+      verlauf: |
+        The modulator-to-carrier ratio stays musically named on every key;
+        the free factor trims cents.
+      tonal: |
+        Musically named FM colour — the modulator rides a semitone-named
+        interval, a free factor trims the cents; stable on every key.
+    - name: fscale-fm-harmonic-shift
+      pattern: static factor before the FM carrier centre
+      graph_ascii: |
+        (note) ─▶ (fscale · k) ─freq_in──▶ (fm) ──▶ (osc · shifted carrier) ──▶ (output)
+        (note) ─▶ (osc · mod @ raw key) ──▶ (fm.modulator_in)
+      verlauf: |
+        The cluster lifts onto a harmonic while the modulator keeps the raw
+        key, so the spectrum re-colours as the voice lifts.
+      tonal: |
+        Re-colouring lift — the cluster sits on harmonic k while the
+        modulator keeps the raw key; fixed relationship, fresh spectrum.
+    - name: through-zero-fm-bend
+      pattern: static sine ratio at a deep index
+      graph_ascii: |
+        (osc · sine @ ratio x f) ──out──▶ (fm.modulator_in, deep a)
+        (note) ─freq_in──▶ (fm · 1 + a·m folds through 0) ──▶ (osc · carrier) ──▶ (output)
+      verlauf: |
+        The factor (1 + a·m) folds through zero each modulator cycle; the
+        phase runs backwards without a discontinuity.
+      tonal: |
+        Through-zero sweeps without clicks — the phase runs backwards
+        smoothly; hollow-to-bright folds on deep indices.
+    - name: static-detune-beating
+      pattern: static frequency offset pair
+      graph_ascii: |
+        (osc A @ f + off) ──┐                             no note wire
+                            ├─▶ (add) ──▶ (output)
+        (osc B @ f) ────────┘
+        beat rate = |fA − fB|
+      verlauf: |
+        Amplitude beats at |fA − fB|; no note wire, pure static widening.
+      tonal: |
+        Constant-rate amplitude beat — pure static widening for drones and
+        pads; the beat does not track the key.
+    - name: fscale-detune-unison
+      pattern: keyed cents-offset branches around unity
+      graph_ascii: |
+        (note) ─▶ (fscale · r1) ─▶ (osc A) ──┐
+                                              ├─▶ (add) ──▶ (output)
+        (note) ─▶ (fscale · r2) ─▶ (osc B) ──┘
+        beat = f x |r2 − r1|, key-locked
+      verlauf: |
+        Voices beat at f·|r2 − r1| locked to the key; identical waveforms
+        beat cleanly, octave stacks widen further.
+      tonal: |
+        Key-locked unison beat — identical waveforms beat cleanly, cents
+        offsets widen, octave-stacked branches deepen the sound.
+    - name: fscale-temper-beating
+      pattern: pure factor vs tempered interval pair
+      graph_ascii: |
+        (note) ─▶ (fscale · pure factor) ─▶ (osc A) ───────┐
+                                                            ├─▶ (add) ──▶ (output)
+        (note) ─▶ (tempered interval branch) ─▶ (osc B) ───┘
+        ~2-cent difference beats at 0.0017 f
+      verlauf: |
+        Roughly a two-cent difference beats as a key-tracked celeste breath
+        (0.0017 f); matching branches collapse the beat.
+      tonal: |
+        Celeste breath keyed to the note — the pure-vs-tempered pair beats
+        softly; matched branches collapse the beat to silence.
+    - name: fscale-organ-stack
+      pattern: rational factor fan-out (drawbars)
+      graph_ascii: |
+        (note) ─▶ (fscale · 0.5 / 1 / 2 / 3 ...) ─▶ (osc row) ─▶ (per-input gains) ─▶ (output)
+        the drawbar faders are the per-input levels
+      verlauf: |
+        Fundamental, octave, twelfth render in parallel; per-input levels
+        are the drawbar faders.
+      tonal: |
+        Drawbar organ body — sub, fundamental, octave and twelfth blended
+        by fader; pure additive, key-locked, no beat.
+    - name: fscale-interval-power-stack
+      pattern: named-tempered interval fan-out
+      graph_ascii: |
+        (note) ─▶ (fscale · named tempered intervals) ─▶ (osc fan) ─▶ (mix) ─▶ (output)
+      verlauf: |
+        The stack reads as a chord voicing or drone locked to every key.
+      tonal: |
+        A chord voicing or drone locked to every key — each branch holds
+        its named interval; voicing swaps are fscale edits.
+    - name: stereo-micropitch-spread
+      pattern: keyed ±cents branches to opposite merge sides
+      graph_ascii: |
+        (note x r+) ─▶ (osc L) ──▶ (merge L)      (note x r−) ─▶ (osc R) ──▶ (merge R)
+        the channels never sum inside the graph
+      verlauf: |
+        The channels drift in and out of phase; inside the graph they never
+        sum, so no comb forms.
+      tonal: |
+        Gentle phase-wandering width from ±cents branches — no comb
+        filtering because no internal sum; breathing, stable stereo.
+    - name: difference-tone-bass
+      pattern: integer ratio pair (4, 5) into the ring
+      graph_ascii: |
+        (osc @ 4f, square) ─▶ (ring.in1)      (osc @ 5f, square) ─▶ (ring.in2)
+        (ring · unbiased) ──▶ (output)
+        difference sideband regenerates f itself
+      verlauf: |
+        The difference sideband regenerates the fundamental itself; key-
+        locked missing-fundamental bass.
+      tonal: |
+        Missing-fundamental bass — two high keyed voices ring out the low
+        fundamental in the difference band, key-locked.
+    - name: osc-ring-mod-cross
+      pattern: two static components into the ring
+      graph_ascii: |
+        (osc A) ─▶ (ring.in1)      (osc B) ─▶ (ring.in2)
+        (ring · unbiased) ──▶ (output)
+        ±(fA ± fB) sidebands only
+      verlauf: |
+        Sum and difference sidebands only; unrelated frequencies go
+        clangorous, close ones beat hollow.
+      tonal: |
+        Pure sideband cross — sum and difference only; unrelated pairs
+        clang metallic, near pairs beat hollow and slow.
+    - name: am-sideband-pairing
+      pattern: keyed ratio voice into the AM modulator
+      graph_ascii: |
+        (osc · keyed voice @ ratio x f) ──out──▶ (am.modulator_in)
+        (osc · carrier) ──▶ (am · biased) ──▶ (output)
+        sideband distances around the carrier stay note-locked
+      verlauf: |
+        The bias keeps the carrier audible while the note-locked pair adds
+        its sideband distances around it.
+      tonal: |
+        Ring-flavoured colour that stays musical — the bias keeps the
+        carrier audible while the keyed pair adds its sideband cage.
+    - name: ring-sideband-pickup
+      pattern: keyed ratio pair + key-tracked bp pickup
+      graph_ascii: |
+        (osc · keyed ratio pair) ─▶ (ring) ──▶ (bp · key-tracked @ (1 + r) x f) ──▶ (output)
+        one sum sideband survives the pickup
+      verlauf: |
+        The bandpass selects the sum sideband at factor 1 + r; one clean
+        inharmonic melodic partial survives.
+      tonal: |
+        One clean inharmonic melodic partial picked from the sideband
+        pile — thin, glassy, key-stable lead tone.
+    - name: metal-hat-squares
+      pattern: static inharmonic square pair into the ring (+ event gate)
+      graph_ascii: |
+        (osc · square pair, inharmonic) ─▶ (ring) ──▶ (adsr · micro-decay gate) ──▶ (output)
+        the decay decides closed tick vs open wash
+      verlauf: |
+        Deterministic metallic line spectrum; the micro-decay decides
+        closed tick against open wash.
+      tonal: |
+        Deterministic metallic line spectrum — a short gate snaps a closed
+        tick, a longer one opens into hat wash.
+    - name: pitch-related-instrument
+      pattern: umbrella of the static ratio branch family
+      graph_ascii: |
+        (note) ─▶ (fscale fan · r1..rn) ─▶ (osc row) ─▶ (mix) ─▶ (output)
+        ┄ FM branch: (fscale · ratio) ─▶ (fm stages) ─▶ (carrier row)
+        every branch keeps a fixed pitch relationship to the key
+      verlauf: |
+        Note fan-out with fscale branches and proportional FM stages; every
+        branch keeps a fixed pitch relationship to the key.
+      tonal: |
+        Umbrella of the ratio-branch family — key-locked chords, stacks and
+        proportional FM; everything stays in tune by construction.
+    - name: pulse-oscillator-bank
+      pattern: static square bank folded on the adder bus (imports osc-sum-bus)
+      graph_ascii: |
+        [ import: osc-sum-bus ]
+        (square row · service notes) ─▶ pairwise add fold ──▶ (voiced band passes) ──▶ (output)
+      verlauf: |
+        Six service-note squares fold into one deterministic inharmonic
+        cluster consumed by voiced band passes.
+      tonal: |
+        A fixed inharmonic square cluster behind voiced band passes —
+        deterministic multi-tone body, filter-chosen partials.
+
+    # ── M5 velocity accent drivers ──────────────────────────────────────
+    #   family node: velocity-accent ◁ is a  driver-pattern
+    #   course: per-note accent — note.vel into the target's own vel
+    #   socket; accents pop louder/brighter/deeper, ghosts sit under;
+    #   4 instances.
+    - name: 808-accent-gain
+      pattern: note.vel -> gain.vel
+      graph_ascii: |
+        (note.vel) ──▶ (gain.vel)
+        (osc · layer voice) ──▶ (gain · accent level) ──▶ (output)
+      verlauf: |
+        Per-note level scaling; each layer opts in by its own vel wire.
+      tonal: |
+        Pure loudness accent per velocity — accents pop, ghosts sit under;
+        timbre untouched.
+    - name: 808-accent-drive-shaper
+      pattern: note.vel -> shape.vel
+      graph_ascii: |
+        (note.vel) ──▶ (shape.vel)
+        (osc · voice) ──▶ (shape · accent = deeper curve) ──▶ (output)
+      verlauf: |
+        Per-note drive scaling; accents push deeper into the curve.
+      tonal: |
+        Loudness with a timbre kicker — accented hits push deeper into the
+        transfer curve and gain buzz.
+    - name: 808-accent-filter-snap
+      pattern: note.vel -> filter.vel
+      graph_ascii: |
+        (note.vel) ──▶ (filter.vel)
+        (osc · voice) ──▶ (filter · cutoff multiplied per note) ──▶ (output)
+      verlauf: |
+        Per-note cutoff scaling multiplied on the (possibly modulated)
+        cutoff; accents snap open, ghosts sit darker.
+      tonal: |
+        Brightness accent — accents snap the cutoff open, ghost notes sit
+        dark behind the same filter.
+    - name: 808-accent-fm-brightness
+      pattern: note.vel -> fm.vel
+      graph_ascii: |
+        (note.vel) ──▶ (fm.vel)
+        (note) ─freq_in──▶ (fm) ──▶ (osc · carrier) ──▶ (output)
+      verlauf: |
+        Per-note index scaling; accented hits ring brighter, soft hits
+        collapse toward the clean sine.
+      tonal: |
+        Index accent — accented hits ring bright and wide, soft hits
+        collapse toward the clean sine.
+
+    # ── M6 key-track drivers ────────────────────────────────────────────
+    #   family node: key-track      ◁ is a  driver-pattern
+    #   course: proportional frequency from the key — note.out ± fscale
+    #   drives the socket; 2 instances.
+    - name: key-tracking-filter
+      pattern: note.out (± fscale) -> filter.cutoff_mod_in
+      graph_ascii: |
+        (note.out ┄ (fscale · r)) ──▶ (filter.cutoff_mod_in)
+        (osc · voice) ──▶ (filter · cutoff = k x key) ──▶ (output)
+      verlauf: |
+        The live cutoff rides the played frequency or a ratio-locked
+        multiple; timbre becomes proportional per key.
+      tonal: |
+        Proportional timbre — high keys read brighter (or darker) by
+        design; the mapping itself is the instrument's character.
+    - name: keyed-dual-resonator-drum
+      pattern: note fan-out through fscale ratios (+ imports the carpet chain)
+      graph_ascii: |
+        [ import: tuned-noise-percussion ]        ┄ the untracked carpet
+        (note) ─▶ (fscale · fixed inharmonic interval) ─▶ (two gated tone bodies) ──▶ (output)
+      verlauf: |
+        Two gated tone bodies transpose with the key at a fixed inharmonic
+        interval; the tuned carpet stays untracked.
+      tonal: |
+        Two key-locked tone bodies at a fixed inharmonic interval over an
+        untuned resonance carpet — percussive, transposable dyad.
+
+    # ── M7 audio self-feedback drivers ──────────────────────────────────
+    #   family node: self-feedback  ◁ is a  driver-pattern
+    #   course: the rendered signal itself is the driver on a socket of
+    #   its own path (self fm index, self ring square); 2 instances.
+    - name: self-drive-growl-fm
+      pattern: own rendered carrier -> fm.amount_mod_in
+      graph_ascii: |
+        (osc · carrier out) ──▶ (fm.amount_mod_in)      owns both sides of the wire
+        (note) ─freq_in──▶ (fm) ──▶ (osc.note_in) ──▶ (output)
+      verlauf: |
+        Amplitude becomes timbre: loud parts of the wave deepen the
+        sidebands of the very voice that rendered them.
+      tonal: |
+        Amplitude becomes timbre — the voice's own loud parts deepen its
+        sidebands; self-fed growl that varies with the material.
+    - name: self-ring-octave-double
+      pattern: same wire on both ring inputs
+      graph_ascii: |
+        (osc · out) ──▶ (ring.in1)      same wire ──▶ (ring.in2)
+        (ring · y·y) ──▶ (hp · removes the DC floor) ──▶ (output)
+      verlauf: |
+        y·y squares the voice: pure octave plus DC for sine, even-partial
+        emphasis for richer waves; the hp removes the DC floor.
+      tonal: |
+        y·y squares the voice — pure octave above for sine, even-partial
+        emphasis for richer waves; the hp trims the DC floor.

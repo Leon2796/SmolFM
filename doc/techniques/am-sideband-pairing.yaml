@@ -15,6 +15,30 @@ technique:
     osc-ring-mod-cross; at LFO rates the same stage degenerates into plain
     tremolo (am-tremolo-lfo).
 
+  tutorial: |
+    Amplitudenmodulation (AM) auf Audiorate — in der Synthesizerliteratur
+    die metallisch glänzende Schwester der Ringmodulation. Wofür dient die
+    Verdrahtung? Ein Träger- und ein Modulator-Oscillator treffen sich in
+    einer AM-Stufe; deren bipolare Kurve wird vorgespannt, damit der
+    Träger hörbar bleibt, während die Seitenbänder auf Trägerfrequenz
+    plus und minus Modulatorfrequenz aufschlagen. Was ist das Ziel? Ein
+    glänzend-glockiges Partikelspektrum um eine stabile Tonhöhenmitte —
+    klirrend-glockig, aber melodisch verwendbar, wo Ringmodulation (der
+    Träger-unterdrückende Grenzfall ohne Vorspannung) die Tonhöhe
+    aufzulösen droht. Der Gang des Signals: (1) Die Note speist den
+    Träger und — über den Ratio-Teiler — den Noten-gebundenen Modulator.
+    (2) Die AM-Stufe mischt: der Carrier bleibt sichtbar, plus/minus
+    Frequenzen türmen die Seitenbänder auf. (3) Der Ausgang summiert die
+    Paarung. Das Ratio-Tracking hält die Seitenbandabstände musikalisch:
+    die Abstände wandern mit der Taste mit, nicht-integer Ratios geben
+    inharmonische Färbung. Bei LFO-Raten entartet dieselbe Verdrahtung
+    zu sanftem Tremolo (am-tremolo-lfo); im FM-Bereich erwächst das
+    Klangbild verwandt im classic-two-op-fm, und das trägerunterdrückende
+    Gegenstück ist das osc-ring-mod-cross. Das Ratio-Tracking hält die
+    Seitenbandabstände auch auf der Tastatur musikalisch: jede Taste
+    verschiebt die Abstände proportional, nie aus dem musikalischen
+    Bezug — ein Klangbild, das bleibt, wo man es hingestellt hat.
+
   involved_nodes:
     - type: note
       role: MIDI note source; base frequency for both voices.
@@ -75,6 +99,11 @@ technique:
       (signal).  modulator.out -> am.modulator_in (signal).  am.out ->
       output (signal).  The two voices meet only in the AM stage; in
       front of it they stay independent.
+
+  graph_ascii: |
+      (note) ──out──┬──▶ (osc · carrier) ──out──▶ am.carrier_in
+                    └──▶ (fscale · ratio) ──out──▶ (osc · modulator) ──out──▶ am.modulator_in
+      (am · pair stage) ──out──▶ (output)          amount = depth · factor = ratio
 
   parameters:
     - name: am amount

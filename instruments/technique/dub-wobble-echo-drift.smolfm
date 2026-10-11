@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="dub-wobble-echo-drift" description="Minimal example instance of the technique dub-wobble-echo-drift from the SmolFM technique catalogue." techniques="dub-wobble-echo-drift">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" />
+      <Node id="delay0" division="eighth" time="375" sync="on" mix="0.5" feedback="0.5" />
+      <Node id="osc1" waveform="perlin" mode="lfo" lforate="0.8" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="delay0" toPort="in" />
+      <Wire from="osc1" fromPort="out" to="delay0" toPort="time_mod_in" />
+      <Wire from="delay0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="320" />
+      <Box id="osc0" x="390" y="80" />
+      <Box id="delay0" x="720" y="80" />
+      <Box id="osc1" x="60" y="80" />
+      <Box id="output" x="1050" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

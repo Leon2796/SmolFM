@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="chained-fm-cascade" description="Minimal example instance of the technique chained-fm-cascade from the SmolFM technique catalogue." techniques="chained-fm-cascade">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="fm0" amount="1.2" />
+      <Node id="fm1" amount="1.2" />
+      <Node id="osc0" />
+      <Node id="osc1" staticfreq="440" mode="static" />
+      <Node id="osc2" staticfreq="660" mode="static" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fm0" toPort="freq_in" />
+      <Wire from="fm0" fromPort="out" to="fm1" toPort="freq_in" />
+      <Wire from="fm1" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc1" fromPort="out" to="fm0" toPort="modulator_in" />
+      <Wire from="osc2" fromPort="out" to="fm1" toPort="modulator_in" />
+      <Wire from="osc0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="560" />
+      <Box id="fm0" x="390" y="80" />
+      <Box id="fm1" x="720" y="80" />
+      <Box id="osc0" x="1050" y="80" />
+      <Box id="osc1" x="60" y="80" />
+      <Box id="osc2" x="60" y="320" />
+      <Box id="output" x="1380" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

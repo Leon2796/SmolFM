@@ -9,6 +9,24 @@ technique:
     the format: before time_mod_in existed there was no way to move a
     delay's time, so the whole bucket-brigade family was unreachable.
 
+  tutorial: |
+    Flanger — der berühmte Bucket-Brigade-Swoosh aus der Studio-, Gitarren-
+    und Synth-Literatur, hier aus dem Delay-Knoten selbst gebaut: eine
+    schnelle, kleine Sinuswelle wandert auf time_mod_in, das Feedback fährt
+    hoch. Wofür dient die Verdrahtung? Die Grundzeit sitzt bei 1..8 ms im
+    Flanger-Territorium und der Sweep multipliziert sie mit (1 + m) — die
+    Linie taucht pro Zyklus Richtung Ein-Sample-Minimum und holt aus. Was
+    ist das Ziel? Das Kammfilterwobbeln: Die Auslöschungsfurchen spreizen
+    sich und wandern aufwärts durchs Spektrum, das Feedback vervielfacht
+    die Furchen — der Jet-Druck folgt direkt aus der Zeitskalierung. Der
+    Gang des Signals: (1) Die Stimme spielt samt Obertönen und Attacken.
+    (2) Der Sweep-Osc moduliert die Zeit, das Delay wirft die wandernden
+    Kämme hinter die Stimme. (3) Der Mix hält sich dezent, das Feedback
+    trägt den Rippel-Effekt. (4) Der Ausgang summiert den Flange.
+    Längere Grundzeiten mit sanfter Tiefe lesen sich als Chorus; auf einem
+    synchronisierten Temporaster dreht der Swoosh in Dub-Druck. Erst seit
+    time_mod_in ist diese Familie im Format überhaupt aussprechbar.
+
   involved_nodes:
     - type: note
       role: Not required for effect-only wiring; for pitched sources it tracks the voice.
@@ -46,6 +64,11 @@ technique:
       flanger territory; the sweep multiplies it by (1 + m), so the line
       dives toward the 1-sample minimum and back each cycle.  Mix stays
       modest; feedback carries the classic comb ripple.
+
+  graph_ascii: |
+      (osc · lfo sine sweep) ──out──▶ (delay.time_mod_in)          fast small (1 + m) on the line
+      (osc · source voice) ──out──▶ (adsr · articulation) ──out──▶ (delay.in)
+      (delay · flanging line) ──out──▶ (output)
 
   parameters:
     - name: sweep rate and depth

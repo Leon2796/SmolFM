@@ -10,6 +10,25 @@ technique:
     that reads as a panning motion without any pan control.  Unbalanced
     resonances turn the same pattern into a stereo formant split.
 
+  tutorial: |
+    Komplementäres Filter-Panning — die Crossover-Pseudo-Panoramik der
+    Studio-Literatur: linke Seite durch den Lowpass, rechte durch den
+    Highpass, und ein Cutoff-Sweep liest das Ohr als Panoramabewegung.
+    Wofür dient die Verdrahtung? Der Splitter teilt die zentrierte
+    Stimme in ihre reinen Seitenzweige; jeder Zweig läuft durch sein
+    Filter (lp links, hp rechts); der Merger fasst beide in ein
+    Stereobbild auf einem Ausgangs-Eingang zusammen. Was ist das Ziel?
+    Eine Filterfärbung, die als Pan hörbar wird: bei gemeinsam
+    verfolgtem Cutoff wandert die spektrale Schwerfläche von links
+    nach rechts, ganz ohne Panner; mit gleichem Cutoff rekonstruiert
+    lp + hp ungefähr die Vollenergie (volle Breite, volles Level), auseinander
+    gezogene Cutoffs kippen die Energieverteilung; unterschiedliche
+    Resonanzen machen daraus einen stereofonischen Formantsplit.
+    Der Gang des Signals: (1) Die Note stimmt die zentrierte Stimme.
+    (2) Der Splitter trennt seitenrein. (3) Die Filter färben jede
+    reine Seite. (4) Der Merger baut das Stereobbild, der Ausgang
+    trägt es. Kein Filter überschreitet je die Kanalgrenze.
+
   involved_nodes:
     - type: note
       role: Keyboard send driving the voice.
@@ -78,6 +97,12 @@ technique:
       filter-right.out -> merge.in2 (signal).  merge.out -> output
       (signal).  The filters never cross channels: each processes one pure
       side.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · voice) ──out──▶ (split.in)
+      (split.outL) ──▶ (filter · lp left) ──▶ merge.in1
+      (split.outR) ──▶ (filter · hp right) ──▶ (merge.in2)
+      (merge · stereo frame) ──out──▶ (output)     complementary sweeps read as pan
 
   parameters:
     - name: left cutoff

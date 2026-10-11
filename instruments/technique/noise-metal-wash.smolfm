@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="noise-metal-wash" description="Minimal example instance of the technique noise-metal-wash from the SmolFM technique catalogue." techniques="noise-metal-wash">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" waveform="noise" mode="static" />
+      <Node id="filter0" mode="bp" cutoff="6200" resonance="0.5" />
+      <Node id="adsr0" attack="0.001" release="0.1" sustain="0.0" decay="0.15" />
+      <Node id="gain0" factor="0.8" />
+      <Node id="filter1" mode="bp" cutoff="800" resonance="0.4" />
+      <Node id="adsr1" attack="0.002" release="0.2" sustain="0.0" decay="0.4" />
+      <Node id="gain1" factor="0.8" />
+      <Node id="adsr2" attack="0.001" release="0.05" sustain="0.0" decay="0.2" />
+      <Node id="resonator0" q="0.6" decay="0.18" tune="1740" />
+      <Node id="gain2" factor="0.9" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="osc0" fromPort="out" to="filter1" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="filter1" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="osc0" fromPort="out" to="adsr2" toPort="in" />
+      <Wire from="note" fromPort="vel" to="gain0" toPort="vel" />
+      <Wire from="note" fromPort="vel" to="gain1" toPort="vel" />
+      <Wire from="note" fromPort="vel" to="gain2" toPort="vel" />
+      <Wire from="note" fromPort="vel" to="resonator0" toPort="vel" />
+      <Wire from="adsr0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="adsr1" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="resonator0" fromPort="out" to="gain2" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="gain1" fromPort="out" to="output" toPort="in2" />
+      <Wire from="gain2" fromPort="out" to="output" toPort="in3" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="320" />
+      <Box id="osc0" x="60" y="80" />
+      <Box id="filter0" x="390" y="80" />
+      <Box id="adsr0" x="720" y="80" />
+      <Box id="gain0" x="1050" y="80" />
+      <Box id="filter1" x="390" y="320" />
+      <Box id="adsr1" x="720" y="320" />
+      <Box id="gain1" x="1050" y="320" />
+      <Box id="adsr2" x="390" y="560" />
+      <Box id="resonator0" x="390" y="800" />
+      <Box id="gain2" x="720" y="560" />
+      <Box id="output" x="1380" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

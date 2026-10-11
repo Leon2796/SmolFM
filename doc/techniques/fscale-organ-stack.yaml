@@ -9,6 +9,25 @@ technique:
     derived in the frequency domain from rational scale factors, so the
     stack stays locked to the key on every note.
 
+  tutorial: |
+    Drawbar-Orgel-Stack — die Hammond-Registrierung als Verdrahtung: eine
+    Taste klingt wie ein Akkord aus Obertönen, Grundton, Oktave und Duodezime
+    sind als eigenständige Stimmen parallel geschaltet. Wofür dient die
+    Verdrahtung? Der Tastensend fächert die Notenfrequenz über Ratio-Teiler
+    (Faktor 1, 2 und 3) in drei pitch-gebundene Oscs, jeder auf eigenem
+    Ausgangs-Eingang. Was ist das Ziel? Drawbar-artiges Balancieren: die
+    per-Input-Levels sind die Zugstangen — der Keylock hält den Stack auf
+    jeder Taste harmonisch, denn jede Partialbeziehung ist exakt ihr
+    Faktor. Der Gang des Signals: (1) Die Note speist Grundton, Oktav- und
+    Duodezim-Zweig zugleich. (2) Die drei Oscs rendern ihre Partikel samt
+    Obertönen parallel und unabhängig. (3) Der Ausgang summiert auf
+    dedizierten Eingängen — Levels trims die Registrierung, der Master-
+    Level skaliert den Stack. Im Katalog ist dies die drawbar-stimmte
+    Fassung des Frequenz-Fächers aus pitch-related-instrument; die
+    strukturelle Schwesternschaltung in der Lagen-Schichtung ist
+    sub-instrument-layering. Bis zu acht Partialstimmen passen unter
+    einen Ausgang.
+
   involved_nodes:
     - type: note
       role: Keyboard send; the single pitch reference every partial derives
@@ -73,6 +92,12 @@ technique:
       fscale2.out (factor 3) -> osc3.note_in.  The three osc.out ports feed
       three dedicated output inputs (signal); the per-input levels are the
       drawbar faders and the master level scales the whole stack.
+
+  graph_ascii: |
+      (note) ──out──┬──▶ (osc1 · fundamental)  ──▶ output.in1
+                    ├──▶ (fscale1 · ×2) ──▶ (osc2) ──▶ output.in2
+                    └──▶ (fscale2 · ×3) ──▶ (osc3) ──▶ output.in3
+      per-input levels = drawbar faders
 
   parameters:
     - name: drawbar ratios

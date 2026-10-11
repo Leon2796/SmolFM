@@ -10,6 +10,23 @@ technique:
     voice, expressed as explicit wiring instead of a hidden per-voice
     setting.
 
+  tutorial: |
+    Die ADSR-Hüllkurve — das Standard-Anschlags- und Ausklangmodell der
+    Synthesizerliteratur, hier in ihrer Grundrolle als Amplitudenhüllkurve.
+    Wofür dient die Verdrahtung? Die Stimme läuft serial durch die ADSR-
+    Stufe: der Osc liefert den Klang, die Hüllkurve formt seine Amplitude
+    nach dem Notenereignis. Was ist das Ziel? Jeder Ton erhält vier hörbare
+    Phasen — die Attack schwellt ihn auf, das Decay setzt ihn aufs Sustain-
+    Niveau, das Sustain hält die Lautheit, das Release letzt ihn nach der
+    Taste verklingen. Der Gang des Signals: (1) Der Osc spielt die
+    Wellenform samt Obertönen. (2) Die ADSR-Stufe öffnet und schließt das
+    Level per Note — kurzes Decay mit Sustain 0 liest das Ohr als gezupften
+    Pluck, lange Attack als schwellendes Pad. (3) Der Ausgang transportiert
+    die gebändigte Stimme. Anders als das periodische Tremolo
+    (am-tremolo-lfo) oder das auf eine zweite Stimme reagierende Ducking
+    (am-sidechain-duck) folgt diese Dynamik exakt den Tastendrücken; im
+    Frequenzbereich arbeitet das Geschwister fadsr-cutoff-sweep.
+
   involved_nodes:
     - type: note
       role: Keyboard send; provides the voice pitch and triggers the
@@ -48,6 +65,10 @@ technique:
       adsr.out -> output (signal).  A single serial voice path; the
       envelope is the only dynamic stage and lives entirely in the signal
       domain.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · voice) ──out──▶ (adsr · amp envelope) ──out──▶ (output)
+                                            ▲ A-D-S-R timing follows the note event
 
   parameters:
     - name: attack

@@ -8,6 +8,23 @@ technique:
     and echo pitch are two sides of one coin, the drift also smears the
     repeats' pitch slightly: a tape-dub feel from pure wiring.
 
+  tutorial: |
+    Driftendes Dub-Echo — das Band-Zittern der Dub-Literatur: ein
+    Perlin-Drift schaukelt die Zeit eines tempo-gebundenen Delays,
+    sodass die Echos um das Raster atmen. Wofür dient die Verdrahtung?
+    Die Stimme läuft in ein Sync-Delay (z. B. Achtel-Division); eine
+    langsame Perlin-LFO (0.03..0.15 Hz) sitzt auf time_mod_in und
+    multipliziert die Rasterzeit mit (1 + m) abtastweise. Was ist das
+    Ziel? Ein menschlich atmender Groove, der nie exakt quantisiert
+    und nie wiederholt — Echo-Zeiten wandern innerhalb von ±100 % des
+    Rasters. Der Gang des Signals: (1) Die Note stimmt die Stimme,
+    (2) das Delay wirft die Sync-Echos; der Drift verschiebt jede
+    Wiederholung musikalisch ums Raster, (3) weil Delay-Zeit und
+    Echo-Pitch zusammenhängen, verschmiert die Tonhöhe leicht — der
+    Bandwobble-Nebeneffekt macht den Groove menschlich; der Ausgang
+    trägt das Ergebnis. Geschwister: flanger-delay-line (schnell,
+    klein) am selben Anschluss.
+
   involved_nodes:
     - type: note
       role: Keyboard send; voices the input being echoed.
@@ -42,6 +59,10 @@ technique:
       delay runs in sync mode (a division like 1/8); the perlin multiplier
       drifts (1 + m) around that grid — echoes land near the grid but
       wander musically.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · voice) ──out──▶ (delay · synced echo) ──out──▶ (output)
+      (osc · lfo perlin drift) ──out──▶ (delay.time_mod_in)        the grid breathes around 1/8
 
   parameters:
     - name: drift rate

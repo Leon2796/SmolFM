@@ -7,6 +7,20 @@ technique:
     envelope: the up and down factors translate the carrier frequency during
     attack and decay while the modulator ratio sets the spectral shape.
 
+  tutorial: |
+    FM-Spektrum-Sweep — die Träger-Hüllkurve der FM-Literatur: die
+    Pitch-Hüllkurve sitzt vor die FM-Stufe und schiebt das ganze
+    Seitenbandspektrum mit. Wofür dient die Verdrahtung? Die Notenfrequenz
+    läuft durch den F-ADSR, dessen Ausgang die Carrier-Frequenz der
+    FM-Stufe wird; der Modulator bleibt unabhängig. Was ist das Ziel?
+    Wandernde Seitenbänder: beim Auf und Ab der Hüllkurve reisen alle
+    Teilwellen mit und verankern sich gegen das feste Modulatorverhältnis
+    neu — das Spektrum kippt zwischen harmonisch und inharmonisch. Der
+    Gang des Signals: (1) Die Note speist den F-ADSR, (2) dessen Ausgang
+    die FM-Stufe samt Modulatorsignal, (3) der Carrier rendert die
+    gewischte FM-Welt samt wandernder Obertöne — Glockentöne, die durch
+    ihr eigenes Spektrum kippen.
+
   involved_nodes:
     - type: note
       role: MIDI note source; base frequency for the envelope.
@@ -54,6 +68,10 @@ technique:
       carrier.note_in (frequency).  carrier.out -> output (signal).  The
       envelope sits between the note source and the FM stage's carrier
       frequency input; the modulator path is independent.
+
+  graph_ascii: |
+      (note) ──out──▶ (fadsr · pitch env) ──out──▶ (fm.freq_in) ──out──▶ (osc · carrier.note_in) ──out──▶ (output)
+      (osc · modulator) ──out──▶ (fm.modulator_in)                    all sidebands travel with the sweep
 
   parameters:
     - name: envelope factors

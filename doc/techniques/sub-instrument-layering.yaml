@@ -16,6 +16,31 @@ technique:
     frequency-domain derivations of the fundamental see
     pitch-related-instrument.
 
+  tutorial: |
+    Sub-Instrument-Schichtung — die Partitur-Schichtung der
+    Orchestrierungs-Literatur: vollständige Ketten werden am Ausgang
+    vereint zu einem spielbaren Instrument. Wofür dient die Verdrahtung?
+    Jede Layer ist eine komplette Sub-Instrument-Kette — eigene Stimme,
+    eigene Artikulation (ADSR), eigene Tonformung (SVF) — und alle
+    Ketten laufen parallel auf eigene Ausgangs-Eingänge; der Ausgang
+    ist die EINZIGE Summierstelle. Was ist das Ziel? Ein aus mehreren
+    ganzen Instrumenten bestehendes Klanginstrument: die Ketten bleiben
+    durch eigene Hüllkurven und Tonstufen getrennt, die Ausgangssumme
+    vereint sie; gemeinsame Vorverarbeitung wird als
+    identische Instanz je Kette realisiert (z. B. gemeinsames EQ mit
+    je Layer ein Filter, weil jeder Eingang exakt eine Quelle annimmt
+    und keine Stufe hinter der Summe sitzen kann); separate
+    Vorverarbeitung ist kettenspezifisch, und Headroom-Trims folgen
+    dem layer-gain-staging-Muster. Der Gang des Signals: (1) Die
+    geteilte Pitch-Quelle speist jede Kette (optional je mit
+    Register-Stufe per fscale). (2) Jede Kette rendert ihre Stimme
+    samt Obertönen und formt sie intern — Hüllkurve und/oder Filter,
+    Stufe für Stufe. (3) Die Ketten treffen sich an den dedizierten
+    Ausgangs-Eingängen. (4) Der Master-Level skaliert die Summe.
+    Bewusste Tonhöhenbezüge sind hier Nebensache — für
+    Frequenzbereichs-Ableitungen des Grundtons siehe
+    pitch-related-instrument.
+
   involved_nodes:
     - type: note
       role: Shared pitch source; every layer chain derives its base frequency
@@ -86,6 +111,10 @@ technique:
       exactly one source and the output is the only summing point, so no
       single stage can sit behind the merge.  The output sums all chains;
       there is no cross-layer routing, the chains share only the note send.
+
+  graph_ascii: |
+      (note) ──out──▶ every layer chain: (osc · voice) [→ (adsr)] [→ (filter)] ──▶ output.inI
+      structural layering · chains share only the note send · identical instances per chain = joint EQ
 
   parameters:
     - name: layer chain staging

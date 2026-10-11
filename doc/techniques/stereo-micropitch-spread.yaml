@@ -9,6 +9,24 @@ technique:
     a wide, vocal pitch-drift image — the manual two-voice form of the
     MicroPitch effect, built without delay lines and without modulators.
 
+  tutorial: |
+    MicroPitch-Streuung — der zwei-Stimmen-MicroPitch-Effekt der
+    Studio-Literatur, ohne Delay-Linien und ohne Modulatoren: zwei
+    um einen Bruchteil eines Prozents verstimmte Carrier werden auf
+    gegenüberliegenden Seiten platziert. Wofür dient die Verdrahtung?
+    Die Note fächert in zwei Frequenzteiler (links knapp über 1,
+    rechts knapp unter 1); jede Stufe stimmt ihren eigenen Carrier;
+    der Merger weist den verstimmten Carriern ihre Seiten zu — ein
+    Splitter ist gar nicht nötig. Was ist das Ziel? Ein breites,
+    langsam atmendes Pitch-Drift-Bild: die Kanäle driften durch und
+    aus Phasenübereinstimmung — bei 220 Hz und ±0.15 % mit rund
+    0.7 Hz: Drift statt Warble, warme vokale Chorus-Breitheit. Der
+    Gang des Signals: (1) Die Note speist beide Teiler, (2) die
+    Carrier rendert ihre Wellenformen samt Obertönen, (3) der Merger
+    platziert links Schärfe, rechts Tiefe, (4) der Ausgang trägt das
+    Bild — im Graphen summieren die Carrier nie, ein Mono-Downmix
+    pocht mit der Driftrate, Offsets klein halten für Mono-Sicherheit.
+
   involved_nodes:
     - type: note
       role: Keyboard send; feeds both scaler branches.
@@ -76,6 +94,11 @@ technique:
       No splitter is needed: the merger alone assigns two independent
       carriers to their sides.  Processors after the merger act on both
       sides jointly.
+
+  graph_ascii: |
+      (note) ──out──┬─▶ (fscale L · +cents) ──▶ (osc L) ──▶ merge.in1
+                    └─▶ (fscale R · −cents) ──▶ (osc R) ──▶ (merge.in2)
+      (merge) ──out──▶ (output)        sides drift in and out of phase · no splitter needed
 
   parameters:
     - name: left factor

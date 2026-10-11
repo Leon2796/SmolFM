@@ -9,6 +9,24 @@ technique:
     quarter-distance tail under a sixteenth-distance tail reads as one
     polyrhythmic echo mesh that always stays locked to the tempo.
 
+  tutorial: |
+    Polyrhythmisches Doppel-Delay — zwei tempo-gebundene Echo-Ebenen auf
+    verschiedenen Noten-Teilungen, im Studio als Dual Sync Delay bekannt.
+    Wofür dient die Verdrahtung? Der trockene Klang fächert parallel in
+    zwei Delay-Zellen, jede sync-on mit eigener Division (Halbe, Viertel,
+    Achtel, Sechzehntel), eigenem Feedback und eigenem Mix. Was ist das
+    Ziel? Ein Echo-Netz, das immer auf dem Raster bleibt: Viertel-Schweif
+    unter Sechzehntel-Staub überlagern sich rhythmisch, ohne jemals
+    gegen das Tempo zu treiben. Der Gang des Signals: (1) Die Quelle
+    verteilt die Wellenform samt Obertönen auf beide Zellen.
+    (2) Jede Zelle wirft ihr Teilungs-Echo — die grobe Division atmet
+    breit, die feine füllt metrischen Staub. (3) Der Ausgang summiert
+    Trockensignal und beide Schweife auf eigenen Eingängen. Die Zellen
+    modulieren sich nie gegenseitig — die Polyrhythmie lebt allein in
+    der Parallelschaltung; Feedback und Mix je Linie sind die einzigen
+    Klangsteller. Als D3-Fächer hängt diese Technik im
+    delay-patterns-Register neben parallel-echo-blend.
+
   involved_nodes:
     - type: osc
       role: Dry voice source in pitch or static mode.
@@ -43,6 +61,11 @@ technique:
       (signal).  Both delays run sync on with different division indices;
       neither line modulates the other — the polyrhythm lives in the
       parallel fan-out, not in a feed chain.
+
+  graph_ascii: |
+      (osc · dry voice) ──out──┬──▶ (delay A · coarse division) ──out──▶ output.in1
+                               └──▶ (delay B · fine division)   ──out──▶ output.in2
+      both lines sync on · no line modulates the other
 
   parameters:
     - name: division pair

@@ -7,6 +7,19 @@ technique:
     carrier gain down on every percussive pulse, so the pad ducks in the
     rhythm of the modulator — a sidechain-style pump without a compressor.
 
+  tutorial: |
+    Sidechain-Ducking — aus der Studiopraxis, wo der Kompressor beim Bass
+    hinter jedem Beat runterzieht. Hier schafft reine Verdrahtung denselben
+    Pump. Wofür dient die Verdrahtung? Eine percussive Kette sitzt auf dem
+    Modulator-Eingang der AM-Stufe, das Pad auf dem Carrier-Eingang. Was
+    ist das Ziel? Das Pad duckt rhythmisch hinter jedem Perc-Puls — ein
+    atmender Rhythmusraum, der die Beats Vortritt gibt, ganz ohne
+    Kompressor. Der Gang des Signals: (1) Die Rausch-Quelle bildet den
+    Puls, der Shaper formt, die kurze Hüllkurve begrenzt seine Länge.
+    (2) Die AM-Stufe koppelt: jeder bipolare Puls zieht das Träger-Gain
+    nach unten — Duck-Länge ist die Puls-Decay-Zeit. Amount 0 lässt das
+    Pad trocken, voller Amount gräbt die Pump-Lücke vollständig.
+
   involved_nodes:
     - type: osc
       role: Pad carrier in pitch or static mode; the signal being ducked.
@@ -56,6 +69,11 @@ technique:
       am.modulator_in (signal).  Pad: pad osc -> am.carrier_in (signal).
       am.out -> output (signal).  No feedback, no LFO — the duck rhythm is
       the perc envelope pattern.
+
+  graph_ascii: |
+      (osc · noise perc) ──out──▶ (shape) ──out──▶ (adsr · perc env) ──out──▶ am.modulator_in
+      (osc · pad carrier) ─────────────────────────────────────────────▶ am.carrier_in
+      (am) ──out──▶ (output)              each perc pulse ducks the pad
 
   parameters:
     - name: am amount

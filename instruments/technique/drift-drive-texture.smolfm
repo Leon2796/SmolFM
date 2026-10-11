@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="drift-drive-texture" description="Minimal example instance of the technique drift-drive-texture from the SmolFM technique catalogue." techniques="drift-drive-texture">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" />
+      <Node id="shape0" drive="0.5" />
+      <Node id="osc1" waveform="perlin" mode="lfo" lforate="1.2" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="osc1" fromPort="out" to="shape0" toPort="drive_mod_in" />
+      <Wire from="shape0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="320" />
+      <Box id="osc0" x="390" y="80" />
+      <Box id="shape0" x="720" y="80" />
+      <Box id="osc1" x="60" y="80" />
+      <Box id="output" x="1050" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

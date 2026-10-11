@@ -10,6 +10,23 @@ technique:
     learns a cyclic whistle that rises into a zap and falls silent — a
     self-oscillation ladder driven purely by the Q socket.
 
+  tutorial: |
+    Sägezahn-Resonanz-Rampe — der pulsierende Squelch der Filterkunst:
+    jede Rampe klettert die Resonanz von Zusammenfall bis zur vollen Q
+    und schnappt beim Reset zu. Wofür dient die Verdrahtung? Der Saw-
+    LFO sitzt auf resonance_mod_in — nur die Resonanz pulst (r ×
+    (1 + m), von null auf Anschlag jede Periode), der Cutoff bleibt
+    statisch oder tastenverfolgt. Was ist das Ziel? Nahe einer
+    Basisresonanz von 0.5 kreuzt jede Rampe genau einmal die
+    Selbstschwingungsschwelle — die stationäre Stimme lernt einen
+    aufsteigenden Pfiff, der in einen Zap mündet und verstummt, ganz
+    ohne Tonhöhenbewegung. Der Gang des Signals: Note ⇒ Stimme samt
+    Obertönen, Saw-Rampe ⇒ Q-Anschluss (jede Periode der Weg ab null),
+    Filter ⇒ sauber oder metallisch pfeifend, Ausgang ⇒ die gepulste
+    Ebene. Geschwister: resonance-breathing-filter (Perlin),
+    auto-sweep-resonance importiert diese Verdrahtung wortwörtlich
+    (ein Klang).
+
   involved_nodes:
     - type: note
       role: Keyboard send; anchors the voice pitch and optionally the cutoff.
@@ -45,6 +62,20 @@ technique:
       (signal).  The saw is the only moving node; every cycle rebuilds the
       same Q path from zero.
 
+  graph_ascii: |
+      (note) ──out──▶ (osc · steady voice.note_in)
+      (osc · lfo saw ramp) ──out──▶ (filter.resonance_mod_in)
+      (osc · steady voice) ──out──▶ (filter.in)
+      (filter) ──out──▶ (output)
+      ┄ (note) ──out──▶ (filter.cutoff_mod_in)      optional key tracking
+
+  used_by:                    # mirrored imports registry — checked both ways
+    - name: auto-sweep-resonance
+      detail: |
+        full import: the alias replaces this file's graph, ports, topology
+        and parameters with this entry and contributes only its own
+        framing text.
+
   parameters:
     - name: ramp rate
       role: |
@@ -74,8 +105,10 @@ technique:
       description: |
         resonance-breathing-filter drives the same resonance_mod_in with
         perlin (non-cyclic breath); this technique uses the saw for exact
-        cycles.  auto-sweep-resonance moves the cutoff socket instead and
-        leaves Q static.  Combining all three couples ramp, cutoff and Q.
+        cycles.  auto-sweep-resonance imports this graph verbatim and keeps
+        only its own framing — one entry, one klang, the alias documents the
+        reuse.  Coupled designs combine this socket with perlin-cutoff-drift
+        or key-tracking-filter on the cutoff side.
     - name: budget
       description: |
         Registry budgets: note = 1, osc <= 16 (two used), filter <= 16 (one

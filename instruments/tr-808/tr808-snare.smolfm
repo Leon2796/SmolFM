@@ -1,51 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3" name="tr808-snare" description="808-Style Snare: Zweiton-Korpus 185/330 Hz mit 120-ms-Korpus-Dekay (driftbox-Cap) plus Rausch-Kette nach 808-synth: HP 2200 x0,7 + Rattle-Bandpass 3600 Q4,5 x0,5, 160-ms-Snap, Noise-Dominanz 1,05; Skitter/Burst-Re-Gates = Engine-Case, bewusst ohne Echo-Delay angenaehert (Echo am resonanten Noise = quasi-periodische Segmente = metallisch) (tuned-noise-percussion); Velocity-Akzent hebt alle Schichten an." techniques="tuned-noise-percussion">
+<SmolFM version="3" name="tr808-snare" description="808-Style Snare als Phase-2-Erneuerung (alter Stand als Sicherung unter tr808-rip-off-snare.smolfm): der reine Sinus-Korpus (185/330 Hz) wird durch einen statischen Zweiton-Resonanzkoerper ersetzt - resonator0 185 Hz + resonator1 330 Hz (Paar-Verhaeltnis 1,7838), q 0,8, decay 0,12 s (Ring-t60), interner Anschlag (strikelevel 0,4077, striketime 0,008 s), Anschlags-Pegel direkt aus strike_vel (roh, Amplitude proportional vel); `in` offen ohne Schleife (Direct-Form-Hieb wie Tom/Conga), kein Key-Tracking und kein tune-Wiring (feste Pitch-Variante, statischer Anker), kein vel am Resonator (Spread unwired = byte-neutral). Akzent ist reine Lautstaerken-Lage: vsc0 (sqrt, scale 1,0) vor den vel-Eingaengen aller drei Lage-Gains (185-Trimmung 1,35, 330-Trimmung 1,1, Rattle-VCA 1,05) - die Faktoren restaurieren die alte 0,55/0,45-Balance ueber die Strike-Spitze 0,4077. Rausch-Kette unveraendert wie im Original: Noise 6000 -> Highpass 2200 (res 0,29) x0,7 + Rattle-Bandpass 3600 (res 0,9) x0,5, Summe add0, 160-ms-Snap-Gate, Noise-Dominanz 1,05; Velocity-Akzent hebt alle Schichten an (tuned-noise-percussion)." techniques="tuned-noise-percussion keyed-dual-resonator-drum resonator-body-strike">
   <Graph>
     <Nodes>
       <Node id="note">
         <Pin id="out" direction="out" type="frequency" />
         <Pin id="vel" direction="out" type="velocity" />
       </Node>
-      <Node id="osc0" waveform="sine" mode="static" staticfreq="185">
-        <Pin id="note_in" direction="in" type="frequency" />
-        <Pin id="out" direction="out" type="signal" />
+      <Node id="vsc0" curve="sqrt" scale="1.0">
+        <Pin id="vel_in" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="velocity" />
       </Node>
-      <Node id="osc1" waveform="sine" mode="static" staticfreq="330">
-        <Pin id="note_in" direction="in" type="frequency" />
-        <Pin id="out" direction="out" type="signal" />
-      </Node>
-      <Node id="osc2" waveform="noise" mode="static" staticfreq="6000">
-        <Pin id="note_in" direction="in" type="frequency" />
-        <Pin id="out" direction="out" type="signal" />
-      </Node>
-      <Node id="adsr0" attack="0.001" decay="0.12" sustain="0.0" release="0.05">
+      <Node id="resonator0" tune="185" q="0.8" decay="0.12" strikelevel="0.4077" striketime="0.008">
         <Pin id="in" direction="in" type="signal" />
+        <Pin id="tune" direction="in" type="frequency" />
+        <Pin id="q_mod_in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="strike_vel" direction="in" type="velocity" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
-      <Node id="adsr1" attack="0.001" decay="0.12" sustain="0.0" release="0.04">
+      <Node id="resonator1" tune="330" q="0.8" decay="0.12" strikelevel="0.4077" striketime="0.008">
         <Pin id="in" direction="in" type="signal" />
+        <Pin id="tune" direction="in" type="frequency" />
+        <Pin id="q_mod_in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="strike_vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain0" factor="1.35">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain1" factor="1.1">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="osc0" waveform="noise" mode="static" staticfreq="6000">
+        <Pin id="note_in" direction="in" type="frequency" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
       <Node id="filter0" cutoff="3600" resonance="0.9" mode="bp">
-        <Pin id="in" direction="in" type="signal" />
-        <Pin id="vel" direction="in" type="velocity" />
-        <Pin id="out" direction="out" type="signal" />
-      </Node>
-      <Node id="adsr2" attack="0.001" decay="0.16" sustain="0.0" release="0.06">
-        <Pin id="in" direction="in" type="signal" />
-        <Pin id="out" direction="out" type="signal" />
-      </Node>
-      <Node id="gain0" factor="0.55">
-        <Pin id="in" direction="in" type="signal" />
-        <Pin id="vel" direction="in" type="velocity" />
-        <Pin id="out" direction="out" type="signal" />
-      </Node>
-      <Node id="gain1" factor="0.45">
-        <Pin id="in" direction="in" type="signal" />
-        <Pin id="vel" direction="in" type="velocity" />
-        <Pin id="out" direction="out" type="signal" />
-      </Node>
-      <Node id="gain2" factor="1.05">
         <Pin id="in" direction="in" type="signal" />
         <Pin id="vel" direction="in" type="velocity" />
         <Pin id="out" direction="out" type="signal" />
@@ -67,45 +62,51 @@
         <Pin id="in2" direction="in" type="signal" />
         <Pin id="out" direction="out" type="signal" />
       </Node>
+      <Node id="adsr0" attack="0.001" decay="0.16" sustain="0.0" release="0.06">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
+      <Node id="gain2" factor="1.05">
+        <Pin id="in" direction="in" type="signal" />
+        <Pin id="vel" direction="in" type="velocity" />
+        <Pin id="out" direction="out" type="signal" />
+      </Node>
       <Node id="output" level="0.85" />
     </Nodes>
     <Connections>
       <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
-      <Wire from="note" fromPort="out" to="osc1" toPort="note_in" />
-      <Wire from="note" fromPort="out" to="osc2" toPort="note_in" />
-      <Wire from="note" fromPort="vel" to="gain0" toPort="vel" />
-      <Wire from="note" fromPort="vel" to="gain1" toPort="vel" />
-      <Wire from="note" fromPort="vel" to="gain2" toPort="vel" />
-      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
-      <Wire from="adsr0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="note" fromPort="vel" to="vsc0" toPort="vel_in" />
+      <Wire from="note" fromPort="vel" to="resonator0" toPort="strike_vel" />
+      <Wire from="note" fromPort="vel" to="resonator1" toPort="strike_vel" />
+      <Wire from="vsc0" fromPort="out" to="gain0" toPort="vel" />
+      <Wire from="vsc0" fromPort="out" to="gain1" toPort="vel" />
+      <Wire from="vsc0" fromPort="out" to="gain2" toPort="vel" />
+      <Wire from="resonator0" fromPort="out" to="gain0" toPort="in" />
       <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
-      <Wire from="osc1" fromPort="out" to="adsr1" toPort="in" />
-      <Wire from="adsr1" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="resonator1" fromPort="out" to="gain1" toPort="in" />
       <Wire from="gain1" fromPort="out" to="output" toPort="in2" />
-      <Wire from="osc2" fromPort="out" to="filter1" toPort="in" />
-      <Wire from="osc2" fromPort="out" to="filter0" toPort="in" />
-
+      <Wire from="osc0" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="osc0" fromPort="out" to="filter1" toPort="in" />
       <Wire from="filter0" fromPort="out" to="gain4" toPort="in" />
       <Wire from="gain4" fromPort="out" to="add0" toPort="in2" />
       <Wire from="filter1" fromPort="out" to="gain3" toPort="in" />
       <Wire from="gain3" fromPort="out" to="add0" toPort="in1" />
-      <Wire from="add0" fromPort="out" to="adsr2" toPort="in" />
-      <Wire from="adsr2" fromPort="out" to="gain2" toPort="in" />
+      <Wire from="add0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="gain2" toPort="in" />
       <Wire from="gain2" fromPort="out" to="output" toPort="in3" />
     </Connections>
   </Graph>
   <Layout>
     <Boxes>
       <Box id="note" x="60" y="380" />
-      <Box id="osc0" x="360" y="60" />
-      <Box id="adsr0" x="680" y="60" />
-      <Box id="gain0" x="1000" y="60" />
-      <Box id="osc1" x="360" y="380" />
-      <Box id="adsr1" x="680" y="380" />
-      <Box id="gain1" x="1000" y="380" />
-      <Box id="osc2" x="360" y="700" />
+      <Box id="vsc0" x="60" y="700" />
+      <Box id="resonator0" x="360" y="60" />
+      <Box id="gain0" x="680" y="60" />
+      <Box id="resonator1" x="360" y="380" />
+      <Box id="gain1" x="680" y="380" />
+      <Box id="osc0" x="360" y="700" />
       <Box id="filter0" x="680" y="700" />
-      <Box id="adsr2" x="1000" y="700" />
+      <Box id="adsr0" x="1000" y="700" />
       <Box id="gain2" x="1320" y="700" />
       <Box id="filter1" x="680" y="1020" />
       <Box id="gain3" x="1000" y="1020" />

@@ -10,6 +10,24 @@ technique:
     on/off without AM's depth semantis; the square's duty behaviour plus
     the static gain decide how hard the silence bites.
 
+  tutorial: |
+    Gate-Chops — der Trance-Gate und die Strobe-Slices der Dance-Literatur,
+    aus purer Verdrahtung gebaut: ein quadratischer LFO schaltet einen
+    Gain-Knoten hart um. Wofür dient die Verdrahtung? Die Square-Spannung
+    läuft auf factor_mod_in; zwischen (1 + m) = 0 und 2 wird der Gain zum
+    harten Rhythmus-Gatter, das jede gehaltene Stimme periodisch hackt.
+    Was ist das Ziel? Rhythmus ohne Sequenzer und ohne Auslösung: Gated
+    Pads, Trance-Gatter und Strobe-Streifen als Ein-Note-Halterung — der
+    Choptakt ist die LFO-Rate. Der Gang des Signals: (1) Die Note stimmt
+    das Pad samt Obertönen. (2) Die Square-LFO schaltet: geschlossene
+    Halbzeit löscht komplett, offene verdoppelt das Basis-Niveau — das
+    offene Level ist der Parameter, nicht die LFO-Amplitude. (3) Am
+    Audiorand der Choptakte liest das Ohr Stutter. Der Grundunterschied zum AM:
+    ein Gain multipliziert streng, kein Carrier-Rest — anders als das
+    Tremolo (am-tremolo-lfo) bleibt die Stille voll. Eine Gate-Osc kann
+    mehrere Gain-Abzweige gleichzeitig speisen — Schicht-Chops auf einen
+    Rhythmusschlag.
+
   involved_nodes:
     - type: note
       role: Keyboard send; pitches the gated voice.
@@ -44,6 +62,10 @@ technique:
       One gain and one LFO voice turn a sustain into an arbitrary-rate
       rhythm section.
 
+  graph_ascii: |
+      (note) ──out──▶ (osc · pad voice) ──out──▶ (gain · gate) ──out──▶ (output)
+      (osc · lfo square gate) ──out──▶ (gain.factor_mod_in)         0 ↔ 2× base per chop cycle
+
   parameters:
     - name: chop rate
       role: |
@@ -73,7 +95,7 @@ technique:
         silence; the multiplicative gain closes it.
     - name: socket-siblings
       description: |
-        gain-swell-pads uses the same factor_mod_in socket with perlin for
+        gain-drift-swell uses the same factor_mod_in socket with perlin for
         organic breath; gain-ratchet-riser uses saw for ramps.  For stereo
         widening of the chopped signal see stereo-micropitch-spread.
     - name: budget

@@ -9,6 +9,22 @@ technique:
     at audio rates the square wave smears the voice into a crunchy ring
     timbre.
 
+  tutorial: |
+    Square-Ring-Chop — das harte Polaritäts-Schneiden der Werk-Literatur:
+    Stimme mal Square-LFO im Ringprodukt — die Stimme wird abwechselnd
+    durchgelassen und polverkehrt gespiegelt, an jeder Square-Kante.
+    Wofür dient die Verdrahtung? Stimmen-Osc auf ring.in1, ein
+    freilaufender Square-LFO auf ring.in2, das Produkt zum Ausgang.
+    Was ist das Ziel? Aggressives Stuttering mit Klick-Punches (sub-
+    audio), körniges Grind (audionah), metallischer Ringklang (Audio-
+    band) — ganz ohne Filter und ohne AM-Schwellen. Der Gang des
+    Signals: (1) Die Note stimmt die Stimme samt Obertönen, (2) der
+    Square-Chop schaltet kantenweise durch oder polverkehrt, (3) der
+    Ring multipliziert, (4) der Ausgang trägt das Gehackte. Verwandt:
+    self-ring-octave-double (Selbst-Quadrierung), osc-ring-mod-cross
+    (zwei Audio-Oscs), ring-sideband-pickup (Summenband-Auswahl) —
+    hier ist einer der Eingänge ein sub-audio LFO.
+
   involved_nodes:
     - type: osc
       role: Voice oscillator in pitch mode; the chopped signal.
@@ -49,6 +65,11 @@ technique:
       (signal).  chop osc.out (LFO mode, square) -> ring.in2 (signal).
       ring.out -> output (signal).  The chop source is free-running and
       unsynced to the note.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · voice) ──out──▶ ring.in1
+      (osc · lfo square chop) ──out──▶ (ring.in2)
+      (ring · unbiased product) ──out──▶ (output)       pass ⟷ polarity-flip per edge
 
   parameters:
     - name: chop rate

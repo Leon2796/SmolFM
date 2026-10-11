@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="TR-909 Bass Drum"
+         description="909-Kick als sine-dive-kick: fadsr-Frequenzdive mit Noise-Click, resonanter Drive-Shape und Velocity-Accent über Gain und Shaper"
+         techniques="sine-dive-kick, tuned-noise-percussion, 808-accent-gain, 808-accent-drive-shaper">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="fadsr0" attack="0.001" decay="0.16" sustain="0" release="0.05" up="2.2" down="1" />
+      <Node id="osc0" waveform="sine" mode="pitch" />
+      <Node id="adsr0" attack="0.001" decay="0.42" sustain="0" release="0.06" />
+      <Node id="shape0" shape="soft" drive="0.8" />
+      <Node id="gain0" factor="0.62" />
+      <Node id="osc1" waveform="noise" mode="static" staticfreq="7500" />
+      <Node id="adsr1" attack="0.001" decay="0.03" sustain="0" release="0.01" />
+      <Node id="filter0" mode="hp" cutoff="3500" resonance="0.25" />
+      <Node id="gain1" factor="0.34" />
+      <Node id="vsc0" curve="sqrt" scale="2.2" />
+      <Node id="output" level="0.75" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="fadsr0" toPort="freq_in" />
+      <Wire from="fadsr0" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="adsr0" toPort="in" />
+      <Wire from="adsr0" fromPort="out" to="shape0" toPort="in" />
+      <Wire from="shape0" fromPort="out" to="gain0" toPort="in" />
+      <Wire from="gain0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="osc1" fromPort="out" to="adsr1" toPort="in" />
+      <Wire from="adsr1" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="gain1" toPort="in" />
+      <Wire from="gain1" fromPort="out" to="output" toPort="in2" />
+      <Wire from="note" fromPort="vel" to="vsc0" toPort="vel_in" />
+      <Wire from="vsc0" fromPort="out" to="gain0" toPort="vel" />
+      <Wire from="vsc0" fromPort="out" to="shape0" toPort="vel" />
+      <Wire from="vsc0" fromPort="out" to="gain1" toPort="vel" />
+      <Wire from="vsc0" fromPort="out" to="fadsr0" toPort="vel" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="60" />
+      <Box id="fadsr0" x="380" y="60" />
+      <Box id="osc0" x="700" y="60" />
+      <Box id="adsr0" x="1020" y="60" />
+      <Box id="shape0" x="1340" y="60" />
+      <Box id="gain0" x="1660" y="60" />
+      <Box id="osc1" x="700" y="380" />
+      <Box id="adsr1" x="1020" y="380" />
+      <Box id="filter0" x="1340" y="380" />
+      <Box id="gain1" x="1660" y="380" />
+      <Box id="vsc0" x="60" y="700" />
+      <Box id="output" x="1980" y="220" />
+    </Boxes>
+  </Layout>
+</SmolFM>

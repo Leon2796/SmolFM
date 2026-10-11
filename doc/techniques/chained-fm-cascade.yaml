@@ -7,6 +7,19 @@ technique:
     modulated frequency of the first — a cascaded modulation index that
     builds denser, more inharmonic spectra than a single two-operator pair.
 
+  tutorial: |
+    Kaskadierte FM — in der FM-Buchtradition die Multi-Stage-Kaskadierung
+    mehrerer Modulationsindizes ineinander. Wofür dient die Verdrahtung?
+    Die erste FM-Stufe moduliert die Basstonhöhe, die zweite die bereits
+    modulierte Frequenz der ersten — die Abweichungen multiplizieren
+    sich. Was ist das Ziel? Ein dichteres, inharmonischeres Spektrum als
+    ein einziges FM-Paar — metallischer, hörbar komplexer. Der Gang des
+    Signals: (1) Die Note tritt in die erste Stufe, (2) ihr Ausgang
+    speist die zweite als neue Basisfrequenz — kleine Tiefe wobbelt
+    langsam, große fragmentiert das Spektrum. (3) Der Träger rendert,
+    der Ausgang übernimmt; erster Ratio ganzzahlig, zweiter leicht
+    verstimmt sichert den harmonischen Wurzelklang.
+
   involved_nodes:
     - type: note
       role: MIDI note source feeding the first FM stage.
@@ -57,6 +70,11 @@ technique:
       Frequency-domain cascade: note -> fm0.freq_in; fm0.out -> fm1.freq_in;
       fm1.out -> carrier.note_in.  Two modulator oscillators (signal) feed
       fm0.modulator_in and fm1.modulator_in; the carrier renders the result.
+
+  graph_ascii: |
+      (note) ──out──▶ (fm0) ──out──▶ (fm1) ──out──▶ (osc · carrier.note_in) ──out──▶ (output)
+                        ▲                ▲
+      (osc · mod 0) ───┘   (osc · mod 1) ─┘         cascaded modulation index
 
   parameters:
     - name: first stage amount

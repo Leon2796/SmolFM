@@ -19,6 +19,52 @@ technique:
     does not layer complete signal chains or pre-process merged groups —
     that is sub-instrument-layering.
 
+  tutorial: |
+    Tonhöhenbezogener Instrumentensend — das Rahmenwerk der
+    Frequenzbereichs-Literatur: eine einzige Notenquelle fächert ihre
+    Frequenz in parallele Ableitungszweige, die gezielt harmonisch oder
+    inharmonisch zur Grundwelle liegen. Wofür dient die Verdrahtung? Der
+    Note-Ausgang speist viele Verbraucher: glatter Tracking-Zweig (rohe
+    Note), transponierter Zweig (fscale-Faktor davor) oder proportional
+    modulierter Zweig (FM-Stufe, deren Auslenkung mit der Note skaliert:
+    out = f·(1 + a·m)) — das Modulatorsignal kann freilaufend oder über
+    Ratio-Teiler an der Grundwelle hängen. Was ist das Ziel? Verwandtschaft
+    als Instrument: rationale Faktoren und note-gebundene Ratio-Modulatoren
+    sitzen harmonisch neben dem Grundton, irrationale Faktoren oder
+    freilaufende, rauchige Modulatoren setzen inharmonisch — alle Zweige
+    antworten auf jede Taste, ein Tastendruck klingt als Akkord verwandter
+    Instrumente, konsonant gestapelt oder metallisch färbend. Der Gang
+    des Signals: (1) Der Send fächert in alle Zweige. (2) Jeder Zweig
+    leitet seine Frequenz ab — Skalen- und FM-Faktoren produzieren die
+    Gesamtdistanz zur Grundwelle; rationale Produkte klingen harmo-
+    nisch, irrationale oder zeitveränderliche Produkte inharmonisch.
+    (3) Die Stimmen rendern die Zweiginstrumente samt Obertönen.
+    (4) Der Ausgang summiert die Zweige auf dedizierten Eingängen.
+    Die Technik lebt im Frequenzbereich — sie schichtet keine
+    kompletten Ketten und vorverarbeitet keine Summen (das ist
+    sub-instrument-layering); sie ist das Dach, unter dem drawbar-
+    Stack, Intervall-Stack und Temper-Schwebung ihre fokussierten
+    Voicings finden — vom Grundton-Tracking bis zur Ratio-Modulator-
+    Werkstatt, alles aus einem Send und seinen Ableitungen.
+
+    Der Send ist bewusst die einzige Quelle: der Note-Prozessor
+    existiert genau einmal, aber sein Ausgang speist viele Verbraucher
+    — alle Ableitungen folgen derselben Taste gleichzeitig. Die
+    Fokus-Techniken unter dem Dach: fscale-detune-unison
+    (Schwebungsbreite), fscale-interval-modulator-fm (benannte
+    Modulator-Intervalle) und difference-tone-bass (Regeneration des
+    Grundtons als Differenzseite) — jedes eine fokussierte Voicing
+    dieser Ableitungskunst.
+  involved_nodes:
+
+    Der Send ist bewusst die einzige Quelle: der Note-Prozessor
+    existiert genau einmal, aber sein Ausgang speist viele Verbraucher
+    — alle Ableitungen folgen derselben Taste gleichzeitig. Die
+    Fokus-Techniken unter dem Dach: fscale-detune-unison
+    (Schwebungsbreite), fscale-interval-modulator-fm (benannte
+    Modulator-Intervalle) und difference-tone-bass (Regeneration des
+    Grundtons als Differenzseite) — jedes eine fokussierte Voicing
+    dieser Ableitungskunst.
   involved_nodes:
     - type: note
       role: The single keyboard send; its out port is the shared pitch
@@ -93,6 +139,12 @@ technique:
         the fundamental at every key.
       Every branch voice feeds one dedicated master output input.  The
       branches are independent; they share only the note send.
+
+  graph_ascii: |
+      (note) ──out──┬──▶ (branch: osc · pitch) ────▶ output.inI
+                    ├──▶ (fscale · factor r) ──▶ (osc) ──▶ output.inJ
+                    └──▶ (fm.freq_in ± fscale) ──▶ (osc · voice) ──▶ output.inK
+      all branches share the note send · rational = harmonic, irrational/noisy = inharmonic
 
   parameters:
     - name: branch scale factors

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="static-detune-beating" description="Minimal example instance of the technique static-detune-beating from the SmolFM technique catalogue." techniques="static-detune-beating">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" staticfreq="442" mode="static" />
+      <Node id="osc1" staticfreq="444" mode="static" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="osc0" fromPort="out" to="output" toPort="in1" />
+      <Wire from="osc1" fromPort="out" to="output" toPort="in2" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="560" />
+      <Box id="osc0" x="60" y="80" />
+      <Box id="osc1" x="60" y="320" />
+      <Box id="output" x="390" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>

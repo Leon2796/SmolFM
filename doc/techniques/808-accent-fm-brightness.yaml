@@ -8,6 +8,19 @@ technique:
     grows exactly with the attack strength, driven purely by note.vel into
     fm.vel — no envelope clone, no FX bus.
 
+  tutorial: |
+    FM-Brightness-Accent — in der FM-Literatur die dynamische Indexsteuerung
+    (Velocity aufs FM-Index): Wofür dient die Verdrahtung? Am Synthesizer
+    öffnet die Anschlagstärke den Modulationsindex, sodass betonte Hits
+    einen helleren Obertonblitz werfen. Was ist das Ziel? Die metallische
+    Körnung der Cowbell-, Clave- und Conga-Stimmen wächst exakt mit der
+    Anschlagstärke — wie die level-abhängige Analogfärbung des Originals,
+    ganz ohne Envelope-Klon oder FX-Bus. Der Gang des Signals: (1) Die Note
+    bringt Frequenz und Velocity. (2) In der FM-Stage wächst der Index mit
+    der Velocity: Seitenbänder türmen sich bei Akzenten auf, der Ton blitzt
+    metallic auf; weiche Noten bleiben zahm und rund. (3) Träger und
+    nachgelagerte Stufen tragen die getönte Ebene zum Ausgang.
+
   involved_nodes:
     - type: note
       role: MIDI source; supplies carrier frequency and accent velocity.
@@ -35,6 +48,11 @@ technique:
       mod-osc.out -> fm.modulator_in (signal).  fm.out -> carrier note_in
       (frequency).  amount_mod_in stays available for spectral envelopes —
       it multiplies with velocity.
+
+  graph_ascii: |
+      (note) ──out──▶ (fm) ──out──▶ (osc · carrier.note_in) ──out──▶ (output)
+        └─vel──▶ (fm.vel)
+      (osc · modulator) ──out──▶ (fm.modulator_in)
 
   parameters:
     - name: base amount

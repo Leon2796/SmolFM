@@ -9,6 +9,26 @@ technique:
     an octave or a fifth above the keyboard while the modulator oscillator,
     still fed by the raw note, stays locked to the original pitch ratio.
 
+  tutorial: |
+    FM auf Oberwellen-Mitte — die harmonikverschobene FM aus der
+    FM-Werktradition: der Frequenzteiler schiebt das ganze Modulations-
+    cluster auf eine Oberwelle der Taste. Wofür dient die Verdrahtung? Die
+    Note speist den Teiler (z. B. Faktor 2 oder 1.5) vor dem FM-Stufenzentrum,
+    während der Modulator-Oscillator roh auf der Notenfrequenz bleibt. Was
+    ist das Ziel? Die bekannte Patch-Welt sitzt eine Oktave oder Quinte
+    über der Tastatur, ohne dass die Modulator-Ratio ihre musikalische
+    Verankerung verliert — das Spektrum färbt sich um, weil der
+    Modulator-zu-Träger-Wert sich mit dem Faktor verschiebt. Der Gang des
+    Signals: (1) Die Note teilt sich: verschobene Frequenz in die FM-
+    Stufe, rohe Frequenz in den Modulator. (2) Die FM-Stufe umschließt
+    die verschobene Mitte mit ihren Abweichungen. (3) Der Carrier rendert
+    die verschobene, modulierte Wellenform samt Obertönen. (4) Der
+    Ausgang erhält die höher hängende Stimme. Verwandtschaft im Katalog:
+    fscale-organ-stack rendert eine zweite skalierte Stimme daneben — hier
+    wandert nur das FM-Cluster; fadsr-fm-spectrum-sweep wischt denselben
+    Anschluss mit einer Hüllkurve, hier hält ein statischer Faktor;
+    shaped-modulator-fm knetet stattdessen das Modulatorsignal selbst.
+
   involved_nodes:
     - type: note
       role: MIDI note source; feeds both the scaler and the modulator.
@@ -66,6 +86,11 @@ technique:
       carrier.out -> output (signal).  The scaler moves the cluster's
       centre; the modulator stays on the raw key so the deviation keeps its
       musical ratio to the played note.
+
+  graph_ascii: |
+      (note) ──out──┬──▶ (fscale · harmonic factor) ──out──▶ (fm.freq_in) ──out──▶ (osc · carrier.note_in) ──out──▶ (output)
+                    └────────────────────────▶ (osc · modulator.note_in) ──out──▶ (fm.modulator_in)
+      scaler moves the cluster centre · modulator stays on the raw key
 
   parameters:
     - name: fscale factor

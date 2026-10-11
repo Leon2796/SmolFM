@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SmolFM version="3" name="osc-sum-bus" description="Minimal example instance of the technique osc-sum-bus from the SmolFM technique catalogue." techniques="osc-sum-bus">
+  <Graph>
+    <Nodes>
+      <Node id="note" />
+      <Node id="osc0" />
+      <Node id="osc1" />
+      <Node id="osc2" />
+      <Node id="add0" />
+      <Node id="add1" />
+      <Node id="filter0" mode="lp" cutoff="4000" resonance="0.2" />
+      <Node id="output" level="0.7" />
+    </Nodes>
+    <Connections>
+      <Wire from="note" fromPort="out" to="osc0" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="osc1" toPort="note_in" />
+      <Wire from="note" fromPort="out" to="osc2" toPort="note_in" />
+      <Wire from="osc0" fromPort="out" to="add0" toPort="in1" />
+      <Wire from="osc1" fromPort="out" to="add0" toPort="in2" />
+      <Wire from="osc2" fromPort="out" to="add1" toPort="in2" />
+      <Wire from="add0" fromPort="out" to="add1" toPort="in1" />
+      <Wire from="add1" fromPort="out" to="filter0" toPort="in" />
+      <Wire from="filter0" fromPort="out" to="output" toPort="in1" />
+    </Connections>
+  </Graph>
+  <Layout>
+    <Boxes>
+      <Box id="note" x="60" y="80" />
+      <Box id="osc0" x="390" y="80" />
+      <Box id="osc1" x="390" y="320" />
+      <Box id="osc2" x="390" y="560" />
+      <Box id="add0" x="720" y="80" />
+      <Box id="add1" x="1050" y="80" />
+      <Box id="filter0" x="1380" y="80" />
+      <Box id="output" x="1710" y="80" />
+    </Boxes>
+  </Layout>
+</SmolFM>
