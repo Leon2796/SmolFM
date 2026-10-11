@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<SmolFM version="3" name="tr808-cheap-rip-off-clap" description="(Erhaltener alter Stand des Original-Patches als Sicherung, Rueckfallebene zum Phase-2-Neubau tr808-hand-clap) 808-Style Hand-Clap: breites Rausch-Band 1,05 kHz, zu einem 3-Tap-Cluster (die trockene Quelle plus 14/31-ms-Kopien parallel addiert, reine Taps - mix 1,0 / fb 0 = kammfilterfrei; Echo-Feedback am Noise = quasi-periodische Segmente = metallisch), Envelope nach den Taps begrenzt den Cluster, plus diffuser 200-ms-Tail; Velocity-Akzent lauter." techniques="multi-burst-clap, 808-accent-gain">
+<SmolFM version="3" name="tr808-rip-off-clap" description="(Erhaltener alter Stand des Original-Patches als Sicherung, Rueckfallebene zum Phase-2-Neubau tr808-hand-clap) 808-Style Hand-Clap: breites Rausch-Band 1,05 kHz, zu einem 3-Tap-Cluster (die trockene Quelle plus 14/31-ms-Kopien parallel addiert, reine Taps - mix 1,0 / fb 0 = kammfilterfrei; Echo-Feedback am Noise = quasi-periodische Segmente = metallisch), Envelope nach den Taps begrenzt den Cluster, plus diffuser 200-ms-Tail; Velocity-Akzent lauter." techniques="multi-burst-clap, 808-accent-gain">
   <Graph>
     <Nodes>
       <Node id="note">
