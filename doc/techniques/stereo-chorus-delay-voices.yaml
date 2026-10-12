@@ -1,0 +1,190 @@
+technique:
+  name: stereo-chorus-delay-voices
+
+  idea: |
+    A centered voice fans out into two short delay lines (20..50 ms, no
+    feedback), and each line's time_mod_in carries its own slow sine with
+    a different rate.  Moving a delay line's length resamples its content,
+    so each line's wet copy wobbles in pitch like a vibrato voice while the
+    line's mix holds the untouched copy; the two wobbling copies meet the
+    dry voice — a stack of detuned sources beating against their origin.
+    The chorus side of the modulation-effect family: pitched wobble and
+    beating instead of the flanger's comb sweep, feedback omitted, width
+    breathing from the two rate offsets.
+
+  tutorial: |
+    Chorus — der mehrstimmige Dicke-Effekt der Studio- und Gitarrenliteratur,
+    hier aus zwei wobbelnden Delay-Linien gebaut. Wofür dient die Verdrahtung?
+    Die Stimme teilt sich seitenrein in zwei kurze Verzögerungen (20..50 ms);
+    jede Linie mischt in ihrem Knoten das unverzögerte Original mit und eine
+    langsam wabernde Kopie — zwei Quellen, die fast dieselbe Melodie spielen
+    mit minimalen Tonhöhen-Versätzen. Was ist das Ziel? Das Ohr liest die
+    schwach verstimmten Kopien als mehrere Spieler (daher der Name Chorus):
+    ihre vibrierenden Tonhöhen bilden Dissonanzen, die als Schwebungen in
+    einem reichen, atmenden Klangbild pulsieren — bei dezenten Werten als
+    warmes Chorsein, bei drastischen als dissonantes Warble. Der Gang des
+    Signals: (1) Die Note stimmt die zentrierte Stimme. (2) Der Splitter
+    trennt seitenrein. (3) Jede Delay-Linie hält ihren Mix (Original plus
+    Kopie) und wobbelt die Kopie über time_mod_in — die Kopie klettert und
+    sinkt in der Tonhöhe, ganz ohne Pitch-Modulator: eine kürzere Linie liest
+    schneller ab, eine längere langsamer. (4) Der Merger fasst beide Linien
+    zum Stereobild; die beiden LFO-Raten laufen auseinander und lassen die
+    Breite langsam auf- und zugehen. Geschwister aus dem Katalog:
+    flanger-delay-line treibt dieselbe Buchse mit schneller kleiner LFO und
+    starkem Feedback — dort wandert das Kammfiltergitter (Swoosh), hier
+    vibrieren die Kopien (Schwebung); stereo-micropitch-spread erzeugt
+    dasselbe Hörziel über Frequenzteiler statt Delay-Linien;
+    vibrato-tail-echo wobbelt nur die Echoschwänze bei hohem Feedback;
+    stereo-dual-delay-field trägt dieselbe Seitenverdrahtung, aber ganz
+    ohne Driver.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send driving the voice.
+    - type: osc
+      role: Voice oscillator in pitch mode; the centered source being chorused.
+    - type: split
+      role: Divides the voice into the left and right chorus strand.
+    - type: delay
+      role: Left chorus line; 20..50 ms, feedback 0, mix near 0.5.
+    - type: delay
+      role: Right chorus line; independent time, feedback 0, mix near 0.5.
+    - type: osc
+      role: Left chorus LFO in lfo mode; slow sine (e.g. 0.3 Hz).
+    - type: osc
+      role: Right chorus LFO in lfo mode; slow sine at a second rate
+        (e.g. 0.55 Hz) so the strands wander apart.
+    - type: merge
+      role: Recombines the two chorus strands into one stereo frame.
+    - type: output
+      role: Master endpoint for the merged frame.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the voice (frequency).
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the played note (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Centered signal into the splitter (signal).
+    - node_role: Splitter
+      port: in
+      role: Receives the voice signal (signal).
+    - node_role: Splitter
+      port: outL
+      role: Left side branch into the left chorus line (signal).
+    - node_role: Splitter
+      port: outR
+      role: Right side branch into the right chorus line (signal).
+    - node_role: Left chorus line
+      port: in
+      role: Receives the left strand (signal).
+    - node_role: Left chorus line
+      port: time_mod_in
+      role: Left wobble multiplies the base time by (1 + m) per sample
+        (signal).
+    - node_role: Left chorus line
+      port: out
+      role: Left dry-plus-copy mix into merger in1 (signal).
+    - node_role: Right chorus line
+      port: in
+      role: Receives the right strand (signal).
+    - node_role: Right chorus line
+      port: time_mod_in
+      role: Right wobble at its own rate (signal).
+    - node_role: Right chorus line
+      port: out
+      role: Right dry-plus-copy mix into merger in2 (signal).
+    - node_role: Left chorus LFO
+      port: out
+      role: Slow sine into the left time_mod_in (signal).
+    - node_role: Right chorus LFO
+      port: out
+      role: Second slow sine at the offset rate into the right time_mod_in
+        (signal).
+    - node_role: Merger
+      port: in1
+      role: Contributes the left channel (signal).
+    - node_role: Merger
+      port: in2
+      role: Contributes the right channel (signal).
+    - node_role: Merger
+      port: out
+      role: Combined stereo chorus frame towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the merged frame (signal).
+
+  topology:
+    description: |
+      note.out -> voice-osc.note_in (frequency).  voice-osc.out ->
+      split.in (signal).  split.outL -> delay-left.in, split.outR ->
+      delay-right.in (signal).  lfo-left.out -> delay-left.time_mod_in,
+      lfo-right.out -> delay-right.time_mod_in (signal).  Both delay nodes
+      run without feedback (feedback attribute 0) and at mix ~0.5 so the
+      untouched copy rides inside each line; base times 20..50 ms, unequal
+      per side when the beating should stagger.  delay-left.out ->
+      merge.in1, delay-right.out -> merge.in2 (signal).  merge.out ->
+      output (signal).
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · voice) ──out──▶ (split · in)
+      (split.outL) ──▶ (delay L · 20..50 ms, feedback 0) ──▶ (merge.in1)
+      (split.outR) ──▶ (delay R · 20..50 ms, feedback 0) ──▶ (merge.in2)
+      (osc · lfo sine L ~0.3 Hz)  ──out──▶ (delay L.time_mod_in)
+      (osc · lfo sine R ~0.55 Hz) ──out──▶ (delay R.time_mod_in)
+      (merge) ──out──▶ (output)        both mixes hold their dry copy ·
+      each side pitches its own wobbling copy · the rate split opens the width
+
+  parameters:
+    - name: chorus base times
+      role: |
+        delay L/R each 1..2000 ms: 20..50 ms is the chorus regime — the
+        repeat is never an echo here, it rides hidden inside the voice.
+        Unequal times (e.g. 25 ms left, 42 ms right) stagger the beating.
+    - name: wobble rates and offset
+      role: |
+        lfoRate 0.01..50 Hz per LFO: 0.1..2 Hz is the chorus band.  The
+        rate offset between L and R (e.g. 0.3 vs 0.55 Hz) swings the stereo
+        width open and shut; equal rates freeze it in step.
+    - name: wobble depth
+      role: |
+        LFO amplitude on each time_mod_in — the copy's pitch wobble follows
+        the line wobble (time-means-pitch); subtle depth = warm chorusing,
+        strong depth = warbling dissonance against the dry copy.
+    - name: feedback ausgelassen
+      role: |
+        feedback 0 on both lines: the chorus never builds comb resonance;
+        the flanging comb lives only in the flanger-delay-line sibling.
+
+  relationships:
+    - name: time-means-pitch
+      description: |
+        A wobbling delay line resamples its content, so the wet copy wobbles
+        in pitch exactly like the line wobbles in length — the same
+        resampling family as vibrato-tail-echo and dub-wobble-echo-drift,
+        here fed into two hidden micro-copies instead of an echo tail.
+    - name: beating-with-dry
+      description: |
+        Each line's mix passes the untouched copy inside the node, so the
+        wobbling copy and its origin form a dissonance pair whose sum beats
+        (Schwebung) at the deviation rate — the rich chorusing texture.
+        With feedback 0 no comb grid remains: the flanger's notch ladder
+        belongs to its sibling, not here.
+    - name: rate-offset-width
+      description: |
+        The two LFO rates offset the strands' phase alignment; the stereo
+        picture drifts open and shut at the difference rate — the same
+        two-rate-offset idea stereo-tremolo-phase-drift rides on the AM
+        sides.
+    - name: budget
+      description: |
+        Registry budgets (xsd): note = 1, osc <= 16 (three used), delay <= 16
+        (two used), split <= 8 (one used), merge <= 8 (one used), output = 1.
+
+  perceptual_effects:
+    - rich multi-source chorus; the voice sounds played by several players
+    - slow stereo width breathing from the LFO rate offset
+    - warbling dissonant edge when the depth exaggerates the pitch wobble

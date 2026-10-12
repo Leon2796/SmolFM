@@ -1,0 +1,237 @@
+technique:
+  name: ap-chain-phaser
+
+  idea: |
+    A dry voice runs in parallel with a series of allpass filter stages
+    (filter nodes in mode "ap"): every stage keeps the magnitude at 1 and
+    rotates the phase up to 360 degrees, so a few frequencies arrive behind
+    schedule.  The add node sums the dry copy and the rotated strand —
+    where a stage's rotation meets the dry copy 180 degrees apart the sum
+    cancels; the result is a handful of soft, non-harmonic notches whose
+    corners a slow LFO (via an FM bridge per stage) glides through the
+    spectrum, deepened by a feedback loop around the chain.  This is the
+    Phaser — the allpass sibling of the delay-line flanger, expressed with
+    the filter's ap mode; its cancellations sit wherever the stage corners
+    place them, never on the flanger's harmonic comb grid.
+
+  tutorial: |
+    Stufen-Phaser — das Allpass-Baukasten-Prinzip der Studio-Literatur:
+    der Schall geht durch Allpass-Filter, die nichts herausfiltern, aber
+    verschiedene Frequenzen unterschiedlich spät durchreichen; summiert mit
+    dem Trockensignal löschen sich die Verspäteten gegenseitig aus. Wofür
+    dient die Verdrahtung? Die Kette aus Allpass-Filtern (filter im
+    mode "ap") dreht bei jedem Durchgang die Phase — der Cutoff setzt den
+    Drehpunkt der Drehung, die Resonanz ihre Kantigkeit; ein LFO über die
+    FM-Brücke schiebt den Drehpunkt langsam hin und her, und der
+    Feedback-Knoten schickt das Ketten-Ergebnis in die Kette zurück, um die
+    Auslöschungen zu vertiefen. Was ist das Ziel? Wenige, weiche, nicht
+    harmonisch verteilte Auslöschungen, deren Wanderung wie ein atmendes
+    Klangfarben-Fenster klingt — deutlich weicher als der Flanger: kein
+    harmonisches Kammgitter, keine scharfe Zahnung, nur eine kleine Zahl
+    wandernder Löcher im Spektrum. Der Gang des Signals: (1) Der Osc gibt
+    die Wellenform samt Obertönen; sein Ausgang teilt sich in die
+    Trockenlinie zum add-Knoten und in den Feedback-Eingang. (2) Die
+    Allpass-Stufen drehen die Phase — am Knoten bleibt die Lautheit
+    unverändert, das Ohr hört allein die Verschiebung über die Mischung
+    mit dem Trockenanteil. (3) Die FM-Brücken (LFO auf fm.modulator_in,
+    Brücke auf cutoff_mod_in) heben und senken die Drehpunkte; zwei
+    Brücken mit leicht verschiedenen Raten lassen ihre Löcher
+    auseinanderdriften. (4) Der add-Knoten summiert Trocken- und
+    Drehstrecke: Gegenläufiges löscht aus, Gleichläufiges verstärkt —
+    der Phaser-Sweep schmiegt sich weich über den Klang. In den Katalog-
+    Nachbarschaften: lfo-cutoff-wobble fährt nur ein Filter im
+    Frequenz-Wah-Bogen, static-formant-pair steht ohne Bewegung,
+    flanger-delay-line baut sein Kammfilter in der Zeit-Domaene des
+    Delays — hier entsteht das Kammfilter in der Phasen-Domaene des
+    Allpasses.
+
+  involved_nodes:
+    - type: note
+      role: Keyboard send driving the voice.
+    - type: osc
+      role: Voice oscillator in pitch mode; the phased voice.
+    - type: filter
+      role: Allpass stage 1 (mode ap, static cutoff) — base corner.
+    - type: filter
+      role: Allpass stage 2 (mode ap, static cutoff) — base corner.
+    - type: filter
+      role: Allpass stage 3 (mode ap); cutoff follows FM bridge 1.
+    - type: filter
+      role: Allpass stage 4 (mode ap); cutoff follows FM bridge 2.
+    - type: fm
+      role: Bridge 1; turns the LFO swing into a frequency-domain corner.
+    - type: fm
+      role: Bridge 2; second corner source at the offset rate.
+    - type: osc
+      role: Sweep LFO 1 in lfo mode; slow sine (e.g. 0.2 Hz).
+    - type: osc
+      role: Sweep LFO 2 in lfo mode; slow sine at a second rate (e.g.
+        0.33 Hz).
+    - type: feedback
+      role: Chain loop breaker; recirculates the chain out into the chain in.
+    - type: add
+      role: Sums the dry copy and the phase-rotated strand.
+    - type: output
+      role: Master endpoint.
+
+  involved_ports:
+    - node_role: Keyboard send
+      port: out
+      role: Base frequency into the voice (frequency).
+    - node_role: Voice oscillator
+      port: note_in
+      role: Receives the played note (frequency).
+    - node_role: Voice oscillator
+      port: out
+      role: Dry voice into add.in1 and into the feedback loop (signal).
+    - node_role: Chain feedback
+      port: in
+      role: Receives the strand that feeds the chain (signal).
+    - node_role: Chain feedback
+      port: fb_in
+      role: Chain tail returned for recirculation (signal).
+    - node_role: Chain feedback
+      port: out
+      role: Loop-broken strand into stage 1 (signal).
+    - node_role: Allpass stage 1
+      port: in
+      role: Receives the loop-broken strand (signal).
+    - node_role: Allpass stage 1
+      port: out
+      role: Phase-rotated strand onward (signal).
+    - node_role: Allpass stage 2
+      port: in
+      role: Receives stage 1's tail (signal).
+    - node_role: Allpass stage 2
+      port: out
+      role: Rotated strand onward (signal).
+    - node_role: Allpass stage 3
+      port: in
+      role: Receives stage 2's tail (signal).
+    - node_role: Allpass stage 3
+      port: cutoff_mod_in
+      role: Bridge 1's corner replaces the static cutoff (frequency).
+    - node_role: Allpass stage 3
+      port: out
+      role: Rotated strand onward (signal).
+    - node_role: Allpass stage 4
+      port: in
+      role: Receives stage 3's tail (signal).
+    - node_role: Allpass stage 4
+      port: cutoff_mod_in
+      role: Bridge 2's corner replaces the static cutoff (frequency).
+    - node_role: Allpass stage 4
+      port: out
+      role: Chain tail into feedback.fb_in and add.in2 (signal).
+    - node_role: Bridge 1
+      port: freq_in
+      role: The key centre scales the corner (frequency).
+    - node_role: Bridge 1
+      port: modulator_in
+      role: The slow LFO swing (signal).
+    - node_role: Bridge 1
+      port: out
+      role: Swept corner into stage 3's cutoff_mod_in (frequency).
+    - node_role: Bridge 2
+      port: freq_in
+      role: The key centre scales the second corner (frequency).
+    - node_role: Bridge 2
+      port: modulator_in
+      role: The offset-rate LFO swing (signal).
+    - node_role: Bridge 2
+      port: out
+      role: Swept corner into stage 4's cutoff_mod_in (frequency).
+    - node_role: Sweep LFO 1
+      port: out
+      role: Slow sine into bridge 1 (signal).
+    - node_role: Sweep LFO 2
+      port: out
+      role: Offset-rate sine into bridge 2 (signal).
+    - node_role: Summing add
+      port: in1
+      role: The dry copy (signal).
+    - node_role: Summing add
+      port: in2
+      role: The phase-rotated chain tail (signal).
+    - node_role: Summing add
+      port: out
+      role: The cancellation sum towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: One mix input for the phased voice (signal).
+
+  topology:
+    description: |
+      note.out -> voice-osc.note_in (frequency).  voice-osc.out ->
+      add.in1 and feedback.in (signal).  feedback.out -> filter1.in;
+      filter1..filter4 run in series (mode ap); stage 1 and 2 carry static
+      cutoff attributes, stage 3 and 4 run cutoff_mod_in.  filter4.out ->
+      feedback.fb_in and add.in2 (signal).  Bridge wiring: note.out ->
+      fm1.freq_in and fm2.freq_in (frequency); lfo1.out ->
+      fm1.modulator_in, lfo2.out -> fm2.modulator_in (signal); fm1.out ->
+      filter3.cutoff_mod_in, fm2.out -> filter4.cutoff_mod_in (frequency).
+      add.out -> output (signal).  The feedback amount recirculates the
+      chain around its own tail; at amount 0 the chain runs one gentle
+      pass, un-looped.
+
+  graph_ascii: |
+      (note) ──out──▶ (osc · voice) ──out──┬─▶ (add.in1 · dry copy)
+                                           └─▶ (feedback · in)
+      (feedback.out) ──▶ (filter 1 · ap) ──▶ (filter 2 · ap) ──▶ (filter 3 · ap) ──▶ (filter 4 · ap)
+      (filter 4.out) ──┬─▶ (feedback.fb_in)          the loop deepens each cancellation
+                       └─▶ (add.in2)
+      (osc · lfo sine 0.2 Hz)  ──▶ (fm 1 · bridge) ──▶ (filter 3.cutoff_mod_in)
+      (osc · lfo sine 0.33 Hz) ──▶ (fm 2 · bridge) ──▶ (filter 4.cutoff_mod_in)
+      (add) ──out──▶ (output)        magnitude untouched · few soft, non-harmonic cancellations
+
+  parameters:
+    - name: stage count (stages/poles)
+      role: |
+        2..4 allpass filter nodes in the series — each ap stage adds one
+        soft cancellation per pass; fewer stages read softer, more stages
+        thicken the sweep (the literature's poles/stages switch).
+    - name: corners (the frequency knob)
+      role: |
+        Stages 1..2 static cutoff attributes (e.g. 350 and 700 Hz) place the
+        base cancellations; the bridges scale stages 3..4 with the key
+        centre so their corners glide around the played note.
+    - name: sweep (LFO rate + bridge amounts)
+      role: |
+        lfoRate 0.05..1 Hz; the FM amount (0..10) sets the corner swing
+        around the key centre — keep the bridge output inside the audible
+        200..5000 Hz band so the corners glide, never jump.
+    - name: feedback depth
+      role: |
+        feedback amount 0..0.95 recirculates the chain out into the chain
+        in; deeper amounts stack each pass's rotation and deepen the
+        cancellations; 0 runs a single gentle pass.
+
+  relationships:
+    - name: magnitude-stays-one
+      description: |
+        Every ap stage keeps |y| = 1 (FilterProcessor.md AP row, x -
+        2k.v1), so the chain alone cannot change the loudness — the entire
+        audible effect originates at the add node's summation with the dry
+        copy.
+    - name: non-harmonic-cuts
+      description: |
+        Unlike the flanger's uniformly spaced comb teeth, the cancellations
+        sit wherever the stage corners place them — not on a harmonic
+        series — which is why the phaser sweep reads softer and less
+        harsh than the flanger swoosh.
+    - name: socket-siblings
+      description: |
+        flanger-delay-line sweeps its comb on delay.time_mod_in; this
+        technique sweeps corner frequencies on filter.cutoff_mod_in in the
+        ap mode; lfo-cutoff-wobble is the single-stage wah sibling and
+        static-formant-pair the unmoved cousin.
+    - name: budget
+      description: |
+        Registry budgets (xsd): note = 1, osc <= 16 (three used), filter
+        <= 16 (four used), fm <= 8 (two used), feedback <= 4 (one used),
+        add <= 8 (one used), output = 1.
+
+  perceptual_effects:
+    - airy phased whoosh with few soft moving cancellations
+    - hollow sweeping colour on rich harmonic voices, without a comb grid
+    - resonant deepening as the feedback loop rides high

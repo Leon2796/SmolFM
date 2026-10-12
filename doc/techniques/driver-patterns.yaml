@@ -39,7 +39,7 @@ technique:
     eines ein für alle Mal festgesetzten Klangbilds. Wer die Verdrahtung liest,
     fragt nicht, welche
     Zelle klingt, sondern wer welche Buchse mit welchem Verlauf steuert;
-    die Familien M1–M7 sortieren 63 Instanzen nach der Art dieser Quelle.
+    die Familien M1–M7 sortieren 65 Instanzen nach der Art dieser Quelle.
     Der Graph bleibt in allen Familien zweigleisig: der Audio-Draht führt
     (note) ──▶ (osc) ──▶ (output), der Steuer-Draht legt von seiner Quelle
     in eine Buchse der Zielzelle — am.modulator_in, gain.trim,
@@ -191,7 +191,7 @@ technique:
   instances:
     # ── technique tree ──────────────────────────────────────────────────
     # driver-pattern (root skeleton)  ◁ is a  the seven family bars below
-    #   ├─ M1 periodic-lfo     · 13 — repeating fixed-rate lfo cycle
+    #   ├─ M1 periodic-lfo     · 15 — repeating fixed-rate lfo cycle
     #   ├─ M2 perlin-drift     ·  7 — aperiodic perlin/simplex wander
     #   ├─ M3 event-envelope   · 16 — one-shot adsr/fadsr event per note
     #   ├─ M4 static-ratio     · 19 — constant ratio/offset, no time course
@@ -203,7 +203,7 @@ technique:
     #   family node: periodic-lfo   ◁ is a  driver-pattern
     #   course: fixed-rate repeating cycle (osc · lfo, sine/square/saw) —
     #   the loop is the entire course; sockets below: am, gain, filter,
-    #   delay, shape, fm; 13 instances.
+    #   delay, shape, fm; 15 instances.
     - name: am-tremolo-lfo
       pattern: periodic LFO -> am.modulator_in
       graph_ascii: |
@@ -351,6 +351,38 @@ technique:
       tonal: |
         The same cyclic squelch-and-snap — ramp into self-oscillation,
         snap shut; kept only as the name-compatible alias.
+    - name: stereo-chorus-delay-voices
+      pattern: two rate-offset periodic LFOs -> delay.time_mod_in per side
+      graph_ascii: |
+        (osc · voice) ──out──▶ (split · in)
+        (split.outL) ──▶ (delay L · 20..50 ms, feedback 0) ──▶ (merge.in1)
+        (split.outR) ──▶ (delay R · 20..50 ms, feedback 0) ──▶ (merge.in2)
+        (osc · lfo sine L ~0.3 Hz)  ──out──▶ (delay L.time_mod_in)
+        (osc · lfo sine R ~0.55 Hz) ──out──▶ (delay R.time_mod_in)
+        (merge) ──out──▶ (output)    each mix holds its dry copy; the wobbling copies beat
+      verlauf: |
+        Each line's mix holds the untouched copy while time_mod_in pitches
+        the second copy up and down; the two rate-offset LFOs open and close
+        the width as the deviations drift apart.
+      tonal: |
+        Rich wobbling chorus — the dry voice beats against two
+        pitch-vibrato copies; slow stereo breathing from the rate offset.
+    - name: ap-chain-phaser
+      pattern: two rate-offset periodic LFOs (fm bridges) -> filter.cutoff_mod_in (ap stack)
+      graph_ascii: |
+        (osc · voice) ──▶ (add.in1 · dry) and ──▶ (feedback · in)
+        (feedback.out) ──▶ (filter 1 · ap) ──▶ (filter 2 · ap) ──▶ (filter 3 · ap) ──▶ (filter 4 · ap)
+        (filter 4.out) ──▶ (add.in2) and ──▶ (feedback.fb_in)
+        (osc · lfo sine 0.2 Hz)  ──▶ (fm bridge 1) ──▶ (filter 3.cutoff_mod_in)
+        (osc · lfo sine 0.33 Hz) ──▶ (fm bridge 2) ──▶ (filter 4.cutoff_mod_in)
+        (add) ──▶ (output)    few soft non-harmonic cancellations sweep the spectrum
+      verlauf: |
+        Static corner stages hold the base cancellations while the two
+        bridge-driven stages glide their corners at offset rates; the
+        feedback loop deepens the cancellations each recirculation.
+      tonal: |
+        Airy phased sweep — magnitude untouched until the dry summation;
+        soft non-harmonic cancellations, no comb grid.
 
     # ── M2 aperiodic perlin / simplex drift drivers ─────────────────────
     #   family node: perlin-drift   ◁ is a  driver-pattern
