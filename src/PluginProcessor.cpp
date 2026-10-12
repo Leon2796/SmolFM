@@ -589,7 +589,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 
         layout.add (std::make_unique<juce::AudioParameterChoice> (
             "filter" + num + "Mode", "Filter " + num + " Mode",
-            juce::StringArray { "LP", "BP", "HP", "Notch" }, 0));
+            juce::StringArray { "LP", "BP", "HP", "Notch", "AP" }, 0));
     }
 
         // -- AM modulator pool ------------------------------------------------------

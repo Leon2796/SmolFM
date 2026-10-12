@@ -1,7 +1,7 @@
 # FilterProcessor
 > Template: [../processor-template.md](../processor-template.md) — Struktur nicht ändern.
 
-Multi-Mode-State-Variable-Filter (LP/BP/HP/Notch) mit statischer Cutoff-
+Multi-Mode-State-Variable-Filter (LP/BP/HP/Notch/AP) mit statischer Cutoff-
 Einstellung und optionalem Frequenzeingang `cutoff_mod_in`, dessen Wert die
 statische Cutoff vollständig ersetzt (kein Offset). TPT-Trapez-Integration —
 stabil auch bei hoher Resonance, Cutoff wird pro Sample neu hergeleitet.
@@ -22,7 +22,7 @@ Tabelle 1b: Ports — jeder Port in eigener Zeile (ein Port ist ein eigener Para
 | `cutoff_mod_in` | Input | `frequency` | unverbunden: der statische Cutoff-Regler gilt | **Die Stimme der Blendgrenze.** Verbunden ersetzt der Hz-Wert den Cutoff-Regler komplett (kein Offset, 20–20000 Hz) — Key-Tracking bzw. F-ADSR-Dives gliden die Klangfarbe hoch/runter. | `InputPort cutoffMod` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
 | `resonance_mod_in` | Input | `signal` | liest 0 → die statische Resonance wirkt unverändert | **Die Resonanz-Schwellkurbel.** Multipliziert die eingestellte Resonanz ($r\cdot(1+m)$, auf 0–1 geclampt): Perlin = organische Q-Atmung, Saw-LFO = zyklische Selbst-Oszillations-Rampen, ADSR = kurze Hammer-Pings. | `InputPort resonanceMod` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
 | `vel` | Input | `velocity` | liest 1.0 → neutral (byteidentisch) | **Anschlag öffnet die Blende.** Anschlagstärke multipliziert die wirksame Cutoff ($f_c \cdot v$, 20–20000): harte Anschläge sitzen heller, zarte dunkler — der Noise-Snap-Akzent der 808-Snare. | `InputPort velIn` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
-| `out` | Output | `signal` | — | **Durchlässige Signalfarben:** der gefilterte Klang nach dem gewählten Fenster (LP/BP/HP/Notch). | `OutputPort output` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
+| `out` | Output | `signal` | — | **Durchlässige Signalfarben:** der gefilterte Klang nach dem gewählten Fenster (LP/BP/HP/Notch/AP). | `OutputPort output` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
 
 Tabelle 1c: Daraus folgende echte Parameter (APVTS).
 
@@ -30,7 +30,7 @@ Tabelle 1c: Daraus folgende echte Parameter (APVTS).
 |---|---|---|---|---|---|
 | Cutoff | `filter<N>Cutoff` | Float, 20–20000 Hz (log, skew 0.3), Default 1000 | Die Blendgrenze der Klangfarbe — wie ein Dimmer zwischen dunklem Fundament (tief) und hellen Spitzen (hoch); der Regler, solange `cutoff_mod_in` leer bleibt. | `std::atomic<float>* cutoff` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
 | Resonance | `filter<N>Resonance` | Float, 0–1, Default 0 | Das Anheben der Kante an der Blendgrenze: 0 = sanft zugehalten, nahe 1 = die Kante piept fast von selbst (Selbst-Oszillation, bleibt stabil). | `std::atomic<float>* resonance` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
-| Mode | `filter<N>Mode` | Choice 0–3 (LP, BP, HP, Notch), Default 0 | Der Flügelsatz am Fenster: Lowpass (nur Tiefen), Bandpass (schmale Klangzunge), Highpass (nur Höhen), Notch (ein Loch im Spektrum). | `std::atomic<float>* mode` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
+| Mode | `filter<N>Mode` | Choice 0–4 (LP, BP, HP, Notch, AP), Default 0 | Der Flügelsatz am Fenster: Lowpass (nur Tiefen), Bandpass (schmale Klangzunge), Highpass (nur Höhen), Notch (ein Loch im Spektrum), Allpass (Phasen-Dreher ohne Pegeländerung: Amplitude bleibt 1, die Phase rotiert 0°→−360°; Cutoff ist der Drehpunkt der Drehung, Resonanz ihre Kantigkeit — high = steile, konzentrierte Kippung, low = breite, flache Drehung). | `std::atomic<float>* mode` | [src/processors/FilterProcessor.h](../../src/processors/FilterProcessor.h) |
 
 `<N>` = Instanzindex 0–7.
 
@@ -72,7 +72,7 @@ Symboltabelle:
 | $r$ | Basis-Resonanz (0–1); wirksam $r_{\text{eff}} = \mathrm{clamp}(r\,(1+m_{\text{res}}), 0, 1)$ mit $m_{\text{res}}$ aus `resonance_mod_in` (unverbunden $= 0$) | linear |
 | $k$ | Dämpfungsfaktor (SVF) | linear |
 | $g$ | Integrator-Koeffizient $\tan(\pi f_c/f_s)$ | linear |
-| $m$ | Mode-Index (0–3) | — |
+| $m$ | Mode-Index (0–4) | — |
 | $y_n$ | Ausgangssample | Amplitude |
 | $\mathrm{ic1eq}, \mathrm{ic2eq}$ | TPT-Integrator-Zustände | Amplitude |
 
@@ -95,13 +95,17 @@ y_n = \begin{cases}
 v_2 & m = 0 \text{ (LP)}\\
 v_1 & m = 1 \text{ (BP)}\\
 x_n - k\,v_1 - v_2 & m = 2 \text{ (HP)}\\
-x_n - k\,v_1 & m = 3 \text{ (Notch)}
+x_n - k\,v_1 & m = 3 \text{ (Notch)}\\
+x_n - 2k\,v_1 & m = 4 \text{ (Allpass: } |y_n| = 1,\ \varphi \text{ rotiert } 0^\circ \to -360^\circ)
 \end{cases}
 $$
 
 Spezialfälle:
 - $r = 0$: $k = 2$ (maximal gedämpft, $Q = 0.5$).
 - $r \to 1$: $k \to 0.02$ (nahe Selbstoszillation, bleibt stabil).
+- Im AP-Modus ($m=4$) bleibt die Amplitude an jeder Frequenz exakt 1
+  (bilinear-exakter Allpass); nur die Phase rotiert — $f_c$ ist der Punkt
+  der $180^\circ$-Wende, $r$ setzt die Kantigkeit der Drehung.
 - `cutoff_mod_in` unverbunden: $f_c$ = statischer `cutoff`-Parameter.
 - `startNote()` setzt beide Integrator-Zustände auf 0 (kein Rumbler aus dem
   vorherigen Note-Tail).
@@ -114,7 +118,7 @@ Spezialfälle:
 | $f_c$ (dynamisch) | `cutoffMod.isConnected()` → `cutoffMod.getSample()` | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | jlimit 20–20000 |
 | $f_c$ (statisch) | `cutoff->load()` | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | Fallback ohne Mod-Port |
 | $r$ | `resonance->load()` → `resBase` → `res` | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | Basis jlimit 0–1; `resonance_mod_in` verbunden: $r \cdot (1+m)$, $m$ = Stereo-Mittel geclampt $[-1,+1]$, Ergebnis jlimit 0–1 |
-| $m$ | `mode->load()` → `modeIndex` | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | round + jlimit 0–3 |
+| $m$ | `mode->load()` → `modeIndex` | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | round + jlimit 0–4 |
 | $g, k, a_1..a_3$ | `g`, `k`, `a1`, `a2`, `a3` | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | pro Sample in `processSample()` |
 | $v_1, v_2, v_3$ | `v1`, `v2`, `v3` | [FilterProcessor.cpp](../../src/processors/FilterProcessor.cpp) | TPT-Zwischengrößen |
 | $\mathrm{ic1eq}, \mathrm{ic2eq}$ | `ic1eq`, `ic2eq` | [FilterProcessor.h](../../src/processors/FilterProcessor.h) | Zustandsfelder, Reset in `startNote()` |

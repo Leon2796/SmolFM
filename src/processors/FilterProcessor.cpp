@@ -73,7 +73,7 @@ StereoFrame FilterProcessor::processSample()
 
     const float resBase = resonance != nullptr ? resonance->load() : 0.0f;
     const int modeIndex = mode != nullptr
-        ? juce::jlimit (0, 3, static_cast<int> (std::round (mode->load())))
+        ? juce::jlimit (0, 4, static_cast<int> (std::round (mode->load())))
         : 0;
 
     // Resonance modulation: the signal input multiplies the static value by
@@ -112,6 +112,7 @@ StereoFrame FilterProcessor::processSample()
             case 1:  channelOutput = v1;                         break;   // band pass
             case 2:  channelOutput = channelInput - k * v1 - v2; break;   // high pass
             case 3:  channelOutput = channelInput - k * v1;      break;   // notch (HP + LP)
+            case 4:  channelOutput = channelInput - 2.0f * k * v1; break; // allpass: same magnitude, phase 0..-360
             default: channelOutput = v2;                         break;   // low pass
         }
         return channelOutput;

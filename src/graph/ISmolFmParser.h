@@ -94,7 +94,7 @@ public:
 // APVTS choice order declared in PluginProcessor::createParameterLayout().
 inline juce::StringArray waveformNames ()   { return { "sine", "saw", "square", "triangle", "noise", "perlin", "simplex" }; }
 inline juce::StringArray oscModeNames ()    { return { "pitch", "static", "lfo" }; }
-inline juce::StringArray filterModeNames () { return { "lp", "bp", "hp", "notch" }; }
+inline juce::StringArray filterModeNames () { return { "lp", "bp", "hp", "notch", "ap" }; }
 inline juce::StringArray shapeNames ()      { return { "soft", "hard", "fold" }; }
 inline juce::StringArray syncNames ()       { return { "off", "on" }; }
 inline juce::StringArray divisionNames ()   { return { "half", "quarter", "eighth", "sixteenth" }; }

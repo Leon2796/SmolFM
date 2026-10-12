@@ -780,6 +780,72 @@ namespace
                      + std::to_string (sourcePeak) + ")" };
     }
 
+    // Allpass mode (4): a pure phase rotator — the output magnitude must
+    // stay ~1 for any sine (below, at and above the cutoff corner).  Any
+    // coefficient slip (x - k*v1 instead of x - 2*k*v1, wrong k scaling)
+    // shows up immediately as a magnitude deviation around the corner.
+    TestResult runFilterAllpassTest()
+    {
+        std::atomic<float> waveform  { 0.0f };  // sine
+        std::atomic<float> cutoff    { 440.0f };
+        std::atomic<float> resonance { 0.7f };
+        std::atomic<float> mode      { 4.0f };  // AP
+
+        smolfm::SignalGraph graph;
+
+        auto note = std::make_unique<smolfm::NoteProcessor>();
+        smolfm::NoteProcessor* notePtr = note.get();
+        auto osc = std::make_unique<smolfm::OscillatorProcessor> (&waveform, nullptr, nullptr, nullptr);
+        smolfm::OscillatorProcessor* oscPtr = osc.get();
+        auto filter = std::make_unique<smolfm::FilterProcessor> (&cutoff, &resonance, &mode);
+        smolfm::FilterProcessor* filterPtr = filter.get();
+
+        graph.addProcessor (std::move (note));
+        graph.addProcessor (std::move (osc));
+        graph.addProcessor (std::move (filter));
+
+        if (! oscPtr->getNoteInput().connect (notePtr->getOutput()))
+            return { false, "Failed to connect note to osc note_in" };
+        if (! filterPtr->getInput().connect (oscPtr->getOutput()))
+            return { false, "Failed to connect osc to allpass filter" };
+
+        graph.prepare (48000.0);
+        notePtr->setMidiNoteNumber (69);   // A4 = 440 Hz
+        graph.startNote();
+
+        // Three corner positions around the 440 Hz voice: a coefficient slip
+        // in the AP mix bends the magnitude near the corner.
+        const float corners[] { 200.0f, 440.0f, 1100.0f };
+        for (float corner : corners)
+        {
+            cutoff.store (corner);
+            filterPtr->startNote();
+
+            float inPeak = 0.0f;
+            float outPeak = 0.0f;
+            for (int i = 0; i < 2400; ++i)
+            {
+                graph.processSample();
+                if (i < 400) continue;   // let the settled sine fill the TPT state
+
+                const smolfm::StereoFrame xi = oscPtr->getOutput().getSample();
+                const smolfm::StereoFrame xo = filterPtr->getOutput().getSample();
+                inPeak  = std::max (inPeak,  std::abs (xi.l));
+                outPeak = std::max (outPeak, std::abs (xo.l));
+            }
+
+            if (inPeak < 0.001f)
+                return { false, "Oscillator was silent; allpass checks are vacuous" };
+
+            const float ratio = outPeak / inPeak;
+            if (ratio < 0.95f || ratio > 1.05f)
+                return { false, std::string ("Allpass magnitude must stay 1 (cutoff ")
+                             + std::to_string (corner) + ": ratio = " + std::to_string (ratio) + ")" };
+        }
+
+        return { true, "Filter allpass keeps magnitude ~1 below/at/above the corner (phase-only node)" };
+    }
+
     // Velocity flow for the pitch envelope: fadsr.vel scales the ANCHOR
     // DEPTH (pull-to-neutral), not the envelope shape.  The wired node
     // (up 3.0 / down 0.5) at velocity 0.5 must be sample-exact identical to
@@ -1798,6 +1864,7 @@ int main()
     runTest ("Velocity FM index scaling", runVelocityFmTest);
     runTest ("Velocity filter cutoff scaling", runVelocityFilterTest);
     runTest ("Filter mode parameter id", runFilterModeParameterIdTest);
+    runTest ("Filter allpass magnitude", runFilterAllpassTest);
     runTest ("Bass drum chain probe", runBassDrumChainTest);
     runTest ("Waveshaper transfer table", runWaveshaperTransferTable);
     runTest ("Velocity fadsr depth scaling", runVelocityFAdsrTest);

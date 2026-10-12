@@ -13,8 +13,8 @@ FilterComponent::FilterComponent (juce::AudioProcessorValueTreeState& apvts,
                                   const juce::String& modeParameterID)
 {
     // Item order must match the choices declared in
-    // PluginProcessor::createParameterLayout() ("LP", "BP", "HP", "Notch").
-    modeBox.addItemList ({ "LP", "BP", "HP", "Notch" }, 1);
+    // PluginProcessor::createParameterLayout() ("LP", "BP", "HP", "Notch", "AP").
+    modeBox.addItemList ({ "LP", "BP", "HP", "Notch", "AP" }, 1);
     addAndMakeVisible (modeBox);
 
     modeLabel.setText ("Mode", juce::dontSendNotification);

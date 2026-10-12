@@ -52,6 +52,7 @@
       <xs:enumeration value="bp"/>
       <xs:enumeration value="hp"/>
       <xs:enumeration value="notch"/>
+      <xs:enumeration value="ap"/>
     </xs:restriction>
   </xs:simpleType>
 
@@ -546,7 +547,7 @@
   <xs:complexType name="FilterNodeType">
     <xs:annotation>
       <xs:appinfo xmlns="urn:smolfm:node-meta">
-        <purpose>Filtert das Eingangssignal mit LP-, BP-, HP- oder Notch-Charakteristik über einstellbare Cutoff-Frequenz und Resonanz. Ein angebundener Modulationseingang überschreibt die statische Cutoff-Frequenz.</purpose>
+        <purpose>Filtert das Eingangssignal mit LP-, BP-, HP-, Notch- oder Allpass-Charakteristik über einstellbare Cutoff-Frequenz und Resonanz. Ein angebundener Modulationseingang überschreibt die statische Cutoff-Frequenz. Im AP-Modus bleibt die Amplitude 1 (bilinear-exakter Allpass, y = x − 2k·v1); nur die Phase rotiert 0°→−360° — cutoff ist der Drehpunkt, resonance die Kantigkeit der Drehung.</purpose>
         <docReference>doc/processors/FilterProcessor.md</docReference>
         <inputs>
           <port id="in" type="signal"/>

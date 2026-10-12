@@ -21,7 +21,7 @@
         - resonance 0-1, maps to the SVF damping k = 2 * (1 - 0.99 * res);
           k = 2 is maximally damped (Q = 0.5), k -> 0 approaches self-
           oscillation but stays stable.
-        - mode      0 = LP, 1 = BP, 2 = HP, 3 = Notch.
+        - mode      0 = LP, 1 = BP, 2 = HP, 3 = Notch, 4 = AP (allpass).
 
     Per sample the TPT state-variable filter integrates with:
 
@@ -38,6 +38,9 @@
         BP    = v1
         HP    = x - k*v1 - v2
         Notch = HP + v2   (= x - k*v1)
+        AP    = x - 2*k*v1 (bilinear-exakter Allpass: Magnitude bleibt
+              1, die Phase rotiert 0..-360 Grad - cutoff ist der
+              Drehpunkt, resonance die Kantigkeit der Drehung)
 
     Stereo: the coefficients depend only on the cutoff and are shared by
     both channels; only the TPT state (ic1eq/ic2eq) is a left/right pair,
