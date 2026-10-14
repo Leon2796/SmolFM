@@ -87,6 +87,15 @@ namespace
                     if (syncId.isNotEmpty()) specs.add ({ "sync",      syncId });
                     if (divId .isNotEmpty()) specs.add ({ "division",  divId });
                 }
+        else if (baseId == "hold")
+        {
+            const auto rateId = GraphNodeRegistry::holdRateParameterIdFor (nodeId);
+            const auto syncId = GraphNodeRegistry::holdSyncParameterIdFor (nodeId);
+            const auto divId  = GraphNodeRegistry::holdDivisionParameterIdFor (nodeId);
+            if (rateId.isNotEmpty()) specs.add ({ "rate",     rateId });
+            if (syncId.isNotEmpty()) specs.add ({ "sync",     syncId });
+            if (divId .isNotEmpty()) specs.add ({ "division", divId });
+        }
         else if (baseId == "fscale")
         {
             const auto factorId   = GraphNodeRegistry::amountParameterIdFor (nodeId);

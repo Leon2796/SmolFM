@@ -296,6 +296,7 @@ Signal kinds: `frequency`, `signal` and `velocity`; a wire connects like with li
 | `resonator` | `in` (exciter, signal), `tune` (frequency, overrides static), `q_mod_in` (signal), `vel` (velocity → decay), `strike_vel` (velocity, raw accent for the internal strike) | `out` (signal) | 8 |
 | `feedback` | `in`, `fb_in` (signal) | `out` (signal) | 4 |
 | `delay`   | `in`, `time_mod_in` (signal)    | `out` (signal)       | 16 |
+| `hold`    | `in`, `rate_mod_in` (signal)    | `out` (signal)       | 8  |
 | `ring`    | `in1`, `in2` (signal)           | `out` (signal)       | 8 |
 | `am`      | `carrier_in`, `modulator_in` (signal) | `out` (signal) | 8 |
 | `output`  | `in1`…`in8` (signal)            | —                    | 1 |

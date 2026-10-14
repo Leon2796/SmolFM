@@ -60,6 +60,8 @@ target_sources(${PROJECT_NAME}
         gui/components/AmComponent.cpp
         processors/DelayProcessor.cpp
         gui/components/DelayComponent.cpp
+        processors/SampleHoldProcessor.cpp
+        gui/components/SampleHoldComponent.cpp
         processors/SplitterProcessor.cpp
         processors/MergerProcessor.cpp
         processors/AdderProcessor.cpp
@@ -107,6 +109,7 @@ add_executable(SmolFM_GraphTests
     processors/GainProcessor.cpp
     processors/WaveshaperProcessor.cpp
     processors/FilterProcessor.cpp
+    processors/SampleHoldProcessor.cpp
     processors/SplitterProcessor.cpp
     processors/MergerProcessor.cpp
     processors/AdderProcessor.cpp

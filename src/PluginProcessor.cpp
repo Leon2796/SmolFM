@@ -133,6 +133,14 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
         voiceParameters.delayDivision[static_cast<size_t> (i)] = parameters.getRawParameterValue ("delay" + num + "Division");
     }
 
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxSampleHolds; ++i)
+    {
+        const juce::String num (i);
+        voiceParameters.holdRate     [static_cast<size_t> (i)] = parameters.getRawParameterValue ("hold" + num + "Rate");
+        voiceParameters.holdSync     [static_cast<size_t> (i)] = parameters.getRawParameterValue ("hold" + num + "SyncMode");
+        voiceParameters.holdDivision [static_cast<size_t> (i)] = parameters.getRawParameterValue ("hold" + num + "Division");
+    }
+
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxResonators; ++i)
     {
         const juce::String num (i);
@@ -627,6 +635,29 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 
         layout.add (std::make_unique<juce::AudioParameterChoice> (
             "delay" + num + "Division", "Delay " + num + " Division",
+            juce::StringArray { "1/2", "1/4", "1/8", "1/16" }, 1));
+    }
+
+    // -- Sample-hold pool ------------------------------------------------------
+    // SyncMode = bool (free Hz vs host-BPM); Division = choice index 0..3
+    // (1/2, 1/4, 1/8, 1/16) picks the hold grid when Sync is on.
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxSampleHolds; ++i)
+    {
+        const juce::String num (i);
+
+        // ID-drift guard: the registry template and this layout must produce
+        // the same id — a drift leaves the knob unattached (resonator precedent).
+        jassert (smolfm::GraphNodeRegistry::holdRateParameterIdFor ("hold" + num) == "hold" + num + "Rate");
+
+        layout.add (std::make_unique<juce::AudioParameterFloat> (
+            "hold" + num + "Rate", "Hold " + num + " Rate",
+            juce::NormalisableRange<float> (0.5f, 20000.0f, 0.01f, 0.25f), 1000.0f));
+
+        layout.add (std::make_unique<juce::AudioParameterBool> (
+            "hold" + num + "SyncMode", "Hold " + num + " Sync", false));
+
+        layout.add (std::make_unique<juce::AudioParameterChoice> (
+            "hold" + num + "Division", "Hold " + num + " Division",
             juce::StringArray { "1/2", "1/4", "1/8", "1/16" }, 1));
     }
 

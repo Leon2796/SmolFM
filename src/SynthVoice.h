@@ -41,6 +41,7 @@
 #include "processors/RingModulatorProcessor.h"
 #include "processors/AmProcessor.h"
 #include "processors/DelayProcessor.h"
+#include "processors/SampleHoldProcessor.h"
 #include "processors/ResonatorProcessor.h"
 #include "processors/FeedbackProcessor.h"
 #include "graph/GraphNodes.h"
@@ -99,6 +100,11 @@ struct SynthVoiceParameters
     std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delayMix;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delaySync;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delayDivision;
+
+    // Sample-hold parameters per instance (3 parameters per node).
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxSampleHolds> holdRate;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxSampleHolds> holdSync;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxSampleHolds> holdDivision;
 
     // Resonator parameters per instance (6 parameters per node): tune (Hz,
     // static fallback), q (0..1), decay (t60 seconds), the vel spread
@@ -191,7 +197,9 @@ private:
     std::array<FAdsrProcessor*, GraphNodeRegistry::maxFAdsr> fAdsrProcessors {};
     std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators> ringModulators {};
     std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators> amModulators {};
-    std::array<DelayProcessor*, GraphNodeRegistry::maxDelays> delays {};    std::array<GainProcessor*, GraphNodeRegistry::maxGains> gainProcessors {};
+    std::array<DelayProcessor*, GraphNodeRegistry::maxDelays> delays {};
+    std::array<SampleHoldProcessor*, GraphNodeRegistry::maxSampleHolds> holdProcessors {};
+    std::array<GainProcessor*, GraphNodeRegistry::maxGains> gainProcessors {};
     std::array<WaveshaperProcessor*, GraphNodeRegistry::maxWaveshapers> waveshapers {};
     std::array<FilterProcessor*, GraphNodeRegistry::maxFilters> filters {};
     std::array<SplitterProcessor*, GraphNodeRegistry::maxSplitters> splitters {};

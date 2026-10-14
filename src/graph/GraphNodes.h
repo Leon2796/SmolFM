@@ -65,6 +65,7 @@ enum class NodeType
         ringModulator,
     amModulator,
     delay,
+    sampleHold,
     adsr,
     fAdsr,
     gain,
@@ -129,6 +130,10 @@ struct NodeSpec
     juce::String mixParameterTemplate;
     juce::String syncParameterTemplate;
     juce::String divisionParameterTemplate;
+
+    // Extra template for the sample-hold node (sync/division are shared
+    // with the delay node; only the hold rate is hold-specific).
+    juce::String rateParameterTemplate;
 
     // Extra templates for the filter node.
     juce::String cutoffParameterTemplate;     // "filter%Cutoff" style prefix
@@ -198,6 +203,7 @@ public:
     static constexpr int maxRingModulators  = 8;
     static constexpr int maxAmModulators    = 8;
     static constexpr int maxDelays          = 16;
+    static constexpr int maxSampleHolds     = 8;
     static constexpr int maxNotes       = 1;
     static constexpr int maxAdsr        = 16;
     static constexpr int maxFAdsr       = 8;
@@ -255,6 +261,11 @@ public:
     static juce::String delayMixParameterIdFor       (const juce::String& nodeId);
     static juce::String delaySyncParameterIdFor      (const juce::String& nodeId);
     static juce::String delayDivisionParameterIdFor  (const juce::String& nodeId);
+
+    // Sample-hold parameter ids (sync/division read the shared templates)
+    static juce::String holdRateParameterIdFor       (const juce::String& nodeId);
+    static juce::String holdSyncParameterIdFor       (const juce::String& nodeId);
+    static juce::String holdDivisionParameterIdFor   (const juce::String& nodeId);
 
     // Resonator-specific parameter ids (VelSpread shares the decay prefix)
     static juce::String resonatorTuneParameterIdFor   (const juce::String& nodeId);

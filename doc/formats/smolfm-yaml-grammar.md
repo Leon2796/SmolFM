@@ -91,6 +91,8 @@ layout:
 | `shape` (shape) | soft, hard, fold |
 | `sync` (delay) | off, on |
 | `division` (delay) | half, quarter, eighth, sixteenth |
+| `sync` (hold) | off, on |
+| `division` (hold) | half, quarter, eighth, sixteenth |
 | `interval` (fscale) | none, octave_up, octave_down, fifth_up, fifth_down, fourth_up, fourth_down, minor_third_up, major_third_up, semitone_up, semitone_down |
 
 The names match the APVTS choice order declared in
@@ -150,6 +152,11 @@ for a node type are ignored by the parsers.
 - `mix`: float, 0..1 (default 0.3)
 - `sync`: off | on (on = tempo-synced, `time` is ignored)
 - `division`: half | quarter | eighth | sixteenth (delay length; default quarter)
+
+### Sample Hold (hold)
+- `rate`: float, 0.5..20000 Hz (hold grid in free-running mode; default 1000; a connected `rate_mod_in` port multiplies it)
+- `sync`: off | on (on = tempo-synced, `rate` is ignored)
+- `division`: half | quarter | eighth | sixteenth (hold length; default quarter)
 
 ### Resonator (resonator)
 - `tune`: float, 20..8000 Hz (log scale; default 100; static fallback — a connected `tune` port overrides it entirely)

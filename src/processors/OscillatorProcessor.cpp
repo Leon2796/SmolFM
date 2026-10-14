@@ -60,7 +60,10 @@ StereoFrame OscillatorProcessor::processSample()
         freq = noteInput.getSample().l;
 
     oscillator.setFrequency (freq);
-    oscillator.setWaveform (waveformFromIndex (static_cast<int> (std::round (waveform->load()))));
+    // Waveform null-guard mirrors the mode/staticFreq/lfoRate guards above:
+    // a null waveform pointer means "no parameter wired" and falls back to
+    // the sine default (index 0) instead of crashing the first sample.
+    oscillator.setWaveform (waveformFromIndex (static_cast<int> (std::round (waveform != nullptr ? waveform->load() : 0.0f))));
 
     // Mono phase: the oscillator produces one sample per tick; it is emitted
     // as a centered pair so both output channels carry identical content.

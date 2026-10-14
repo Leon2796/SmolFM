@@ -36,6 +36,7 @@ namespace
                                                                           std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators>& ringModulators,
                                                                           std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators>& amModulators,
                                                                           std::array<DelayProcessor*, GraphNodeRegistry::maxDelays>& delays,
+                                                                          std::array<SampleHoldProcessor*, GraphNodeRegistry::maxSampleHolds>& holdProcessors,
                                                                           std::array<GainProcessor*, GraphNodeRegistry::maxGains>& gainProcessors,
                                      std::array<WaveshaperProcessor*, GraphNodeRegistry::maxWaveshapers>& waveshapers,
                                      std::array<FilterProcessor*, GraphNodeRegistry::maxFilters>& filters,
@@ -86,6 +87,16 @@ namespace
                         return &delays[static_cast<size_t> (index)]->getInput();
                     if (portId == "time_mod_in")
                         return &delays[static_cast<size_t> (index)]->getTimeModInput();
+                    return nullptr;
+                }
+                if (type == NodeType::sampleHold
+                 && index >= 0 && index < GraphNodeRegistry::maxSampleHolds
+                 && holdProcessors[static_cast<size_t> (index)] != nullptr)
+                {
+                    if (portId == "in")
+                        return &holdProcessors[static_cast<size_t> (index)]->getInput();
+                    if (portId == "rate_mod_in")
+                        return &holdProcessors[static_cast<size_t> (index)]->getRateModInput();
                     return nullptr;
                 }
 
@@ -257,6 +268,7 @@ namespace
                                                                               std::array<RingModulatorProcessor*, GraphNodeRegistry::maxRingModulators>& ringModulators,
                                                                               std::array<AmProcessor*, GraphNodeRegistry::maxAmModulators>& amModulators,
                                                                               std::array<DelayProcessor*, GraphNodeRegistry::maxDelays>& delays,
+                                                                              std::array<SampleHoldProcessor*, GraphNodeRegistry::maxSampleHolds>& holdProcessors,
                                                                               std::array<GainProcessor*, GraphNodeRegistry::maxGains>& gainProcessors,
                                                                               std::array<WaveshaperProcessor*, GraphNodeRegistry::maxWaveshapers>& waveshapers,
                                        std::array<FilterProcessor*, GraphNodeRegistry::maxFilters>& filters,
@@ -327,6 +339,11 @@ namespace
          && index >= 0 && index < GraphNodeRegistry::maxDelays
          && delays[static_cast<size_t> (index)] != nullptr)
             return &delays[static_cast<size_t> (index)]->getOutput();
+
+        if (type == NodeType::sampleHold
+         && index >= 0 && index < GraphNodeRegistry::maxSampleHolds
+         && holdProcessors[static_cast<size_t> (index)] != nullptr)
+            return &holdProcessors[static_cast<size_t> (index)]->getOutput();
 
         if (type == NodeType::gain
          && index >= 0 && index < GraphNodeRegistry::maxGains
@@ -556,6 +573,19 @@ void SynthVoice::buildGraph()
             graph.addProcessor (std::move (f));
         }
 
+        // Sample & hold pool - rate-grid quantiser (Bitcrush time axis /
+        // stepped mod). Sits at the END of the signal band: the node reads
+        // every earlier signal producer fresh in the same tick; only the
+        // feedback bridge reaches it with the inherent one-sample delay.
+        for (int i = 0; i < GraphNodeRegistry::maxSampleHolds; ++i)
+        {
+            auto sh = std::make_unique<SampleHoldProcessor> (parameters.holdRate     [static_cast<size_t> (i)],
+                                                             parameters.holdSync     [static_cast<size_t> (i)],
+                                                             parameters.holdDivision [static_cast<size_t> (i)]);
+            holdProcessors[static_cast<size_t> (i)] = sh.get();
+            graph.addProcessor (std::move (sh));
+        }
+
         // Feedback pool — bounded cycle breakers (plan P3.6).  They sit
         // BEFORE the resonator pool: the node's `out` carries the loop entry
         // value fresh into its downstream body, while its `fb_in` return
@@ -717,6 +747,10 @@ void SynthVoice::setHostTempo (double bpm) noexcept
     for (auto* d : delays)
         if (d != nullptr)
             d->setHostTempo (bpm);
+
+    for (auto* h : holdProcessors)
+        if (h != nullptr)
+            h->setHostTempo (bpm);
 }
 
 bool SynthVoice::hasReasonToLive() const noexcept
@@ -809,6 +843,13 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
             d->reset();
         }
 
+        for (auto* h : holdProcessors)
+        if (h != nullptr)
+        {
+            h->getInput().disconnect();
+            h->getRateModInput().disconnect();
+        }
+
         // A new patch must not inherit the previous patch's envelopes either:
         // if a note-off was lost (or a held sustain pedal defers it forever),
         // the old ADSR would keep sustaining at its sustain level and drone
@@ -899,13 +940,13 @@ void SynthVoice::applyConnectionPatch (const ConnectionPatch& patch)
     {
                 OutputPort* out = resolveOutput (conn.from.nodeId, conn.from.portId,
                                                    noteSources, adsrProcessors, fAdsrProcessors, masterOutput,
-                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors, waveshapers, filters,
+                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, holdProcessors, gainProcessors, waveshapers, filters,
                                                    splitters, mergers, adders, feedbackProcessors, resonators, velocityScalers);
                 InputPort*  in  = resolveInput  (conn.to.nodeId,   conn.to.portId,
                                                    const_cast<SynthVoiceParameters&> (parameters),
                                                    velocityScalers,
                                                    noteSources, adsrProcessors, fAdsrProcessors, masterOutput,
-                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, gainProcessors, waveshapers, filters,
+                                                   oscillators, fmProcessors, frequencyScalers, ringModulators, amModulators, delays, holdProcessors, gainProcessors, waveshapers, filters,
                                                    splitters, mergers, adders, feedbackProcessors, resonators);
 
         if (out == nullptr || in == nullptr)

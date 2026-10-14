@@ -24,6 +24,7 @@
 #include "AdderProcessor.h"
 #include "WaveshaperProcessor.h"
 #include "FilterProcessor.h"
+#include "SampleHoldProcessor.h"
 #include "ResonatorProcessor.h"
 #include "FeedbackProcessor.h"
 #include "FAdsrProcessor.h"
@@ -1839,10 +1840,82 @@ namespace
                      + "; " + profileB
                      + "; " + velLine + ")" };
     }
+    TestResult runSampleHoldGridTest()
+    {
+        // One 440 Hz sine (pitch mode, note 69) through a hold at 8000 Hz.
+        // At fs = 48000 the grid is exactly 6 samples and startNote latches
+        // on the first sample, so the output must be constant within each
+        // 6-sample plateau while the plateau VALUE advances with the sine.
+        std::atomic<float> carrierWaveform { 0.0f };   // sine (index 0)
+        std::atomic<float> holdRate { 8000.0f };
+        std::atomic<float> holdSync { 0.0f };
+        std::atomic<float> holdDiv  { 1.0f };
+
+        smolfm::SignalGraph graph;
+
+        auto note = std::make_unique<smolfm::NoteProcessor>();
+        smolfm::NoteProcessor* notePtr = note.get();
+
+        auto carrier = std::make_unique<smolfm::OscillatorProcessor> (&carrierWaveform, nullptr, nullptr, nullptr);
+        smolfm::OscillatorProcessor* carrierPtr = carrier.get();
+
+        auto hold = std::make_unique<smolfm::SampleHoldProcessor> (&holdRate, &holdSync, &holdDiv);
+        smolfm::SampleHoldProcessor* holdPtr = hold.get();
+
+        graph.addProcessor (std::move (note));
+        graph.addProcessor (std::move (carrier));
+        graph.addProcessor (std::move (hold));
+
+        if (! carrierPtr->getNoteInput().connect (notePtr->getOutput()))
+            return { false, "Failed to connect note to carrier note_in" };
+
+        if (! holdPtr->getInput().connect (carrierPtr->getOutput()))
+            return { false, "Failed to connect carrier to hold in" };
+
+        graph.prepare (48000.0);
+        notePtr->setMidiNoteNumber (69);   // A4 = 440 Hz — many values per plateau
+        graph.startNote();
+
+        const int period = 6;              // 48000 / 8000
+
+        float previous = 0.0f;
+        float firstPlateau = 0.0f;
+        float lastPlateau  = 0.0f;
+        for (int i = 0; i < 8 * period; ++i)
+        {
+            const smolfm::StereoFrame y = graph.processSample();
+            const float value = y.l;
+
+            // Within a plateau the held value must be bit-exact constant;
+            // only the first sample of each plateau may differ (the latch).
+            if (i > 0 && i % period != 0 && value != previous)
+                return { false, "Hold output changed inside a 6-sample plateau" };
+
+            if (i == 0)                firstPlateau = value;
+            if (i == 8 * period - 1)   lastPlateau  = value;
+            previous = value;
+        }
+
+        // The grid must actually re-latch: plateau values follow the sine.
+        if (firstPlateau == lastPlateau)
+            return { false, "Hold output never re-latched; grid test is vacuous" };
+
+        if (! std::isfinite (previous))
+            return { false, "Hold output went non-finite" };
+
+        return { true, "Hold grid: output constant inside every "
+                     + std::to_string (period)
+                     + "-sample plateau at rate 8000 Hz / fs 48000 and re-latches each grid tick" };
+    }
+
 }
 
 int main()
 {
+    // Flush every insert immediately: a crash mid-suite must not swallow the
+    // trace (diagnostics; harmless for the test verdicts themselves).
+    std::cout << std::unitbuf;
+
     int failures = 0;
 
     auto runTest = [&failures] (const std::string& name, std::function<TestResult()> test)
@@ -1872,6 +1945,7 @@ int main()
     runTest ("Resonator vel-on-decay", runResonatorVelDecayTest);
     runTest ("Resonator strike", runResonatorStrikeProbe);
     runTest ("Feedback loop", runFeedbackLoopTest);
+    runTest ("Sample hold grid", runSampleHoldGridTest);
 
     return failures;
 }

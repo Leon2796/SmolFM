@@ -191,6 +191,19 @@ namespace
             specs.push_back (delay);
         }
         {
+            NodeSpec hold;
+            hold.id = "hold";
+            hold.title = "Sample Hold";
+            hold.outputPortId = "out";
+            hold.outputType = PortType::signal;
+            hold.inputPortIds = { "in", "rate_mod_in" };
+            hold.inputTypes = { PortType::signal, PortType::signal };
+            hold.rateParameterTemplate     = "hold%Rate";
+            hold.syncParameterTemplate     = "hold%SyncMode";
+            hold.divisionParameterTemplate = "hold%Division";
+            specs.push_back (hold);
+        }
+        {
             NodeSpec adsr;
 
             adsr.id = "adsr";
@@ -476,6 +489,7 @@ NodeType GraphNodeRegistry::typeOf (const juce::String& nodeId)
     if (base == "am")      return NodeType::amModulator;
     if (base == "add")    return NodeType::adder;
     if (base == "delay")   return NodeType::delay;
+    if (base == "hold")   return NodeType::sampleHold;
     if (base == "adsr")   return NodeType::adsr;
 
     if (base == "fadsr") return NodeType::fAdsr;
@@ -585,6 +599,7 @@ int GraphNodeRegistry::maxInstancesOf (NodeType type)
         case NodeType::amModulator:    return maxAmModulators;
         case NodeType::adder:          return maxAdds;
         case NodeType::delay:          return maxDelays;
+        case NodeType::sampleHold:     return maxSampleHolds;
         case NodeType::adsr:           return maxAdsr;
         case NodeType::fAdsr:          return maxFAdsr;
         case NodeType::gain:           return maxGains;
@@ -878,6 +893,30 @@ juce::String GraphNodeRegistry::delaySyncParameterIdFor (const juce::String& nod
 }
 
 juce::String GraphNodeRegistry::delayDivisionParameterIdFor (const juce::String& nodeId)
+{
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->divisionParameterTemplate.isEmpty())
+        return {};
+    return withIndex (spec->divisionParameterTemplate, indexOf (nodeId));
+}
+
+juce::String GraphNodeRegistry::holdRateParameterIdFor (const juce::String& nodeId)
+{
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->rateParameterTemplate.isEmpty())
+        return {};
+    return withIndex (spec->rateParameterTemplate, indexOf (nodeId));
+}
+
+juce::String GraphNodeRegistry::holdSyncParameterIdFor (const juce::String& nodeId)
+{
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+    if (spec == nullptr || spec->syncParameterTemplate.isEmpty())
+        return {};
+    return withIndex (spec->syncParameterTemplate, indexOf (nodeId));
+}
+
+juce::String GraphNodeRegistry::holdDivisionParameterIdFor (const juce::String& nodeId)
 {
     const NodeSpec* spec = findSpec (baseIdOf (nodeId));
     if (spec == nullptr || spec->divisionParameterTemplate.isEmpty())

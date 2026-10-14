@@ -22,6 +22,7 @@
 #include "gui/components/RingModulatorComponent.h"
 #include "gui/components/AmComponent.h"
 #include "gui/components/DelayComponent.h"
+#include "gui/components/SampleHoldComponent.h"
 #include "gui/components/SplitterComponent.h"
 #include "gui/components/MergerComponent.h"
 #include "gui/components/AdderComponent.h"
@@ -168,6 +169,16 @@ namespace
             smolfm::GraphNodeRegistry::delayDivisionParameterIdFor (instanceId));
     }
 
+    std::unique_ptr<juce::Component> makeHoldContent (const juce::String& instanceId,
+                                                      juce::AudioProcessorValueTreeState& apvts)
+    {
+        return std::make_unique<gui::SampleHoldComponent> (
+            apvts,
+            smolfm::GraphNodeRegistry::holdRateParameterIdFor     (instanceId),
+            smolfm::GraphNodeRegistry::holdSyncParameterIdFor     (instanceId),
+            smolfm::GraphNodeRegistry::holdDivisionParameterIdFor (instanceId));
+    }
+
     std::unique_ptr<juce::Component> makeResonatorContent (const juce::String& instanceId,
                                                            juce::AudioProcessorValueTreeState& apvts)
     {
@@ -264,12 +275,13 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     ringButton .configure ("ring",  "RNG",  smolfm::GraphNodeRegistry::maxRingModulators);
     amButton   .configure ("am",   "AM",   smolfm::GraphNodeRegistry::maxAmModulators);
     delayButton .configure ("delay", "DLY",  smolfm::GraphNodeRegistry::maxDelays);
+    holdButton  .configure ("hold", "SH",   smolfm::GraphNodeRegistry::maxSampleHolds);
     outputButton .configure ("output", "OUT", smolfm::GraphNodeRegistry::maxMasterOutputs);
     splitButton .configure ("split", "SPL",  smolfm::GraphNodeRegistry::maxSplitters);
     mergeButton .configure ("merge", "MRG",  smolfm::GraphNodeRegistry::maxMergers);
     addButton   .configure ("add",   "ADD",  smolfm::GraphNodeRegistry::maxAdds);
 
-        for (auto* b : { &oscButton, &fmButton, &scaleButton, &vScaleButton, &adsrButton, &fAdsrButton, &gainButton, &shapeButton, &filterButton, &resonatorButton, &feedbackButton, &noteButton, &ringButton, &amButton, &delayButton, &outputButton, &splitButton, &mergeButton, &addButton })
+        for (auto* b : { &oscButton, &fmButton, &scaleButton, &vScaleButton, &adsrButton, &fAdsrButton, &gainButton, &shapeButton, &filterButton, &resonatorButton, &feedbackButton, &noteButton, &ringButton, &amButton, &delayButton, &holdButton, &outputButton, &splitButton, &mergeButton, &addButton })
     {
         addAndMakeVisible (*b);
                 b->onCountChanged = [this] (const juce::String& baseId, bool add)
@@ -339,6 +351,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             return graphPanel.addNodeOfType ("am", processorRef.getParameters(), makeAmContent, nodeStartsHidden);
         if (baseId == "delay")
             return graphPanel.addNodeOfType ("delay", processorRef.getParameters(), makeDelayContent, nodeStartsHidden);
+        if (baseId == "hold")
+            return graphPanel.addNodeOfType ("hold", processorRef.getParameters(), makeHoldContent, nodeStartsHidden);
         if (baseId == "output")
             return graphPanel.addNodeOfType ("output", processorRef.getParameters(),
                                              [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
@@ -391,6 +405,7 @@ void AudioPluginAudioProcessorEditor::addNodeFromToolbar (const juce::String& ba
         { "ring",   makeRingModulatorContent },
                 { "am",     makeAmContent        },
         { "delay",  makeDelayContent     },
+        { "hold",   makeHoldContent      },
         { "split",  makeSplitterContent  },
         { "merge",  makeMergerContent    },
         { "add",    makeAddContent       }
@@ -428,6 +443,7 @@ void AudioPluginAudioProcessorEditor::refreshToolbarBadges()
     ringButton  .setRemaining (smolfm::GraphNodeRegistry::maxRingModulators   - graphPanel.countBoxesOfType ("ring"));
     amButton    .setRemaining (smolfm::GraphNodeRegistry::maxAmModulators      - graphPanel.countBoxesOfType ("am"));
     delayButton .setRemaining (smolfm::GraphNodeRegistry::maxDelays            - graphPanel.countBoxesOfType ("delay"));
+    holdButton  .setRemaining (smolfm::GraphNodeRegistry::maxSampleHolds       - graphPanel.countBoxesOfType ("hold"));
     outputButton.setRemaining (smolfm::GraphNodeRegistry::maxMasterOutputs   - graphPanel.countBoxesOfType ("output"));
     splitButton .setRemaining (smolfm::GraphNodeRegistry::maxSplitters         - graphPanel.countBoxesOfType ("split"));
     mergeButton .setRemaining (smolfm::GraphNodeRegistry::maxMergers           - graphPanel.countBoxesOfType ("merge"));
@@ -460,14 +476,14 @@ void AudioPluginAudioProcessorEditor::resized()
 
     // Palette tiles with +/- buttons: 80x52 px each (set by PaletteButton::setSize).
     // Tiles flow left to right and wrap into a new row whenever the current
-    // row is full — 19 node types need more horizontal room than most windows
+    // row is full — 20 node types need more horizontal room than most windows
     // offer.  Extra rows grow downwards; the space they need is reserved below
     // the toolbar first so tiles never overlap the patch browser or canvas.
     auto palette = toolbar.reduced (4, 2);
     const int tileWidth = 80;
     const int tileHeight = 52;
     const int tileSpacing = 8;
-    const int paletteCount = 19;   // keep in sync with the addAndMakeVisible loop
+    const int paletteCount = 20;   // keep in sync with the addAndMakeVisible loop
 
     const int perRow = juce::jmax (1, (palette.getWidth() + tileSpacing) / (tileWidth + tileSpacing));
     const int rows = (paletteCount + perRow - 1) / perRow;
@@ -502,6 +518,7 @@ void AudioPluginAudioProcessorEditor::resized()
         placeTile (ringButton);
         placeTile (amButton);
         placeTile (delayButton);
+    placeTile (holdButton);
         placeTile (splitButton);
         placeTile (mergeButton);
         placeTile (addButton);

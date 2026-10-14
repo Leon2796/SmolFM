@@ -51,6 +51,7 @@ private:
     gui::PaletteButton ringButton;
     gui::PaletteButton amButton;
     gui::PaletteButton delayButton;
+    gui::PaletteButton holdButton;
     gui::PaletteButton outputButton;
     gui::PaletteButton splitButton;
     gui::PaletteButton mergeButton;

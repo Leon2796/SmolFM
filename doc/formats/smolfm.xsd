@@ -231,6 +231,13 @@
     </xs:restriction>
   </xs:simpleType>
 
+  <xs:simpleType name="HoldRateRangeType">
+    <xs:restriction base="xs:float">
+      <xs:minInclusive value="0.5"/>
+      <xs:maxInclusive value="20000"/>
+    </xs:restriction>
+  </xs:simpleType>
+
   <xs:simpleType name="ResonatorTuneRangeType">
     <xs:restriction base="xs:float">
       <xs:minInclusive value="20"/>
@@ -591,6 +598,31 @@
         <xs:attribute name="time" type="DelayTimeRangeType" use="optional"/>
         <xs:attribute name="feedback" type="DelayFeedbackRangeType" use="optional"/>
         <xs:attribute name="mix" type="DelayMixRangeType" use="optional"/>
+        <xs:attribute name="sync" type="SyncType" use="optional"/>
+        <xs:attribute name="division" type="DivisionType" use="optional"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <!-- Sample hold (hold) -->
+  <xs:complexType name="SampleHoldNodeType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Hält das Eingangssignal für eine einstellbare Rasterdauer fest (Sample-and-Hold / Sample-Rate-Reduktion): der Ausgang liefert pro Raster eine neue eingefrorene L/R-Kopie, dazwischen denselben Wert. Die Raste läuft statisch in Hertz oder tempo-synchronisiert über eine Noten-Länge; rate_mod_in multipliziert die Rasterfrequenz. Dient der Bitcrush-Raster-Achse und als getakteter Mod-Stepper.</purpose>
+        <docReference>doc/processors/SampleHoldProcessor.md</docReference>
+        <inputs>
+          <port id="in" type="signal"/>
+          <port id="rate_mod_in" type="signal"/>
+        </inputs>
+        <outputs>
+          <port id="out" type="signal"/>
+        </outputs>
+        <maxInstances>8</maxInstances>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="BaseNodeType">
+        <xs:attribute name="rate" type="HoldRateRangeType" use="optional"/>
         <xs:attribute name="sync" type="SyncType" use="optional"/>
         <xs:attribute name="division" type="DivisionType" use="optional"/>
       </xs:extension>

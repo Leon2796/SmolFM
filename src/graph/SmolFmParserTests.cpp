@@ -425,6 +425,47 @@ int main()
         CHECK (y.parameters["scale"] == 1.5f);
     }
 
+    // hold: rate float + sync/division enums round-trip through both
+    // flavours' whitelists (mirrors the resonator/feedback checks).
+    CHECK (enumOrNumber ("sync", "hold", "on") == 1.0f);
+    CHECK (enumOrNumber ("sync", "hold", "off") == 0.0f);
+    CHECK (enumValueText ("division", "hold", 2.0f) == "eighth");
+
+    const auto holdXml = writeTemp ("hold_node.smolfm",
+        "<SmolFM version=\"3\" name=\"HoldDemo\">\n"
+        "  <Graph>\n"
+        "    <Nodes>\n"
+        "      <Node id=\"hold0\" rate=\"8000\" sync=\"off\" division=\"quarter\"/>\n"
+        "    </Nodes>\n"
+        "  </Graph>\n"
+        "</SmolFM>\n");
+    const auto holdYaml = writeTemp ("hold_node.yaml.smolfm",
+        "version: \"3\"\n"
+        "name: \"HoldDemo\"\n"
+        "graph:\n"
+        "  nodes:\n"
+        "    - id: \"hold0\"\n"
+        "      rate: 8000\n"
+        "      sync: off\n"
+        "      division: quarter\n");
+    SmolFmData holdData;
+    CHECK (xmlParser.parse (holdXml, holdData) && holdData.nodes.size() == 1);
+    SmolFmData holdYData;
+    CHECK (yamlParser.parse (holdYaml, holdYData) && holdYData.nodes.size() == 1);
+    if (holdData.nodes.size() == 1)
+    {
+        auto& n = holdData.nodes[0];
+        CHECK (n.parameters["rate"] == 8000.0f);
+        CHECK (n.parameters["sync"] == 0.0f);
+        CHECK (n.parameters["division"] == 1.0f);
+    }
+    if (holdYData.nodes.size() == 1)
+    {
+        auto& h = holdYData.nodes[0];
+        CHECK (h.parameters["sync"] == 0.0f);
+        CHECK (h.parameters["division"] == 1.0f);
+    }
+
     if (failures == 0)
         std::cout << "SmolFM_ParserTests: all checks passed\n";
 

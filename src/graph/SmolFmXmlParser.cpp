@@ -27,7 +27,7 @@ namespace
         "staticfreq", "lforate", "attack", "decay", "sustain", "release",
         "up", "down", "factor", "amount", "drive", "cutoff", "resonance",
         "time", "feedback", "mix", "level", "tune", "q", "spread",
-        "strikelevel", "striketime", "curve", "scale"
+        "strikelevel", "striketime", "curve", "scale", "rate"
     };
 
     void readAttributes (const juce::XmlElement& element, const juce::String& nodeId,
