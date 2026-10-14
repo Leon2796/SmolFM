@@ -88,7 +88,7 @@ layout:
 | `waveform` (osc) | sine, saw, square, triangle, noise, perlin, simplex |
 | `mode` (osc) | pitch, static, lfo |
 | `mode` (filter) | lp, bp, hp, notch |
-| `shape` (shape) | soft, hard, fold |
+| `shape` (shape) | soft, hard, fold, quantize |
 | `sync` (delay) | off, on |
 | `division` (delay) | half, quarter, eighth, sixteenth |
 | `sync` (hold) | off, on |
@@ -139,7 +139,7 @@ for a node type are ignored by the parsers.
 
 ### Waveshaper (shape)
 - `drive`: float, 0..1
-- `shape`: soft | hard | fold
+- `shape`: soft | hard | fold | quantize
 
 ### Filter (filter)
 - `cutoff`: float, 20..20000 Hz (log scale; default 1000)

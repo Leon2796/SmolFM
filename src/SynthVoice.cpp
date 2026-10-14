@@ -553,7 +553,7 @@ void SynthVoice::buildGraph()
             graph.addProcessor (std::move (g));
         }
 
-        // Waveshaper pool — three transfer functions with drive.
+        // Waveshaper pool — four transfer functions with drive.
         for (int i = 0; i < GraphNodeRegistry::maxWaveshapers; ++i)
         {
             auto ws = std::make_unique<WaveshaperProcessor> (parameters.shaperDrive [static_cast<size_t> (i)],

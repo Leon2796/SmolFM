@@ -12,8 +12,9 @@ WaveshaperComponent::WaveshaperComponent (juce::AudioProcessorValueTreeState& ap
                                           const juce::String& shapeParameterID)
 {
     // Item order must match the choices declared in
-    // PluginProcessor::createParameterLayout() ("Soft", "Hard", "Fold").
-    shapeBox.addItemList ({ "Soft", "Hard", "Fold" }, 1);
+    // PluginProcessor::createParameterLayout() ("Soft", "Hard", "Fold",
+    // "Quantize").
+    shapeBox.addItemList ({ "Soft", "Hard", "Fold", "Quantize" }, 1);
     addAndMakeVisible (shapeBox);
 
     shapeLabel.setText ("Shape", juce::dontSendNotification);

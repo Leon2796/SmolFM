@@ -1253,7 +1253,7 @@ namespace
     TestResult runWaveshaperTransferTable()
     {
         std::string table = "waveshaper transfer (0.37 sine, peak out):";
-        for (int shapeIndex : { 0, 1, 2 })
+        for (int shapeIndex : { 0, 1, 2, 3 })
         for (float driveValue : { 0.05f, 0.25f })
         for (float v : { 1.0f, 0.3f })
         {
@@ -1301,13 +1301,72 @@ namespace
                 peak = std::max (peak, std::abs (y.l));
             }
 
-            const char* shapeName = shapeIndex == 0 ? "soft" : shapeIndex == 1 ? "hard" : "fold";
-            table += "\n  " + std::string (shapeName)
+            const char* nameTable[4] = { "soft", "hard", "fold", "quantize" };
+            table += "\n  " + std::string (nameTable[shapeIndex])
                    + " drive=" + std::to_string (driveValue)
                    + " vel=" + std::to_string (v)
                    + " -> peak " + std::to_string (peak);
         }
         return { true, table };
+    }
+
+    // Quantize shape (the drive-set amplitude grid): every output of
+    // shape index 3 must be round(x*L)/L with L = clamp(round(64*(1-d)),
+    // 2, 64) levels per unit: drive 0 lands on the 1/64 grid within
+    // <= 1/128 error (near-transparent), drive 0.5 on the 1/32 grid (a
+    // DIFFERENT answer for the same input — proves drive really re-sets
+    // the grid), drive 1 collapses to sign steps (L=2).  Bare-processor
+    // test: the waveshaper reads its unwired input default, no graph.
+    TestResult runWaveshaperQuantizeTest()
+    {
+        std::atomic<float> level { 0.0f };           // drive 0 -> L = 64
+        std::atomic<float> shape { 3.0f };           // quantize
+        smolfm::WaveshaperProcessor shaper (&level, &shape);
+        shaper.prepare (48000.0);
+
+        smolfm::StereoFrame y;
+
+        level.store (0.0f);
+        shaper.getInput().setDefaultValue (0.355f);   // round(22.72) = 23
+        y = shaper.processSample();
+        if (std::abs (y.l - 23.0f / 64.0f) > 1e-6f)
+            return { false, "quantize drive=0 must quantize 0.355 to 23/64 (= 0.359375), got "
+                          + std::to_string (y.l) };
+
+        shaper.getInput().setDefaultValue (-0.9f);    // round(-57.6) = -58
+        y = shaper.processSample();
+        if (std::abs (y.l - -58.0f / 64.0f) > 1e-6f)
+            return { false, "quantize drive=0 must quantize -0.9 to -58/64 (= -0.90625), got "
+                          + std::to_string (y.l) };
+
+        level.store (0.5f);                           // L = 32
+        shaper.getInput().setDefaultValue (0.355f);   // round(11.36) = 11
+        y = shaper.processSample();
+        if (std::abs (y.l - 11.0f / 32.0f) > 1e-6f)
+            return { false, "quantize drive=0.5 must quantize 0.355 to 11/32 (= 0.34375), got "
+                          + std::to_string (y.l) + "; the grid must move with drive" };
+
+        level.store (1.0f);                           // L = 2: sign steps
+        shaper.getInput().setDefaultValue (0.9f);     // round(1.8) = 2
+        y = shaper.processSample();
+        if (std::abs (y.l - 1.0f) > 1e-6f)
+            return { false, "quantize drive=1 must quantize 0.9 to +1, got "
+                          + std::to_string (y.l) };
+
+        shaper.getInput().setDefaultValue (-0.9f);    // round(-1.8) = -2
+        y = shaper.processSample();
+        if (std::abs (y.l - -1.0f) > 1e-6f)
+            return { false, "quantize drive=1 must quantize -0.9 to -1 (symmetric, no DC bias), got "
+                          + std::to_string (y.l) };
+
+        shaper.getInput().setDefaultValue (0.4f);     // round(0.8) = 1
+        y = shaper.processSample();
+        if (std::abs (y.l - 0.5f) > 1e-6f)
+            return { false, "quantize drive=1 must quantize 0.4 to 0.5, got "
+                          + std::to_string (y.l) };
+
+        return { true, "quantize grid follows drive: 1/64 at drive 0 (23/64 = 0.359375), "
+                       "1/32 at drive 0.5 (11/32 = 0.34375), sign steps at drive 1 (+1/-1/0.5)" };
     }
 
     // Phase-2 strike probe (03.10.2026, plan doc §9.2/§9.5): the internal
@@ -1940,6 +1999,7 @@ int main()
     runTest ("Filter allpass magnitude", runFilterAllpassTest);
     runTest ("Bass drum chain probe", runBassDrumChainTest);
     runTest ("Waveshaper transfer table", runWaveshaperTransferTable);
+    runTest ("Waveshaper quantize levels", runWaveshaperQuantizeTest);
     runTest ("Velocity fadsr depth scaling", runVelocityFAdsrTest);
     runTest ("Resonator ring + decay", runResonatorRingTest);
     runTest ("Resonator vel-on-decay", runResonatorVelDecayTest);

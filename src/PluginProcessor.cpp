@@ -565,7 +565,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 
     // -- Waveshaper pool ----------------------------------------------------
     // Two parameters per instance: drive (0-1) and shape (choice: soft, hard,
-    // fold).  drive=0 with soft shape is near-transparent.
+    // fold, quantize).  drive=0 with soft shape is near-transparent; on
+    // quantize, drive sets the grid coarseness (64 levels down to 2).
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxWaveshapers; ++i)
     {
         const juce::String num (i);
@@ -576,7 +577,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 
         layout.add (std::make_unique<juce::AudioParameterChoice> (
             "shape" + num + "Shape", "Waveshaper " + num + " Shape",
-            juce::StringArray { "Soft", "Hard", "Fold" }, 0));
+            juce::StringArray { "Soft", "Hard", "Fold", "Quantize" }, 0));
     }
 
     // -- Filter pool --------------------------------------------------------

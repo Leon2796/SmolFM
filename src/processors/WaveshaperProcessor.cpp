@@ -38,7 +38,7 @@ StereoFrame WaveshaperProcessor::processSample()
 
     const float dBase = drive != nullptr ? juce::jlimit (0.0f, 1.0f, drive->load()) : 0.0f;
     const int shapeIndex = shape != nullptr
-        ? juce::jlimit (0, 2, static_cast<int> (std::round (shape->load())))
+        ? juce::jlimit (0, 3, static_cast<int> (std::round (shape->load())))
         : 0;
 
     // Drive modulation: the connected value's stereo mean, clamped to
@@ -93,6 +93,20 @@ StereoFrame WaveshaperProcessor::processSample()
                 while (std::abs (yChannel) > 1.0f)
                     yChannel = 2.0f * (yChannel > 0.0f ? 1.0f : -1.0f) - yChannel;
                 return yChannel;
+            }
+
+            case 3:
+            {
+                // Quantize: amplitude staircase (the crush on the value axis;
+                // the hold node is the crush on the time axis).  Drive sets
+                // the grid coarseness: levels per unit drop from 64 (drive 0,
+                // quantization error <= 1/128 — near-transparent) down to 2
+                // (drive 1 = sign steps).  A connected drive_mod_in re-sets
+                // the grid per sample, so an envelope sweeps the crush.
+                const int levels = juce::jlimit (2, 64,
+                    static_cast<int> (std::round (64.0f * (1.0f - d))));
+                return std::round (xChannel * static_cast<float> (levels))
+                     / static_cast<float> (levels);
             }
 
             default:

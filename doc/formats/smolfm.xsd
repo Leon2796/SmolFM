@@ -61,6 +61,7 @@
       <xs:enumeration value="soft"/>
       <xs:enumeration value="hard"/>
       <xs:enumeration value="fold"/>
+      <xs:enumeration value="quantize"/>
     </xs:restriction>
   </xs:simpleType>
 
@@ -530,7 +531,7 @@
   <xs:complexType name="WaveshaperNodeType">
     <xs:annotation>
       <xs:appinfo xmlns="urn:smolfm:node-meta">
-        <purpose>Verzerrt das Eingangssignal über eine nichtlineare Übertragungskurve in Soft-, Hard- oder Fold-Variante mit einstellbarem Drive-Anteil. Gibt das verzerrte Signal weiter.</purpose>
+        <purpose>Verzerrt das Eingangssignal über eine nichtlineare Übertragungskurve in Soft-, Hard-, Fold- oder Quantize-Variante (Amplitudentreppstufen; der Drive setzt die Stufenzahl pro Einheit) mit einstellbarem Drive-Anteil. Gibt das verzerrte Signal weiter.</purpose>
         <docReference>doc/processors/WaveshaperProcessor.md</docReference>
         <inputs>
           <port id="in" type="signal"/>

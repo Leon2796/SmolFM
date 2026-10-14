@@ -15,13 +15,17 @@
 
     Per sample (per channel — standard stereo distortion behaviour):
 
-        y_n = f(x_n)      with f one of three static transfer functions:
+        y_n = f(x_n)      with f one of four static transfer functions:
           0 soft clip:  x / (1 + |x|)                (tanh-like, warm)
           1 hard clip:  clamp(x * (1 + 9*drive), -1, 1)   (aggressive)
           2 fold:       foldback of x * (1 + 19*drive)    (metallic)
+          3 quantize:   round(x * L) / L                  (stepped, lo-fi)
+                        L = clamp(round(64 * (1 - drive)), 2, 64)
 
     drive scales the input before the curve so the transfer function can be
-    pushed harder; shape selects the function.  shape=0 with drive=0 is
+    pushed harder (shapes 0-2); on quantize it sets the grid coarseness:
+    drive=0 keeps 64 levels per unit (error <= 1/128, near-transparent),
+    drive=1 collapses to 2 levels (sign steps).  shape=0 with drive=0 is
     near-transparent (identity at small amplitudes).
 */
 
@@ -33,7 +37,7 @@ namespace smolfm
 {
 
 /**
-    Waveshaper node with three selectable transfer functions.
+    Waveshaper node with four selectable transfer functions.
 */
 class WaveshaperProcessor final : public Processor
 {
@@ -43,8 +47,8 @@ public:
 
         @param driveParameter atomic pointer to the drive amount (0–1 in the
                               UI; scales the input into the curve)
-        @param shapeParameter atomic pointer to the shape index (0–2: soft,
-                              hard, fold)
+        @param shapeParameter atomic pointer to the shape index (0–3: soft,
+                              hard, fold, quantize)
     */
     WaveshaperProcessor (std::atomic<float>* driveParameter,
                          std::atomic<float>* shapeParameter);
