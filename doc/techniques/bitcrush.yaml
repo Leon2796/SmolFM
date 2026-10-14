@@ -1,0 +1,149 @@
+technique:
+  name: bitcrush
+
+  idea: |
+    The classic bit crusher: the sample hold freezes the signal on a time
+    grid (sample-rate reduction), and the waveshaper in quantize mode
+    rasters the frozen values onto an amplitude staircase (value grid).
+    Two degeneration axes in one serial chain — hold rate controls how
+    coarse the time steps get, drive controls how coarse the level steps
+    get — from subtle lo-fi grit down to two-level signum fragments.
+
+  tutorial: |
+    Bitcrusher — der klassische Lo-fi-Zerfaller aus der Studio-Literatur:
+    eine Welle, die gleichzeitig auf zwei Raster geworfen wird, ein
+    Zeit- und ein Werte-Raster. Wofür dient die Verdrahtung? Der
+    Sample-Hold hält jede eingefrorene Probe so lange fest, bis der
+    nächste Grid-Tick greift; aus der glatt laufenden Welle wird eine
+    Treppe — der Klang wirkt wie von einem älteren, trägeren Wandler
+    abgelichtet. Der Waveshaper im Quantize-Modus rastert danach die
+    Amplitude auf ein Stufengitter; der Drive macht das Gitter gröber.
+    Was ist das Ziel? Gewollter digitaler Zerfall mit getrennten
+    Stellknöpfen für beide Achsen. Das Ohr hört die Treppe als Rauheit
+    und digital-randige Kanten: die feinen Hochton-Details brechen zuerst
+    weg (Maskierung der Struktur), ungerade Oberwellen mit festem
+    Stufenmuster ersetzen die natürlichen Obertöne, und bei grobem
+    Zeitraster versteppen Melodie-Fragmente hörbar, bis nur noch
+    Vorzeichen-Treppstufen übrig bleiben. Der Gang des Signals: (1) Der
+    Osc liefert die glatte Quelle — im Pitch-Modus folgt sie der Taste,
+    im Static-Modus ist sie ein atonaler Charakterstrom. (2) Der Hold
+    friert sie auf dem Zeitraster ein: nahe der Sample-Rate fast
+    transparent, um 8000 Hz der klassische Crush-Eindruck, wenige Hz
+    machen die Stufen hörbar. (3) Der Quantize-Shaper rastet jede
+    angefrorene Probe aufs Amplitudengitter: Drive 0 lässt 64 Stufen
+    (Stufenfehler höchstens 1/128, nahezu transparent), Drive 1 lässt nur
+    noch zwei. (4) Der Ausgang trägt die gebrochene Stimme. Die beiden
+    Mod-Ports (rate_mod_in am Hold, drive_mod_in am Shaper) bleiben in
+    der Grundform unbestückt — hängt ein Perlin dran, beginnt das Raster
+    zu wanken: driftender Lo-Fi-Wobble. Verwandtschaften:
+    fold-wave-oscillator nutzt denselben Shaper als Timbre-Generator
+    (Falten statt Rastern), und gain-gate-chops versteppert nur die
+    Lautheit; hier rastern beide Achsen das Klangmaterial selbst.
+
+  involved_nodes:
+    - type: osc
+      role: Signal source in pitch or static mode; the material to crush.
+    - type: hold
+      role: Time-axis freezer; rate sets the staircase grid in Hz, or
+        tempo-synced via sync/division.
+    - type: shape
+      role: Waveshaper in quantize mode; drive sets the amplitude level
+        grid (64 levels down to 2).
+    - type: output
+      role: Summing endpoint.
+
+  involved_ports:
+    - node_role: Oscillator
+      port: out
+      role: Raw signal into the time grid (signal).
+    - node_role: Sample hold
+      port: in
+      role: Receives the raw signal (signal).
+    - node_role: Sample hold
+      port: out
+      role: Frozen staircase into the shaper (signal).
+    - node_role: Waveshaper
+      port: in
+      role: Rasterizes the frozen values (signal).
+    - node_role: Waveshaper
+      port: out
+      role: Crushed voice towards the output (signal).
+    - node_role: Master output
+      port: in1..in8
+      role: Dedicated mix input for the crushed voice (signal).
+
+  topology:
+    description: |
+      osc.out -> hold.in (signal).  hold.out -> shape.in (signal).
+      shape.out -> output (signal).  Two degeneration axes in one serial
+      path: the hold quantizes the time axis (rate grid), the quantize
+      shape rasters the value axis (level grid).  The mod sockets stay
+      unwired in the base form — hold.rate_mod_in (rate wobble) and
+      shape.drive_mod_in (level-grid sweep) extend the pattern; the
+      shaper's vel input scales the drive dynamically (harder hits crush
+      harder).
+
+  graph_ascii: |
+      (osc · source) ──out──▶ (hold · time grid) ──out──▶ (shape · quantize level grid) ──out──▶ (output)
+      ┄ hold.rate_mod_in / shape.drive_mod_in / shape.vel optional — unwired in the base form
+
+  parameters:
+    - name: hold rate
+      role: |
+        Sample-hold grid in Hz, 0.5..20000: near the sample rate the time
+        axis stays transparent, ~8000 Hz is the classic lo-fi crush
+        grid, a few Hz turns the melody into audible steps.
+    - name: quantize levels (drive)
+      role: |
+        Waveshaper drive 0..1 in quantize mode sets the level grid:
+        64 levels at drive 0 (stair error <= 1/128, near transparent)
+        down to 2 levels at drive 1 (signum stairs, maximal crush).
+    - name: sync / division
+      role: |
+        Sample-hold sync on ties the time grid to the host tempo
+        (division half..sixteenth) — steps sit on the beat, useful for
+        rhythmic crush textures.
+    - name: oscillator mode
+      role: |
+        Pitch tracks the keyboard for lo-fi leads; static mode turns the
+        chain into an atonal character stream.
+
+  relationships:
+    - name: axis order
+      description: |
+        The hold feeds the quantizer: every frozen segment collapses to
+        exactly one level, so each time step carries a single crisp
+        value.  Reversing the chain (shape before hold) also lands the
+        output on the same value grid, but quantizes continuously before
+        freezing — the two orders differ only in which instant of the
+        wave supplies the segment's level; the reference chain freezes
+        first, rasters after.
+    - name: grid pair
+      description: |
+        Time grid T (hold: T = round(sampleRate / rate)) and level grid
+        L (shape: L = jlimit(2, 64, round(64 - 64*drive))) scale in
+        opposite senses: coarse time grid plus fine level grid = stepwise
+        lo-fi; fine time grid plus coarse level grid = gritty stair
+        harmonics at full melody tracking; both coarse = signum chatter.
+    - name: budget
+      description: |
+        Registry budgets (xsd maxInstances): osc <= 16 (one used),
+        hold <= 8 (one used), shape <= 16 (one used), output = 1.
+    - name: siblings
+      description: |
+        fold-wave-oscillator makes the same shaper the timbre generator
+        itself (fold mode, no degeneration); gain-gate-chops steps the
+        amplitude envelope — bitcrush degenerates both axes of the signal
+        itself.  The shaper without the hold is the pure value-axis
+        variant, the hold without the level grid is plain sample-rate
+        reduction.
+
+  perceptual_effects:
+    - lo-fi digital grit: fine high-frequency detail collapses first, the
+      voice turns dry and sandpaper-like
+    - inharmonic quantization noise and odd-order stair harmonics replace
+      natural overtones
+    - audible time-stepping at low hold rates — melodic fragments become
+      stuttering staircases
+    - with both grids coarse the voice collapses into two-value signum
+      chatter with a fixed spectral pattern

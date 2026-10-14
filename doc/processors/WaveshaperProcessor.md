@@ -84,7 +84,7 @@ Spezialfälle:
   transparent); $d = 1 \Rightarrow L = 2$ (Signum-Treppen, maximaler Crush).
   Ein Sinus springt treppenförmig zwischen den Stufenniveaus — ungerade
   Oberwellen mit festem Stufenmuster: die Wertachse des Bitcrush (die
-  Zeitachse kommt vom `hold`-Node, siehe `doc/techniques/`).
+  Zeitachse kommt vom `hold`-Node, siehe `doc/techniques/bitcrush.yaml`).
 
 ### Abschnitt 3b — Modulations-Input `drive_mod_in`
 
