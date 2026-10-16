@@ -31,6 +31,109 @@
 
 namespace
 {
+    namespace icons
+    {
+        // Stroke-only glyph builders for the palette tiles.  Every path is
+        // sketched in a virtual 24x24 box; PaletteButton scales and strokes
+        // it, so all icons share exactly one line weight.  Tiles without an
+        // icon show their letters instead.
+
+        juce::Path sine()      // oscillator
+        {
+            juce::Path p;
+            p.startNewSubPath (2, 12);
+            p.cubicTo (5, 2, 9, 2, 12, 12);
+            p.cubicTo (15, 22, 19, 22, 22, 12);
+            return p;
+        }
+
+        juce::Path lowpass()   // filter: flat, knee, tail
+        {
+            juce::Path p;
+            p.startNewSubPath (2, 6);
+            p.lineTo (10, 6);
+            p.quadraticTo (17, 6, 19, 16);
+            p.lineTo (22, 16);
+            return p;
+        }
+
+        juce::Path speaker()   // gain: wedge + emission arcs
+        {
+            juce::Path p;
+            p.startNewSubPath (3, 9);
+            p.lineTo (8, 9);
+            p.lineTo (13, 4);
+            p.lineTo (13, 20);
+            p.lineTo (8, 15);
+            p.lineTo (3, 15);
+            p.closeSubPath();
+            p.addArc (14, 6, 6, 12, -0.9f, 0.9f, true);
+            p.addArc (16, 3, 8, 18, -0.75f, 0.75f, true);
+            return p;
+        }
+
+        juce::Path envelope()  // ADSR: attack, decay, sustain, release
+        {
+            juce::Path p;
+            p.startNewSubPath (2, 20);
+            p.lineTo (6, 4);
+            p.lineTo (10, 13);
+            p.lineTo (16, 13);
+            p.lineTo (22, 20);
+            return p;
+        }
+
+        juce::Path curve()     // waveshaper: transfer curve
+        {
+            juce::Path p;
+            p.startNewSubPath (4, 20);
+            p.cubicTo (12, 20, 12, 4, 20, 4);
+            return p;
+        }
+
+        juce::Path noteGlyph() // note: head, stem, flag
+        {
+            juce::Path p;
+            p.addEllipse (5, 15, 7, 5);
+            p.startNewSubPath (12, 17.5f);
+            p.lineTo (12, 4);
+            p.quadraticTo (17, 3, 18, 8);
+            return p;
+        }
+
+        juce::Path taps()      // delay: receding echo taps
+        {
+            juce::Path p;
+            p.addEllipse (3, 9.5f, 5, 5);
+            p.addEllipse (11, 10, 4, 4);
+            p.addEllipse (18, 10.5f, 3, 3);
+            return p;
+        }
+
+        juce::Path splitY()    // splitter: one in, two out
+        {
+            juce::Path p;
+            p.startNewSubPath (2, 12);
+            p.lineTo (10, 12);
+            p.startNewSubPath (10, 12);
+            p.lineTo (21, 5);
+            p.startNewSubPath (10, 12);
+            p.lineTo (21, 19);
+            return p;
+        }
+
+        juce::Path mergeY()    // merger: two in, one out
+        {
+            juce::Path p;
+            p.startNewSubPath (2, 5);
+            p.lineTo (11, 12);
+            p.lineTo (2, 19);
+            p.startNewSubPath (11, 12);
+            p.lineTo (22, 12);
+            return p;
+        }
+    }
+
     // Node-type content factories.  Each produces the panel a box needs, bound
     // to the instance's own parameter ids (via GraphNodeRegistry).
 
@@ -198,6 +301,18 @@ namespace
         return std::make_unique<gui::FeedbackComponent> (
             apvts, smolfm::GraphNodeRegistry::amountParameterIdFor (instanceId));
     }
+
+    //==========================================================================
+    // Palette column geometry, shared by resized() and fitWindowToContent().
+    constexpr int paletteTile      = 56;
+    constexpr int paletteGap       = 2;
+    constexpr int paletteColumns   = 3;
+    constexpr int paletteTileCount = 20;   // keep in sync with the addAndMakeVisible loop
+    constexpr int paletteRows      = (paletteTileCount + paletteColumns - 1) / paletteColumns;
+    constexpr int paletteGridW     = paletteColumns * paletteTile + (paletteColumns - 1) * paletteGap;
+    constexpr int paletteGridH     = paletteRows    * paletteTile + (paletteRows    - 1) * paletteGap;
+    constexpr int palettePad       = 4;    // padding inside the palette column
+    constexpr int paletteW         = paletteGridW + 2 * palettePad + 8;  // + reserve for the vertical scrollbar
 }
 
 std::unique_ptr<juce::Component> AudioPluginAudioProcessorEditor::makeOutputContent (const juce::String& instanceId,
@@ -231,26 +346,71 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible (patchBrowser);
     addAndMakeVisible (exportButton);
     addAndMakeVisible (importButton);
+    addAndMakeVisible (directoryButton);
+    addAndMakeVisible (paletteToggleButton);
+    addAndMakeVisible (pathLabel);
 
     exportButton.onClick = [this] { exportPatch(); };
     importButton.onClick = [this] { importPatch(); };
 
+    // Toolbar path label: shows the directory the patch browser scans.
+    pathLabel.setJustificationType (juce::Justification::centredLeft);
+    pathLabel.setMinimumHorizontalScale (0.6f);
+    pathLabel.setColour (juce::Label::textColourId, juce::Colours::grey);
+    pathLabel.setFont (juce::FontOptions (12.0f));
+
+    // The palette toggle shows/hides the collapsible right-side node palette.
+    paletteToggleButton.onClick = [this]
+    {
+        paletteVisible = ! paletteVisible;
+        paletteToggleButton.setTooltip (paletteVisible ? "Hide node palette"
+                                                       : "Show node palette");
+        resized();
+    };
+
+    // Working-directory picker: adopts the chosen directory through the very
+    // same path as the patch browser's directory handling (see the
+    // onDirectoryChosen lambda below).
+    directoryButton.onClick = [this]
+    {
+        fileChooser = std::make_unique<juce::FileChooser> ("Select SmolFM working directory",
+            processorRef.getPatchDirectory());
+
+        fileChooser->launchAsync (juce::FileBrowserComponent::openMode
+                                | juce::FileBrowserComponent::canSelectDirectories,
+            [this] (const juce::FileChooser& chooser)
+            {
+                if (const juce::File dir = chooser.getResult(); dir.isDirectory())
+                    patchBrowser.onDirectoryChosen (dir);
+            });
+    };
+
     // Patch browser: directory lives in the processor state; selection loads
     // the chosen patch into the graph panel.
+    //
+    // Context-switch rules so label, listing and sounding instrument always
+    // agree:
+    //  - a directory choice loads its newly selected first patch (a stable
+    //    rescan with an unchanged directory keeps the selection and nothing
+    //    is reloaded);
+    //  - a failed load alerts and reverts the listing to what still plays.
     patchBrowser.onDirectoryChosen = [this] (const juce::File& dir)
     {
-        processorRef.setPatchDirectory (dir);
-        patchBrowser.setDirectory (dir);
+        setWorkingDirectory (dir);
+
+        if (const juce::File selected = patchBrowser.getSelectedPatch();
+            selected.existsAsFile() && selected != lastLoadedPatch)
+        {
+            if (! loadPatch (selected))
+                patchBrowser.selectPatch (lastLoadedPatch);
+        }
     };
     patchBrowser.onPatchSelected = [this] (const juce::File& file)
     {
-        if (smolfm::SmolFmFile::load (graphPanel, processorRef.getParameters(), file))
-        {
-            patchBrowser.setInstrumentName (smolfm::SmolFmFile::readInstrumentName (file));
-            fitWindowToContent();
-        }
+        if (! loadPatch (file))
+            patchBrowser.selectPatch (lastLoadedPatch);
     };
-    patchBrowser.setDirectory (processorRef.getPatchDirectory());
+    setWorkingDirectory (processorRef.getPatchDirectory());
 
     boundsConstrainer->setMinimumSize (700, 500);
     boundsConstrainer->setMaximumSize (2400, 1600);
@@ -258,33 +418,41 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     setResizable (true, true);
 
     // -----------------------------------------------------------------
-    // Toolbar palette: one tile per node type, showing how many are left.
+    // Side palette: one square tile per node type, showing how many can
+    // still be added.  Icons where a glyph beats the letters.
     // -----------------------------------------------------------------
-        oscButton  .configure ("osc",   "Osc",  smolfm::GraphNodeRegistry::maxOscillators);
-    fmButton   .configure ("fm",   "FM",   smolfm::GraphNodeRegistry::maxFmAmounts);
-    scaleButton.configure ("fscale", "FSC",  smolfm::GraphNodeRegistry::maxFrequencyScales);
-    vScaleButton.configure ("vsc", "VSC",  smolfm::GraphNodeRegistry::maxVelocityScales);
-    adsrButton .configure ("adsr",  "ADSR", smolfm::GraphNodeRegistry::maxAdsr);
-    fAdsrButton .configure ("fadsr", "FAD", smolfm::GraphNodeRegistry::maxFAdsr);
-    gainButton .configure ("gain",  "GN",   smolfm::GraphNodeRegistry::maxGains);
-    shapeButton .configure ("shape", "SHP",  smolfm::GraphNodeRegistry::maxWaveshapers);
-    filterButton .configure ("filter", "FLT", smolfm::GraphNodeRegistry::maxFilters);
-    resonatorButton .configure ("resonator", "RES", smolfm::GraphNodeRegistry::maxResonators);
-    feedbackButton .configure ("feedback", "FDB", smolfm::GraphNodeRegistry::maxFeedbacks);
-    noteButton .configure ("note",  "NT",   smolfm::GraphNodeRegistry::maxNotes);
-    ringButton .configure ("ring",  "RNG",  smolfm::GraphNodeRegistry::maxRingModulators);
-    amButton   .configure ("am",   "AM",   smolfm::GraphNodeRegistry::maxAmModulators);
-    delayButton .configure ("delay", "DLY",  smolfm::GraphNodeRegistry::maxDelays);
-    holdButton  .configure ("hold", "SH",   smolfm::GraphNodeRegistry::maxSampleHolds);
-    outputButton .configure ("output", "OUT", smolfm::GraphNodeRegistry::maxMasterOutputs);
-    splitButton .configure ("split", "SPL",  smolfm::GraphNodeRegistry::maxSplitters);
-    mergeButton .configure ("merge", "MRG",  smolfm::GraphNodeRegistry::maxMergers);
-    addButton   .configure ("add",   "ADD",  smolfm::GraphNodeRegistry::maxAdds);
+    oscButton     .configure ("osc",      "Osc", smolfm::GraphNodeRegistry::maxOscillators,     icons::sine);
+    fmButton      .configure ("fm",       "FM",  smolfm::GraphNodeRegistry::maxFmAmounts);
+    scaleButton   .configure ("fscale",   "FSC", smolfm::GraphNodeRegistry::maxFrequencyScales);
+    vScaleButton  .configure ("vsc",      "VSC", smolfm::GraphNodeRegistry::maxVelocityScales);
+    adsrButton    .configure ("adsr",     "ADSR", smolfm::GraphNodeRegistry::maxAdsr,  icons::envelope);
+    fAdsrButton   .configure ("fadsr",    "FAD", smolfm::GraphNodeRegistry::maxFAdsr);
+    gainButton    .configure ("gain",     "GN",  smolfm::GraphNodeRegistry::maxGains,  icons::speaker);
+    shapeButton   .configure ("shape",    "SHP", smolfm::GraphNodeRegistry::maxWaveshapers, icons::curve);
+    filterButton  .configure ("filter",   "FLT", smolfm::GraphNodeRegistry::maxFilters, icons::lowpass);
+    resonatorButton.configure ("resonator", "RES", smolfm::GraphNodeRegistry::maxResonators);
+    feedbackButton.configure  ("feedback", "FDB", smolfm::GraphNodeRegistry::maxFeedbacks);
+    noteButton    .configure ("note",      "NT",  smolfm::GraphNodeRegistry::maxNotes,  icons::noteGlyph);
+    ringButton    .configure ("ring",      "RNG", smolfm::GraphNodeRegistry::maxRingModulators);
+    amButton      .configure ("am",        "AM",  smolfm::GraphNodeRegistry::maxAmModulators);
+    delayButton   .configure ("delay",     "DLY", smolfm::GraphNodeRegistry::maxDelays, icons::taps);
+    holdButton    .configure ("hold",      "SH",  smolfm::GraphNodeRegistry::maxSampleHolds);
+    outputButton  .configure ("output",    "OUT", smolfm::GraphNodeRegistry::maxMasterOutputs);
+    splitButton   .configure ("split",     "SPL", smolfm::GraphNodeRegistry::maxSplitters, icons::splitY);
+    mergeButton   .configure ("merge",     "MRG", smolfm::GraphNodeRegistry::maxMergers, icons::mergeY);
+    addButton     .configure ("add",       "ADD", smolfm::GraphNodeRegistry::maxAdds);
 
-        for (auto* b : { &oscButton, &fmButton, &scaleButton, &vScaleButton, &adsrButton, &fAdsrButton, &gainButton, &shapeButton, &filterButton, &resonatorButton, &feedbackButton, &noteButton, &ringButton, &amButton, &delayButton, &holdButton, &outputButton, &splitButton, &mergeButton, &addButton })
+    // Right palette column: the scroll view keeps every row reachable when
+    // the window is short.
+    paletteScroll.setScrollBarsShown (true, false);   // vertical only
+    paletteScroll.setScrollBarThickness (8);
+    paletteScroll.setViewedComponent (&paletteGrid, false);
+    addAndMakeVisible (paletteScroll);
+
+    for (auto* b : { &oscButton, &fmButton, &scaleButton, &vScaleButton, &adsrButton, &fAdsrButton, &gainButton, &shapeButton, &filterButton, &resonatorButton, &feedbackButton, &noteButton, &ringButton, &amButton, &delayButton, &holdButton, &outputButton, &splitButton, &mergeButton, &addButton })
     {
-        addAndMakeVisible (*b);
-                b->onCountChanged = [this] (const juce::String& baseId, bool add)
+        paletteGrid.addAndMakeVisible (*b);
+        b->onCountChanged = [this] (const juce::String& baseId, bool add)
         {
             if (add)
                 addNodeFromToolbar (baseId);
@@ -374,7 +542,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     // here so onConnectionPatchChanged/onNodeSetChanged are already wired.
     const juce::File initialPatch = patchBrowser.getSelectedPatch();
     if (initialPatch.existsAsFile())
-        smolfm::SmolFmFile::load (graphPanel, processorRef.getParameters(), initialPatch);
+        loadPatch (initialPatch);
 
     setSize (1200, 800);
 
@@ -463,72 +631,82 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 
 void AudioPluginAudioProcessorEditor::resized()
 {
-    auto bounds = getLocalBounds().reduced (24);
+    auto bounds = getLocalBounds();
 
-        // Toolbar: title left, palette center, import/export right.  Height fits the
-    // +/- tiles (52px + margins).
-    auto toolbar = bounds.removeFromTop (60);
-    titleLabel.setBounds (toolbar.removeFromLeft (110));
+    // The chrome hugs the window edges: compact toolbar row on top, patch
+    // navigation below, the canvas fills the rest.
+    bounds = bounds.withTrimmedLeft (8).withTrimmedTop (6)
+                   .withTrimmedRight (4).withTrimmedBottom (8);   // left, top, seam right of the canvas, bottom
 
-    auto buttonsArea = toolbar.removeFromRight (toolbar.getWidth() > 420 ? 400 : toolbar.getWidth() / 2);
-    importButton.setBounds (buttonsArea.removeFromRight (84).reduced (2));
-    exportButton.setBounds (buttonsArea.removeFromRight (84).reduced (2));
+    // Toolbar: title, icon-only export/import/directory (tooltips name them),
+    // then the working-directory path.  The palette toggle lives at the right
+    // end of the patch navigation row instead of the toolbar.
+    auto toolbar = bounds.removeFromTop (28);
+    titleLabel.setBounds (toolbar.removeFromLeft (70));
+    toolbar.removeFromLeft (6);
+    exportButton.setBounds (toolbar.removeFromLeft (28).reduced (1));
+    toolbar.removeFromLeft (4);
+    importButton.setBounds (toolbar.removeFromLeft (28).reduced (1));
+    toolbar.removeFromLeft (4);
+    directoryButton.setBounds (toolbar.removeFromLeft (28).reduced (1));
+    pathLabel.setBounds (toolbar);
 
-    // Palette tiles with +/- buttons: 80x52 px each (set by PaletteButton::setSize).
-    // Tiles flow left to right and wrap into a new row whenever the current
-    // row is full — 20 node types need more horizontal room than most windows
-    // offer.  Extra rows grow downwards; the space they need is reserved below
-    // the toolbar first so tiles never overlap the patch browser or canvas.
-    auto palette = toolbar.reduced (4, 2);
-    const int tileWidth = 80;
-    const int tileHeight = 52;
-    const int tileSpacing = 8;
-    const int paletteCount = 20;   // keep in sync with the addAndMakeVisible loop
-
-    const int perRow = juce::jmax (1, (palette.getWidth() + tileSpacing) / (tileWidth + tileSpacing));
-    const int rows = (paletteCount + perRow - 1) / perRow;
-    if (rows > 1)
-        bounds.removeFromTop ((rows - 1) * (tileHeight + tileSpacing));
-
-    int x = 0, y = 0;
-
-    auto placeTile = [&] (gui::PaletteButton& b)
+    auto placeTile = [&] (gui::PaletteButton& b, int index)
     {
-        if (x + tileWidth > palette.getWidth())
-        {
-            x = 0;
-            y += tileHeight + tileSpacing;
-        }
-        b.setBounds (palette.getX() + x, palette.getY() + y, tileWidth, tileHeight);
-        x += tileWidth + tileSpacing;
+        const int col = index % paletteColumns, row = index / paletteColumns;
+        b.setBounds (palettePad + col * (paletteTile + paletteGap),
+                     palettePad + row * (paletteTile + paletteGap), paletteTile, paletteTile);
     };
 
-    placeTile (oscButton);
-    placeTile (fmButton);
-    placeTile (scaleButton);
-    placeTile (vScaleButton);  // was missing: tile stayed parked at (0,0), top-left corner
-        placeTile (adsrButton);
-        placeTile (fAdsrButton);
-        placeTile (gainButton);
-        placeTile (shapeButton);
-        placeTile (filterButton);
-        placeTile (resonatorButton);
-        placeTile (feedbackButton);
-        placeTile (noteButton);
-        placeTile (ringButton);
-        placeTile (amButton);
-        placeTile (delayButton);
-    placeTile (holdButton);
-        placeTile (splitButton);
-        placeTile (mergeButton);
-        placeTile (addButton);
-        placeTile (outputButton);
+    int index = 0;
+    placeTile (oscButton, index++);
+    placeTile (fmButton, index++);
+    placeTile (scaleButton, index++);
+    placeTile (vScaleButton, index++);
+    placeTile (adsrButton, index++);
+    placeTile (fAdsrButton, index++);
+    placeTile (gainButton, index++);
+    placeTile (shapeButton, index++);
+    placeTile (filterButton, index++);
+    placeTile (resonatorButton, index++);
+    placeTile (feedbackButton, index++);
+    placeTile (noteButton, index++);
+    placeTile (ringButton, index++);
+    placeTile (amButton, index++);
+    placeTile (delayButton, index++);
+    placeTile (holdButton, index++);
+    placeTile (outputButton, index++);
+    placeTile (splitButton, index++);
+    placeTile (mergeButton, index++);
+    placeTile (addButton, index++);
+    jassert (index == paletteTileCount);   // tile list and grid geometry out of sync?
 
-    bounds.removeFromTop (8);
+    bounds.removeFromTop (6);
 
-    // Patch browser: directory row + navigation above the graph canvas.
-    patchBrowser.setBounds (bounds.removeFromTop (64));
-        bounds.removeFromTop (4);
+    // Patch navigation above the canvas: `< name >` flanking cluster at the
+    // left end (directory button and path label moved into the toolbar
+    // above).  The row's right end is reserved for the palette toggle.
+    auto navRow = bounds.removeFromTop (30);
+    auto toggleSlot = navRow.removeFromRight (28);
+    patchBrowser.setBounds (navRow);
+    bounds.removeFromTop (4);
+
+    // Collapsible right side palette: a fixed 3-column grid of square tiles,
+    // one per node type, barely separated (2px) so the grid reads as one
+    // block.  Its column sits beside the canvas only, sharing the draggable
+    // panel's top and bottom edges, and can be hidden via the toggle inside
+    // the panel.  The scroll view keeps the last rows reachable on short
+    // windows.
+    const int paletteAreaW = paletteVisible ? paletteW : 0;
+    auto paletteArea = bounds.removeFromRight (paletteAreaW);
+    paletteScroll.setVisible (paletteVisible);
+    paletteScroll.setBounds (paletteArea.withTrimmedLeft (2));   // right edge stays flush at the window seam
+    paletteGrid.setBounds (0, 0, paletteArea.getWidth() - 8, paletteGridH + 2 * palettePad);
+
+    // The palette toggle sits at the right end of the navigation row: flush
+    // with the window seam, directly above the palette column it switches,
+    // and entirely clear of canvas content also while the palette is hidden.
+    paletteToggleButton.setBounds (toggleSlot.reduced (1));
 
     // The viewport gets the remaining space; the panel sizes itself to content.
     graphViewport.setBounds (bounds);
@@ -556,15 +734,17 @@ void AudioPluginAudioProcessorEditor::fitWindowToContent()
     if (content.isEmpty())
         return;
 
-    // Fixed chrome: margins (24 each side) + toolbar (34) + gaps (8+4) +
-        // patch browser (64).  The canvas sits below all of that.
-    const int chromeTop    = 24 + 60 + 8 + 64 + 4;  // toolbar now 60px
-    const int chromeRight  = 24;
-    const int chromeBottom = 24;
+    // Fixed chrome: slim margins (8 left, 6 top, 8 bottom) + slim toolbar
+    // (28) + gaps (6+4) + patch navigation (30).  Right: seam (4) + palette
+    // column; the collapsible palette contributes nothing while hidden.
+    const int chromeTop    = 6 + 28 + 6 + 30 + 4;
+    const int chromeLeft   = 8;
+    const int chromeRight  = 4 + (paletteVisible ? paletteW : 0);
+    const int chromeBottom = 8;
 
     // content.getRight() is the panel-local right edge of the layout; the
     // window needs that plus the chrome around the canvas.
-    const int neededW = content.getRight()  + chromeRight;
+    const int neededW = content.getRight()  + chromeLeft + chromeRight;
     const int neededH = content.getBottom() + chromeTop + chromeBottom;
 
         if (neededW <= getWidth() && neededH <= getHeight())
@@ -586,6 +766,45 @@ void AudioPluginAudioProcessorEditor::fitWindowToContent()
 
     setSize (juce::jmax (getWidth(),  newW),
              juce::jmax (getHeight(), newH));
+}
+
+//==============================================================================
+/*
+    Single funnel for every patch-switch path (startup, browser step, directory
+    choice, import): the editor's guarantee is that the name label, the browser
+    selection and the sounding graph always refer to the same file.
+*/
+bool AudioPluginAudioProcessorEditor::loadPatch (const juce::File& file)
+{
+    jassert (file != juce::File());   // callers screen existence already
+
+    if (! smolfm::SmolFmFile::load (graphPanel, processorRef.getParameters(), file))
+    {
+        // The previous patch keeps playing; callers may revert their listing.
+        juce::AlertWindow::showMessageBoxAsync (juce::MessageBoxIconType::WarningIcon,
+                                                "SmolFM",
+                                                "Could not load instrument:\n"
+                                                + file.getFullPathName());
+        return false;
+    }
+
+    lastLoadedPatch = file;
+    patchBrowser.setInstrumentName (smolfm::SmolFmFile::readInstrumentName (file));
+    fitWindowToContent();
+    return true;
+}
+
+//==============================================================================
+/*
+    Single funnel for the working directory, matching loadPatch() for patches:
+    the processor state (persisted), the patch browser's listing and the
+    toolbar path label always agree on the scanned directory.
+*/
+void AudioPluginAudioProcessorEditor::setWorkingDirectory (const juce::File& dir)
+{
+    processorRef.setPatchDirectory (dir);
+    patchBrowser.setDirectory (dir);
+    pathLabel.setText (dir.getFullPathName(), juce::dontSendNotification);
 }
 
 //==============================================================================
@@ -624,10 +843,16 @@ void AudioPluginAudioProcessorEditor::importPatch()
             if (source == juce::File() || ! source.existsAsFile())
                 return;
 
-            smolfm::SmolFmFile::load (graphPanel, processorRef.getParameters(), source);
-            patchBrowser.setInstrumentName (smolfm::SmolFmFile::readInstrumentName (source));
+            // Load first: only a successful import adopts the file's directory
+            // as the browser context.  An early directory switch would leave
+            // the listing (and a subsequent arrowse step) pointing at a
+            // different instrument than the one actually loaded.
+            if (! loadPatch (source))
+                return;
+
+            const juce::File directory = source.getParentDirectory();
+            setWorkingDirectory (directory);
             patchBrowser.selectPatch (source);
-            fitWindowToContent();
         });
 }
 
@@ -709,14 +934,9 @@ void AudioPluginAudioProcessorEditor::applyStartupInstrumentParameter()
     // working directory, mark the file in the listing, then load and show it.
     const juce::File directory (instrumentFile.getParentDirectory());
 
-    processorRef.setPatchDirectory (directory);
-    patchBrowser.setDirectory (directory);
+    setWorkingDirectory (directory);
     patchBrowser.selectPatch (instrumentFile);
 
-    if (smolfm::SmolFmFile::load (graphPanel, processorRef.getParameters(), instrumentFile))
-    {
-        patchBrowser.setInstrumentName (smolfm::SmolFmFile::readInstrumentName (instrumentFile));
-        fitWindowToContent();
-    }
+    loadPatch (instrumentFile);
 }
 

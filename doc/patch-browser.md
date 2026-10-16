@@ -6,35 +6,44 @@ Wechsel wird der Graph direkt in den Canvas geladen.
 
 ## UI-Aufbau
 
-Der Browser sitzt zwischen Toolbar und Graph-Canvas
-([PluginEditor.cpp](../src/PluginEditor.cpp)):
+Der Browser ist eine schlanke Navigationszeile zwischen Toolbar und
+Graph-Canvas ([PluginEditor.cpp](../src/PluginEditor.cpp)); die
+Verzeichnis-Auswahl (Folder-Button + Pfad-Label) lebt in der Toolbar darüber.
+Die Node-Palette rechts ist ein-/ausklappbar (Palette-Toggle am rechten Ende
+der Navigationszeile) und teilt mit dem Canvas Ober- und Unterkante:
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│  Toolbar (Titel, Palette, Export/Import)                 │
-├──────────────────────────────────────────────────────────┤
-│  [Pfad zum Verzeichnis ..................]  [Directory]  │
-│                    [<]  Instrumentenname  [>]            │
-├──────────────────────────────────────────────────────────┤
-│  DraggablePanel (Graph-Canvas)                           │
-└──────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│  Toolbar (Titel, Export, Import, Directory, Pfad)                │
+├──────────────────────────────────────────────────────────────────┤
+│  [<] Instrumentenname [>]                        [Toggle]       │
+├───────────────────────────────────────────────┬──────────────────┤
+│  DraggablePanel (Graph-Canvas)                │  Node-palette    │
+│                                               │  (kol- lapse-    │
+│                                               │  bar)            │
+└───────────────────────────────────────────────┴──────────────────┘
 ```
 
 | Element | Bedeutung | Symbol |
 |---|---|---|
-| Pfad-Label | Zeigt das gewählte Verzeichnis (links, skalierbar) | `PatchBrowser::pathLabel` |
-| Directory-Button | Öffnet einen Verzeichnis-Chooser | `PatchBrowser::directoryButton` |
-| Pfeile `<` / `>` | Blättern zur vorherigen/nächsten `.smolfm`-Datei (zyklisch) | `PatchBrowser::prevButton`, `nextButton` |
-| Name-Label | Zentriertes, gestyltes Label mit dem Instrumentennamen | `PatchBrowser::nameLabel` |
+| Pfad-Label | Zeigt das gewählte Verzeichnis, rechts neben den Toolbar-Buttons | `AudioPluginAudioProcessorEditor::pathLabel` |
+| Directory-Button | Öffnet einen Verzeichnis-Chooser | `AudioPluginAudioProcessorEditor::directoryButton` |
+| Palette-Toggle | Blendet die rechte Node-Palette ein/aus (kollabierbar), am rechten Ende der Navigationszeile | `AudioPluginAudioProcessorEditor::paletteToggleButton` |
+| Pfeile `<` / `>` | Flankieren das Namens-Label am linken Zeilenende (Anordnung `< Name >`); blättern zur vorherigen/nächsten `.smolfm`-Datei (zyklisch) | `PatchBrowser::prevButton`, `nextButton` |
+| Name-Label | Sitzt zwischen den Pfeilen, in seinem festen Slot zentriert; fett und in der Akzentfarbe gesetzt | `PatchBrowser::nameLabel` |
 
-Der Name-Label ist zentriert, fett und in der Akzentfarbe (lightblue)
-gesetzt — er ist das dominierende Element der Zeile.
+Das Name-Label sitzt zwischen den Pfeilen (Anordnung `< Name >`) — in einem
+festen Slot zentriert, damit die Pfeile beim Blättern nicht wandern — und ist
+fett in der Akzentfarbe (lightblue) gesetzt; es ist das dominierende Element
+der Zeile.
 
 ## Datenfluss
 
 ```
-Directory-Button → onDirectoryChosen → processorRef.setPatchDirectory(dir)
-                                     → patchBrowser.setDirectory(dir) → rescan()
+Directory-Button → patchBrowser.onDirectoryChosen(dir) → Editor::setWorkingDirectory(dir)
+                 → processorRef.setPatchDirectory(dir)
+                 → patchBrowser.setDirectory(dir) → rescan()
+                 → erster Patch des neuen Kontexts laden
 
 Pfeil < / >      → step(±1) → onPatchSelected(file)
                             → SmolFmFile::load(panel, apvts, file)

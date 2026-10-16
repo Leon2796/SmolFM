@@ -345,6 +345,30 @@ bool SmolFmFile::load (gui::DraggablePanel& panel,
             }
     }
 
+    // Nodes still on the canvas but absent from the file keep their boxes
+    // (the palette's +/- recycles them for the next "+"), but their sound
+    // parameters are RESET to the declared defaults: without this, values
+    // from a previously loaded patch leak into the new instrument the moment
+    // that box is reused or rewired (context switch loading the wrong sound).
+    const juce::StringArray canvasIds = panel.getBoxIds();
+
+    for (const juce::String& canvasId : canvasIds)
+    {
+        bool inFile = false;
+        for (const auto& node : data.nodes)
+        {
+            if (node.id == canvasId)
+            {
+                inFile = true;
+                break;
+            }
+        }
+
+        if (! inFile)
+            for (const auto& p : parametersForNode (canvasId))
+                setParameter (apvts, p.parameterId, parameterDefault (apvts, p.parameterId));
+    }
+
     // Rebuild the wiring and push it to the panel (which notifies the processor).
     // A file without a Connections section keeps the current wiring; a file
     // with the section (even empty) replaces it. save() always writes it.

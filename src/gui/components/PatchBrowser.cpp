@@ -9,36 +9,14 @@ namespace gui
 
 PatchBrowser::PatchBrowser()
 {
-    pathLabel.setJustificationType (juce::Justification::centredLeft);
-    pathLabel.setMinimumHorizontalScale (0.6f);
-
-    nameLabel.setJustificationType (juce::Justification::centred);
+    nameLabel.setJustificationType (juce::Justification::centred);   // name sits centred between the chevrons
     nameLabel.setColour (juce::Label::textColourId, juce::Colours::lightblue);
     nameLabel.setFont (juce::FontOptions (18.0f, juce::Font::bold));
     nameLabel.setMinimumHorizontalScale (0.5f);
 
-    directoryButton.onClick = [this]
-    {
-        directoryChooser = std::make_unique<juce::FileChooser> (
-            "Select SmolFM working directory",
-            pathLabel.getText().isNotEmpty() ? juce::File (pathLabel.getText())
-                                             : juce::File::getSpecialLocation (juce::File::userDocumentsDirectory));
-
-        directoryChooser->launchAsync (juce::FileBrowserComponent::openMode
-                                     | juce::FileBrowserComponent::canSelectDirectories,
-            [this] (const juce::FileChooser& chooser)
-            {
-                const juce::File dir = chooser.getResult();
-                if (dir.isDirectory() && onDirectoryChosen != nullptr)
-                    onDirectoryChosen (dir);
-            });
-    };
-
     prevButton.onClick = [this] { step (-1); };
     nextButton.onClick = [this] { step (1); };
 
-    addAndMakeVisible (pathLabel);
-    addAndMakeVisible (directoryButton);
     addAndMakeVisible (prevButton);
     addAndMakeVisible (nextButton);
     addAndMakeVisible (nameLabel);
@@ -48,24 +26,28 @@ PatchBrowser::PatchBrowser()
 
 void PatchBrowser::resized()
 {
-    auto bounds = getLocalBounds();
+    // Flanked title at the left end: `< name >` — the instrument title sits
+    // between the two chevrons.  Its slot has a fixed width (so the chevrons
+    // never wander from click to click) and the text is centred inside that
+    // slot.  The row's right end stays free for the editor's palette toggle.
+    auto row = getLocalBounds();
 
-    auto directoryRow = bounds.removeFromTop (26);
-    directoryButton.setBounds (directoryRow.removeFromRight (100).reduced (2));
-    pathLabel.setBounds (directoryRow.reduced (2, 0));
+    const int button = 28;
+    const int gap    = 6;
 
-    bounds.removeFromTop (4);
+    const int nameWidth = juce::jmin (220, juce::jmax (0, row.getWidth() - 2 * (button + gap)));
 
-    auto navigationRow = bounds.removeFromTop (30);
-    prevButton.setBounds (navigationRow.removeFromLeft (34).reduced (2));
-    nextButton.setBounds (navigationRow.removeFromRight (34).reduced (2));
-    nameLabel.setBounds (navigationRow);
+    auto cluster = row.removeFromLeft (button + gap + nameWidth + gap + button);
+    prevButton.setBounds (cluster.removeFromLeft (button).withSizeKeepingCentre (button, button));
+    cluster.removeFromLeft (gap);
+    nameLabel.setBounds (cluster.removeFromLeft (nameWidth));
+    cluster.removeFromLeft (gap);
+    nextButton.setBounds (cluster.removeFromLeft (button).withSizeKeepingCentre (button, button));
 }
 
 void PatchBrowser::setDirectory (const juce::File& dir)
 {
-    pathLabel.setText (dir.isDirectory() ? dir.getFullPathName() : juce::String(),
-                       juce::dontSendNotification);
+    currentDirectory = dir;
     rescan();
 }
 
@@ -97,19 +79,34 @@ void PatchBrowser::setInstrumentName (const juce::String& name)
 
 void PatchBrowser::rescan()
 {
+    // Remember the selection across the rescan: rescans also run with an
+    // unchanged directory (e.g. the same directory chosen again), and the
+    // user must not silently jump to the first patch in that case.
+    const juce::File previous = getSelectedPatch();
+
     patchFiles.clear();
     currentIndex = -1;
 
-    const juce::File dir (pathLabel.getText());
+    const juce::File dir (currentDirectory);
     if (dir.isDirectory())
     {
         for (const auto& entry : juce::RangedDirectoryIterator (dir, false, "*.smolfm"))
             patchFiles.push_back (entry.getFile());
     }
 
-    // Keep the selection stable when the directory did not change.
+    // First patch wins when the previous selection is not in the new
+    // listing (a genuinely new directory); otherwise it stays put.
     if (! patchFiles.empty())
         currentIndex = 0;
+
+    for (int i = 0; i < static_cast<int> (patchFiles.size()); ++i)
+    {
+        if (patchFiles[static_cast<std::size_t> (i)] == previous)
+        {
+            currentIndex = i;
+            break;
+        }
+    }
 
     updateDisplay();
 }

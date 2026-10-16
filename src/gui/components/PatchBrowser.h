@@ -1,21 +1,21 @@
 /*
-    PatchBrowser is the patch selection bar above the graph panel.
+    PatchBrowser is the patch navigation bar above the graph panel: a single
+    row with the prev/next chevrons flanking the instrument name (`< name >`)
+    at the left end; the editor docks its palette toggle at the row's right
+    end.  The working directory is picked in the editor's top toolbar (folder
+    button + path label) and handed over via setDirectory().
 
-    Layout (top to bottom):
-      - directory row: path label (left) + "Directory" button (right)
-      - navigation row: "<" arrow, centred instrument name label, ">" arrow
-
-    The component scans one working directory for .smolfm files and lets the
+    The component scans that working directory for .smolfm files and lets the
     user step through them.  Only the selected file is parsed — the list
     keeps juce::File handles plus lazily read display names.
 
     The directory itself lives in the processor (persisted with the plugin
-    state); this component only reflects and edits it.
+    state); this component only reflects it.
 */
 
 #pragma once
 
-#include <juce_gui_basics/juce_gui_basics.h>
+#include "../IconButton.h"
 
 namespace gui
 {
@@ -49,13 +49,15 @@ private:
     void step (int delta);
     void updateDisplay();
 
-    juce::Label pathLabel;
-    juce::TextButton directoryButton { "Directory" };
-    juce::TextButton prevButton { "<" };
-    juce::TextButton nextButton { ">" };
-    juce::Label nameLabel;
+    /** The scanned directory (mirrored from the processor, shown in the
+        editor's toolbar path label). */
+    juce::File currentDirectory;
 
-    std::unique_ptr<juce::FileChooser> directoryChooser;
+    // Icon-only chrome buttons, matching the palette tiles' look.
+    IconButton prevButton      { icons::chevronLeft(),  "Previous instrument" };
+    IconButton nextButton      { icons::chevronRight(), "Next instrument" };
+
+    juce::Label nameLabel;
 
     std::vector<juce::File> patchFiles;
     int currentIndex = -1;
