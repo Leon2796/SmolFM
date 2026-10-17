@@ -727,16 +727,12 @@ void AudioPluginAudioProcessorEditor::resized()
     // and entirely clear of canvas content also while the palette is hidden.
     paletteToggleButton.setBounds (toggleSlot.reduced (1));
 
-    // The viewport gets the remaining space; the panel sizes itself to content.
+    // The viewport gets the remaining space; the panel owns its scrollable
+    // canvas sizing (visible-area minimum plus grid reserve cell, see
+    // DraggablePanel::refreshCanvasSize — scrollbar on/off follows from
+    // canvas vs. viewport automatically).
     graphViewport.setBounds (bounds);
-    
-    // Tell the panel its ideal size based on content (it will be scrollable if larger).
-    const auto content = graphPanel.getContentBounds();
-    if (!content.isEmpty())
-        graphPanel.setSize (juce::jmax (content.getRight(), bounds.getWidth()),
-                            juce::jmax (content.getBottom(), bounds.getHeight()));
-    else
-        graphPanel.setSize (bounds.getWidth(), bounds.getHeight());
+    graphPanel.refreshCanvasSize();
 
     // Park the resize handle in the bottom-right corner.
     resizer.setBounds (getWidth() - 24, getHeight() - 24, 24, 24);
@@ -809,6 +805,13 @@ bool AudioPluginAudioProcessorEditor::loadPatch (const juce::File& file)
 
     lastLoadedPatch = file;
     patchBrowser.setInstrumentName (smolfm::SmolFmFile::readInstrumentName (file));
+
+    // Grid mode: loaded boxes dock into the unit grid — sizes snap up to
+    // whole cells, positions move to the nearest collision-free cell —
+    // before the window is fitted to the docked content.
+    if (graphPanel.isGridMode())
+        graphPanel.dockToGrid();
+
     fitWindowToContent();
     return true;
 }

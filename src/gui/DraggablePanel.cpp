@@ -8,7 +8,9 @@
 
 #include "DraggablePanel.h"
 
+#include <algorithm>
 #include <set>
+#include <vector>
 
 namespace gui
 {
@@ -132,6 +134,12 @@ DraggableComponent* DraggablePanel::addNodeOfType (const juce::String& baseId,
     // Park the new box beside the previous ones so they don't stack exactly.
     raw->setTopLeftPosition ({ 16 + 24 * (boxes.size() - 1), 16 + 24 * (boxes.size() - 1) });
 
+    // Grid mode: toolbar additions go straight into the unit grid.  Boxes
+    // created hidden (patch loads) dock later via the reveal hook in
+    // updateVisibilityFromConnections().
+    if (gridMode && raw->isVisible())
+        dockSingleBox (*raw);
+
     if (onNodeSetChanged)
         onNodeSetChanged();
 
@@ -202,6 +210,7 @@ void DraggablePanel::setBoxPosition (const juce::String& boxId, juce::Point<int>
         // to fit right after loading.  Negative coordinates are still
         // nonsense, so only those are clamped away.
         box->setTopLeftPosition ({ juce::jmax (0, pos.x), juce::jmax (0, pos.y) });
+        refreshCanvasSize();
         repaint();
     }
 }
@@ -335,9 +344,97 @@ void DraggablePanel::updateVisibilityFromConnections()
     }
 
     // Show only boxes that are part of the current wiring; hide the rest.
-    for (auto* b : boxes)
-        b->setVisible (connectedNodeIds.count (b->getBoxId()) > 0);
+    // A box revealed while grid mode is on docks straight into the unit
+    // grid, so it never reappears free-form between two cell lines.
+    for (DraggableComponent* b : boxes)
+    {
+        const bool show = connectedNodeIds.count (b->getBoxId()) > 0;
+        const bool wasVisible = b->isVisible();
 
+        b->setVisible (show);
+
+        if (show && gridMode && ! wasVisible)
+            dockSingleBox (*b);
+    }
+
+    repaint();
+}
+
+//==============================================================================
+void DraggablePanel::setGridMode (bool enabled)
+{
+    if (gridMode == enabled)
+        return;
+
+    gridMode = enabled;
+
+    if (enabled)
+        dockToGrid();
+
+    // Disabling keeps the docked geometry (it stays valid free-form layout)
+    // instead of restoring pre-dock sizes nobody recorded.
+    repaint();
+}
+
+juce::Point<int> DraggablePanel::gridSnapped (juce::Point<int> position) const noexcept
+{
+    return { grid::snapTo (position.x), grid::snapTo (position.y) };
+}
+
+void DraggablePanel::dockSingleBox (DraggableComponent& box)
+{
+    // Obstacles: the boxes already placed in the grid (visible ones only).
+    std::vector<juce::Rectangle<int>> occupied;
+
+    for (DraggableComponent* b : boxes)
+        if (b != &box && b->isVisible())
+            occupied.push_back (b->getBounds());
+
+    // The drop point decides: this probe walks over the whole canvas without
+    // capping candidates at the panel edge.  The old keepInside cap was the
+    // reason drops near the right/bottom edge sprang back to interior cells
+    // (every candidate past the edge was skipped, so the ring walk returned
+    // inward).  With a scrollable canvas a landing past the edge is anyway
+    // reachable after a scroll — refreshCanvasSize() grows the canvas under
+    // it and the surrounding Viewport shows its scrollbars when needed.
+    box.setBounds (grid::dockedBounds (box.getBounds(), occupied));
+
+    refreshCanvasSize();
+    repaint();
+}
+
+void DraggablePanel::dockToGrid()
+{
+    // Reading order (top row first, then left column) gives a stable,
+    // predictable dock result even when the loaded layout overlaps.
+    std::vector<DraggableComponent*> visible;
+
+    for (DraggableComponent* b : boxes)
+        if (b->isVisible())
+            visible.push_back (b);
+
+    std::sort (visible.begin(), visible.end(),
+               [] (const DraggableComponent* a, const DraggableComponent* b)
+               {
+                   if (a->getY() != b->getY())
+                       return a->getY() < b->getY();
+                   if (a->getX() != b->getX())
+                       return a->getX() < b->getX();
+                   return a->getBoxId() < b->getBoxId();
+               });
+
+    // Whole-canvas parking: docked boxes may extend past the current panel;
+    // refreshCanvasSize() and fitWindowToContent() grow for them.
+    std::vector<juce::Rectangle<int>> occupied;
+
+    for (DraggableComponent* b : visible)
+    {
+        const juce::Rectangle<int> docked = grid::dockedBounds (b->getBounds(), occupied);
+        b->setBounds (docked);
+        occupied.push_back (docked);
+    }
+
+    refreshCanvasSize();
     repaint();
 }
 
@@ -348,6 +445,27 @@ juce::Rectangle<int> DraggablePanel::getContentBounds() const noexcept
         content = content.getUnion (b->getBounds());
 
     return content.expanded (16);   // padding so nothing hugs the edge
+}
+
+void DraggablePanel::refreshCanvasSize()
+{
+    // Single owner of the canvas-size rule; PluginEditor::resized() and the
+    // dock paths above all end here.  The canvas at least fills the visible
+    // area, so the surrounding Viewport's scrollbars appear exactly when the
+    // canvas outgrows it — and disappear again once everything fits.
+    // Grid mode adds one reserve cell beyond the content: a drop on the
+    // outermost visible column/row must stay a legal dock target (the walk
+    // in dockedBounds may look one cell past the landing corner).
+    // ponytail: no shrink feedback beyond this rule — the canvas only ever
+    // follows content + reserve; drag-at-edge autoscroll is the upgrade path.
+    const juce::Component* parent = getParentComponent();
+    const juce::Rectangle<int> content = getContentBounds();
+    const int slack = gridMode ? grid::unit : 0;
+
+    setSize (juce::jmax (parent != nullptr ? parent->getWidth()  : 0,
+                         content.getRight()  + slack),
+             juce::jmax (parent != nullptr ? parent->getHeight() : 0,
+                         content.getBottom() + slack));
 }
 
 //==============================================================================
@@ -429,6 +547,23 @@ void DraggablePanel::pinMouseUp (PinComponent& pin, const juce::MouseEvent& e)
     }
 
     repaint();
+}
+
+//==============================================================================
+void DraggablePanel::paint (juce::Graphics& g)
+{
+    // The unit grid draws under the boxes (and under the wires, which live
+    // in paintOverChildren) so the canvas still reads as dark wiring board.
+    if (! gridMode)
+        return;
+
+    g.setColour (juce::Colours::lightblue.withAlpha (0.10f));
+
+    for (int x = 0; x < getWidth(); x += grid::unit)
+        g.drawVerticalLine (x, 0.0f, static_cast<float> (getHeight()));
+
+    for (int y = 0; y < getHeight(); y += grid::unit)
+        g.drawHorizontalLine (y, 0.0f, static_cast<float> (getWidth()));
 }
 
 //==============================================================================

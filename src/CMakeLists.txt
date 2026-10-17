@@ -128,3 +128,11 @@ add_executable(SmolFM_ParserTests
 
 target_include_directories(SmolFM_ParserTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
 target_link_libraries(SmolFM_ParserTests PRIVATE juce::juce_core)
+
+# Self-check for the unit-grid docking geometry of the grid mode: pure math
+# on juce::Rectangle, no GUI components needed (src/gui/GridDocker.h).
+add_executable(SmolFM_GridTests
+    gui/GridDockerTests.cpp)
+
+target_include_directories(SmolFM_GridTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
+target_link_libraries(SmolFM_GridTests PRIVATE juce::juce_core juce::juce_graphics)

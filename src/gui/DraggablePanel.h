@@ -23,6 +23,7 @@
 #include <functional>
 
 #include "DraggableComponent.h"
+#include "GridDocker.h"
 #include "PinComponent.h"
 #include "../graph/GraphNodes.h"
 
@@ -82,6 +83,33 @@ public:
     /** Restore positions AND wiring if a saved layout exists. */
     void loadLayout();
 
+    // -- Grid mode (unit-square docking) --------------------------------
+
+    /**
+        Toggle the unit-grid mode.  Enabling docks every visible box: sizes
+        round up to whole cells of the unit square, positions park on cell
+        corners, colliding boxes walk to the nearest free cells.
+
+        Disabling stops the snapping; boxes keep their docked geometry (it
+        stays valid free-form layout, and no pre-dock sizes need tracking).
+    */
+    void setGridMode (bool enabled);
+
+    bool isGridMode() const noexcept { return gridMode; }
+
+    /** Dock every visible box into the unit grid (used on enable and after
+        a .smolfm load while the mode is on). */
+    void dockToGrid();
+
+    /** Dock a single box (drag drop, newly revealed or toolbar-added box
+        while the mode is on): snap its size, park on the nearest free cell.
+        The drop point decides — a landing past the panel grows the scrollable
+        canvas (scrollbars appear), so every visible cell stays reachable. */
+    void dockSingleBox (DraggableComponent& box);
+
+    /** Quantize a position to the nearest cell corner (in-drag snapping). */
+    juce::Point<int> gridSnapped (juce::Point<int> position) const noexcept;
+
     // -- Pin mouse events (forwarded by PinComponent) -----------------------
 
     void pinMouseDown (PinComponent& pin, const juce::MouseEvent& e);
@@ -113,6 +141,12 @@ public:
     */
     juce::Rectangle<int> getContentBounds() const noexcept;
 
+    /** Size the scrollable canvas: at least fill the visible area; in grid
+        mode keep one reserve cell beyond the content.  Scrollbar visibility
+        simply follows from canvas > visible area (juce::Viewport).
+        Called by PluginEditor::resized() and by the dock paths themselves. */
+    void refreshCanvasSize();
+
     /** Insert a single wire if types are compatible. */
     bool tryConnect (const smolfm::ConnectionPatch::Endpoint& from,
                      const smolfm::ConnectionPatch::Endpoint& to);
@@ -139,6 +173,7 @@ public:
     */
     std::function<DraggableComponent* (const juce::String& instanceId)> onCreateMissingNode;
 
+    void paint (juce::Graphics& g) override;
     void paintOverChildren (juce::Graphics& g) override;
     void resized() override;
 
@@ -152,6 +187,8 @@ private:
     juce::OwnedArray<DraggableComponent> boxes;
 
     smolfm::ConnectionPatch currentPatch;
+
+    bool gridMode = false;   ///< unit-grid docking mode (see setGridMode)
 
     // Drag state for an in-flight wire.
     bool draggingWire = false;

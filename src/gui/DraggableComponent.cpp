@@ -156,11 +156,24 @@ void DraggableComponent::mouseDrag (const juce::MouseEvent& e)
     const juce::Point<int> delta = e.getScreenPosition() - dragStartMouse;
     juce::Point<int> newPos = dragStartPosition + delta;
 
+    // Grid mode: lock the drag position onto the nearest cell corner.  The
+    // collision-free placement itself happens on mouse-up, so overlaps
+    // during the drag are transient (arrangement-view style snap feel).
+    DraggablePanel* panel = dynamic_cast<DraggablePanel*> (getParentComponent());
+    if (panel != nullptr && panel->isGridMode())
+        newPos = panel->gridSnapped (newPos);
+
     // Keep the box inside its parent so users cannot lose it off-screen.
+    // (Quantizing snaps to the nearest cell, which may lie past the parent
+    // edge; the mouse-up dock realigns the box once more.)  Grid mode allows
+    // one cell of slack past the canvas edge, so even the outermost visible
+    // row/column stays reachable: the drop decides where the box lands.
     if (auto* parent = getParentComponent())
     {
-        newPos.x = juce::jlimit (0, juce::jmax (0, parent->getWidth()  - getWidth()),  newPos.x);
-        newPos.y = juce::jlimit (0, juce::jmax (0, parent->getHeight() - getHeight()), newPos.y);
+        const int slack = panel != nullptr && panel->isGridMode() ? grid::unit : 0;
+
+        newPos.x = juce::jlimit (0, juce::jmax (0, parent->getWidth()  - getWidth()  + slack),  newPos.x);
+        newPos.y = juce::jlimit (0, juce::jmax (0, parent->getHeight() - getHeight() + slack), newPos.y);
     }
 
     setTopLeftPosition (newPos);
@@ -171,6 +184,16 @@ void DraggableComponent::mouseDrag (const juce::MouseEvent& e)
 
 void DraggableComponent::mouseUp (const juce::MouseEvent& /*e*/)
 {
+    // Grid mode: the quantized drag may have parked the box on an occupied
+    // cell — the drop walks it once to the nearest free cell.
+    if (draggingFromTitleBar)
+    {
+        DraggablePanel* panel = dynamic_cast<DraggablePanel*> (getParentComponent());
+
+        if (panel != nullptr && panel->isGridMode())
+            panel->dockSingleBox (*this);
+    }
+
     draggingFromTitleBar = false;
 }
 
