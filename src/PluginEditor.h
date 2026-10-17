@@ -12,8 +12,6 @@
 
 #pragma once
 
-#pragma once
-
 #include "PluginProcessor.h"
 #include "gui/DraggablePanel.h"
 #include "gui/DraggableComponent.h"
