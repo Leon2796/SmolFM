@@ -347,11 +347,28 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible (exportButton);
     addAndMakeVisible (importButton);
     addAndMakeVisible (directoryButton);
+    addAndMakeVisible (gridToggleButton);
     addAndMakeVisible (paletteToggleButton);
     addAndMakeVisible (pathLabel);
 
     exportButton.onClick = [this] { exportPatch(); };
     importButton.onClick = [this] { importPatch(); };
+
+    // The grid switch is a real toggle: IconButton derives from juce::Button,
+    // which only flips its state when clicking-toggles-state is enabled.
+    // Without this line getToggleState() stayed false forever.
+    gridToggleButton.setClickingTogglesState (true);
+
+    // Grid mode: docking may park boxes further right/below than the
+    // free-form layout ever reached, so re-fit the window after toggling.
+    gridToggleButton.onClick = [this]
+    {
+        graphPanel.setGridMode (gridToggleButton.getToggleState());
+        gridToggleButton.setTooltip (gridToggleButton.getToggleState()
+                                         ? "Grid mode on: boxes dock into the unit cells"
+                                         : "Grid mode");
+        fitWindowToContent();
+    };
 
     // Toolbar path label: shows the directory the patch browser scans.
     pathLabel.setJustificationType (juce::Justification::centredLeft);
@@ -649,6 +666,8 @@ void AudioPluginAudioProcessorEditor::resized()
     importButton.setBounds (toolbar.removeFromLeft (28).reduced (1));
     toolbar.removeFromLeft (4);
     directoryButton.setBounds (toolbar.removeFromLeft (28).reduced (1));
+    toolbar.removeFromLeft (4);
+    gridToggleButton.setBounds (toolbar.removeFromLeft (28).reduced (1));
     pathLabel.setBounds (toolbar);
 
     auto placeTile = [&] (gui::PaletteButton& b, int index)

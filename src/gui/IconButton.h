@@ -31,16 +31,22 @@ public:
         const auto bounds = getLocalBounds().toFloat().reduced (0.5f);
         const bool enabled = isEnabled();
 
+        // Toggle buttons (e.g. the grid-mode switch) lift into an accent
+        // tint while engaged, independent of hover/press.
+        const bool active = getClickingTogglesState() && getToggleState();
+
         auto fill = juce::Colour (0xff2a2d33);
-        if (enabled && down)      fill = juce::Colour (0xff4d545f);
+        if (enabled && active)    fill = juce::Colour (0xff1d4a63);
+        else if (enabled && down) fill = juce::Colour (0xff4d545f);
         else if (enabled && over) fill = juce::Colour (0xff373c45);
 
         g.setColour (fill);
         g.fillRoundedRectangle (bounds, 4.0f);
-        g.setColour (juce::Colours::white.withAlpha (enabled && over ? 0.14f : 0.07f));
+        g.setColour (juce::Colours::white.withAlpha (enabled && active ? 0.30f
+                                              : (enabled && over ? 0.14f : 0.07f)));
         g.drawRoundedRectangle (bounds, 4.0f, 1.0f);
 
-        g.setColour (juce::Colours::white.withAlpha (enabled ? 0.85f : 0.3f));
+        g.setColour (juce::Colours::white.withAlpha (enabled ? (active ? 1.0f : 0.85f) : 0.3f));
         const auto transform = glyph.getTransformToScaleToFit (bounds.reduced (6.0f), true);
         g.strokePath (glyph,
                       juce::PathStrokeType (1.7f,
@@ -109,6 +115,15 @@ namespace icons
         p.addRectangle (13.5f, 3, 7.5f, 7.5f);
         p.addRectangle (3, 13.5f, 7.5f, 7.5f);
         p.addRectangle (13.5f, 13.5f, 7.5f, 7.5f);
+        return p;
+    }
+
+    inline juce::Path gridGlyph()        // grid mode: 3x3 lattice of unit cells
+    {
+        juce::Path p;
+        for (int col = 0; col < 3; ++col)
+            for (int row = 0; row < 3; ++row)
+                p.addRectangle (3.0f + col * 7.5f, 3.0f + row * 7.5f, 6.0f, 6.0f);
         return p;
     }
 

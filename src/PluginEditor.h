@@ -39,10 +39,15 @@ private:
     juce::TooltipWindow tooltipWindow { this, 400 }; ///< shows the tooltips of every control below
 
     // Icon-only chrome controls (see gui/IconButton.h), laid out in the top
-    // toolbar in this order: export, import, working directory.
+    // toolbar in this order: export, import, working directory, grid mode.
     gui::IconButton exportButton    { gui::icons::exportGlyph(), "Export current instrument as .smolfm" };
     gui::IconButton importButton    { gui::icons::importGlyph(), "Import a .smolfm instrument" };
     gui::IconButton directoryButton { gui::icons::folderGlyph(), "Choose working directory" };
+
+    /** Toggle for the unit-grid docking mode: while on, box sizes stay whole
+        multiples of the unit square, boxes park flush on cell corners and a
+        loaded .smolfm layout docks automatically. */
+    gui::IconButton gridToggleButton { gui::icons::gridGlyph(), "Grid mode" };
 
     /** Toggle for the collapsible right-side node palette (docked at the
         right end of the patch navigation row, above the palette column). */
