@@ -21,6 +21,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include <functional>
+#include <vector>
 
 #include "DraggableComponent.h"
 #include "GridDocker.h"
@@ -110,6 +111,30 @@ public:
     /** Quantize a position to the nearest cell corner (in-drag snapping). */
     juce::Point<int> gridSnapped (juce::Point<int> position) const noexcept;
 
+    // -- Multi-select (double-click mark, rubber band, group move) ----------
+
+    /** Flip a box's selection mark (double-click on its title bar). */
+    void toggleBoxSelection (DraggableComponent& box);
+
+    /** Deselect every visible box; a plain left click on empty canvas
+        background and a finished rubber-band drag trigger this. */
+    void clearSelection();
+
+    /**
+        Group-drag plumbing, called by the dragged box itself:
+
+        - beginGroupDrag: on mouse-down of a title bar; when that box already
+          carries the selection mark, captures every selected box's start
+          position (the dragged box first).
+        - moveGroupTo: applies the dragged box's applied (snapped + clamped)
+          delta to all captured peers, each clamped to the canvas.
+        - endGroupDrag: on drop, docks the captured peers via dockSingleBox
+          (the dragged box already landed), then clears the capture.
+    */
+    void beginGroupDrag (DraggableComponent& origin);
+    void moveGroupTo    (DraggableComponent& origin, juce::Point<int> originNewPos);
+    void endGroupDrag   (DraggableComponent& origin);
+
     // -- Pin mouse events (forwarded by PinComponent) -----------------------
 
     void pinMouseDown (PinComponent& pin, const juce::MouseEvent& e);
@@ -177,6 +202,13 @@ public:
     void paintOverChildren (juce::Graphics& g) override;
     void resized() override;
 
+    /** Left click on the canvas background: deselect everything.  Right
+        button drag: rubber-band rectangle — on release every visible box
+        intersecting it joins the selection (replacing the previous one). */
+    void mouseDown (const juce::MouseEvent& e) override;
+    void mouseDrag (const juce::MouseEvent& e) override;
+    void mouseUp   (const juce::MouseEvent& e) override;
+
 private:
     void layoutBoxes();
 
@@ -194,6 +226,16 @@ private:
     bool draggingWire = false;
     smolfm::ConnectionPatch::Endpoint draggedFrom;
     juce::Point<float> draggedToPosition;
+
+    // Group-drag capture: the selected boxes at the moment the dragged box
+    // was pressed (dragged box first; empty when that box is unmarked).
+    std::vector<DraggableComponent*> dragGroup;
+    std::vector<juce::Point<int>>    dragGroupStart;
+
+    // Right-button rubber-band selection drag (panel-local coordinates).
+    bool rubberBanding = false;
+    juce::Point<int> rubberBandStart;
+    juce::Point<int> rubberBandNow;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DraggablePanel)
 };

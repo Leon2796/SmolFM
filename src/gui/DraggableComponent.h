@@ -40,6 +40,7 @@ public:
     void mouseDown (const juce::MouseEvent& e) override;
     void mouseDrag (const juce::MouseEvent& e) override;
     void mouseUp (const juce::MouseEvent& e) override;
+    void mouseDoubleClick (const juce::MouseEvent& e) override;
 
     /** Fired when the little × in the title bar is clicked.  The panel
         removes the box via this callback. */
@@ -47,6 +48,16 @@ public:
 
     /** Stable identifier used for persistence. */
     const juce::String& getBoxId() const noexcept { return boxId; }
+
+    // -- Multi-select ------------------------------------------------------
+    // Marked via double-click on the title bar or the panel's rubber-band
+    // rectangle; marked boxes move as a group when one of them is dragged.
+
+    /** True when the box carries the multi-select marker. */
+    bool isSelected() const noexcept { return selected; }
+
+    /** Set the marker; repaints only on change. */
+    void setSelected (bool shouldBeSelected);
 
     /** Preferred size of the box (content + title bar). */
     juce::Rectangle<int> getPreferredSize() const noexcept;
@@ -97,6 +108,8 @@ private:
     bool draggingFromTitleBar = false;
     juce::Point<int> dragStartMouse;
     juce::Point<int> dragStartPosition;
+
+    bool selected = false;   ///< multi-select marker (see isSelected/setSelected)
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DraggableComponent)
 };

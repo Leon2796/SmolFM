@@ -50,6 +50,13 @@ void DraggableComponent::paint (juce::Graphics& g)
     g.setColour (juce::Colours::black);
     g.setFont (titleBarHeight - 6.0f);
     g.drawText (title, 6, 0, getWidth() - 12, titleBarHeight, juce::Justification::centredLeft, true);
+
+    // Multi-select marker: bright frame around the whole box.
+    if (selected)
+    {
+        g.setColour (juce::Colours::yellow);
+        g.drawRect (getLocalBounds(), 2);
+    }
 }
 
 void DraggableComponent::resized()
@@ -138,13 +145,20 @@ juce::Point<float> DraggableComponent::getOutputPinCentre (int index) const noex
 
 void DraggableComponent::mouseDown (const juce::MouseEvent& e)
 {
-    draggingFromTitleBar = (e.y < titleBarHeight);
+    // Only the left button drags the box; the right button belongs to the
+    // panel's rubber-band selection (which starts on empty canvas only).
+    draggingFromTitleBar = e.mods.isLeftButtonDown() && e.y < titleBarHeight;
 
     if (draggingFromTitleBar)
     {
         dragStartMouse = e.getScreenPosition();
         dragStartPosition = getPosition();
         toFront (true);
+
+        // Group move: when this box is part of the selection, the panel
+        // captures every selected box's start position before anything moves.
+        if (auto* panel = dynamic_cast<DraggablePanel*> (getParentComponent()))
+            panel->beginGroupDrag (*this);
     }
 }
 
@@ -178,6 +192,10 @@ void DraggableComponent::mouseDrag (const juce::MouseEvent& e)
 
     setTopLeftPosition (newPos);
 
+    // Group move: selected peers follow with the same applied delta.
+    if (panel != nullptr)
+        panel->moveGroupTo (*this, newPos);
+
     if (auto* parent = getParentComponent())
         parent->repaint();
 }
@@ -185,16 +203,40 @@ void DraggableComponent::mouseDrag (const juce::MouseEvent& e)
 void DraggableComponent::mouseUp (const juce::MouseEvent& /*e*/)
 {
     // Grid mode: the quantized drag may have parked the box on an occupied
-    // cell — the drop walks it once to the nearest free cell.
+    // cell — the drop walks it once to the nearest free cell.  The dragged
+    // box lands first; the panel then docks its selected peers nearby.
     if (draggingFromTitleBar)
     {
         DraggablePanel* panel = dynamic_cast<DraggablePanel*> (getParentComponent());
 
         if (panel != nullptr && panel->isGridMode())
             panel->dockSingleBox (*this);
+
+        if (panel != nullptr)
+            panel->endGroupDrag (*this);
     }
 
     draggingFromTitleBar = false;
+}
+
+void DraggableComponent::mouseDoubleClick (const juce::MouseEvent& e)
+{
+    // Only the title bar participates; content keeps its own double-clicks
+    // (e.g. slider value editing).
+    if (e.y >= titleBarHeight)
+        return;
+
+    if (auto* panel = dynamic_cast<DraggablePanel*> (getParentComponent()))
+        panel->toggleBoxSelection (*this);
+}
+
+void DraggableComponent::setSelected (bool shouldBeSelected)
+{
+    if (selected == shouldBeSelected)
+        return;
+
+    selected = shouldBeSelected;
+    repaint();
 }
 
 juce::Rectangle<int> DraggableComponent::getPreferredSize() const noexcept

@@ -550,6 +550,156 @@ void DraggablePanel::pinMouseUp (PinComponent& pin, const juce::MouseEvent& e)
 }
 
 //==============================================================================
+// Multi-select.  Double-click on a title bar toggles a box's mark, a
+// right-button drag on empty canvas draws a rubber-band rectangle, a plain
+// background click clears everything, and marked boxes move as one group.
+//==============================================================================
+
+void DraggablePanel::toggleBoxSelection (DraggableComponent& box)
+{
+    box.setSelected (! box.isSelected());
+    repaint();
+}
+
+void DraggablePanel::clearSelection()
+{
+    bool changed = false;
+
+    for (DraggableComponent* b : boxes)
+        if (b->isVisible() && b->isSelected())
+        {
+            b->setSelected (false);
+            changed = true;
+        }
+
+    if (changed)
+        repaint();
+}
+
+void DraggablePanel::beginGroupDrag (DraggableComponent& origin)
+{
+    dragGroup.clear();
+    dragGroupStart.clear();
+
+    if (! origin.isSelected())
+        return;   // dragging an unmarked box moves it alone
+
+    // Dragged box first: moveGroupTo derives the shared delta from it and
+    // endGroupDrag docks it separately before the peers.
+    dragGroup.push_back (&origin);
+    dragGroupStart.push_back (origin.getPosition());
+
+    for (DraggableComponent* b : boxes)
+        if (b != &origin && b->isVisible() && b->isSelected())
+        {
+            dragGroup.push_back (b);
+            dragGroupStart.push_back (b->getPosition());
+        }
+}
+
+void DraggablePanel::moveGroupTo (DraggableComponent& origin, juce::Point<int> originNewPos)
+{
+    if (dragGroup.empty() || dragGroup[0] != &origin)
+        return;
+
+    auto* parent = getParentComponent();
+    if (parent == nullptr)
+        return;
+
+    const juce::Point<int> delta = originNewPos - dragGroupStart[0];
+    const int slack = gridMode ? grid::unit : 0;
+
+    for (int i = 1; i < static_cast<int> (dragGroup.size()); ++i)
+    {
+        DraggableComponent* peer = dragGroup[static_cast<size_t> (i)];
+
+        // Same delta for the whole group; each peer clamps to the canvas
+        // independently, so a wide peer never pushes the others when the
+        // origin already sits at the edge.
+        juce::Point<int> pos = dragGroupStart[static_cast<size_t> (i)] + delta;
+        pos.x = juce::jlimit (0, juce::jmax (0, parent->getWidth()  - peer->getWidth()  + slack), pos.x);
+        pos.y = juce::jlimit (0, juce::jmax (0, parent->getHeight() - peer->getHeight() + slack), pos.y);
+
+        peer->setTopLeftPosition (pos);
+    }
+}
+
+void DraggablePanel::endGroupDrag (DraggableComponent& origin)
+{
+    if (dragGroup.empty() || dragGroup[0] != &origin)
+        return;
+
+    // Grid mode: the dragged box already docked (dockSingleBox in mouseUp);
+    // the peers walk from their dragged positions to nearby free cells in
+    // capture order, so the group lands as close together as the occupied
+    // cells allow.
+    if (gridMode)
+        for (int i = 1; i < static_cast<int> (dragGroup.size()); ++i)
+            dockSingleBox (*dragGroup[static_cast<size_t> (i)]);
+
+    dragGroup.clear();
+    dragGroupStart.clear();
+}
+
+//==============================================================================
+void DraggablePanel::mouseDown (const juce::MouseEvent& e)
+{
+    if (e.mods.isRightButtonDown())
+    {
+        // Rubber-band rectangle: press on empty canvas, drag, release.
+        rubberBanding = true;
+        rubberBandStart = e.getPosition();
+        rubberBandNow = rubberBandStart;
+        repaint();
+        return;
+    }
+
+    // Plain click on the canvas background deselects everything.
+    if (e.mods.isLeftButtonDown())
+        clearSelection();
+}
+
+void DraggablePanel::mouseDrag (const juce::MouseEvent& e)
+{
+    if (! rubberBanding)
+        return;
+
+    rubberBandNow = e.getPosition();
+    repaint();
+}
+
+void DraggablePanel::mouseUp (const juce::MouseEvent& e)
+{
+    if (! rubberBanding)
+        return;
+
+    rubberBanding = false;
+    juce::ignoreUnused (e);
+
+    const juce::Rectangle<int> rect (rubberBandStart, rubberBandNow);
+    rubberBandStart = {};
+    rubberBandNow = {};
+
+    // A right-press without a real drag changes nothing (the canvas has no
+    // context menu, so a stray click stays harmless).
+    if (rect.getWidth() < 3 && rect.getHeight() < 3)
+    {
+        repaint();
+        return;
+    }
+
+    // The rectangle replaces the previous selection: clear, then mark every
+    // visible box it touches.
+    clearSelection();
+
+    for (DraggableComponent* b : boxes)
+        if (b->isVisible() && b->getBounds().intersects (rect))
+            b->setSelected (true);
+
+    repaint();
+}
+
+//==============================================================================
 void DraggablePanel::paint (juce::Graphics& g)
 {
     // The unit grid draws under the boxes (and under the wires, which live
@@ -672,6 +822,18 @@ void DraggablePanel::paintOverChildren (juce::Graphics& g)
                 }
             }
         }
+    }
+
+    // Rubber-band rectangle of an active right-button selection drag.
+    if (rubberBanding)
+    {
+        const juce::Rectangle<float> rect { rubberBandStart.toFloat(), rubberBandNow.toFloat() };
+
+        g.setColour (juce::Colours::yellow.withAlpha (0.12f));
+        g.fillRect (rect);
+
+        g.setColour (juce::Colours::yellow.withAlpha (0.8f));
+        g.drawRoundedRectangle (rect, 2.0f, 1.0f);
     }
 }
 
