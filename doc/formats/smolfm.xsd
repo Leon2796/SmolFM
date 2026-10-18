@@ -350,7 +350,7 @@
       <xs:appinfo xmlns="urn:smolfm:node-meta">
         <purpose>Integriert die momentane Eingangsfrequenz und rendert daraus die gewählte Wellenform (sine, saw, square, triangle, noise, perlin, simplex). 
 		Im Pitch-Modus folgt die Frequenz dem note_in-Eingang, im Static-Modus schwingt der Oszillator mit der festen StaticFreq und im LFO-Modus erzeugt er eine periodische Niederfrequenz mit der einstellbaren LfoRate. 
-		Ohne angeschlossenen Eingang nutzt er den Port-Standardwert von 440 Hz. Damit dient er im Graph als Träger- oder Modulator-Oszillator sowie als LFO-Quelle.</purpose>
+		Ohne angeschlossenen Eingang bleibt der Oszillator still: Im Pitch-Modus liest er 0 Hz (kein Ton), im Static-/LFO-Modus dient der Draht als Gate — ohne verbundene Note gibt es keinen Oszillationsstart. Damit dient er im Graph als Träger- oder Modulator-Oszillator sowie als LFO-Quelle.</purpose>
         <docReference>doc/processors/OscillatorProcessor.md</docReference>
         <inputs>
           <port id="note_in" type="frequency"/>
@@ -445,7 +445,7 @@
     <xs:complexContent>
       <xs:extension base="BaseNodeType">
         <xs:attribute name="curve" type="VscCurveType" use="optional"/>
-        <xs:attribute name="scale" type="xs:float" use="optional"/>
+        <xs:attribute name="scale" type="VelSpreadRangeType" use="optional"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -710,7 +710,7 @@
   <xs:complexType name="SplitterNodeType">
     <xs:annotation>
       <xs:appinfo xmlns="urn:smolfm:node-meta">
-        <purpose>Teilt ein Stereo-Signal in seine Seitenzweige: outL = (L, 0), outR = (0, R). Jeder Zweig trÃ¤gt nur eine Seite (seitenrein) und bleibt PortType::signal, damit er direkt jeden Standardprozessor speist. Ein Zweig kann direkt in den Master geroutet werden, ohne Merger.</purpose>
+        <purpose>Teilt ein Stereo-Signal in seine Seitenzweige: outL = (L, 0), outR = (0, R). Jeder Zweig trägt nur eine Seite (seitenrein) und bleibt PortType::signal, damit er direkt jeden Standardprozessor speist. Ein Zweig kann direkt in den Master geroutet werden, ohne Merger.</purpose>
         <docReference>doc/processors/SplitterProcessor.md</docReference>
         <inputs>
           <port id="in" type="signal"/>

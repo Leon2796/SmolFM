@@ -110,14 +110,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
         voiceParameters.filterMode     [static_cast<size_t> (i)] = parameters.getRawParameterValue ("filter" + num + "Mode");
     }
 
-    for (int i = 0; i < smolfm::GraphNodeRegistry::maxGains; ++i)
-    {
-        const juce::String num (i);
-
-        voiceParameters.gainFactor[static_cast<size_t> (i)] = parameters.getRawParameterValue ("gain" + num + "Factor");
-    }
-
-        for (int i = 0; i < smolfm::GraphNodeRegistry::maxAmModulators; ++i)
+    for (int i = 0; i < smolfm::GraphNodeRegistry::maxAmModulators; ++i)
     {
         const juce::String num (i);
         voiceParameters.amAmount[static_cast<size_t> (i)] = parameters.getRawParameterValue ("am" + num + "Amount");

@@ -49,7 +49,7 @@ namespace
         "      <Node id=\"note\">\n"
         "        <Pin id=\"out\" direction=\"out\" type=\"frequency\"/>\n"
         "      </Node>\n"
-        "      <Node id=\"osc0\" waveform=\"saw\" mode=\"pitch\" staticfreq=\"440\">\n"
+        "      <Node id=\"osc0\" waveform=\"saw\" mode=\"pitch\" staticfreq=\"440\" lforate=\"2.0\">\n"
         "        <Pin id=\"note_in\" direction=\"in\" type=\"frequency\"/>\n"
         "        <Pin id=\"out\" direction=\"out\" type=\"signal\"/>\n"
         "      </Node>\n"
@@ -80,6 +80,7 @@ namespace
         "      waveform: saw\n"
         "      mode: pitch\n"
         "      staticfreq: 440\n"
+        "      lforate: 2.0\n"
         "      pins:\n"
         "        - id: \"note_in\"\n"
         "          direction: in\n"
@@ -122,7 +123,7 @@ namespace
             && note.pins[0].type == "frequency");
 
         CHECK (osc.id == "osc0" && osc.x == 400 && osc.y == 100);
-        CHECK (osc.parameters.size() == 3);
+        CHECK (osc.parameters.size() == 4);
 
         auto paramOf = [&osc] (const char* key)
         {
@@ -132,7 +133,8 @@ namespace
 
         CHECK (paramOf ("waveform") == 1.0f
             && paramOf ("mode") == 0.0f
-            && paramOf ("staticfreq") == 440.0f);
+            && paramOf ("staticfreq") == 440.0f
+            && paramOf ("lforate") == 2.0f);
         CHECK (osc.pins.size() == 2
             && osc.pins[0].id == "note_in"
             && osc.pins[1].id == "out");
@@ -269,7 +271,7 @@ int main()
         "      <Node id=\"note\">\n"
         "        <Pin id=\"out\" direction=\"out\" type=\"frequency\"/>\n"
         "      </Node>\n"
-        "      <Node id=\"osc0\" waveform=\"saw\" mode=\"pitch\" staticfreq=\"440\">\n"
+        "      <Node id=\"osc0\" waveform=\"saw\" mode=\"pitch\" staticfreq=\"440\" lforate=\"2.0\">\n"
         "        <Pin id=\"note_in\" direction=\"in\" type=\"frequency\"/>\n"
         "        <Pin id=\"out\" direction=\"out\" type=\"signal\"/>\n"
         "      </Node>\n"
@@ -350,7 +352,7 @@ int main()
         "<SmolFM version=\"3\" name=\"ResDemo\">\n"
         "  <Graph>\n"
         "    <Nodes>\n"
-        "      <Node id=\"resonator0\" tune=\"49.5\" q=\"0.8\" decay=\"0.35\" spread=\"2\"/>\n"
+        "      <Node id=\"resonator0\" tune=\"49.5\" q=\"0.8\" decay=\"0.35\" spread=\"2\" strikelevel=\"0.5\" striketime=\"0.01\"/>\n"
         "      <Node id=\"feedback0\" amount=\"0.42\"/>\n"
         "    </Nodes>\n"
         "  </Graph>\n"
@@ -365,6 +367,8 @@ int main()
         "      q: 0.8\n"
         "      decay: 0.35\n"
         "      spread: 2\n"
+        "      strikelevel: 0.5\n"
+        "      striketime: 0.01\n"
         "    - id: \"feedback0\"\n"
         "      amount: 0.42\n");
     SmolFmData resData;
@@ -378,6 +382,8 @@ int main()
         CHECK (r.parameters["q"] == 0.8f);
         CHECK (r.parameters["decay"] == 0.35f);
         CHECK (r.parameters["spread"] == 2.0f);
+        CHECK (r.parameters["strikelevel"] == 0.5f);
+        CHECK (r.parameters["striketime"] == 0.01f);
     }
     if (resYData.nodes.size() == 2)
     {
@@ -423,6 +429,41 @@ int main()
         auto& y = vscYData.nodes[0];
         CHECK (y.parameters["curve"] == 1.0f);
         CHECK (y.parameters["scale"] == 1.5f);
+    }
+
+    // fadsr: the up/down frequency multipliers parse through both flavours'
+    // whitelists alongside the env times (mirrors the resonator strike keys).
+    const auto fadsrXml = writeTemp ("fadsr_node.smolfm",
+        "<SmolFM version=\"3\" name=\"FadsrDemo\">\n"
+        "  <Graph>\n"
+        "    <Nodes>\n"
+        "      <Node id=\"fadsr0\" attack=\"0.01\" decay=\"0.2\" sustain=\"0.7\" release=\"0.4\" up=\"3\" down=\"0.5\"/>\n"
+        "    </Nodes>\n"
+        "  </Graph>\n"
+        "</SmolFM>\n");
+    const auto fadsrYaml = writeTemp ("fadsr_node.yaml.smolfm",
+        "version: \"3\"\n"
+        "name: \"FadsrDemo\"\n"
+        "graph:\n"
+        "  nodes:\n"
+        "    - id: \"fadsr0\"\n"
+        "      attack: 0.01\n"
+        "      decay: 0.2\n"
+        "      sustain: 0.7\n"
+        "      release: 0.4\n"
+        "      up: 3\n"
+        "      down: 0.5\n");
+    SmolFmData fadsrData;
+    CHECK (xmlParser.parse (fadsrXml, fadsrData) && fadsrData.nodes.size() == 1);
+    SmolFmData fadsrYData;
+    CHECK (yamlParser.parse (fadsrYaml, fadsrYData) && fadsrYData.nodes.size() == 1);
+    if (fadsrData.nodes.size() == 1 && fadsrYData.nodes.size() == 1)
+    {
+        auto& x = fadsrData.nodes[0];
+        auto& y = fadsrYData.nodes[0];
+        CHECK (x.parameters["up"] == 3.0f && y.parameters["up"] == 3.0f);
+        CHECK (x.parameters["down"] == 0.5f && y.parameters["down"] == 0.5f);
+        CHECK (x.parameters["release"] == 0.4f && y.parameters["release"] == 0.4f);
     }
 
     // hold: rate float + sync/division enums round-trip through both

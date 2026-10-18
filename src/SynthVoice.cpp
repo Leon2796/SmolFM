@@ -61,15 +61,6 @@ namespace
                     return nullptr;
                 }
 
-                if (type == NodeType::ringModulator
-                         && index >= 0 && index < GraphNodeRegistry::maxRingModulators
-                         && ringModulators[static_cast<size_t> (index)] != nullptr)
-                        {
-                            if (portId == "in1") return &ringModulators[static_cast<size_t> (index)]->getInput1();
-                            if (portId == "in2") return &ringModulators[static_cast<size_t> (index)]->getInput2();
-                            return nullptr;
-                }
-
                 if (type == NodeType::amModulator
                  && index >= 0 && index < GraphNodeRegistry::maxAmModulators
                  && amModulators[static_cast<size_t> (index)] != nullptr)
@@ -185,7 +176,7 @@ namespace
             return nullptr;
         }
 
-                if (type == NodeType::ringModulator
+        if (type == NodeType::ringModulator
          && index >= 0 && index < GraphNodeRegistry::maxRingModulators
          && ringModulators[static_cast<size_t> (index)] != nullptr)
         {

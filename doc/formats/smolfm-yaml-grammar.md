@@ -87,7 +87,7 @@ layout:
 |-----------------------|--------|
 | `waveform` (osc) | sine, saw, square, triangle, noise, perlin, simplex |
 | `mode` (osc) | pitch, static, lfo |
-| `mode` (filter) | lp, bp, hp, notch |
+| `mode` (filter) | lp, bp, hp, notch, ap |
 | `shape` (shape) | soft, hard, fold, quantize |
 | `sync` (delay) | off, on |
 | `division` (delay) | half, quarter, eighth, sixteenth |
@@ -144,7 +144,7 @@ for a node type are ignored by the parsers.
 ### Filter (filter)
 - `cutoff`: float, 20..20000 Hz (log scale; default 1000)
 - `resonance`: float, 0..1
-- `mode`: lp | bp | hp | notch
+- `mode`: lp | bp | hp | notch | ap (ap = allpass, leaves the magnitude flat and shifts the phase)
 
 ### Delay (delay)
 - `time`: float, 1..2000 ms (free-running mode; default 250)
