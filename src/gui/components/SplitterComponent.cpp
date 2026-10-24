@@ -14,7 +14,8 @@ SplitterComponent::SplitterComponent()
     infoLabel.setJustificationType (juce::Justification::centred);
     addAndMakeVisible (infoLabel);
 
-    setSize (200, 60);
+    // Compact content size: an info stone on 1x1, same recipe as the gain node.
+    setSize (100, 88);
 }
 
 void SplitterComponent::resized()

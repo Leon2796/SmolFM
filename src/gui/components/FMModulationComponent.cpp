@@ -27,9 +27,8 @@ FMModulationComponent::FMModulationComponent (juce::AudioProcessorValueTreeState
         amountOverlay.reset (new ModIndicatorOverlay (fmSlider,
                                                       std::move (effectiveAmountRangeProviderIn)));
 
-    // Compact content size: DraggableComponent sizes the node box from this,
-    // so a single-knob FM node no longer falls back to the 220x260 default.
-    setSize (100, 106);
+    // Compact content size: one knob on 1x1, same recipe as the gain node.
+    setSize (100, 88);
 }
 
 FMModulationComponent::~FMModulationComponent()
