@@ -28,6 +28,7 @@ der Navigationszeile) und teilt mit dem Canvas Ober- und Unterkante:
 |---|---|---|
 | Pfad-Label | Zeigt das gewählte Verzeichnis, rechts neben den Toolbar-Buttons | `AudioPluginAudioProcessorEditor::pathLabel` |
 | Directory-Button | Öffnet einen Verzeichnis-Chooser | `AudioPluginAudioProcessorEditor::directoryButton` |
+| Grid-Toggle | Schaltet den Raster-Modus (Einheitsquadrat-Docking) um, rechts neben dem Directory-Button; aktiviert gefüllt | `AudioPluginAudioProcessorEditor::gridToggleButton` |
 | Palette-Toggle | Blendet die rechte Node-Palette ein/aus (kollabierbar), am rechten Ende der Navigationszeile | `AudioPluginAudioProcessorEditor::paletteToggleButton` |
 | Pfeile `<` / `>` | Flankieren das Namens-Label am linken Zeilenende (Anordnung `< Name >`); blättern zur vorherigen/nächsten `.smolfm`-Datei (zyklisch) | `PatchBrowser::prevButton`, `nextButton` |
 | Name-Label | Sitzt zwischen den Pfeilen, in seinem festen Slot zentriert; fett und in der Akzentfarbe gesetzt | `PatchBrowser::nameLabel` |
@@ -36,6 +37,25 @@ Das Name-Label sitzt zwischen den Pfeilen (Anordnung `< Name >`) — in einem
 festen Slot zentriert, damit die Pfeile beim Blättern nicht wandern — und ist
 fett in der Akzentfarbe (lightblue) gesetzt; es ist das dominierende Element
 der Zeile.
+
+## Grid-Modus (Raster-Docking)
+
+Der Grid-Toggle in der Toolbar (`graphPanel.setGridMode()`) dockt alle
+sichtbaren Processor-Bausteine in ein Raster aus 120x120-Quadraten
+([GridDocker.h](../src/gui/GridDocker.h), `gui::grid::unit`):
+
+- Boxgrößen runden auf ganze Zellen auf (`n x m` Zellen — Osc 228x214 px
+  wird 2x2, Gain 1x2, Resonator 4x2, …).
+- Positionen rasten auf Zell-Ecken; belegte Zellbereiche werden beim
+  Andocken in Ringen wachsender Manhattan-Distanz umgangen, sodass die
+  Boxen flächendeckend ohne Überlappung kacheln.
+- Beim Laden eines `.smolfm`-Layouts mit aktivem Modus docken die geladenen
+  Boxen automatisch — die Positionen verschieben sich ggf. auf die nächste
+  freie Zelle.
+- Drag rastet live auf Zellen; erst beim Loslassen wird einmalig die
+  kollisionsfreie Zelle gesucht.
+- Modus aus: die Boxen behalten ihre angedockte Geometrie, es wird nicht
+  mehr gerastet.
 
 ## Datenfluss
 
