@@ -1,5 +1,5 @@
 /*
-    VelocityScaleComponent owns the Velocity Scale label, the curve dropdown
+    VelocityScaleComponent owns the curve dropdown
     and the scale slider.
 
     The component handles its own internal layout and exposes no parameter
@@ -25,7 +25,6 @@ public:
     void resized() override;
 
 private:
-    juce::Label titleLabel;
     juce::ComboBox curveBox;
     juce::Slider scaleSlider;
 

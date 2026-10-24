@@ -1,5 +1,5 @@
 /*
-    FrequencyScaleComponent owns the Frequency Scale label, the interval
+    FrequencyScaleComponent owns the interval
     dropdown and the factor slider.
 
     The component handles its own internal layout and exposes no parameter
@@ -25,7 +25,6 @@ public:
     void resized() override;
 
 private:
-    juce::Label titleLabel;
     juce::ComboBox intervalBox;
     juce::Slider factorSlider;
 

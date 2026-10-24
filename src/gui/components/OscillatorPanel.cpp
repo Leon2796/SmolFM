@@ -11,7 +11,6 @@ namespace gui
 {
 
 OscillatorPanel::OscillatorPanel (juce::AudioProcessorValueTreeState& apvts,
-                                  const juce::String& title,
                                   const juce::String& waveformParameterID,
                                   const juce::String& modeParameterID,
                                   const juce::String& staticFreqParameterID,
@@ -31,10 +30,8 @@ OscillatorPanel::OscillatorPanel (juce::AudioProcessorValueTreeState& apvts,
                                                                  nullptr));
         modeSyncAttachment->sendInitialUpdate();
     }
-    titleLabel.setText (title, juce::dontSendNotification);
-    titleLabel.setJustificationType (juce::Justification::centred);
 
-        // Item order must match the choices declared in
+    // Item order must match the choices declared in
     // PluginProcessor::createParameterLayout() ("Sine", "Saw", "Square",
     // "Triangle", "Noise", "Perlin Noise", "Simplex Noise").
     // ComboBox item IDs start at 1; ComboBoxAttachment maps them to the choice index.
@@ -63,7 +60,6 @@ OscillatorPanel::OscillatorPanel (juce::AudioProcessorValueTreeState& apvts,
     lfoRateLabel.setText ("Rate", juce::dontSendNotification);
     lfoRateLabel.setJustificationType (juce::Justification::centred);
 
-    addAndMakeVisible (titleLabel);
     addAndMakeVisible (waveformBox);
     addAndMakeVisible (modeLabel);
     addAndMakeVisible (modeBox);
@@ -88,9 +84,9 @@ OscillatorPanel::OscillatorPanel (juce::AudioProcessorValueTreeState& apvts,
     updateFrequencyRows();
 
     // Compact content size: DraggableComponent sizes the node box from this
-    // so the oscillator box matches this panel (title, waveform/mode combos,
+    // so the oscillator box matches this panel (waveform/mode combos,
     // one frequency row) instead of the 220x260 default.
-    setSize (220, 190);
+    setSize (220, 162);
 }
 
 OscillatorPanel::~OscillatorPanel()
@@ -123,9 +119,6 @@ void OscillatorPanel::updateFrequencyRows()
 void OscillatorPanel::resized()
 {
     auto bounds = getLocalBounds().reduced (8);
-
-    titleLabel.setBounds (bounds.removeFromTop (24));
-    bounds.removeFromTop (4);
 
     waveformBox.setBounds (bounds.removeFromTop (26).withSizeKeepingCentre (200, 26));
     bounds.removeFromTop (4);

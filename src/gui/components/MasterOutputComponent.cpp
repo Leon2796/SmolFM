@@ -13,13 +13,9 @@ MasterOutputComponent::MasterOutputComponent (juce::AudioProcessorValueTreeState
                                               std::function<float()> peakProviderIn)
     : peakProvider (std::move (peakProviderIn))
 {
-    titleLabel.setText ("Output", juce::dontSendNotification);
-    titleLabel.setJustificationType (juce::Justification::centred);
-
     configureRotarySlider (levelSlider, "");
     levelSlider.setRange (0.0, 1.0, 0.001);
 
-    addAndMakeVisible (titleLabel);
     addAndMakeVisible (levelSlider);
 
     levelAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts,
@@ -28,8 +24,8 @@ MasterOutputComponent::MasterOutputComponent (juce::AudioProcessorValueTreeState
 
     startTimerHz (30);
 
-    // Compact content size: keeps the master node box small (title, knob, meter).
-    setSize (110, 150);
+    // Compact content size: keeps the master node box small (knob, meter).
+    setSize (110, 126);
 }
 
 MasterOutputComponent::~MasterOutputComponent()
@@ -40,9 +36,6 @@ MasterOutputComponent::~MasterOutputComponent()
 void MasterOutputComponent::resized()
 {
     auto bounds = getLocalBounds().reduced (8);
-
-    titleLabel.setBounds (bounds.removeFromTop (20));
-    bounds.removeFromTop (4);
 
     // Meter strip on the right, slider takes the rest.
     const int meterWidth = 14;

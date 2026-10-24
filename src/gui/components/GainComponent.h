@@ -30,7 +30,6 @@ public:
 
 private:
     juce::Slider gainSlider;
-    juce::Label gainLabel;
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> gainAttachment;
 

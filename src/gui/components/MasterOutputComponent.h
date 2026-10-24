@@ -29,7 +29,6 @@ public:
 private:
     void timerCallback() override;
 
-    juce::Label titleLabel;
     juce::Slider levelSlider;
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> levelAttachment;

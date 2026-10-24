@@ -1,5 +1,5 @@
 /*
-    FMModulationComponent owns the FM Amount label and slider.
+    FMModulationComponent owns the FM amount slider.
 
     The component handles its own internal layout and exposes no parameter
     logic outside of the constructor, where the APVTS attachment is created.
@@ -27,7 +27,6 @@ public:
     void resized() override;
 
 private:
-    juce::Label titleLabel;
     juce::Slider fmSlider;
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> fmAttachment;

@@ -1,8 +1,8 @@
 /*
     OscillatorPanel is a reusable JUCE component for one FM oscillator.
 
-    It contains a title label, a ComboBox for waveform selection, and the
-    frequency-mode controls: a mode combo (Pitch / Static / LFO), a static
+    It contains a ComboBox for waveform selection and the frequency-mode
+    controls: a mode combo (Pitch / Static / LFO), a static
     frequency slider (20-20000 Hz, audio range) and an LFO rate slider
     (0.01-50 Hz).  Only the row matching the selected mode is visible.
 
@@ -24,7 +24,6 @@ class OscillatorPanel final : public juce::Component,
 {
 public:
     OscillatorPanel (juce::AudioProcessorValueTreeState& apvts,
-                     const juce::String& title,
                      const juce::String& waveformParameterID,
                      const juce::String& modeParameterID,
                      const juce::String& staticFreqParameterID,
@@ -38,7 +37,6 @@ private:
     void comboBoxChanged (juce::ComboBox*) override;
     void updateFrequencyRows();
 
-    juce::Label titleLabel;
     juce::ComboBox waveformBox;
 
     juce::Label modeLabel;

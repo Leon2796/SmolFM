@@ -160,7 +160,7 @@ namespace
                                                             juce::AudioProcessorValueTreeState& apvts)
     {
         return std::make_unique<gui::OscillatorPanel> (
-            apvts, "Oscillator",
+            apvts,
             smolfm::GraphNodeRegistry::waveformParameterIdFor    (instanceId),
             smolfm::GraphNodeRegistry::oscModeParameterIdFor     (instanceId),
             smolfm::GraphNodeRegistry::oscStaticFreqParameterIdFor (instanceId),

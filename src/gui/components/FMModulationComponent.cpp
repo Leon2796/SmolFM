@@ -12,12 +12,8 @@ FMModulationComponent::FMModulationComponent (juce::AudioProcessorValueTreeState
                                       const juce::String& parameterID,
                                       std::function<juce::Range<float>()> effectiveAmountRangeProviderIn)
 {
-    titleLabel.setText ("FM Amount", juce::dontSendNotification);
-    titleLabel.setJustificationType (juce::Justification::centred);
-
     configureRotarySlider (fmSlider, " rad");
 
-    addAndMakeVisible (titleLabel);
     addAndMakeVisible (fmSlider);
 
     fmAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts,
@@ -33,7 +29,7 @@ FMModulationComponent::FMModulationComponent (juce::AudioProcessorValueTreeState
 
     // Compact content size: DraggableComponent sizes the node box from this,
     // so a single-knob FM node no longer falls back to the 220x260 default.
-    setSize (100, 140);
+    setSize (100, 106);
 }
 
 FMModulationComponent::~FMModulationComponent()
@@ -43,12 +39,9 @@ FMModulationComponent::~FMModulationComponent()
 void FMModulationComponent::resized()
 {
     juce::Grid grid;
-    grid.templateRows = { juce::Grid::TrackInfo (juce::Grid::Fr (1)),
-                          juce::Grid::TrackInfo (juce::Grid::Fr (4)) };
+    grid.templateRows = { juce::Grid::TrackInfo (juce::Grid::Fr (1)) };
     grid.templateColumns = { juce::Grid::TrackInfo (juce::Grid::Fr (1)) };
-    grid.rowGap = juce::Grid::Px (8);
 
-    grid.items.add (juce::GridItem (titleLabel));
     grid.items.add (juce::GridItem (fmSlider));
 
     grid.performLayout (getLocalBounds());

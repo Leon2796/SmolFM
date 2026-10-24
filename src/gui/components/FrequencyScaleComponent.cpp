@@ -12,9 +12,6 @@ FrequencyScaleComponent::FrequencyScaleComponent (juce::AudioProcessorValueTreeS
                                                   const juce::String& factorParameterID,
                                                   const juce::String& intervalParameterID)
 {
-    titleLabel.setText ("Freq Scale", juce::dontSendNotification);
-    titleLabel.setJustificationType (juce::Justification::centred);
-
     // Item order must match the choices declared in
     // PluginProcessor::createParameterLayout() ("None", "Octave up", ...);
     // ComboBoxAttachment maps them onto the choice index (item id = order+1).
@@ -28,7 +25,6 @@ FrequencyScaleComponent::FrequencyScaleComponent (juce::AudioProcessorValueTreeS
 
     configureRotarySlider (factorSlider, " x");
 
-    addAndMakeVisible (titleLabel);
     addAndMakeVisible (intervalBox);
     addAndMakeVisible (factorSlider);
 
@@ -42,7 +38,7 @@ FrequencyScaleComponent::FrequencyScaleComponent (juce::AudioProcessorValueTreeS
     // Compact content size: DraggableComponent reads this to size the node
     // box (title bar + padding), so every fscale node stays small instead of
     // falling back to the wide 220x260 default box.
-    setSize (124, 156);
+    setSize (124, 132);
 }
 
 FrequencyScaleComponent::~FrequencyScaleComponent()
@@ -52,13 +48,11 @@ FrequencyScaleComponent::~FrequencyScaleComponent()
 void FrequencyScaleComponent::resized()
 {
     juce::Grid grid;
-    grid.templateRows = { juce::Grid::TrackInfo (juce::Grid::Px (18)),
-                          juce::Grid::TrackInfo (juce::Grid::Px (20)),
+    grid.templateRows = { juce::Grid::TrackInfo (juce::Grid::Px (20)),
                           juce::Grid::TrackInfo (juce::Grid::Fr (1)) };
     grid.templateColumns = { juce::Grid::TrackInfo (juce::Grid::Fr (1)) };
     grid.rowGap = juce::Grid::Px (6);
 
-    grid.items.add (juce::GridItem (titleLabel));
     grid.items.add (juce::GridItem (intervalBox));
     grid.items.add (juce::GridItem (factorSlider));
 

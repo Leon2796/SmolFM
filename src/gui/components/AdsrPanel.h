@@ -1,8 +1,8 @@
 /*
     AdsrPanel owns the four ADSR controls.
 
-    It contains a title label and Attack, Decay, Sustain and Release rotary
-    sliders.  The sliders are arranged with juce::Grid.
+    It shows an envelope curve preview plus Attack, Decay, Sustain and
+    Release rotary sliders, arranged with juce::Grid.
 */
 
 #pragma once
@@ -35,8 +35,6 @@ private:
     };
 
     void sliderValueChanged (juce::Slider*) override;
-
-    juce::Label titleLabel;
 
     juce::Slider attackSlider;
     juce::Slider decaySlider;

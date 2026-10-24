@@ -81,15 +81,11 @@ AdsrPanel::AdsrPanel (juce::AudioProcessorValueTreeState& apvts,
                       const juce::String& sustainParameterID,
                       const juce::String& releaseParameterID)
 {
-    titleLabel.setText ("ADSR", juce::dontSendNotification);
-    titleLabel.setJustificationType (juce::Justification::centred);
-
     configureRotarySlider (attackSlider,  " s");
     configureRotarySlider (decaySlider,   " s");
     configureRotarySlider (sustainSlider, "");
     configureRotarySlider (releaseSlider, " s");
 
-    addAndMakeVisible (titleLabel);
     addAndMakeVisible (attackSlider);
     addAndMakeVisible (decaySlider);
     addAndMakeVisible (sustainSlider);
@@ -146,8 +142,7 @@ void AdsrPanel::sliderValueChanged (juce::Slider*)
 void AdsrPanel::resized()
 {
     juce::Grid grid;
-    grid.templateRows = { juce::Grid::TrackInfo (juce::Grid::Fr (1)),
-                          juce::Grid::TrackInfo (juce::Grid::Fr (2)),
+    grid.templateRows = { juce::Grid::TrackInfo (juce::Grid::Fr (2)),
                           juce::Grid::TrackInfo (juce::Grid::Fr (4)) };
     grid.templateColumns = { juce::Grid::TrackInfo (juce::Grid::Fr (1)),
                              juce::Grid::TrackInfo (juce::Grid::Fr (1)),
@@ -155,11 +150,6 @@ void AdsrPanel::resized()
                              juce::Grid::TrackInfo (juce::Grid::Fr (1)) };
     grid.rowGap = juce::Grid::Px (8);
     grid.columnGap = juce::Grid::Px (8);
-
-    // The title spans all four columns.
-    juce::GridItem titleItem (titleLabel);
-    titleItem.column = { juce::GridItem::Span (4) };
-    grid.items.add (titleItem);
 
     // The ADSR curve preview spans all four columns.
     juce::GridItem curveItem (curveDisplay);

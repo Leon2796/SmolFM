@@ -42,8 +42,6 @@ private:
 
     void sliderValueChanged (juce::Slider*) override;
 
-    juce::Label titleLabel;
-
     juce::Slider attackSlider;
     juce::Slider decaySlider;
     juce::Slider sustainSlider;

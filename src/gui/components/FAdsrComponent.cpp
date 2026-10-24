@@ -82,9 +82,6 @@ FAdsrComponent::FAdsrComponent (juce::AudioProcessorValueTreeState& apvts,
                                 const juce::String& upParameterID,
                                 const juce::String& downParameterID)
 {
-    titleLabel.setText ("F-ADSR", juce::dontSendNotification);
-    titleLabel.setJustificationType (juce::Justification::centred);
-
     configureRotarySlider (attackSlider,  " s");
     configureRotarySlider (decaySlider,   " s");
     configureRotarySlider (sustainSlider, "");
@@ -92,7 +89,6 @@ FAdsrComponent::FAdsrComponent (juce::AudioProcessorValueTreeState& apvts,
     configureRotarySlider (upSlider,   "x");
     configureRotarySlider (downSlider, "x");
 
-    addAndMakeVisible (titleLabel);
     addAndMakeVisible (attackSlider);
     addAndMakeVisible (decaySlider);
     addAndMakeVisible (sustainSlider);
@@ -157,8 +153,7 @@ void FAdsrComponent::CurveDisplay::paint (juce::Graphics& g)
 void FAdsrComponent::resized()
 {
     juce::Grid grid;
-    grid.templateRows = { juce::Grid::TrackInfo (juce::Grid::Fr (1)),
-                          juce::Grid::TrackInfo (juce::Grid::Fr (2)),
+    grid.templateRows = { juce::Grid::TrackInfo (juce::Grid::Fr (2)),
                           juce::Grid::TrackInfo (juce::Grid::Fr (4)),
                           juce::Grid::TrackInfo (juce::Grid::Fr (3)) };
     grid.templateColumns = { juce::Grid::TrackInfo (juce::Grid::Fr (1)),
@@ -167,11 +162,6 @@ void FAdsrComponent::resized()
                              juce::Grid::TrackInfo (juce::Grid::Fr (1)) };
     grid.rowGap = juce::Grid::Px (8);
     grid.columnGap = juce::Grid::Px (8);
-
-    // The title spans all four columns.
-    juce::GridItem titleItem (titleLabel);
-    titleItem.column = { juce::GridItem::Span (4) };
-    grid.items.add (titleItem);
 
     // The ADSR curve preview spans all four columns.
     juce::GridItem curveItem (curveDisplay);
@@ -188,12 +178,12 @@ void FAdsrComponent::resized()
     // of the four columns so they sit centred side by side.
     juce::GridItem upItem (upSlider);
     upItem.column = { 1, 2 };
-    upItem.row = { 4 };
+    upItem.row = { 3 };
     grid.items.add (upItem);
 
     juce::GridItem downItem (downSlider);
     downItem.column = { 3, 4 };
-    downItem.row = { 4 };
+    downItem.row = { 3 };
     grid.items.add (downItem);
 
     grid.performLayout (getLocalBounds());
