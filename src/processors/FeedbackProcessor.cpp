@@ -52,9 +52,13 @@ StereoFrame FeedbackProcessor::processSample()
 
     const StereoFrame y { x.l + fb.l * fbAmount, x.r + fb.r * fbAmount };
 
-    // Track the circulating energy (O(1), same policy as the delay tail).
-    const float peak = std::max (std::abs (y.l), std::abs (y.r));
-    tailPeak = juce::jmax (tailPeak * 0.99998f, peak);
+    // Circulating-energy estimate for the voice lifetime policy.  Track the
+    // recirculating term (|fb| * fbAmount) only — y still contains the fresh
+    // input x, which would pin the estimate high forever on a patch whose
+    // exciter keeps sounding after note-off (the same freeze the delay had).
+    // The tracked term excludes the input and decays per tick (ceiling 0.95).
+    const float recircPeak = fbAmount * std::max (std::abs (fb.l), std::abs (fb.r));
+    tailPeak = juce::jmax (tailPeak * 0.999f, recircPeak);
 
     output.setSample (y);
     return y;

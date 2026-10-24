@@ -129,6 +129,15 @@ add_executable(SmolFM_ParserTests
 
 target_include_directories(SmolFM_ParserTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
 target_link_libraries(SmolFM_ParserTests PRIVATE juce::juce_core)
+# Minimal self-check for this specific change: the delay line's tail
+# estimate must default to a single echo (feedback 0) and must die on its own
+# even while a note source keeps sounding after note-off (the voice freeze).
+add_executable(SmolFM_TailLifetimeTests
+    processors/TailLifetimeTests.cpp
+    processors/DelayProcessor.cpp)
+
+target_include_directories(SmolFM_TailLifetimeTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/.." "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(SmolFM_TailLifetimeTests PRIVATE juce::juce_audio_basics juce::juce_core)
 
 # Self-check for the effective-control telemetry (mod-indicator plan P1/P2):
 # every modulatable control must publish the min/max band of the value it

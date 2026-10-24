@@ -148,7 +148,7 @@ for a node type are ignored by the parsers.
 
 ### Delay (delay)
 - `time`: float, 1..2000 ms (free-running mode; default 250)
-- `feedback`: float, 0..0.95 (default 0.3)
+- `feedback`: float, 0..0.95 (default 0 = ein einzelnes Echo, keine Rückkopplung)
 - `mix`: float, 0..1 (default 0.3)
 - `sync`: off | on (on = tempo-synced, `time` is ignored)
 - `division`: half | quarter | eighth | sixteenth (delay length; default quarter)

@@ -116,7 +116,10 @@ StereoFrame DelayProcessor::processSample()
     const int readPos = (writePos - delayInt + maxSamples) % maxSamples;
     const StereoFrame wet = buffer[static_cast<size_t> (readPos)];
 
-    const float fb = feedback != nullptr ? juce::jlimit (0.0f, 0.95f, feedback->load()) : 0.3f;
+    // Default off: 0 = a single echo — feedback must be dialled in
+    // deliberately, otherwise a delay that keeps processing after note-off
+    // would recirculate forever and never let the voice die.
+    const float fb = feedback != nullptr ? juce::jlimit (0.0f, 0.95f, feedback->load()) : 0.0f;
     const float m  = mix      != nullptr ? juce::jlimit (0.0f, 1.0f,  mix->load())      : 0.3f;
 
     const StereoFrame dry = input.getSample();
@@ -124,11 +127,14 @@ StereoFrame DelayProcessor::processSample()
     buffer[static_cast<size_t> (writePos)] = written;
     writePos = (writePos + 1) % maxSamples;
 
-    // Track tail energy (O(1)): the written value is exactly what remains in
-    // the line.  The louder channel decides when the tail has run out.  Decay
-    // is slow enough to follow even long delay repeats.
-    const float writtenPeak = std::max (std::abs (written.l), std::abs (written.r));
-    tailPeak = juce::jmax (tailPeak * 0.99998f, writtenPeak);
+    // Decayed tail estimate for the voice lifetime policy.  This must track
+    // the recirculating line only — NOT `written`, which still contains the
+    // fresh input.  A patch whose input keeps sounding after note-off (note
+    // sources hold the last note) would otherwise pin tailPeak high forever
+    // and freeze the voice; the wet feedback tap `fb * wet` excludes the
+    // input and so decays per tick (ceiling fb <= 0.95).
+    const float recircPeak = fb * std::max (std::abs (wet.l), std::abs (wet.r));
+    tailPeak = juce::jmax (tailPeak * 0.999f, recircPeak);
 
     const StereoFrame result { dry.l * (1.0f - m) + wet.l * m,
                                dry.r * (1.0f - m) + wet.r * m };

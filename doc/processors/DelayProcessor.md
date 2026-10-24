@@ -26,7 +26,7 @@ Tabelle 1c: Daraus folgende echte Parameter (APVTS).
 | Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
 |---|---|---|---|---|---|
 | Time | `delay<N>TimeMs` | Float 1–2000 ms, Default 250 | Der Abstand zwischen Original und Echo in Millisekunden — wie weit die Stimme in den Raum geschoben wird; wenige ms schimmern, hunderte ms rufen deutlich zurück. | `std::atomic<float>* timeMs` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
-| Feedback | `delay<N>Feedback` | Float 0–0.95, Default 0.3 | Wie oft das Echo sich selbst wiederhören darf: 0 = nur ein einzelnes Echo, 0.95 = langer, fast ewiger Ausläufer (Sicherheitsdeckel gegen Aufschaukeln). | `std::atomic<float>* feedback` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
+| Feedback | `delay<N>Feedback` | Float 0–0.95, Default 0 | Wie oft das Echo sich selbst wiederhören darf: 0 = nur ein einzelnes Echo (default, absichtlich ohne Rückkopplung), 0.95 = langer, fast ewiger Ausläufer (Sicherheitsdeckel gegen Aufschaukeln). | `std::atomic<float>* feedback` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
 | Mix | `delay<N>Mix` | Float 0–1, Default 0.3 | Mischhebel zwischen trockenem Original (0) und reinem Echo (1) — wie viel „Ferne" im Klang sitzt. | `std::atomic<float>* mix` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
 | Sync | `delay<N>SyncMode` | Bool, Default false | Schnürung der Echozeit an das Host-Tempo statt an freie Millisekunden — die Echos sitzen auf dem Takt statt einer Stoppuhr. | `std::atomic<float>* syncMode` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
 | Division | `delay<N>Division` | Choice 0–3 (1/2, 1/4, 1/8, 1/16), Default 1 | Der Taktanteil im Sync-Modus — von breiten Halben bis zum rastlosen Sechzehntel-Echo. | `std::atomic<float>* division` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
@@ -40,6 +40,7 @@ und `SynthVoice::setHostTempo` eingeschleust wird.
 | UI-Funktion | Bedeutung | UI-Symbol | Datei |
 |---|---|---|---|
 | Host-Sync Toggle | Wechselt zwischen freiem ms-Wert und BPM-abhängiger Notendivision; deaktiviert das Time-Textfeld im Sync-Modus | `DelayComponent::syncButton` | [src/gui/components/DelayComponent.cpp](../../src/gui/components/DelayComponent.cpp) |
+| Effektivwert-Anzeige (Ghost-Needle/Band) am Time-Regler | zeigt bei Tastendruck die wirksame Verzögerungszeit in ms — Statischer Reglerwert skaliert über `time_mod_in` plus Puffer-Deckel; im Sync-Modus die BPM-berechnete Zeit (die Nadel deckt beide Modi auf derselben ms-Skala ab; Telemetrie: Min/Max-Fenster ≈ 5 ms, die Nadel folgt dem Fensterband mit Pendel-Ballistik) | `DelayComponent::timeOverlay` (Typ `ModIndicatorOverlay`, Quelle `DelayProcessor::getEffectiveTimeMsRange`) | [src/gui/components/ModIndicatorOverlay.h](../../src/gui/components/ModIndicatorOverlay.h) |
 
 ## Abschnitt 3 — Mathematische Beschreibung
 
@@ -94,8 +95,10 @@ Sonderfälle:
 - **Patch-Wechsel:** Beim Laden eines neuen Patches wird der Puffer geleert
   (`reset()`), damit kein Signal des alten Instruments stecken bleibt. Der
   Tail überlebt weiterhin Noten innerhalb eines Patches (siehe `startNote`).
-- **Tail-Energie-Bewertung:** `tailPeak` beobachtet parallel die Schreib-
-  amplitude (Peak-Follower, Decay $\approx -7.7$ dB/s). Er dient der
+- **Tail-Energie-Bewertung:** `tailPeak` folgt dem rezirkulierenden Feedback-
+  Anteil $fb\cdot|wet|$ (Peak-Follower, Faktor 0.999 ≈ $-8.7$ dB/s), **nicht**
+  dem geschriebenen Wert: Der Eingang wird ausgenommen, damit ein nach
+  Note-Off weitertönender Eingang die Voice nicht ewig festhält. Er dient der
   Voice-Lifetime-Policy (Voice klingt aus, bis der Tail unter $\approx$
   $-60$ dB fällt) und verändert die Audiosignale nicht.
 
@@ -126,4 +129,4 @@ Perlin im Sync-Modus = menschliches Dub-Wobble; schneller Sinus auf langen
 Zeiten = Vibrato auf den Echos (die Zeit IST die Echo-Pitch-Skala).
 Port-ID-Sync: `GraphNodes`-Spec, XSD-Annotation (`delay`-complexType) und
 `SynthVoice::resolveInput` tragen denselben Namen `time_mod_in`.
-| — (Observation) | `tailPeak` | [DelayProcessor.cpp](../../src/processors/DelayProcessor.cpp) | `jmax(tailPeak * 0.99998, abs(written))`; nur für Voice-Lifetime, kein Audio-Pfad |
+| — (Observation) | `tailPeak` | [DelayProcessor.cpp](../../src/processors/DelayProcessor.cpp) | `jmax(tailPeak * 0.999, fb * |wet|)`; trackt nur die rezirkulierende Linie (frischer Eingang ausgenommen), sonst hält ein nach Note-Off weitertönender Eingang die Voice für immer fest; nur für Voice-Lifetime, kein Audio-Pfad |
