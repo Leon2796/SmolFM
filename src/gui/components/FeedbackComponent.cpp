@@ -22,13 +22,12 @@ FeedbackComponent::FeedbackComponent (juce::AudioProcessorValueTreeState& apvts,
     amountAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (apvts, amountParameterID, amountSlider);
 
     // Compact content size: keeps the feedback node box small (one knob).
-    setSize (130, 150);
+    setSize (100, 88);
 }
 
 void FeedbackComponent::resized()
 {
-    auto r = getLocalBounds().reduced (8);
-    amountSlider.setBounds (r.withTrimmedTop (14).withSizeKeepingCentre (80, r.getHeight() - 14));
+    amountSlider.setBounds (getLocalBounds().reduced (4).withTrimmedTop (14));
 }
 
 } // namespace gui

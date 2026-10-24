@@ -37,7 +37,7 @@ GainComponent::GainComponent (juce::AudioProcessorValueTreeState& apvts,
 
     // Compact content size: DraggableComponent reads this to size the node
     // box, so a single gain knob does not fall back to the 220x260 default.
-    setSize (100, 92);
+    setSize (100, 88);
 }
 
 void GainComponent::resized()

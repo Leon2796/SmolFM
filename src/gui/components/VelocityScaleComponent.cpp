@@ -31,8 +31,9 @@ VelocityScaleComponent::VelocityScaleComponent (juce::AudioProcessorValueTreeSta
                                                                                      scaleSlider));
 
     // Compact content size: DraggableComponent reads this to size the node
-    // box (title bar + padding), same convention as the fscale node.
-    setSize (124, 132);
+    // box (title bar + padding), same convention as the fscale node.  The
+    // narrow width keeps the box one grid cell wide (two rows).
+    setSize (112, 132);
 }
 
 VelocityScaleComponent::~VelocityScaleComponent()

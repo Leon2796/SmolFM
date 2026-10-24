@@ -101,6 +101,11 @@ AdsrPanel::AdsrPanel (juce::AudioProcessorValueTreeState& apvts,
     decayAttachment.reset   (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts, decayParameterID,   decaySlider));
     sustainAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts, sustainParameterID, sustainSlider));
     releaseAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts, releaseParameterID, releaseSlider));
+
+    // Compact content size: DraggableComponent reads this to size the node
+    // box (title bar + padding), so the adsr node stays 2x2 instead of
+    // falling back to the 220x260 default box.
+    setSize (220, 208);
 }
 
 AdsrPanel::~AdsrPanel()

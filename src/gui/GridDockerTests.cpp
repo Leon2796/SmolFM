@@ -44,9 +44,9 @@ namespace
         expectTrue (grid::snapUp (grid::unit + 1) == 2 * grid::unit, "one px over a multiple grows to the next cell");
 
         expectTrue (grid::snapUp (228) == 240, "oscillator box width docks to 2 cells");
-        expectTrue (grid::snapUp (214) == 240, "oscillator box height docks to 2 cells");
+        expectTrue (grid::snapUp (194) == 240, "oscillator box height docks to 2 cells");
         expectTrue (grid::snapUp (398) == 480, "resonator box width docks to 4 cells");
-        expectTrue (grid::snapUp (138) == 240, "gain box height docks to 2 cells");
+        expectTrue (grid::snapUp (120) == grid::unit, "gain box height docks to 1 cell");
     }
 
     /** Docking placement: nearest cell without obstacles, flush neighbours
@@ -54,7 +54,7 @@ namespace
         region is fully packed). */
     void testDocking()
     {
-        const juce::Rectangle<int> oscRequest (150, 130, 228, 214);
+        const juce::Rectangle<int> oscRequest (150, 130, 228, 194);
 
         std::vector<juce::Rectangle<int>> empty;
         expectTrue (grid::dockedBounds (oscRequest, empty)

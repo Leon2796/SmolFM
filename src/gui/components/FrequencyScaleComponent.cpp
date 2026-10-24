@@ -37,8 +37,9 @@ FrequencyScaleComponent::FrequencyScaleComponent (juce::AudioProcessorValueTreeS
 
     // Compact content size: DraggableComponent reads this to size the node
     // box (title bar + padding), so every fscale node stays small instead of
-    // falling back to the wide 220x260 default box.
-    setSize (124, 132);
+    // falling back to the wide 220x260 default box.  The narrow width keeps
+    // the box one grid cell wide (two rows).
+    setSize (112, 132);
 }
 
 FrequencyScaleComponent::~FrequencyScaleComponent()

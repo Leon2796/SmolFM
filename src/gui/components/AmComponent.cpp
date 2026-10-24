@@ -22,12 +22,13 @@ AmComponent::AmComponent (juce::AudioProcessorValueTreeState& apvts,
     if (amountParamId.isNotEmpty())
         amountAttachment = std::make_unique<SliderAttachment> (apvts, amountParamId, amountSlider);
 
-    setSize (200, 110);
+    // Compact content size: one knob on 1x1, same recipe as the gain node.
+    setSize (100, 88);
 }
 
 void AmComponent::resized()
 {
-    amountSlider.setBounds (getLocalBounds().reduced (8).withTrimmedTop (14));
+    amountSlider.setBounds (getLocalBounds().reduced (4).withTrimmedTop (14));
 }
 
 } // namespace gui

@@ -34,7 +34,8 @@ private:
 
     juce::Slider rateSlider;
     juce::Label rateLabel;
-    juce::ToggleButton syncButton { "Host Sync" };
+    // "Host Sync" would not fit into one half of the narrow 112 px strip.
+    juce::ToggleButton syncButton { "Sync" };
     juce::ComboBox divisionBox;
     juce::Label divisionLabel;
 

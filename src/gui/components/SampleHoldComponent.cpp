@@ -41,8 +41,9 @@ SampleHoldComponent::SampleHoldComponent (juce::AudioProcessorValueTreeState& ap
     syncButton.onClick = [this] { updateRateEnabled(); };
     updateRateEnabled();
 
-    // Compact content size: one rotary + the sync/division strip.
-    setSize (220, 160);
+    // Compact content size: one rotary + the sync/division strip; the narrow
+    // width keeps the node box one cell wide (two rows).
+    setSize (112, 160);
 }
 
 void SampleHoldComponent::resized()
@@ -54,8 +55,9 @@ void SampleHoldComponent::resized()
     syncButton.setBounds (bottom.removeFromLeft (bottom.getWidth() / 2).reduced (2));
     divisionBox.setBounds (bottom.reduced (2));
 
-    // The single rotary control fills the remaining space.
-    rateSlider.setBounds (r.reduced (24, 4).withTrimmedTop (14));
+    // The single rotary control fills the remaining space; full width now,
+    // because the narrow box stacks the knob above the strip.
+    rateSlider.setBounds (r.reduced (4, 4).withTrimmedTop (14));
 }
 
 void SampleHoldComponent::updateRateEnabled()

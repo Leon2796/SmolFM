@@ -44,8 +44,8 @@ Der Grid-Toggle in der Toolbar (`graphPanel.setGridMode()`) dockt alle
 sichtbaren Processor-Bausteine in ein Raster aus 120x120-Quadraten
 ([GridDocker.h](../src/gui/GridDocker.h), `gui::grid::unit`):
 
-- Boxgrößen runden auf ganze Zellen auf (`n x m` Zellen — Osc 228x214 px
-  wird 2x2, Gain 1x2, Resonator 4x2, …).
+- Boxgrößen runden auf ganze Zellen auf (`n x m` Zellen — Osc 228x194 px
+  wird 2x2, Gain 1x1, Resonator 4x2, …).
 - Positionen rasten auf Zell-Ecken; belegte Zellbereiche werden beim
   Andocken in Ringen wachsender Manhattan-Distanz umgangen, sodass die
   Boxen flächendeckend ohne Überlappung kacheln.
