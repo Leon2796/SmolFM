@@ -10,7 +10,9 @@ namespace gui
 FilterComponent::FilterComponent (juce::AudioProcessorValueTreeState& apvts,
                                   const juce::String& cutoffParameterID,
                                   const juce::String& resonanceParameterID,
-                                  const juce::String& modeParameterID)
+                                  const juce::String& modeParameterID,
+                                  std::function<juce::Range<float>()> effectiveCutoffRangeProviderIn,
+                                  std::function<juce::Range<float>()> effectiveResonanceRangeProviderIn)
 {
     // Item order must match the choices declared in
     // PluginProcessor::createParameterLayout() ("LP", "BP", "HP", "Notch", "AP").
@@ -40,6 +42,16 @@ FilterComponent::FilterComponent (juce::AudioProcessorValueTreeState& apvts,
     cutoffAttachment    = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (apvts, cutoffParameterID, cutoffSlider);
     resonanceAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (apvts, resonanceParameterID, resonanceSlider);
     modeAttachment      = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (apvts, modeParameterID, modeBox);
+
+    // Ghost needles on both knobs: the effective (modulated) cutoff and
+    // resonance (plus velocity) while a voice renders; the thumbs are never
+    // moved.
+    if (effectiveCutoffRangeProviderIn != nullptr)
+        cutoffOverlay.reset (new ModIndicatorOverlay (cutoffSlider,
+                                                      std::move (effectiveCutoffRangeProviderIn)));
+    if (effectiveResonanceRangeProviderIn != nullptr)
+        resonanceOverlay.reset (new ModIndicatorOverlay (resonanceSlider,
+                                                         std::move (effectiveResonanceRangeProviderIn)));
 
     // Compact content size: keeps the filter node box small.
     setSize (200, 190);

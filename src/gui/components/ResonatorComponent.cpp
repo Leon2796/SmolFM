@@ -13,7 +13,8 @@ ResonatorComponent::ResonatorComponent (juce::AudioProcessorValueTreeState& apvt
                                         const juce::String& decayParameterID,
                                         const juce::String& velSpreadParameterID,
                                         const juce::String& strikeLevelParameterID,
-                                        const juce::String& strikeTimeParameterID)
+                                        const juce::String& strikeTimeParameterID,
+                                        std::function<juce::Range<float>()> effectiveQRangeProviderIn)
 {
     // One rotary per parameter, label above the knob (DelayComponent style).
     auto setupKnob = [this] (juce::Slider& s, juce::Label& l, const juce::String& name)
@@ -40,6 +41,12 @@ ResonatorComponent::ResonatorComponent (juce::AudioProcessorValueTreeState& apvt
     spreadAttachment   = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (apvts, velSpreadParameterID, spreadSlider);
     strikeLevelAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (apvts, strikeLevelParameterID, strikeLevelSlider);
     strikeTimeAttachment  = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (apvts, strikeTimeParameterID, strikeTimeSlider);
+
+    // Ghost needle over the Q knob: the effective (modulated) Q (q_mod_in)
+    // while a voice renders; the thumb itself is never moved.
+    if (effectiveQRangeProviderIn != nullptr)
+        qOverlay.reset (new ModIndicatorOverlay (qSlider,
+                                                 std::move (effectiveQRangeProviderIn)));
 
     // Compact content size: keeps the resonator node box small (six knobs
     // in one row).

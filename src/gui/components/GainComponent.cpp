@@ -9,7 +9,8 @@ namespace gui
 {
 
 GainComponent::GainComponent (juce::AudioProcessorValueTreeState& apvts,
-                              const juce::String& gainParameterID)
+                              const juce::String& gainParameterID,
+                              std::function<juce::Range<float>()> effectiveGainRangeProviderIn)
 {
     configureRotarySlider (gainSlider, "x");
     addAndMakeVisible (gainSlider);
@@ -19,6 +20,13 @@ GainComponent::GainComponent (juce::AudioProcessorValueTreeState& apvts,
     addAndMakeVisible (gainLabel);
 
     gainAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (apvts, gainParameterID, gainSlider);
+
+    // Ghost needle (the WaveshaperComponent precedent): draws the modulated
+    // factor (gain * (1+m) over factor_mod_in) while a voice renders; the
+    // thumb itself is never moved.
+    if (effectiveGainRangeProviderIn != nullptr)
+        gainOverlay.reset (new ModIndicatorOverlay (gainSlider,
+                                                    std::move (effectiveGainRangeProviderIn)));
 
     // The param's NormalisableRange is lambda-based (interval == 0), so the
     // default text conversion prints 7 decimals ("0.4500000x").  Show the raw

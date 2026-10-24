@@ -134,6 +134,25 @@ namespace
         }
     }
 
+    /** Provider factory for the mod-indicator overlays: returns a lambda
+        that polls one node instance's effective (modulated) control value
+        from the engine's telemetry — the same injection route the output
+        node's peak meter uses with its peakProvider.  controlIndex picks the
+        control within the node (filter: 0 = cutoff, 1 = resonance; every
+        other node owns exactly one).
+    */
+    std::function<juce::Range<float>()> effectiveRangeProvider (AudioPluginAudioProcessor& proc,
+                                                                const juce::String& instanceId,
+                                                                const int controlIndex)
+    {
+        const smolfm::NodeType type  = smolfm::GraphNodeRegistry::typeOf (instanceId);
+        const int             index  = smolfm::GraphNodeRegistry::indexOf (instanceId);
+        return [&proc, type, index, controlIndex]
+        {
+            return proc.getEffectiveControlRange (type, index, controlIndex);
+        };
+    }
+
     // Node-type content factories.  Each produces the panel a box needs, bound
     // to the instance's own parameter ids (via GraphNodeRegistry).
 
@@ -149,10 +168,13 @@ namespace
     }
 
     std::unique_ptr<juce::Component> makeFmContent (const juce::String& instanceId,
-                                                    juce::AudioProcessorValueTreeState& apvts)
+                                                    juce::AudioProcessorValueTreeState& apvts,
+                                                    std::function<juce::Range<float>()> effectiveAmountRangeProvider)
     {
         return std::make_unique<gui::FMModulationComponent> (
-            apvts, smolfm::GraphNodeRegistry::amountParameterIdFor (instanceId));
+            apvts,
+            smolfm::GraphNodeRegistry::amountParameterIdFor (instanceId),
+            std::move (effectiveAmountRangeProvider));
     }
 
     std::unique_ptr<juce::Component> makeFrequencyScaleContent (const juce::String& instanceId,
@@ -198,29 +220,37 @@ namespace
     }
 
     std::unique_ptr<juce::Component> makeGainContent (const juce::String& instanceId,
-                                                      juce::AudioProcessorValueTreeState& apvts)
+                                                      juce::AudioProcessorValueTreeState& apvts,
+                                                      std::function<juce::Range<float>()> effectiveGainRangeProvider)
     {
         return std::make_unique<gui::GainComponent> (
-            apvts, smolfm::GraphNodeRegistry::gainParameterIdFor (instanceId));
+            apvts, smolfm::GraphNodeRegistry::gainParameterIdFor (instanceId),
+            std::move (effectiveGainRangeProvider));
     }
 
     std::unique_ptr<juce::Component> makeWaveshaperContent (const juce::String& instanceId,
-                                                           juce::AudioProcessorValueTreeState& apvts)
+                                                            juce::AudioProcessorValueTreeState& apvts,
+                                                            std::function<juce::Range<float>()> effectiveDriveRangeProvider)
     {
         return std::make_unique<gui::WaveshaperComponent> (
             apvts,
             smolfm::GraphNodeRegistry::driveParameterIdFor (instanceId),
-            smolfm::GraphNodeRegistry::shapeParameterIdFor (instanceId));
+            smolfm::GraphNodeRegistry::shapeParameterIdFor (instanceId),
+            std::move (effectiveDriveRangeProvider));
     }
 
     std::unique_ptr<juce::Component> makeFilterContent (const juce::String& instanceId,
-                                                       juce::AudioProcessorValueTreeState& apvts)
+                                                        juce::AudioProcessorValueTreeState& apvts,
+                                                        std::function<juce::Range<float>()> effectiveCutoffRangeProvider,
+                                                        std::function<juce::Range<float>()> effectiveResonanceRangeProvider)
     {
         return std::make_unique<gui::FilterComponent> (
             apvts,
             smolfm::GraphNodeRegistry::filterCutoffParameterIdFor    (instanceId),
             smolfm::GraphNodeRegistry::filterResonanceParameterIdFor (instanceId),
-            smolfm::GraphNodeRegistry::filterModeParameterIdFor      (instanceId));
+            smolfm::GraphNodeRegistry::filterModeParameterIdFor      (instanceId),
+            std::move (effectiveCutoffRangeProvider),
+            std::move (effectiveResonanceRangeProvider));
     }
 
         std::unique_ptr<juce::Component> makeNoteContent (const juce::String&,
@@ -261,7 +291,8 @@ namespace
     }
 
     std::unique_ptr<juce::Component> makeDelayContent (const juce::String& instanceId,
-                                                       juce::AudioProcessorValueTreeState& apvts)
+                                                       juce::AudioProcessorValueTreeState& apvts,
+                                                       std::function<juce::Range<float>()> effectiveTimeRangeProvider)
     {
         return std::make_unique<gui::DelayComponent> (
             apvts,
@@ -269,7 +300,8 @@ namespace
             smolfm::GraphNodeRegistry::delayFeedbackParameterIdFor (instanceId),
             smolfm::GraphNodeRegistry::delayMixParameterIdFor      (instanceId),
             smolfm::GraphNodeRegistry::delaySyncParameterIdFor     (instanceId),
-            smolfm::GraphNodeRegistry::delayDivisionParameterIdFor (instanceId));
+            smolfm::GraphNodeRegistry::delayDivisionParameterIdFor (instanceId),
+            std::move (effectiveTimeRangeProvider));
     }
 
     std::unique_ptr<juce::Component> makeHoldContent (const juce::String& instanceId,
@@ -283,7 +315,8 @@ namespace
     }
 
     std::unique_ptr<juce::Component> makeResonatorContent (const juce::String& instanceId,
-                                                           juce::AudioProcessorValueTreeState& apvts)
+                                                           juce::AudioProcessorValueTreeState& apvts,
+                                                           std::function<juce::Range<float>()> effectiveQRangeProvider)
     {
         return std::make_unique<gui::ResonatorComponent> (
             apvts,
@@ -292,7 +325,8 @@ namespace
             smolfm::GraphNodeRegistry::resonatorDecayParameterIdFor        (instanceId),
             smolfm::GraphNodeRegistry::resonatorVelSpreadParameterIdFor    (instanceId),
             smolfm::GraphNodeRegistry::resonatorStrikeLevelParameterIdFor  (instanceId),
-            smolfm::GraphNodeRegistry::resonatorStrikeTimeParameterIdFor   (instanceId));
+            smolfm::GraphNodeRegistry::resonatorStrikeTimeParameterIdFor   (instanceId),
+            std::move (effectiveQRangeProvider));
     }
 
     std::unique_ptr<juce::Component> makeFeedbackContent (const juce::String& instanceId,
@@ -502,8 +536,14 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         constexpr bool nodeStartsHidden = false;   // makeVisible parameter
         if (baseId == "osc")
             return graphPanel.addNodeOfType ("osc",  processorRef.getParameters(), makeOscillatorContent, nodeStartsHidden);
+        // The modulated-control nodes carry telemetry providers (the ghost
+        // needles); capturing lambdas must not sit in the static factory
+        // map (see addNodeFromToolbar), so they wrap here.
         if (baseId == "fm")
-            return graphPanel.addNodeOfType ("fm",   processorRef.getParameters(), makeFmContent, nodeStartsHidden);
+            return graphPanel.addNodeOfType ("fm", processorRef.getParameters(),
+                                             [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
+                                             { return makeFmContent (id, a, effectiveRangeProvider (processorRef, id, 0)); },
+                                             nodeStartsHidden);
         if (baseId == "fscale")
             return graphPanel.addNodeOfType ("fscale", processorRef.getParameters(), makeFrequencyScaleContent, nodeStartsHidden);
         if (baseId == "vsc")
@@ -513,13 +553,27 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         if (baseId == "fadsr")
             return graphPanel.addNodeOfType ("fadsr", processorRef.getParameters(), makeFAdsrContent, nodeStartsHidden);
         if (baseId == "gain")
-            return graphPanel.addNodeOfType ("gain", processorRef.getParameters(), makeGainContent, nodeStartsHidden);
+            return graphPanel.addNodeOfType ("gain", processorRef.getParameters(),
+                                             [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
+                                             { return makeGainContent (id, a, effectiveRangeProvider (processorRef, id, 0)); },
+                                             nodeStartsHidden);
         if (baseId == "shape")
-            return graphPanel.addNodeOfType ("shape", processorRef.getParameters(), makeWaveshaperContent, nodeStartsHidden);
+            return graphPanel.addNodeOfType ("shape", processorRef.getParameters(),
+                                             [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
+                                             { return makeWaveshaperContent (id, a, effectiveRangeProvider (processorRef, id, 0)); },
+                                             nodeStartsHidden);
         if (baseId == "filter")
-            return graphPanel.addNodeOfType ("filter", processorRef.getParameters(), makeFilterContent, nodeStartsHidden);
+            return graphPanel.addNodeOfType ("filter", processorRef.getParameters(),
+                                             [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
+                                             { return makeFilterContent (id, a,
+                                                                         effectiveRangeProvider (processorRef, id, 0),
+                                                                         effectiveRangeProvider (processorRef, id, 1)); },
+                                             nodeStartsHidden);
         if (baseId == "resonator")
-            return graphPanel.addNodeOfType ("resonator", processorRef.getParameters(), makeResonatorContent, nodeStartsHidden);
+            return graphPanel.addNodeOfType ("resonator", processorRef.getParameters(),
+                                             [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
+                                             { return makeResonatorContent (id, a, effectiveRangeProvider (processorRef, id, 0)); },
+                                             nodeStartsHidden);
         if (baseId == "feedback")
             return graphPanel.addNodeOfType ("feedback", processorRef.getParameters(), makeFeedbackContent, nodeStartsHidden);
                 if (baseId == "note")
@@ -534,8 +588,14 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             return graphPanel.addNodeOfType ("add", processorRef.getParameters(), makeAddContent, nodeStartsHidden);
                 if (baseId == "am")
             return graphPanel.addNodeOfType ("am", processorRef.getParameters(), makeAmContent, nodeStartsHidden);
+        // The modulated-control nodes carry telemetry providers (the ghost
+        // needles); capturing lambdas must not sit in the static factory map
+        // below (it keeps holding the first editor), so they wrap here.
         if (baseId == "delay")
-            return graphPanel.addNodeOfType ("delay", processorRef.getParameters(), makeDelayContent, nodeStartsHidden);
+            return graphPanel.addNodeOfType ("delay", processorRef.getParameters(),
+                                             [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
+                                             { return makeDelayContent (id, a, effectiveRangeProvider (processorRef, id, 0)); },
+                                             nodeStartsHidden);
         if (baseId == "hold")
             return graphPanel.addNodeOfType ("hold", processorRef.getParameters(), makeHoldContent, nodeStartsHidden);
         if (baseId == "output")
@@ -577,19 +637,13 @@ void AudioPluginAudioProcessorEditor::addNodeFromToolbar (const juce::String& ba
     {
         { "note",   makeNoteContent    },
         { "osc",    makeOscillatorContent },
-        { "fm",     makeFmContent      },
                         { "fscale", makeFrequencyScaleContent },
         { "vsc",    makeVelocityScaleContent },
         { "adsr",   makeAdsrContent    },
         { "fadsr",  makeFAdsrContent   },
-        { "gain",   makeGainContent    },
-        { "shape",  makeWaveshaperContent },
-        { "filter", makeFilterContent },
-        { "resonator", makeResonatorContent },
         { "feedback", makeFeedbackContent },
         { "ring",   makeRingModulatorContent },
                 { "am",     makeAmContent        },
-        { "delay",  makeDelayContent     },
         { "hold",   makeHoldContent      },
         { "split",  makeSplitterContent  },
         { "merge",  makeMergerContent    },
@@ -601,6 +655,43 @@ void AudioPluginAudioProcessorEditor::addNodeFromToolbar (const juce::String& ba
         graphPanel.addNodeOfType (baseId, processorRef.getParameters(),
                                   [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
                                   { return makeOutputContent (id, a); });
+        return;
+    }
+
+    // The modulated-control nodes (fm, gain, shape, filter, delay,
+    // resonator) come with telemetry providers wired to the engine (their
+    // ghost needles).  Capturing lambdas must not live in the static factory
+    // map above — it would keep holding the first editor's this pointer —
+    // so they branch here like "output" (the makeOutputContent precedent).
+    if (baseId == "fm" || baseId == "gain" || baseId == "shape"
+     || baseId == "filter" || baseId == "delay" || baseId == "resonator")
+    {
+        if (baseId == "fm")
+            graphPanel.addNodeOfType (baseId, processorRef.getParameters(),
+                                      [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
+                                      { return makeFmContent (id, a, effectiveRangeProvider (processorRef, id, 0)); });
+        else if (baseId == "gain")
+            graphPanel.addNodeOfType (baseId, processorRef.getParameters(),
+                                      [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
+                                      { return makeGainContent (id, a, effectiveRangeProvider (processorRef, id, 0)); });
+        else if (baseId == "shape")
+            graphPanel.addNodeOfType (baseId, processorRef.getParameters(),
+                                      [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
+                                      { return makeWaveshaperContent (id, a, effectiveRangeProvider (processorRef, id, 0)); });
+        else if (baseId == "filter")
+            graphPanel.addNodeOfType (baseId, processorRef.getParameters(),
+                                      [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
+                                      { return makeFilterContent (id, a,
+                                                                  effectiveRangeProvider (processorRef, id, 0),
+                                                                  effectiveRangeProvider (processorRef, id, 1)); });
+        else if (baseId == "delay")
+            graphPanel.addNodeOfType (baseId, processorRef.getParameters(),
+                                      [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
+                                      { return makeDelayContent (id, a, effectiveRangeProvider (processorRef, id, 0)); });
+        else
+            graphPanel.addNodeOfType (baseId, processorRef.getParameters(),
+                                      [this] (const juce::String& id, juce::AudioProcessorValueTreeState& a)
+                                      { return makeResonatorContent (id, a, effectiveRangeProvider (processorRef, id, 0)); });
         return;
     }
 

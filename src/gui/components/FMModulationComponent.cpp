@@ -9,7 +9,8 @@ namespace gui
 {
 
 FMModulationComponent::FMModulationComponent (juce::AudioProcessorValueTreeState& apvts,
-                                      const juce::String& parameterID)
+                                      const juce::String& parameterID,
+                                      std::function<juce::Range<float>()> effectiveAmountRangeProviderIn)
 {
     titleLabel.setText ("FM Amount", juce::dontSendNotification);
     titleLabel.setJustificationType (juce::Justification::centred);
@@ -22,6 +23,13 @@ FMModulationComponent::FMModulationComponent (juce::AudioProcessorValueTreeState
     fmAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (apvts,
                                                                                 parameterID,
                                                                                 fmSlider));
+
+    // Ghost needle over the amount knob: shows the effective (modulated)
+    // index from the engine's telemetry while a voice renders — the thumb
+    // itself is never moved.
+    if (effectiveAmountRangeProviderIn != nullptr)
+        amountOverlay.reset (new ModIndicatorOverlay (fmSlider,
+                                                      std::move (effectiveAmountRangeProviderIn)));
 
     // Compact content size: DraggableComponent sizes the node box from this,
     // so a single-knob FM node no longer falls back to the 220x260 default.

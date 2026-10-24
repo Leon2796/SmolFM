@@ -53,6 +53,13 @@ StereoFrame WaveshaperProcessor::processSample()
         d = juce::jlimit (0.0f, 1.0f, dBase * (1.0f + m));
     }
 
+    // Telemetry: feed the modulated drive into the needle's min/max window
+    // (NeedleWindowTelemetry — a per-sample overwrite would alias against
+    // the UI's 30 Hz poll).  Velocity deliberately stays sound-only — it
+    // still scales the audio drive below, but a per-hit accent must not
+    // strobe the display.
+    uiEffectiveDrive.sample (d);
+
     // Velocity (accent drive): the connected vel input's stereo mean (0-1)
     // scales the effective drive - harder hits enter the curve harder.
     // Unwired: fully sound-invariant.

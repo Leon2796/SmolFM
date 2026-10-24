@@ -43,6 +43,7 @@ Tabelle 1c: Daraus folgende echte Parameter (APVTS).
 | UI-Funktion | Bedeutung | UI-Symbol | Datei |
 |---|---|---|---|
 | *(noch keine)* | Rotary-Slider (Amount) | `FMModulationComponent::fmSlider` | [src/gui/components/FMModulationComponent.h](../../src/gui/components/FMModulationComponent.h) |
+| Effektivwert-Anzeige (Ghost-Needle/Band) am Amount-Regler | zeigt bei Tastendruck den wirksamen FM-Index — statischer Reglerwert, skaliert über `amount_mod_in` (`vel` bleibt bewusst Sound-Only und bewegt die Nadel nie) (Telemetrie: Min/Max-Fenster ≈ 5 ms; die Nadel pendelt zwischen den echten Extremen, der Bogen zeigt Modulationstiefe/Polyphonie-Band; der Daumen bleibt unberührt) | `FMModulationComponent::amountOverlay` (Typ `ModIndicatorOverlay`, Quelle `FMModulationProcessor::getEffectiveAmountRange`) | [src/gui/components/ModIndicatorOverlay.h](../../src/gui/components/ModIndicatorOverlay.h) |
 
 ## Abschnitt 3 — Mathematische Beschreibung
 

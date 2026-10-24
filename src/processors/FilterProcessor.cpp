@@ -60,6 +60,15 @@ StereoFrame FilterProcessor::processSample()
         ? cutoffMod.getSample().l
         : (cutoff != nullptr ? cutoff->load() : 1000.0f);
 
+    // Telemetry: feed the modulated cutoff into the needle's min/max window
+    // — when cutoff_mod_in is wired this is the truth the slider hides (the
+    // static knob value is then merely the fallback); a per-sample
+    // overwrite would alias against the UI's 30 Hz poll (see
+    // NeedleWindowTelemetry).  Velocity deliberately stays sound-only: it
+    // scales the audio cutoff below, but the needle pins the mod position,
+    // not the per-hit accent.
+    uiEffectiveCutoff.sample (juce::jlimit (20.0f, 20000.0f, fc));
+
     // Velocity (accent brightness): the connected vel input's stereo mean
     // (0-1) scales the cutoff - accented hits sit brighter.  Unwired:
     // fully sound-invariant.
@@ -87,6 +96,10 @@ StereoFrame FilterProcessor::processSample()
         const float m = juce::jlimit (-1.0f, 1.0f, 0.5f * (pair.l + pair.r));
         res = juce::jlimit (0.0f, 1.0f, resBase * (1.0f + m));
     }
+
+    // Telemetry: feed the effective resonance into the needle's min/max
+    // window (see NeedleWindowTelemetry in EffectiveRangeTelemetry.h).
+    uiEffectiveResonance.sample (res);
 
     // Trapezoidal state-variable filter (Simper SVF), re-derived per sample.
     // The coefficients depend only on the cutoff and are shared by both

@@ -12,7 +12,8 @@ DelayComponent::DelayComponent (juce::AudioProcessorValueTreeState& apvts,
                                 const juce::String& feedbackId,
                                 const juce::String& mixId,
                                 const juce::String& syncId,
-                                const juce::String& divisionId)
+                                const juce::String& divisionId,
+                                std::function<juce::Range<float>()> effectiveTimeRangeProviderIn)
     : syncParamId (syncId), apvtsRef (&apvts)
 {
     // Time ---------------------------------------------------------------
@@ -63,6 +64,12 @@ DelayComponent::DelayComponent (juce::AudioProcessorValueTreeState& apvts,
     // Listen for sync changes to disable the time slider.
     syncButton.onClick = [this] { updateTimeEnabled(); };
     updateTimeEnabled();
+
+    // Ghost needle over the time knob: the effective (modulated) delay time
+    // (time_mod_in scaling, sync mode included) while a voice renders.
+    if (effectiveTimeRangeProviderIn != nullptr)
+        timeOverlay.reset (new ModIndicatorOverlay (timeSlider,
+                                                    std::move (effectiveTimeRangeProviderIn)));
 
     // Compact content size: keeps the delay node box small (three knobs +
     // the sync/division strip render inside these bounds).

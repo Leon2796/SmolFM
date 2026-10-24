@@ -81,6 +81,25 @@ public:
     /** Highest peak level across all voices, for the UI meter. */
     float getMasterPeakLevel() const;
 
+    /**
+        Effective (modulated) control band across all currently playing
+        voices, for the UI's mod indicator overlays (ghost needle + band).
+
+        Each voice contributes its NeedleWindowTelemetry window band (the
+        min/max of the effective value over the last ~5 ms, see
+        src/EffectiveRangeTelemetry.h); this aggregate spans [minimum,
+        maximum] over the voices — a single note with a constant control
+        collapses it to a point (v, v), a chord with per-key modulation or
+        a moving mod signal shows the real spread.  A negative-length range
+        (smolfm::noEffectiveData(), see src/EffectiveRangeTelemetry.h) means
+        no active voice or no rendered window yet: the overlay then rests
+        and the slider's own attachment value is the truth again.  Never
+        test "no data" with Range::isEmpty() — that is true for degenerate
+        (v, v) values too.
+    */
+    juce::Range<float> getEffectiveControlRange (smolfm::NodeType type, int instanceIndex,
+                                                 int controlIndex) const;
+
 private:
     //==============================================================================
     /**

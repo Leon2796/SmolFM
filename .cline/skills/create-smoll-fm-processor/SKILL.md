@@ -126,6 +126,29 @@ If the processor has mutable parameters, it stores `std::atomic<float>*`
 pointers handed in at construction (see `FMModulationProcessor` for the
 pattern). Never read the APVTS directly from `processSample`.
 
+**Effective-value telemetry (UI ghost needle).** The needle is
+slider × mod-port.  Whenever the processor computes a per-sample *effective*
+parameter value that a mod port bends — and then throws it away with the
+return sample — it also feeds that value into a
+`NeedleWindowTelemetry uiEffective<Control>` member (see
+`src/EffectiveRangeTelemetry.h`): a `.sample (v)` call at the exact site the
+effective value is final — before the velocity scaling, so the needle pins
+the mod position, never the accent — and a thread-safe getter
+(`getEffective<Control>Range()`; memory precedent:
+`MasterOutputProcessor::peakLevel`).  The struct keeps a min/max band over
+a 256-sample window (~5 ms) and folds it into relaxed atomics: a single
+per-sample overwrite aliased against the overlay's 30 Hz poll and made the
+needle jump to arbitrary slider points even for a pure sine.  The UI's
+`ModIndicatorOverlay` polls that band over `SynthVoice::getEffectiveControlRange`
+→ `AudioPluginAudioProcessor::getEffectiveControlRange` → provider lambda
+and animates: one needle chasing the band's centre with meter ballistics (a
+slow mover — e.g. an LFO sine — pendulates between its true extremes; an
+audio-rate mover blurs toward the band centre), plus the band arc as an
+instant-attack / ~0.5 s-release envelope of the observed bands.  Skip any
+part and the control stays a static lie while its mod port is wired.
+Velocity deliberately never feeds the needle — it stays sound-only, so a
+vel-only mover (resonator decay) gets no needle at all.
+
 ### 2. Voice wiring — `src/SynthVoice.{h,cpp}`
 
 Three places, all inside `namespace smolfm`:
@@ -155,6 +178,11 @@ Three places, all inside `namespace smolfm`:
    already thread the pool array through; just extend the argument list.
    Both `disconnectInput`-style functions and `applyConnectionPatch` call
    these resolvers, so a missing branch silently breaks that port.
+4. **`SynthVoice::getEffectiveControlRange`** — if the processor publishes an
+   effective-value atomic (see §1), add a `case` for its `NodeType` (and the
+   `controlIndex`, filter: 0 = cutoff, 1 = resonance) returning a `(v, v)`
+   range.  The plugin-level aggregator in `AudioPluginAudioProcessor` is
+   generic and needs no change.
 
 ### 3. Registry — `src/graph/GraphNodes.{h,cpp}`
 
@@ -201,6 +229,12 @@ Minimal panel that binds the processor's APVTS parameters:
 - `setSize(…)` in the ctor — the box frame reads it via `getPreferredSize`.
 - Parameterless node (like `RingModulatorComponent`) is fine: a static label
   describing the math (`in1 × in2`) is enough.
+- If the processor publishes an effective-value atomic (see §1), the
+  constructor takes one trailing
+  `std::function<juce::Range<float>()>` per modulatable control and builds a
+  `ModIndicatorOverlay` on that slider (see `FMModulationComponent::amountOverlay`).
+  The provider callback stays the editor's business — the component knows no
+  processor.
 
 ### 6. Editor factory + palette — `src/PluginEditor.{h,cpp}`
 
@@ -214,6 +248,11 @@ Minimal panel that binds the processor's APVTS parameters:
 - Add `&fooButton` to the loop that calls `addAndMakeVisible` /
   `onAddRequested`.
 - `addNodeFromToolbar()`: add `{ "foo", makeFooContent }` to the factory map.
+  If `makeFooContent` takes provider parameters (modulatable control, §5),
+  keep the static map capture-free and add a runtime
+  `if (baseId == "foo")` branch next to the `output` precedent instead —
+  capturing `this` into the `static` map would dangle when the editor is
+  recreated.  Build the provider with the `effectiveRangeProvider` helper.
 - `onCreateMissingNode` lambda: add `if (baseId == "foo") return
   graphPanel.addNodeOfType("foo", ..., makeFooContent, false);`
 - `refreshToolbarBadges()`: `fooButton.setRemaining(maxFoos -
@@ -373,6 +412,27 @@ show it, but no generated instrument will ever wire it in.
   functions) without updating its `doc/processors/*.md` in the same work
   step — the template rule makes the same-step update mandatory, docs and
   code must never diverge.
+- **Telemetry drift**: a mod-ported processor without its
+  `NeedleWindowTelemetry uiEffective…` member — or a `NodeType` missing
+  from `SynthVoice::getEffectiveControlRange` — compiles fine and keeps
+  the ghost needle hidden for good (no band ever reaches the UI).  The
+  `SmolFM_ModTelemetryTests` target only sees the processor side (it links
+  no graphics module); the switch case is a manual checklist item.
+- **`isEmpty()` as the telemetry no-data signal**: `juce::Range::isEmpty()`
+  is true exactly when start == end, and the voice getter returns `(v, v)` —
+  so filtering the aggregator (or the overlay) on `isEmpty()` discards every
+  voice and the needle never draws (mono playback showed nothing, once).
+  No-data is a NaN length (this repo's juce::Range ctor clips a reversed
+  pair with jmax, so a negative length can never exist — the old inverted
+  sentinel silently looked like data (1, 1)):
+  `smolfm::noEffectiveData()` / `smolfm::effectiveRangeHasData()`
+  (src/EffectiveRangeTelemetry.h); pinned by the "7) Range protocol" block
+  in `ModTelemetryTests.cpp` — Debug only: a NDEBUG build compiles the
+  asserts away and exits 1 by design.
+- **Capturing lambdas in the static factory map**: the map is `static` and
+  outlives editor recreation, so any lambda capturing `this` dangles on the
+  second open.  Nodes needing an editor reference branch at runtime like
+  `output` (PluginEditor.cpp).
 
 ---
 

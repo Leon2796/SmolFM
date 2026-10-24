@@ -25,7 +25,10 @@
               t_eff = t * (1 + v * (spread - 1))
           with the `spread` parameter (0.25..4, plan P1 pull-to-neutral
           language).  Default spread 1 keeps every value neutral, and the
-          unwired port (defaults 1.0) is byteidentical.
+          unwired port (defaults 1.0) is byteidentical.  Decay is
+          intentionally needle-less: velocity is its only live mover (there
+          is no decay mod-in), and the needle contract covers slider ×
+          mod-port only — see doc/processor-template.md.
         - out      (signal)   : the resonance response — the band-limited
           excitation while it lasts (resonance tint, one signal path) plus
           the ring after it stops.
@@ -78,6 +81,8 @@
 #pragma once
 
 #include "ProcessorPort.h"
+
+#include "../EffectiveRangeTelemetry.h"      // NeedleWindowTelemetry
 
 #include <atomic>
 
@@ -148,6 +153,14 @@ public:
     InputPort& getStrikeVelInput() noexcept { return strikeVel; }
     OutputPort& getOutput()       noexcept { return output; }
 
+    /** Effective (modulated) Q band currently rendered, for the UI's
+        ghost needle: min/max of q * (1 + m) over the telemetry window.
+        Display-only telemetry, thread-safe. */
+    juce::Range<float> getEffectiveQRange() const noexcept
+    {
+        return uiEffectiveQ.read();
+    }
+
 private:
     std::atomic<float>* tune = nullptr;
     std::atomic<float>* q = nullptr;
@@ -185,6 +198,13 @@ private:
     // to the output.  Decays slowly so it never under-reports a ringing
     // tail by much; zero when the stage is cleared.
     float tailPeak = 0.0f;
+
+    // Telemetry for the UI's mod indicator (ghost needle): min/max of the
+    // effective Q after q_mod_in's (1+m) scaling over the needle window —
+    // a per-sample overwrite would alias against the overlay's 30 Hz poll
+    // (see NeedleWindowTelemetry).  Decay stays needle-less: velocity is
+    // its only live mover and never feeds telemetry.
+    NeedleWindowTelemetry uiEffectiveQ;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ResonatorProcessor)
 };

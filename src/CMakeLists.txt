@@ -51,6 +51,7 @@ target_sources(${PROJECT_NAME}
         gui/components/NoteNodeComponent.cpp
         gui/components/PatchBrowser.cpp
         gui/components/MasterOutputComponent.cpp
+        gui/components/ModIndicatorOverlay.cpp
         gui/DraggableComponent.cpp
         gui/PinComponent.cpp
         gui/DraggablePanel.cpp
@@ -128,6 +129,23 @@ add_executable(SmolFM_ParserTests
 
 target_include_directories(SmolFM_ParserTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")
 target_link_libraries(SmolFM_ParserTests PRIVATE juce::juce_core)
+
+# Self-check for the effective-control telemetry (mod-indicator plan P1/P2):
+# every modulatable control must publish the min/max band of the value it
+# actually renders (NeedleWindowTelemetry, 256-sample window), so the UI's
+# ghost needle shows the truth — without aliasing — while mod ports are wired.
+add_executable(SmolFM_ModTelemetryTests
+    processors/ModTelemetryTests.cpp
+    processors/FMModulationProcessor.cpp
+    processors/WaveshaperProcessor.cpp
+    processors/FilterProcessor.cpp
+    processors/GainProcessor.cpp
+    processors/DelayProcessor.cpp
+    processors/ResonatorProcessor.cpp)
+
+target_include_directories(SmolFM_ModTelemetryTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/.." "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(SmolFM_ModTelemetryTests PRIVATE juce::juce_audio_basics juce::juce_core)
+
 
 # Self-check for the unit-grid docking geometry of the grid mode: pure math
 # on juce::Rectangle, no GUI components needed (src/gui/GridDocker.h).

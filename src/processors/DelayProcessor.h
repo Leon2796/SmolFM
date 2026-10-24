@@ -29,6 +29,8 @@
 
 #include "ProcessorPort.h"
 
+#include "../EffectiveRangeTelemetry.h"      // NeedleWindowTelemetry
+
 #include <juce_core/juce_core.h>
 #include <juce_audio_basics/juce_audio_basics.h>
 
@@ -80,6 +82,15 @@ public:
     InputPort& getTimeModInput() noexcept { return timeMod; }
     OutputPort& getOutput() noexcept { return output; }
 
+    /** Effective delay-time band currently in use (ms), for the UI's
+        ghost needle: min/max over the telemetry window.  Covers both
+        modes: free-running and host-sync.  Display-only telemetry,
+        thread-safe. */
+    juce::Range<float> getEffectiveTimeMsRange() const noexcept
+    {
+        return uiEffectiveTimeMs.read();
+    }
+
 private:
     /**
         Recompute the current delay length in samples from the parameter
@@ -97,6 +108,12 @@ private:
     std::atomic<float>* mix = nullptr;        // 0..1 dry/wet
     std::atomic<float>* syncMode = nullptr;   // 0=free, 1=sync to host
     std::atomic<float>* division = nullptr;   // 0=1/2, 1=1/4, 2=1/8, 3=1/16
+
+    // Telemetry for the UI's mod indicator (ghost needle): min/max of the
+    // effective delay time in ms (time_mod_in scaling + buffer clamp) over
+    // the needle window — a per-sample overwrite would alias against the
+    // overlay's 30 Hz poll (see NeedleWindowTelemetry).
+    NeedleWindowTelemetry uiEffectiveTimeMs;
 
     double sampleRate = 44100.0;
     double currentBpm = 120.0;

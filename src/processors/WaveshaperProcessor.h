@@ -33,6 +33,8 @@
 
 #include "ProcessorPort.h"
 
+#include "../EffectiveRangeTelemetry.h"      // NeedleWindowTelemetry
+
 namespace smolfm
 {
 
@@ -62,6 +64,14 @@ public:
     InputPort& getVelInput() noexcept { return velIn; }
     OutputPort& getOutput() noexcept { return output; }
 
+    /** Effective (modulated) drive band currently rendered, for the UI's
+        ghost needle: min/max of drive * (1 + m) over the telemetry window.
+        Display-only telemetry, thread-safe. */
+    juce::Range<float> getEffectiveDriveRange() const noexcept
+    {
+        return uiEffectiveDrive.read();
+    }
+
 private:
     std::atomic<float>* drive;
     std::atomic<float>* shape;
@@ -70,6 +80,12 @@ private:
     InputPort driveMod { PortType::signal };
     InputPort velIn     { PortType::velocity };
     OutputPort output { PortType::signal, *this };
+
+    // Telemetry for the UI's mod indicator (ghost needle): min/max of the
+    // effective drive after drive_mod_in (velocity is sound-only, never
+    // needle data) over the needle window — a per-sample overwrite would
+    // alias against the overlay's 30 Hz poll (see NeedleWindowTelemetry).
+    NeedleWindowTelemetry uiEffectiveDrive;
 };
 
 } // namespace smolfm

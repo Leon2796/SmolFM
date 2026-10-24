@@ -39,6 +39,7 @@ Tabelle 1c: Daraus folgende echte Parameter (APVTS).
 | UI-Funktion | Bedeutung | UI-Symbol | Datei |
 |---|---|---|---|
 | *(keine)* | Drive-Rotary + Shape-Combo | `WaveshaperComponent::driveSlider`, `shapeBox` | [src/gui/components/WaveshaperComponent.h](../../src/gui/components/WaveshaperComponent.h) |
+| Effektivwert-Anzeige (Ghost-Needle/Band) am Drive-Regler | zeigt bei Tastendruck das wirksame Drive — statischer Reglerwert, skaliert über `drive_mod_in` (`vel` bleibt bewusst Sound-Only und bewegt die Nadel nie) (Telemetrie: Min/Max-Fenster ≈ 5 ms; die Nadel pendelt zwischen den echten Extremen, der Bogen zeigt Modulationstiefe/Polyphonie-Band; der Daumen bleibt unberührt) | `WaveshaperComponent::driveOverlay` (Typ `ModIndicatorOverlay`, Quelle `WaveshaperProcessor::getEffectiveDriveRange`) | [src/gui/components/ModIndicatorOverlay.h](../../src/gui/components/ModIndicatorOverlay.h) |
 
 ## Abschnitt 3 — Mathematische Beschreibung
 

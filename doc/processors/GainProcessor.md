@@ -36,7 +36,7 @@ registriert die Parameter über `for (i < GraphNodeRegistry::maxGains)`).
 
 | UI-Funktion | Bedeutung | UI-Symbol | Datei |
 |---|---|---|---|
-| *(keine)* | ein Rotary-Slider (Gain-Faktor, Suffix „x") | `GainComponent::gainSlider` | [src/gui/components/GainComponent.h](../../src/gui/components/GainComponent.h) |
+| Effektivwert-Anzeige (Ghost-Needle/Band) am Gain-Regler | zeigt bei Tastendruck den wirksamen Faktor — statischer Reglerwert, skaliert über `factor_mod_in` (`vel` bleibt bewusst Sound-Only und bewegt die Nadel nie) (Telemetrie: Min/Max-Fenster ≈ 5 ms; die Nadel pendelt zwischen den echten Extremen, der Bogen zeigt Modulationstiefe/Polyphonie-Band; der Daumen bleibt unberührt) | `GainComponent::gainOverlay` (Typ `ModIndicatorOverlay`, Quelle `GainProcessor::getEffectiveGainRange`) | [src/gui/components/ModIndicatorOverlay.h](../../src/gui/components/ModIndicatorOverlay.h) |
 
 ## Abschnitt 3 — Mathematische Beschreibung
 

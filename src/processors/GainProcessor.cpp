@@ -48,6 +48,13 @@ StereoFrame GainProcessor::processSample()
         g = juce::jlimit (0.0f, 10.0f, gBase * (1.0f + m));
     }
 
+    // Telemetry: feed the modulated factor into the needle's min/max window
+    // (NeedleWindowTelemetry — a per-sample overwrite would alias against
+    // the UI's 30 Hz poll).  Velocity deliberately stays sound-only — it
+    // still scales the audio gain below, but the needle pins the mod
+    // position (factor_mod_in), not the per-hit accent.
+    uiEffectiveGain.sample (g);
+
     // Velocity (accent): the connected vel input's stereo mean (0-1)
     // scales the effective gain.  Unwired: fully sound-invariant.
     if (velIn.isConnected())

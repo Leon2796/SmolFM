@@ -9,7 +9,8 @@ namespace gui
 
 WaveshaperComponent::WaveshaperComponent (juce::AudioProcessorValueTreeState& apvts,
                                           const juce::String& driveParameterID,
-                                          const juce::String& shapeParameterID)
+                                          const juce::String& shapeParameterID,
+                                          std::function<juce::Range<float>()> effectiveDriveRangeProviderIn)
 {
     // Item order must match the choices declared in
     // PluginProcessor::createParameterLayout() ("Soft", "Hard", "Fold",
@@ -31,6 +32,12 @@ WaveshaperComponent::WaveshaperComponent (juce::AudioProcessorValueTreeState& ap
 
     driveAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (apvts, driveParameterID, driveSlider);
     shapeAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (apvts, shapeParameterID, shapeBox);
+
+    // Ghost needle over the drive knob: the effective (modulated) drive
+    // (drive_mod_in / vel) while a voice renders; the thumb never moves.
+    if (effectiveDriveRangeProviderIn != nullptr)
+        driveOverlay.reset (new ModIndicatorOverlay (driveSlider,
+                                                     std::move (effectiveDriveRangeProviderIn)));
 
     // Compact content size: keeps the waveshaper node box small.
     setSize (200, 150);

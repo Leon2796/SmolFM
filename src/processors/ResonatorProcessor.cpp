@@ -152,6 +152,10 @@ StereoFrame ResonatorProcessor::processSample()
     }
     const float res = juce::jlimit (0.0f, 1.0f, resBase);
 
+    // Telemetry: feed the effective Q into the needle's min/max window
+    // (see NeedleWindowTelemetry in EffectiveRangeTelemetry.h).
+    uiEffectiveQ.sample (res);
+
     // Stage A (coupling): bandwidth from Q, same mapping as the filter.
     const float kA = 2.0f * (1.0f - 0.99f * res);
 
@@ -217,10 +221,17 @@ StereoFrame ResonatorProcessor::processSample()
         kB * tptBandpassStep (e.r, a1B, a2B, a3B, ic1B.r, ic2B.r)
     };
 
-    // Track tail energy (O(1), same policy as the delay's estimate): the
-    // louder channel decides when the ring has died out.
-    const float peak = std::max (std::abs (y.l), std::abs (y.r));
-    tailPeak = juce::jmax (tailPeak * 0.99998f, peak);
+    // Track tail energy (O(1)).  As with the delay, this must NOT follow the
+    // full output `y`: when the exciter is a sustained note (a pad or the
+    // internal strike) that keeps sounding after note-off, `y` never decays
+    // and the voice lifetime check would hold the voice forever.  The
+    // resonator's own recirculating energy is its stored state; when the
+    // exciter is steady, Stage A's band-passed `e` carries the sustain
+    // residue while `ic2B` holds the mode memory, so this proxy decays the
+    // moment the exciter stops and never outlives the input.
+    const float statePeak = std::max ({ std::abs (e.l), std::abs (e.r),
+                                        std::abs (ic2B.l), std::abs (ic2B.r) });
+    tailPeak = juce::jmax (tailPeak * 0.999f, statePeak);
 
     output.setSample (y);
     return y;

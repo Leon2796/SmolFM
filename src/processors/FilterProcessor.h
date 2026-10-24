@@ -54,6 +54,8 @@
 
 #include "ProcessorPort.h"
 
+#include "../EffectiveRangeTelemetry.h"      // NeedleWindowTelemetry
+
 #include <atomic>
 
 namespace smolfm
@@ -95,6 +97,22 @@ public:
     InputPort& getVelInput() noexcept         { return velIn; }
     OutputPort& getOutput() noexcept          { return output; }
 
+    /** Effective (modulated) cutoff band currently rendered, for the UI's
+        ghost needle: min/max over the telemetry window.  Display-only
+        telemetry, thread-safe. */
+    juce::Range<float> getEffectiveCutoffRange() const noexcept
+    {
+        return uiEffectiveCutoff.read();
+    }
+
+    /** Effective (modulated) resonance band currently rendered, for the
+        UI's ghost needle: min/max over the telemetry window.  Display-only
+        telemetry, thread-safe. */
+    juce::Range<float> getEffectiveResonanceRange() const noexcept
+    {
+        return uiEffectiveResonance.read();
+    }
+
 private:
     std::atomic<float>* cutoff;
     std::atomic<float>* resonance;
@@ -105,6 +123,15 @@ private:
     InputPort resonanceMod { PortType::signal };
     InputPort velIn        { PortType::velocity };
     OutputPort output   { PortType::signal, *this };
+
+    // Telemetry for the UI's mod indicator (ghost needle): min/max of the
+    // effective cutoff (cutoff_mod_in replaces the slider when wired;
+    // velocity is sound-only, never needle data) and resonance
+    // (resonance_mod_in scales by (1+m)) over the needle window — a
+    // per-sample overwrite would alias against the overlay's 30 Hz poll
+    // (see NeedleWindowTelemetry).
+    NeedleWindowTelemetry uiEffectiveCutoff;
+    NeedleWindowTelemetry uiEffectiveResonance;
 
     double sampleRate = 44100.0;
     StereoFrame ic1eq;   // TPT integrator state 1 (left/right pair)

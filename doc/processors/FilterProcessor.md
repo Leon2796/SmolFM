@@ -59,6 +59,8 @@ Namen `vel`.
 | UI-Funktion | Bedeutung | UI-Symbol | Datei |
 |---|---|---|---|
 | *(keine)* | Cutoff-Rotary + Res-Rotary + Mode-Combo | `FilterComponent::cutoffSlider`, `resonanceSlider`, `modeBox` | [src/gui/components/FilterComponent.h](../../src/gui/components/FilterComponent.h) |
+| Effektivwert-Anzeige (Ghost-Needle/Band) am Cutoff-Regler | zeigt bei Tastendruck den wirksamen Cutoff: ist `cutoff_mod_in` verdrahtet, ersetzt der Port den Regler ganz (`vel` bleibt bewusst Sound-Only, bewegt die Nadel nie) — der statische Reglerwert ist dann gar nicht mehr im Spiel, die Nadel zeigt den gültigen Wert (Telemetrie: Min/Max-Fenster ≈ 5 ms, die Nadel pendelt zwischen den echten Extremen; der Bogen zeigt Modulationstiefe/Polyphonie-Band) | `FilterComponent::cutoffOverlay` (Typ `ModIndicatorOverlay`, Quelle `FilterProcessor::getEffectiveCutoffRange`) | [src/gui/components/ModIndicatorOverlay.h](../../src/gui/components/ModIndicatorOverlay.h) |
+| Effektivwert-Anzeige (Ghost-Needle/Band) am Res-Regler | zeigt bei Tastendruck die wirksame Resonanz — statischer Reglerwert, skaliert über `resonance_mod_in` (Telemetrie: Min/Max-Fenster ≈ 5 ms; Band = Min/Max über die spielenden Voices; der Daumen bleibt unberührt) | `FilterComponent::resonanceOverlay` (Typ `ModIndicatorOverlay`, Quelle `FilterProcessor::getEffectiveResonanceRange`) | [src/gui/components/ModIndicatorOverlay.h](../../src/gui/components/ModIndicatorOverlay.h) |
 
 ## Abschnitt 3 — Mathematische Beschreibung
 

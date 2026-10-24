@@ -72,6 +72,7 @@ $v\in[0,1]$ — akzentuierte Schläge klingen länger (Accent-Elektronik A2:
 | UI-Funktion | Bedeutung | UI-Symbol | Datei |
 |---|---|---|---|
 | *(keine)* | Tune-/Q-/Decay-/VelSpread-Rotaries Bindung an die vier APVTS-Parameter | `ResonatorComponent::tuneSlider`, `qSlider`, `decaySlider`, `spreadSlider` | [src/gui/components/ResonatorComponent.h](../../src/gui/components/ResonatorComponent.h) |
+| Effektivwert-Anzeige (Ghost-Needle/Band) am Q-Regler | zeigt bei Tastendruck die wirksame Resonanzstärke Q — statischer Reglerwert, skaliert über `q_mod_in` (Telemetrie: Min/Max-Fenster ≈ 5 ms; Band = Min/Max über die spielenden Voices; der Daumen bleibt unberührt) | `ResonatorComponent::qOverlay` (Typ `ModIndicatorOverlay`, Quelle `ResonatorProcessor::getEffectiveQRange`) | [src/gui/components/ModIndicatorOverlay.h](../../src/gui/components/ModIndicatorOverlay.h) |
 
 ## Abschnitt 3 — Mathematische Beschreibung
 

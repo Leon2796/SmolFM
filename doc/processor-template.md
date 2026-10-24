@@ -104,6 +104,33 @@ Tabelle der zusätzlichen UI-Funktionen/Modi des Prozessors in der Oberfläche
 Wenn es noch keine gibt: Tabelle mit einer einzigen Zeile `*(noch keine)*`
 belassen.
 
+**Effektivwert-Telemetrie (Ghost-Needle).** Der Nadelwert ist Regler ×
+Mod-Port: was der Prozessor pro Sample an einem über `*_mod_in` verdrahteten
+Parameter rechnet (`*_eff`, danach verworfen), sammelt er zusätzlich in das
+`NeedleWindowTelemetry uiEffective<Control>`-Fenster (Min/Max über 256
+Samples ≈ 5 ms, gefaltet in Atomics — siehe `src/EffectiveRangeTelemetry.h`;
+Display-Only) und trägt genau dafür eine Zeile in dieser Tabelle ein.  Ein
+einzelner Overwrite je Sample aliasierte gegen den 30-Hz-Poll der UI — die
+Nadel sprang für jeden Mover auf beliebige Punkte im Ring, schon bei einem
+reinen Sinus.  Velocity bleibt bewusst Sound-Only und bewegt die Nadel nie
+(ein Akzent ist Artikulation, kein Patchzug — ein flirrender Nadelstrich je
+Hit wäre Rauschen); ein Mover ohne eigenen Mod-Port (z. B. Resonator-Decay,
+rein velocity-getrieben) bekommt deshalb keine Nadel.  Die UI zeichnet ihn
+als `ModIndicatorOverlay`: eine Nadel, die dem Band mit Pendel-Ballistik
+folgt (langsamer Mover — z. B. LFO-Sinus — pendelt zwischen den echten
+Extremen; Audio-Rate verschwimmt zur Bandmitte) plus Band-Bogen
+(Attack-instant, Release ~0,5 s: Modulationstiefe/Polyphonie-Ausbreitung);
+Daumen/Attachment bleibt unberührt; gepolt über den Weg
+`SynthVoice::getEffectiveControlRange` →
+`AudioPluginAudioProcessor::getEffectiveControlRange` → Provider-Lambda
+(Präzedenzfall: der Master-Meter `peakProvider`).  Reichweiten-Protokoll:
+`(v, v)` ist ein echter Einzelwert — `juce::Range::isEmpty()` zählt Start ==
+End und darf deshalb nie als „keine Daten"-Signal dienen; „keine Daten" ist
+ausschließlich eine Range mit NaN-Länge (`smolfm::noEffectiveData()`,
+Prädikat `smolfm::effectiveRangeHasData()` in `src/EffectiveRangeTelemetry.h`;
+dieses JUCE-Submodule klammer invertierte Paare im Konstruktor per jmax,
+negative Längen sind deshalb konstruktionsunmöglich).
+
 ---
 
 ### Abschnitt 3 — Mathematische Beschreibung

@@ -369,6 +369,45 @@ float AudioPluginAudioProcessor::getMasterPeakLevel() const
     return peak;
 }
 
+juce::Range<float> AudioPluginAudioProcessor::getEffectiveControlRange (const smolfm::NodeType type,
+                                                                        const int instanceIndex,
+                                                                        const int controlIndex) const
+{
+    // Mirrors getMasterPeakLevel(): poll every voice, skip non-SynthVoices.
+    // Idle voices are excluded here — they stopped rendering, so the value
+    // their processors published last is stale (plan 1.4, "Idle-Zerfall").
+    //
+    // Range protocol (see SynthVoice.h): voice getters return a degenerate
+    // (v, v) range for real data.  juce::Range::isEmpty() is TRUE for
+    // degenerate ranges — filtering on it discarded every voice, so the
+    // aggregator never produced data and the overlay never drew.  The
+    // no-data signal is a NaN length (this juce::Range constructor clamps
+    // a reversed pair, so a negative length cannot exist), via
+    // effectiveRangeHasData().
+    bool anyData = false;
+    float lowest = 0.0f;
+    float highest = 0.0f;
+
+    for (int i = 0; i < synth.getNumVoices(); ++i)
+    {
+        smolfm::SynthVoice* voice = dynamic_cast<smolfm::SynthVoice*> (synth.getVoice (i));
+        if (voice == nullptr || ! voice->isVoiceActive())
+            continue;
+
+        const juce::Range<float> range = voice->getEffectiveControlRange (type, instanceIndex, controlIndex);
+        if (! smolfm::effectiveRangeHasData (range))
+            continue;
+
+        lowest  = anyData ? juce::jmin (lowest, range.getStart())  : range.getStart();
+        highest = anyData ? juce::jmax (highest, range.getEnd()) : range.getEnd();
+        anyData = true;
+    }
+
+    // Band policy: [min over voices, max over voices] — one note playing
+    // collapses the band back into a single needle position (v, v).
+    return anyData ? juce::Range<float> (lowest, highest) : smolfm::noEffectiveData();
+}
+
 juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameterLayout()
 {
     // Parameter IDs must stay stable forever.  They identify parameters to the
@@ -618,7 +657,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "delay" + num + "Feedback", "Delay " + num + " Feedback",
-            juce::NormalisableRange<float> (0.0f, 0.95f), 0.3f));
+            juce::NormalisableRange<float> (0.0f, 0.95f), 0.0f));
 
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "delay" + num + "Mix", "Delay " + num + " Mix",

@@ -103,6 +103,13 @@ StereoFrame DelayProcessor::processSample()
 
     const int delayInt = juce::jlimit (1, maxSamples - 2, static_cast<int> (ds));
 
+    // Telemetry: the length the read pointer actually uses, back-converted
+    // to ms and fed into the needle's min/max window (covers free and
+    // synced modes alike; a per-sample overwrite would alias against the
+    // UI's 30 Hz poll — see NeedleWindowTelemetry).
+    uiEffectiveTimeMs.sample (1000.0f * static_cast<float> (delayInt)
+                                  / static_cast<float> (sampleRate));
+
     // Read the delayed sample with a fractional-step-free lookup: simply read
     // the integer index behind writePos.  No interpolation — delay in this
     // range is musically fine without it.

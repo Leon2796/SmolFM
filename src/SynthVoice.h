@@ -45,9 +45,15 @@
 #include "processors/ResonatorProcessor.h"
 #include "processors/FeedbackProcessor.h"
 #include "graph/GraphNodes.h"
+#include "EffectiveRangeTelemetry.h"     // telemetry range protocol (see header)
 
 namespace smolfm
 {
+
+// Effective-value telemetry range protocol: see src/EffectiveRangeTelemetry.h.
+// A degenerate (v, v) range is real data (one needle value); "no data" is
+// exclusively a NaN length — never isEmpty(), which is also true for
+// (v, v) and would discard every played voice in the aggregator.
 
 /**
     Read-only view of the parameters each voice needs.
@@ -153,6 +159,42 @@ public:
 
         /** Peak of this voice's master output, for the UI meter. */
         float getMasterPeakLevel() const noexcept;
+
+        /**
+            Effective (modulated) band of one control while this voice
+            renders, for the UI's mod indicator overlays.
+
+            The slider attachment shows the *static* parameter; what the
+            processor actually uses per sample while its mod port is wired
+            is computed in processSample() and accumulated into the
+            NeedleWindowTelemetry min/max window (a per-sample overwrite
+            would alias against the overlay's 30 Hz poll).  This returns
+            the completed window's [min, max] band: a degenerate (v, v)
+            point for a constant / unwired control, the real excursion
+            while a mod signal moves it.  Velocity deliberately never feeds
+            the needle: it stays sound-only (see the processors' telemetry
+            comments).
+
+            @param type          node type (fmAmount, gain, waveshaper,
+                                 filter, delay or resonator)
+            @param instanceIndex index into that type's pool
+            @param controlIndex  which control of the instance (filter:
+                                 0 = cutoff, 1 = resonance; everywhere else 0)
+            @return              the telemetry window band — degenerate
+                                 (v, v) for a constant value;
+                                 noEffectiveData() (NaN length) when the
+                                 instance does not exist or has not
+                                 rendered yet — never an empty/zero-length
+                                 range, which would be indistinguishable
+                                 from the value 0.0 (see the protocol
+                                 comment above).
+
+            Idle voices are excluded at the aggregator (isVoiceActive): they
+            stopped rendering, so the window band their processors
+            published last is stale.
+        */
+        juce::Range<float> getEffectiveControlRange (NodeType type, int instanceIndex,
+                                                     int controlIndex) const noexcept;
 
     /** Called from the processor thread when the host playhead BPM changes.
         Forwards the tempo to every tempo-sync-aware processor (delays). */

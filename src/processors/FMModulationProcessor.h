@@ -48,6 +48,8 @@
 
 #include "ProcessorPort.h"
 
+#include "../EffectiveRangeTelemetry.h"      // NeedleWindowTelemetry
+
 namespace smolfm
 {
 
@@ -79,6 +81,14 @@ public:
     InputPort& getVelInput() noexcept       { return velIn; }
     OutputPort& getOutput() noexcept        { return output; }
 
+    /** Effective (modulated) FM index band currently rendered, for the
+        UI's ghost needle: min/max of amount * (1 + m) over the telemetry
+        window.  Display-only telemetry, thread-safe. */
+    juce::Range<float> getEffectiveAmountRange() const noexcept
+    {
+        return uiEffectiveAmount.read();
+    }
+
 private:
     std::atomic<float>* fmAmount;
 
@@ -87,6 +97,12 @@ private:
     InputPort amountMod { PortType::signal };
     InputPort velIn      { PortType::velocity };
     OutputPort output { PortType::frequency, *this };
+
+    // Telemetry for the UI's mod indicator (ghost needle): min/max of the
+    // effective index after amount_mod_in (velocity is sound-only, never
+    // needle data) over the needle window — a per-sample overwrite would
+    // alias against the overlay's 30 Hz poll (see NeedleWindowTelemetry).
+    NeedleWindowTelemetry uiEffectiveAmount;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FMModulationProcessor)
 };

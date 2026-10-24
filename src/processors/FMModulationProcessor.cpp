@@ -53,6 +53,14 @@ StereoFrame FMModulationProcessor::processSample()
         amountEff = juce::jlimit (0.0f, 10.0f, amount * (1.0f + m));
     }
 
+    // Telemetry: feed the modulated index into the needle's min/max window
+    // (NeedleWindowTelemetry — a per-sample overwrite would alias against
+    // the UI's 30 Hz poll).  The needle pins the mod position
+    // (amount * (1+m)); velocity deliberately stays sound-only — it still
+    // scales the audio index below, but a per-hit accent must not strobe
+    // the display.
+    uiEffectiveAmount.sample (amountEff);
+
     // Velocity (accent brightness): the connected vel input's stereo mean
     // (0-1) scales the FM index - hard hits gain metallic sidebands.
     // Unwired: fully sound-invariant.

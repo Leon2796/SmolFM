@@ -733,6 +733,74 @@ float SynthVoice::getMasterPeakLevel() const noexcept
     return masterOutput != nullptr ? masterOutput->getPeakLevel() : 0.0f;
 }
 
+juce::Range<float> SynthVoice::getEffectiveControlRange (const NodeType type,
+                                                         const int instanceIndex,
+                                                         const int controlIndex) const noexcept
+{
+    // Each processor publishes its NeedleWindowTelemetry band (min/max of
+    // the effective value over the needle window); read() itself returns
+    // noEffectiveData() until the first window completed, so a live but
+    // not-yet-rendered instance reports no data, never a stale value.
+    switch (type)
+    {
+        case NodeType::fmAmount:
+            if (controlIndex == 0 && instanceIndex >= 0
+             && instanceIndex < GraphNodeRegistry::maxFmAmounts
+             && fmProcessors[static_cast<size_t> (instanceIndex)] != nullptr)
+                return fmProcessors[static_cast<size_t> (instanceIndex)]
+                           ->getEffectiveAmountRange();
+            return noEffectiveData();
+
+        case NodeType::waveshaper:
+            if (controlIndex == 0 && instanceIndex >= 0
+             && instanceIndex < GraphNodeRegistry::maxWaveshapers
+             && waveshapers[static_cast<size_t> (instanceIndex)] != nullptr)
+                return waveshapers[static_cast<size_t> (instanceIndex)]
+                           ->getEffectiveDriveRange();
+            return noEffectiveData();
+
+        case NodeType::filter:
+            if (instanceIndex >= 0 && instanceIndex < GraphNodeRegistry::maxFilters
+             && filters[static_cast<size_t> (instanceIndex)] != nullptr)
+            {
+                if (controlIndex == 0)
+                    return filters[static_cast<size_t> (instanceIndex)]
+                               ->getEffectiveCutoffRange();
+                if (controlIndex == 1)
+                    return filters[static_cast<size_t> (instanceIndex)]
+                               ->getEffectiveResonanceRange();
+            }
+            return noEffectiveData();
+
+        case NodeType::delay:
+            if (controlIndex == 0 && instanceIndex >= 0
+             && instanceIndex < GraphNodeRegistry::maxDelays
+             && delays[static_cast<size_t> (instanceIndex)] != nullptr)
+                return delays[static_cast<size_t> (instanceIndex)]
+                           ->getEffectiveTimeMsRange();
+            return noEffectiveData();
+
+        case NodeType::resonator:
+            if (controlIndex == 0 && instanceIndex >= 0
+             && instanceIndex < GraphNodeRegistry::maxResonators
+             && resonators[static_cast<size_t> (instanceIndex)] != nullptr)
+                return resonators[static_cast<size_t> (instanceIndex)]
+                           ->getEffectiveQRange();
+            return noEffectiveData();
+
+        case NodeType::gain:
+            if (controlIndex == 0 && instanceIndex >= 0
+             && instanceIndex < GraphNodeRegistry::maxGains
+             && gainProcessors[static_cast<size_t> (instanceIndex)] != nullptr)
+                return gainProcessors[static_cast<size_t> (instanceIndex)]
+                           ->getEffectiveGainRange();
+            return noEffectiveData();
+
+        default:
+            return noEffectiveData();
+    }
+}
+
 void SynthVoice::setHostTempo (double bpm) noexcept
 {
     for (auto* d : delays)
@@ -758,7 +826,9 @@ bool SynthVoice::hasReasonToLive() const noexcept
             return true;
 
     // Delay tails ring out after note-off; the voice must stay alive while
-    // any wired delay line still holds energy.
+    // any wired delay line still holds energy.  The tail estimate tracks the
+    // recirculating line only (fresh input excluded) so a note source that
+    // keeps sounding after note-off cannot freeze the voice here.
     for (auto* d : delays)
         if (d != nullptr && d->getInput().isConnected() && d->hasEnergy())
             return true;

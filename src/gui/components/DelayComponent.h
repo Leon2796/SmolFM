@@ -9,13 +9,17 @@
       - Mix (rotary 0..1)
 
     The time control is disabled when Sync is active because the host BPM
-    plus division takes over.
+    plus division takes over.  A ghost-needle overlay on the time knob shows
+    the effective (modulated) delay time in ms — useful exactly in sync mode,
+    where the disabled knob otherwise hides the truth completely.
 */
 
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_processors/juce_audio_processors.h>
+
+#include "ModIndicatorOverlay.h"
 
 namespace gui
 {
@@ -28,7 +32,8 @@ public:
                     const juce::String& feedbackId,
                     const juce::String& mixId,
                     const juce::String& syncId,
-                    const juce::String& divisionId);
+                    const juce::String& divisionId,
+                    std::function<juce::Range<float>()> effectiveTimeRangeProvider);
     ~DelayComponent() override = default;
 
     void resized() override;
@@ -55,6 +60,9 @@ private:
     std::unique_ptr<SliderAttachment>  mixAttachment;
     std::unique_ptr<ButtonAttachment>  syncAttachment;
     std::unique_ptr<ComboBoxAttachment> divisionAttachment;
+
+    // Ghost needle over the time knob (null when no provider is wired).
+    std::unique_ptr<ModIndicatorOverlay> timeOverlay;
 
     juce::String syncParamId;
     juce::AudioProcessorValueTreeState* apvtsRef = nullptr;

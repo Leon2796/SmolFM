@@ -27,6 +27,8 @@
 
 #include "ProcessorPort.h"
 
+#include "../EffectiveRangeTelemetry.h"      // NeedleWindowTelemetry
+
 namespace smolfm
 {
 
@@ -56,6 +58,15 @@ public:
     InputPort& getVelInput() noexcept { return velIn; }
     OutputPort& getOutput() noexcept { return output; }
 
+    /** Effective (modulated) factor band currently rendered, for the UI's
+        ghost needle: min/max of gain * (1 + m) from factor_mod_in over the
+        telemetry window.  Velocity deliberately stays sound-only and never
+        moves the needle.  Display-only telemetry, thread-safe. */
+    juce::Range<float> getEffectiveGainRange() const noexcept
+    {
+        return uiEffectiveGain.read();
+    }
+
 private:
     std::atomic<float>* gain;
 
@@ -63,6 +74,13 @@ private:
     InputPort modInput { PortType::signal };
     InputPort velIn    { PortType::velocity };
     OutputPort output { PortType::signal, *this };
+
+    // Telemetry for the UI's mod indicator (ghost needle): min/max of the
+    // effective factor after factor_mod_in's (1+m) scaling (velocity is
+    // sound-only, see processSample) over the needle window — a per-sample
+    // overwrite would alias against the overlay's 30 Hz poll (see
+    // NeedleWindowTelemetry in EffectiveRangeTelemetry.h).
+    NeedleWindowTelemetry uiEffectiveGain;
 };
 
 } // namespace smolfm
