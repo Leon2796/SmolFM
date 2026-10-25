@@ -124,6 +124,12 @@ struct NodeSpec
     juce::String driveParameterTemplate; // "shape%Drive" style prefix, only on waveshaper
     juce::String levelParameterTemplate; // master volume, only on output
 
+    // Optional bypass toggle (0 = process, non-zero = neutral passthrough
+    // with the internal state frozen).  Wired on the signal/fq processors
+    // with a state worth remembering: gain, shaper, filter, adsr, fadsr,
+    // delay.  Empty = the node type has no bypass.
+    juce::String bypassParameterTemplate;
+
     // Extra templates for the delay node.
     juce::String timeParameterTemplate;
     juce::String feedbackParameterTemplate;
@@ -246,6 +252,7 @@ public:
     static juce::String adsrParameterIdFor      (const juce::String& nodeId, const juce::String& which);
     static juce::String fAdsrParameterIdFor     (const juce::String& nodeId, const juce::String& which);
     static juce::String gainParameterIdFor      (const juce::String& nodeId);
+    static juce::String bypassParameterIdFor    (const juce::String& nodeId);
     static juce::String driveParameterIdFor     (const juce::String& nodeId);
     static juce::String shapeParameterIdFor     (const juce::String& nodeId);
     static juce::String levelParameterIdFor     (const juce::String& nodeId);

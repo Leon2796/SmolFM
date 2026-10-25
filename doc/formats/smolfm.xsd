@@ -72,6 +72,17 @@
     </xs:restriction>
   </xs:simpleType>
 
+  <!-- Bypass toggle (gain/shape/filter/adsr/fadsr/delay): 1 = neutral
+       passthrough; the processor's internal state is remembered (frozen:
+       delay line, envelope phase, filter integrators) and un-bypassing
+       resumes where it left off.  SmolFmFile::save writes 0/1. -->
+  <xs:simpleType name="BypassType">
+    <xs:restriction base="xs:integer">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
   <xs:simpleType name="DivisionType">
     <xs:restriction base="xs:string">
       <xs:enumeration value="half"/>
@@ -471,6 +482,7 @@
         <xs:attribute name="decay" type="EnvelopeTimeRangeType" use="optional"/>
         <xs:attribute name="sustain" type="EnvelopeSustainRangeType" use="optional"/>
         <xs:attribute name="release" type="EnvelopeReleaseRangeType" use="optional"/>
+        <xs:attribute name="bypass" type="BypassType" use="optional"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -510,6 +522,7 @@
         <xs:attribute name="release" type="EnvelopeReleaseRangeType" use="optional"/>
         <xs:attribute name="up" type="FAdsrFactorType" use="optional"/>
         <xs:attribute name="down" type="FAdsrFactorType" use="optional"/>
+        <xs:attribute name="bypass" type="BypassType" use="optional"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -534,6 +547,7 @@
     <xs:complexContent>
       <xs:extension base="BaseNodeType">
         <xs:attribute name="factor" type="GainFactorRangeType" use="optional"/>
+        <xs:attribute name="bypass" type="BypassType" use="optional"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -559,6 +573,7 @@
       <xs:extension base="BaseNodeType">
         <xs:attribute name="drive" type="DriveRangeType" use="optional"/>
         <xs:attribute name="shape" type="ShapeType" use="optional"/>
+        <xs:attribute name="bypass" type="BypassType" use="optional"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -585,6 +600,7 @@
         <xs:attribute name="cutoff" type="FilterCutoffRangeType" use="optional"/>
         <xs:attribute name="resonance" type="FilterResonanceRangeType" use="optional"/>
         <xs:attribute name="mode" type="FilterModeType" use="optional"/>
+        <xs:attribute name="bypass" type="BypassType" use="optional"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>
@@ -612,6 +628,7 @@
         <xs:attribute name="mix" type="DelayMixRangeType" use="optional"/>
         <xs:attribute name="sync" type="SyncType" use="optional"/>
         <xs:attribute name="division" type="DivisionType" use="optional"/>
+        <xs:attribute name="bypass" type="BypassType" use="optional"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>

@@ -33,6 +33,16 @@ void GainProcessor::startNote()
 
 StereoFrame GainProcessor::processSample()
 {
+    // Bypass: pass the input through neutrally.  The node is stateless, so
+    // "state remembered" trivially holds; the telemetry stays un-sampled
+    // (display-only) while bypassed.
+    if (isBypassed())
+    {
+        const StereoFrame passthrough = input.getSample();
+        output.setSample (passthrough);
+        return passthrough;
+    }
+
     const StereoFrame sourceSample = input.getSample();
     const float gBase = gain != nullptr ? gain->load() : 1.0f;
 

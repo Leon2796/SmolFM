@@ -127,6 +127,15 @@ namespace icons
         return p;
     }
 
+    inline juce::Path bypassGlyph()      // bypass: circle crossed by a slash
+    {
+        juce::Path p;
+        p.addEllipse (4.5f, 4.5f, 15.0f, 15.0f);
+        p.startNewSubPath (17.3f, 6.7f);
+        p.lineTo (6.7f, 17.3f);
+        return p;
+    }
+
     inline juce::Path chevronLeft()
     {
         juce::Path p;

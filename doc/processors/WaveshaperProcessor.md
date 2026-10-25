@@ -31,6 +31,7 @@ Tabelle 1c: Daraus folgende echte Parameter (APVTS).
 |---|---|---|---|---|---|
 | Drive | `shape<N>Drive` | Float, 0–1, Default 0 | Wie kräftig das Signal in die Kurve hineingedrückt wird — das Antriebsrad vor der Zurechtstauchung: nahe 0 mit „Soft" fast neutral, voll aufgedreht kantig. | `std::atomic<float>* drive` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
 | Shape | `shape<N>Shape` | Choice 0–3 (Soft, Hard, Fold, Quantize), Default 0 | Der Verzerrungs-Charakter: Soft = sanfte tubige Weichzeichnung, Hard = harte Clipschere (digital-randige Kanten), Fold = Wellenfaltung, die inharmonisch-metallisch klingt, Quantize = Amplituden-Treppstufen (Bitcrusher-Wertachse): das Sample wird aufs Stufengitter gerastet, Drive macht das Gitter gröber (64→2 Stufen pro Einheit). | `std::atomic<float>* shape` | [src/processors/WaveshaperProcessor.h](../../src/processors/WaveshaperProcessor.h) |
+| Bypass | `shape<N>Bypass` | Bool, Default aus | Bypass-Hahn: 1 = Ausgang ist Bit für Bit der Eingang (neutraler Durchlass, Drive/Shape/Telemetrie pausieren); ein Stateless-Knoten hat keinen Zustand zum Einfrieren. Un-Bypass fährt exakt fort. | `std::atomic<float>*` via `Processor::setBypassParam` | [src/processors/Processor.h](../../src/processors/Processor.h) |
 
 `<N>` = Instanzindex 0–7.
 
@@ -39,6 +40,7 @@ Tabelle 1c: Daraus folgende echte Parameter (APVTS).
 | UI-Funktion | Bedeutung | UI-Symbol | Datei |
 |---|---|---|---|
 | *(keine)* | Drive-Rotary + Shape-Combo | `WaveshaperComponent::driveSlider`, `shapeBox` | [src/gui/components/WaveshaperComponent.h](../../src/gui/components/WaveshaperComponent.h) |
+| Bypass-Schalter | „Bypass": Ausgang = Eingang neutral, DSP-Zustand eingefroren | `DraggableComponent::bypassButton` — ⊘-Icon links oben in der Node-Titel-Leiste; engagiert = Node ausgegraut | [src/gui/DraggableComponent.cpp](../../src/gui/DraggableComponent.cpp) |
 | Effektivwert-Anzeige (Ghost-Needle/Band) am Drive-Regler | zeigt bei Tastendruck das wirksame Drive — statischer Reglerwert, skaliert über `drive_mod_in` (`vel` bleibt bewusst Sound-Only und bewegt die Nadel nie) (Telemetrie: Min/Max-Fenster ≈ 5 ms; die Nadel pendelt zwischen den echten Extremen, der Bogen zeigt Modulationstiefe/Polyphonie-Band; der Daumen bleibt unberührt) | `WaveshaperComponent::driveOverlay` (Typ `ModIndicatorOverlay`, Quelle `WaveshaperProcessor::getEffectiveDriveRange`) | [src/gui/components/ModIndicatorOverlay.h](../../src/gui/components/ModIndicatorOverlay.h) |
 
 ## Abschnitt 3 — Mathematische Beschreibung

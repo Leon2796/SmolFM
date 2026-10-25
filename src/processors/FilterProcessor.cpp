@@ -53,6 +53,15 @@ StereoFrame FilterProcessor::processSample()
 {
     const StereoFrame x = input.getSample();
 
+    // Bypass: pass the input through neutrally.  The TPT integrators stay
+    // frozen (state remembered), so un-bypassing resumes filtering exactly
+    // where it left off; the telemetry stays un-sampled (display-only).
+    if (isBypassed())
+    {
+        output.setSample (x);
+        return x;
+    }
+
     // Cutoff: the modulation input (frequency domain) replaces the static
     // parameter entirely when connected — the static cutoff is the fallback,
     // not an offset.

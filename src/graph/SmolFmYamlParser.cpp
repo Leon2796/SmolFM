@@ -71,6 +71,7 @@ namespace
         else if (line.startsWith ("spread:"))        node.parameters["spread"]        = value.getFloatValue();
         else if (line.startsWith ("strikelevel:"))   node.parameters["strikelevel"]   = value.getFloatValue();
         else if (line.startsWith ("striketime:"))    node.parameters["striketime"]    = value.getFloatValue();
+    else if (line.startsWith ("bypass:"))        node.parameters["bypass"]        = value.getFloatValue();
     }
 }
 

@@ -128,6 +128,9 @@ for a node type are ignored by the parsers.
 - `attack`, `decay`: float, 0.001..5 s
 - `sustain`: float, 0..1
 - `release`: float, 0.001..10 s
+- `bypass`: 0 | 1 (default 0; 1 = neutral pass-through — the input frame
+  comes out unchanged and the envelope phase is frozen; un-bypass resumes
+  exactly where it left off)
 
 ### F-ADSR (fadsr)
 - `attack`, `decay`: float, 0.001..5 s
@@ -136,18 +139,23 @@ for a node type are ignored by the parsers.
 - `up`, `down`: float 0..10 (frequency multiplier at E=1 / E=0; default 1) or
   an interval name from the Enumerations table; the name resolves to its
   exact ratio (`none` = 1, `octave_up` = 2, `fifth_down` ≈ 0.667420)
+- `bypass`: 0 | 1 (default 0; 1 = neutral pass-through of the frequency,
+  envelope phase frozen; un-bypass resumes exactly where it left off)
 
 ### Gain (gain)
 - `factor`: float, 0..10 (default 1 = unity)
+- `bypass`: 0 | 1 (default 0; 1 = neutral pass-through, byte-identical to the input)
 
 ### Waveshaper (shape)
 - `drive`: float, 0..1
 - `shape`: soft | hard | fold | quantize
+- `bypass`: 0 | 1 (default 0; 1 = neutral pass-through, byte-identical to the input)
 
 ### Filter (filter)
 - `cutoff`: float, 20..20000 Hz (log scale; default 1000)
 - `resonance`: float, 0..1
 - `mode`: lp | bp | hp | notch | ap (ap = allpass, leaves the magnitude flat and shifts the phase)
+- `bypass`: 0 | 1 (default 0; 1 = neutral pass-through, TPT integrator states frozen)
 
 ### Delay (delay)
 - `time`: float, 1..2000 ms (free-running mode; default 250)
@@ -155,6 +163,7 @@ for a node type are ignored by the parsers.
 - `mix`: float, 0..1 (default 0.3)
 - `sync`: off | on (on = tempo-synced, `time` is ignored)
 - `division`: half | quarter | eighth | sixteenth (delay length; default quarter)
+- `bypass`: 0 | 1 (default 0; 1 = dry pass-through, delay line + write pointer frozen — the tail stays parked and un-bypassing resumes it; only the tail estimate decays so the voice can end)
 
 ### Sample Hold (hold)
 - `rate`: float, 0.5..20000 Hz (hold grid in free-running mode; default 1000; a connected `rate_mod_in` port multiplies it)

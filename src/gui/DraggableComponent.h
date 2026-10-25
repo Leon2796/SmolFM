@@ -11,6 +11,7 @@
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
+#include <juce_audio_processors/juce_audio_processors.h>
 
 #include "../processors/Processor.h"
 
@@ -19,7 +20,8 @@ namespace gui
 
 class PinComponent;
 
-class DraggableComponent final : public juce::Component
+class DraggableComponent final : public juce::Component,
+                                 private juce::Button::Listener
 {
 public:
     /**
@@ -48,6 +50,17 @@ public:
 
     /** Stable identifier used for persistence. */
     const juce::String& getBoxId() const noexcept { return boxId; }
+
+    /**
+        Wire an optional bypass parameter.
+
+        Shows a small bypass icon at the LEFT edge of the title bar (mirroring
+        the close × at the right) and, while bypassed, dims the whole node
+        with a translucent overlay.  An empty parameter id leaves the node
+        untouched — node types without a bypass option look exactly as before.
+    */
+    void setBypassParameter (juce::AudioProcessorValueTreeState& apvts,
+                             const juce::String& bypassParameterId);
 
     // -- Multi-select ------------------------------------------------------
     // Marked via double-click on the title bar or the panel's rubber-band
@@ -94,10 +107,19 @@ private:
 
     void layoutPins();
 
+    void paintOverChildren (juce::Graphics& g) override;
+    void buttonStateChanged (juce::Button* button) override;
+    void buttonClicked (juce::Button*) override {} // clicks sync via ButtonAttachment
+
     juce::String boxId;
     juce::String title;
     std::unique_ptr<juce::Component> content;
     juce::TextButton closeButton { "close" };
+
+    // Optional bypass wiring (see setBypassParameter): title-bar icon plus
+    // dimmed overlay.  A null button means "node type without bypass option".
+    std::unique_ptr<juce::Button> bypassButton;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> bypassAttachment;
 
     juce::OwnedArray<PinComponent> inputPins;
     juce::OwnedArray<PinComponent> outputPins;

@@ -36,6 +36,15 @@ StereoFrame WaveshaperProcessor::processSample()
 {
     const StereoFrame x = input.getSample();
 
+    // Bypass: pass the input through neutrally.  The node is stateless, so
+    // "state remembered" trivially holds; the telemetry stays un-sampled
+    // (display-only) while bypassed.
+    if (isBypassed())
+    {
+        output.setSample (x);
+        return x;
+    }
+
     const float dBase = drive != nullptr ? juce::jlimit (0.0f, 1.0f, drive->load()) : 0.0f;
     const int shapeIndex = shape != nullptr
         ? juce::jlimit (0, 3, static_cast<int> (std::round (shape->load())))

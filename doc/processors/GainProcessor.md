@@ -28,6 +28,7 @@ Tabelle 1c: Daraus folgende echte Parameter (APVTS).
 | Parameter | APVTS-ID | Typ / Bereich | Kurzbeschreibung (Wirkung) | Symbol im Prozessor | Datei |
 |---|---|---|---|---|---|
 | Gain | `gain<N>Factor` | Float, 0–10, Default 1 (UI-Bipolar: Mitte ≙ 1.0/Unity — linke Hälfte linear 0–1, rechte Hälfte quadratisch 1–10; Rohwert bleibt 0–10) | Der Lautheits-Faktor des Layers: 1 = neutraler Durchlass, 0 = Mute, über 1 = Boost (Vorsicht vor Clipping am gestapelten Master-Bus). | `std::atomic<float>* gain` | [src/processors/GainProcessor.h](../../src/processors/GainProcessor.h) |
+| Bypass | `gain<N>Bypass` | Bool, Default aus | Bypass-Hahn: 1 = Ausgang ist Bit für Bit der Eingang (neutraler Durchlass, Faktor/Mod/Telemetrie pausieren); Un-Bypass fährt exakt fort. | `std::atomic<float>*` via `Processor::setBypassParam` | [src/processors/Processor.h](../../src/processors/Processor.h) |
 
 `<N>` = Instanzindex 0–15 (Budgets seit Commit ecfdef2 verdoppelt; der Code
 registriert die Parameter über `for (i < GraphNodeRegistry::maxGains)`).
@@ -36,6 +37,7 @@ registriert die Parameter über `for (i < GraphNodeRegistry::maxGains)`).
 
 | UI-Funktion | Bedeutung | UI-Symbol | Datei |
 |---|---|---|---|
+| Bypass-Schalter | „Bypass": Ausgang = Eingang neutral, DSP-Zustand eingefroren | `DraggableComponent::bypassButton` — ⊘-Icon links oben in der Node-Titel-Leiste; engagiert = Node ausgegraut | [src/gui/DraggableComponent.cpp](../../src/gui/DraggableComponent.cpp) |
 | Effektivwert-Anzeige (Ghost-Needle/Band) am Gain-Regler | zeigt bei Tastendruck den wirksamen Faktor — statischer Reglerwert, skaliert über `factor_mod_in` (`vel` bleibt bewusst Sound-Only und bewegt die Nadel nie) (Telemetrie: Min/Max-Fenster ≈ 5 ms; die Nadel pendelt zwischen den echten Extremen, der Bogen zeigt Modulationstiefe/Polyphonie-Band; der Daumen bleibt unberührt) | `GainComponent::gainOverlay` (Typ `ModIndicatorOverlay`, Quelle `GainProcessor::getEffectiveGainRange`) | [src/gui/components/ModIndicatorOverlay.h](../../src/gui/components/ModIndicatorOverlay.h) |
 
 ## Abschnitt 3 — Mathematische Beschreibung

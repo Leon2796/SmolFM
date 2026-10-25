@@ -383,7 +383,47 @@ show it, but no generated instrument will ever wire it in.
 
 ---
 
+## Bypass option for signal/fq processors (binding)
+
+Signal/frequency processors with a state worth remembering — currently
+`gain`, `shape`, `filter`, `adsr`, `fadsr`, `delay` — own a bypass parameter
+(`bypassParameterTemplate` in their GraphNodes spec, one `AudioParameterBool`
+`<base><N>Bypass` per instance in `createParameterLayout`, cached in
+`SynthVoiceParameters`, wired to the processor with
+`Processor::setBypassParam` in the SynthVoice pool loops).  The semantics are
+binding for every processor that carries the option:
+
+- `processSample()` starts with the bypass branch: the signal/fq input frame
+  comes out **bit for bit unchanged** — and the output port is set too
+  (skipping `output.setSample` would let downstream read a stale frame).
+- The DSP state is **not advanced** while bypassed — frozen, never reset:
+  delay line + write pointer parked, envelope phase parked
+  (`getNextSample` skipped), TPT integrators parked.
+- Un-bypassing resumes exactly where the DSP left off ("der Prozessor merkt
+  sich seinen Zustand").
+- The bypass state must not lie to the voice lifetime policy: a frozen
+  envelope reports `isActive() == false` while bypassed (see
+  AdsrProcessor/FAdsrProcessor), a parked delay line lets its `tailPeak`
+  estimate decay so the voice can still end.
+- Telemetry may pause (display-only) while bypassed.
+- A **new** signal/fq processor of this kind gets the same option (spec
+  template + bool param + cache array + `setBypassParam`) and never calls
+  `reset()` in the bypass path — the frozen state IS the feature.
+- The node UI needs **no** bypass code of its own: `DraggablePanel::
+  addNodeOfType` wires every declared `<base><N>Bypass` parameter to the
+  title-bar bypass icon (`DraggableComponent::setBypassParameter`); engaged
+  icon + dimmed overlay mark the bypassed node.
+
+---
+
 ## Common pitfalls (already burnt into the codebase)
+
+- **Bypass passthrough forgotten**: a processor with a bypass wire whose
+  `processSample()` ignores `isBypassed()` — or skips `output.setSample()` in
+  the bypass branch (downstream then reads stale frames) — or that resets its
+  state while bypassed (delay tail gone, envelope back to 0) breaks the
+  "neutral frame, remembered state" contract.  Test both directions:
+  passthrough while set, resume after un-bypass.
 
 - **Default value**: without `input.setDefaultValue(0.0f)` an unwired input
   reads 440 Hz (signal ports default to 0, frequency to 440 — pick the right

@@ -83,6 +83,20 @@ float DelayProcessor::getDelaySamples() const noexcept
 
 StereoFrame DelayProcessor::processSample()
 {
+    // Bypass: neutral dry passthrough.  The delay line is NOT ticked — write
+    // pointer and content stay exactly where they were (state remembered),
+    // so un-bypassing picks up the frozen tail.  Only the tail estimate
+    // decays, so the voice lifetime policy can still end the voice while a
+    // bypassed tail is parked (hasEnergy; the estimate rebuilds itself from
+    // the recirculating tap on the first un-bypassed sample).
+    if (isBypassed())
+    {
+        tailPeak *= 0.999f;
+        const StereoFrame passthrough = input.getSample();
+        output.setSample (passthrough);
+        return passthrough;
+    }
+
     if (buffer.empty())
         return input.getSample();
 

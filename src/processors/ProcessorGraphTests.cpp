@@ -24,6 +24,8 @@
 #include "AdderProcessor.h"
 #include "WaveshaperProcessor.h"
 #include "FilterProcessor.h"
+#include "DelayProcessor.h"
+#include "DelayProcessor.h"
 #include "SampleHoldProcessor.h"
 #include "ResonatorProcessor.h"
 #include "FeedbackProcessor.h"
@@ -1969,6 +1971,414 @@ namespace
 
 }
 
+/*
+    Bypass (signal/fq processors): while the bypass param is on, the input
+    frame passes through neutrally and the internal state is frozen so an
+    un-bypass resumes exactly where the DSP left off.  Stateless nodes
+    (gain, waveshaper) trivially remember state; filter/adsr/fadsr/delay
+    carry real state and get their own freeze probes.
+*/
+TestResult runBypassPassthroughTest()
+{
+    // 1) Gain: factor 0.5 -> passthrough -> factor again.
+    {
+        std::atomic<float> waveform { 1.0f };   // saw
+        std::atomic<float> mode { 1.0f };       // static
+        std::atomic<float> staticFreq { 440.0f };
+        std::atomic<float> gainFactor { 0.5f };
+        std::atomic<float> bypass { 0.0f };
+
+        smolfm::SignalGraph graph;
+        // The static-mode oscillator gates on note_in — wire a 440 Hz note
+        // source, otherwise the block runs on a frozen DC frame.
+        auto note = std::make_unique<smolfm::NoteProcessor>();
+        smolfm::NoteProcessor* notePtr = note.get();
+        notePtr->setMidiNoteNumber (69);
+        auto osc = std::make_unique<smolfm::OscillatorProcessor> (&waveform, &mode, &staticFreq, nullptr);
+        smolfm::OscillatorProcessor* oscPtr = osc.get();
+        auto g = std::make_unique<smolfm::GainProcessor> (&gainFactor);
+        smolfm::GainProcessor* gPtr = g.get();
+        gPtr->setBypassParam (&bypass);
+
+        if (! oscPtr->getNoteInput().connect (notePtr->getOutput()))
+            return { false, "gain: failed to connect note gate" };
+        if (! gPtr->getInput().connect (oscPtr->getOutput()))
+            return { false, "gain: failed to connect osc" };
+        graph.addProcessor (std::move (note));
+        graph.addProcessor (std::move (osc));
+        graph.addProcessor (std::move (g));
+        graph.prepare (48000.0);
+        graph.startNote();
+
+        for (int i = 0; i < 60; ++i)
+        {
+            graph.processSample();
+            const auto out = gPtr->getOutput().getSample();
+            const auto in  = oscPtr->getOutput().getSample();
+            if (std::abs (in.l) > 0.01f && std::abs (out.l / in.l - 0.5f) > 0.001f)
+                return { false, "gain: unbypassed factor wrong" };
+        }
+
+        bypass.store (1.0f);
+        for (int i = 0; i < 40; ++i)
+        {
+            graph.processSample();
+            const auto out = gPtr->getOutput().getSample();
+            const auto in  = oscPtr->getOutput().getSample();
+            if (out.l != in.l || out.r != in.r)
+                return { false, "gain: bypassed output differs from input" };
+        }
+
+        bypass.store (0.0f);
+        graph.processSample();
+        {
+            const auto out = gPtr->getOutput().getSample();
+            const auto in  = oscPtr->getOutput().getSample();
+            if (in.l == 0.0f || std::abs (out.l / in.l - 0.5f) > 0.001f)
+                return { false, "gain: un-bypassed factor wrong" };
+        }
+    }
+
+    // 2) Waveshaper: hard clip -> passthrough -> clip again.
+    {
+        std::atomic<float> waveform { 1.0f };
+        std::atomic<float> mode { 1.0f };
+        std::atomic<float> staticFreq { 440.0f };
+        std::atomic<float> drive { 1.0f };
+        std::atomic<float> shape { 1.0f };    // hard clip
+        std::atomic<float> bypass { 0.0f };
+
+        smolfm::SignalGraph graph;
+        // Static-mode osc gates on note_in (see the gain block).
+        auto note = std::make_unique<smolfm::NoteProcessor>();
+        smolfm::NoteProcessor* notePtr = note.get();
+        notePtr->setMidiNoteNumber (69);
+        auto osc = std::make_unique<smolfm::OscillatorProcessor> (&waveform, &mode, &staticFreq, nullptr);
+        smolfm::OscillatorProcessor* oscPtr = osc.get();
+        auto ws = std::make_unique<smolfm::WaveshaperProcessor> (&drive, &shape);
+        smolfm::WaveshaperProcessor* wsPtr = ws.get();
+        wsPtr->setBypassParam (&bypass);
+
+        if (! oscPtr->getNoteInput().connect (notePtr->getOutput()))
+            return { false, "shaper: failed to connect note gate" };
+        if (! wsPtr->getInput().connect (oscPtr->getOutput()))
+            return { false, "shaper: failed to connect osc" };
+        graph.addProcessor (std::move (note));
+        graph.addProcessor (std::move (osc));
+        graph.addProcessor (std::move (ws));
+        graph.prepare (48000.0);
+        graph.startNote();
+
+        bool clipped = false;
+        for (int i = 0; i < 60; ++i)
+        {
+            graph.processSample();
+            if (wsPtr->getOutput().getSample().l != oscPtr->getOutput().getSample().l)
+                clipped = true;
+        }
+        if (! clipped)
+            return { false, "shaper: unbypassed clip never engaged" };
+
+        bypass.store (1.0f);
+        for (int i = 0; i < 40; ++i)
+        {
+            graph.processSample();
+            const auto out = wsPtr->getOutput().getSample();
+            const auto in  = oscPtr->getOutput().getSample();
+            if (out.l != in.l || out.r != in.r)
+                return { false, "shaper: bypassed output differs from input" };
+        }
+
+        bypass.store (0.0f);
+        clipped = false;
+        for (int i = 0; i < 20; ++i)
+        {
+            graph.processSample();
+            if (wsPtr->getOutput().getSample().l != oscPtr->getOutput().getSample().l)
+                clipped = true;
+        }
+        if (! clipped)
+            return { false, "shaper: un-bypassed clip never engaged again" };
+    }
+
+    // 3) Filter (TPT state): LP 200 Hz -> passthrough -> filtering again.
+    {
+        std::atomic<float> waveform { 1.0f };
+        std::atomic<float> mode { 1.0f };
+        std::atomic<float> staticFreq { 440.0f };
+        std::atomic<float> cutoff { 200.0f };
+        std::atomic<float> resonance { 0.0f };
+        std::atomic<float> filterMode { 0.0f };    // low pass
+        std::atomic<float> bypass { 0.0f };
+
+        smolfm::SignalGraph graph;
+        // Static-mode osc gates on note_in (see the gain block).
+        auto note = std::make_unique<smolfm::NoteProcessor>();
+        smolfm::NoteProcessor* notePtr = note.get();
+        notePtr->setMidiNoteNumber (69);
+        auto osc = std::make_unique<smolfm::OscillatorProcessor> (&waveform, &mode, &staticFreq, nullptr);
+        smolfm::OscillatorProcessor* oscPtr = osc.get();
+        auto f = std::make_unique<smolfm::FilterProcessor> (&cutoff, &resonance, &filterMode);
+        smolfm::FilterProcessor* fPtr = f.get();
+        fPtr->setBypassParam (&bypass);
+
+        if (! oscPtr->getNoteInput().connect (notePtr->getOutput()))
+            return { false, "filter: failed to connect note gate" };
+        if (! fPtr->getInput().connect (oscPtr->getOutput()))
+            return { false, "filter: failed to connect osc" };
+        graph.addProcessor (std::move (note));
+        graph.addProcessor (std::move (osc));
+        graph.addProcessor (std::move (f));
+        graph.prepare (48000.0);
+        graph.startNote();
+
+        float inEnergy = 0.0f;
+        float outEnergy = 0.0f;
+        for (int i = 0; i < 200; ++i)
+        {
+            graph.processSample();
+            inEnergy  += std::abs (oscPtr->getOutput().getSample().l);
+            outEnergy += std::abs (fPtr->getOutput().getSample().l);
+        }
+        if (inEnergy < 20.0f)
+            return { false, "filter: source too quiet to judge" };
+        if (outEnergy > inEnergy * 0.75f)
+            return { false, "filter: LP 200 Hz attenuates 440 Hz too little" };
+
+        bypass.store (1.0f);
+        for (int i = 0; i < 40; ++i)
+        {
+            graph.processSample();
+            const auto out = fPtr->getOutput().getSample();
+            const auto in  = oscPtr->getOutput().getSample();
+            if (out.l != in.l || out.r != in.r)
+                return { false, "filter: bypassed output differs from input" };
+        }
+
+        // Un-bypass: filtering resumes (ponytail: the integrator freeze is
+        // the same skip-DSP mechanism as the envelope freeze below; covered
+        // qualitatively here, not by an integrator-level assertion).
+        bypass.store (0.0f);
+        bool resumed = false;
+        for (int i = 0; i < 20; ++i)
+        {
+            graph.processSample();
+            if (fPtr->getOutput().getSample().l != oscPtr->getOutput().getSample().l)
+                resumed = true;
+        }
+        if (! resumed)
+            return { false, "filter: filtering never resumed after un-bypass" };
+    }
+
+    return { true, "gain/shaper/filter: passthrough exact, processing resumes" };
+}
+
+/*
+    Envelope freeze under bypass: ADSR/F-ADSR stop the envelope where it is
+    (the frozen note does not count as sounding for the voice lifetime),
+    open the gate fully while bypassed and resume the phase on un-bypass.
+*/
+TestResult runBypassEnvelopeFreezeTest()
+{
+    // ADSR: freeze mid-attack (attack 0.01 s = 480 samples), gate open, resume.
+    {
+        std::atomic<float> waveform { 1.0f };
+        std::atomic<float> mode { 1.0f };
+        std::atomic<float> staticFreq { 440.0f };
+        std::atomic<float> attack { 0.01f };
+        std::atomic<float> decay { 0.5f };
+        std::atomic<float> sustain { 1.0f };
+        std::atomic<float> release { 0.5f };
+        std::atomic<float> bypass { 0.0f };
+
+        smolfm::SignalGraph graph;
+        // Static-mode osc gates on note_in (see the gain block).
+        auto note = std::make_unique<smolfm::NoteProcessor>();
+        smolfm::NoteProcessor* notePtr = note.get();
+        notePtr->setMidiNoteNumber (69);
+        auto osc = std::make_unique<smolfm::OscillatorProcessor> (&waveform, &mode, &staticFreq, nullptr);
+        smolfm::OscillatorProcessor* oscPtr = osc.get();
+        auto adsr = std::make_unique<smolfm::AdsrProcessor> (&attack, &decay, &sustain, &release);
+        smolfm::AdsrProcessor* adsrPtr = adsr.get();
+        adsrPtr->setBypassParam (&bypass);
+
+        if (! oscPtr->getNoteInput().connect (notePtr->getOutput()))
+            return { false, "adsr: failed to connect note gate" };
+        if (! adsrPtr->getInput().connect (oscPtr->getOutput()))
+            return { false, "adsr: failed to connect osc" };
+        graph.addProcessor (std::move (note));
+        graph.addProcessor (std::move (osc));
+        graph.addProcessor (std::move (adsr));
+        graph.prepare (48000.0);
+        graph.startNote();
+
+        for (int i = 0; i < 200; ++i)
+        {
+            graph.processSample();
+            const auto out = adsrPtr->getOutput().getSample();
+            const auto in  = oscPtr->getOutput().getSample();
+            if (std::abs (out.l) > std::abs (in.l) + 1.0e-6f)
+                return { false, "adsr: envelope grows beyond unity" };
+        }
+
+        bypass.store (1.0f);
+        for (int i = 0; i < 30; ++i)
+        {
+            graph.processSample();
+            const auto out = adsrPtr->getOutput().getSample();
+            const auto in  = oscPtr->getOutput().getSample();
+            if (out.l != in.l || out.r != in.r)
+                return { false, "adsr: bypassed gate is not fully open" };
+        }
+        if (adsrPtr->isActive())
+            return { false, "adsr: bypassed envelope must not count as sounding" };
+
+        bypass.store (0.0f);
+        graph.processSample();
+        if (! adsrPtr->isActive())
+            return { false, "adsr: envelope lost its phase across the bypass" };
+
+        const auto out = adsrPtr->getOutput().getSample();
+        const auto in  = oscPtr->getOutput().getSample();
+        if (std::abs (out.l) >= std::abs (in.l))
+            return { false, "adsr: envelope jumped to unity across the bypass" };
+    }
+
+    // F-ADSR (frequency domain): freeze mid-attack, neutral pitch, resume.
+    {
+        std::atomic<float> attack { 0.01f };
+        std::atomic<float> decay { 0.5f };
+        std::atomic<float> sustain { 1.0f };
+        std::atomic<float> release { 0.5f };
+        std::atomic<float> up { 2.0f };
+        std::atomic<float> down { 1.0f };
+        std::atomic<float> bypass { 0.0f };
+
+        smolfm::SignalGraph graph;
+        auto note = std::make_unique<smolfm::NoteProcessor>();
+        smolfm::NoteProcessor* notePtr = note.get();
+        notePtr->setMidiNoteNumber (69);   // A4 = 440 Hz
+        auto fadsr = std::make_unique<smolfm::FAdsrProcessor> (&attack, &decay, &sustain, &release, &up, &down);
+        smolfm::FAdsrProcessor* fadsrPtr = fadsr.get();
+        fadsrPtr->setBypassParam (&bypass);
+
+        if (! fadsrPtr->getFreqInput().connect (notePtr->getOutput()))
+            return { false, "fadsr: failed to connect note" };
+        graph.addProcessor (std::move (note));
+        graph.addProcessor (std::move (fadsr));
+        graph.prepare (48000.0);
+        graph.startNote();
+
+        // Attack at ~0.42 (tick 200): factor = 1 + E * (2 - 1) ~ 1.42.
+        for (int i = 0; i < 200; ++i)
+        {
+            graph.processSample();
+            const float out = fadsrPtr->getOutput().getSample().l;
+            if (out <= 440.0f || out >= 880.0f)
+                return { false, "fadsr: pitch factor not interpolating" };
+        }
+
+        bypass.store (1.0f);
+        for (int i = 0; i < 30; ++i)
+        {
+            graph.processSample();
+            const float out = fadsrPtr->getOutput().getSample().l;
+            const float in  = notePtr->getOutput().getSample().l;
+            if (out != in)
+                return { false, "fadsr: bypassed pitch factor is not neutral" };
+        }
+        if (fadsrPtr->isActive())
+            return { false, "fadsr: bypassed envelope must not count as sounding" };
+
+        bypass.store (0.0f);
+        graph.processSample();
+        {
+            const float out = fadsrPtr->getOutput().getSample().l;
+            if (out <= 500.0f || out >= 800.0f)
+                return { false, "fadsr: envelope phase not resumed from freeze" };
+        }
+    }
+
+    return { true, "adsr/fadsr: gate/pitch neutral while bypassed, phase resumes" };
+}
+
+/*
+    Delay bypass freeze: control delay A runs untouched while delay B is
+    bypassed for 100 ticks (write pointer + line content parked).  With a
+    96-sample delay B reads back only pre-freeze content right after the
+    un-bypass, so out_B(t) must equal out_A(t - 100) bitwise — the parked
+    line resumes where it froze instead of silently ticking on.
+*/
+TestResult runDelayBypassFreezeTest()
+{
+    std::atomic<float> waveform { 1.0f };
+    std::atomic<float> mode { 1.0f };
+    std::atomic<float> staticFreq { 440.0f };
+    std::atomic<float> timeMs { 2.0f };     // 96 samples at 48 kHz
+    std::atomic<float> feedback { 0.6f };
+    std::atomic<float> mix { 1.0f };        // pure wet
+    std::atomic<float> syncMode { 0.0f };
+    std::atomic<float> division { 1.0f };
+    std::atomic<float> bypassB { 0.0f };
+
+    smolfm::SignalGraph graph;
+    auto osc = std::make_unique<smolfm::OscillatorProcessor> (&waveform, &mode, &staticFreq, nullptr);
+    smolfm::OscillatorProcessor* oscPtr = osc.get();
+    auto delayA = std::make_unique<smolfm::DelayProcessor> (&timeMs, &feedback, &mix, &syncMode, &division);
+    smolfm::DelayProcessor* delayAPtr = delayA.get();
+    auto delayB = std::make_unique<smolfm::DelayProcessor> (&timeMs, &feedback, &mix, &syncMode, &division);
+    smolfm::DelayProcessor* delayBPtr = delayB.get();
+    delayBPtr->setBypassParam (&bypassB);
+
+    if (! delayAPtr->getInput().connect (oscPtr->getOutput())
+        || ! delayBPtr->getInput().connect (oscPtr->getOutput()))
+        return { false, "delay: failed to connect osc" };
+    graph.addProcessor (std::move (osc));
+    graph.addProcessor (std::move (delayA));
+    graph.addProcessor (std::move (delayB));
+    graph.prepare (48000.0);
+    graph.startNote();
+
+    float outAHistory [500] = {};
+    bool passOk = false;
+    bool parked = true;
+
+    for (int t = 0; t < 460; ++t)
+    {
+        if (t == 100)
+            bypassB.store (1.0f);
+        else if (t == 200)
+            bypassB.store (0.0f);
+
+        graph.processSample();
+
+        const float outB = delayBPtr->getOutput().getSample().l;
+        outAHistory[t] = delayAPtr->getOutput().getSample().l;
+
+        if (t >= 120 && t < 180)
+        {
+            const auto passB = delayBPtr->getOutput().getSample();
+            const auto in    = oscPtr->getOutput().getSample();
+            if (passB.l != in.l || passB.r != in.r)
+                return { false, "delay: bypassed output differs from the input" };
+            passOk = true;
+        }
+
+        // Parked catch-up: B's write pointer froze at tick 100, so its wet
+        // read right after the un-bypass lands on the same pre-freeze line
+        // content that A produced 100 wall ticks earlier — bitwise.
+        if (t >= 230 && t < 296 && std::abs (outB - outAHistory[t - 100]) > 1.0e-6f)
+            parked = false;
+    }
+
+    if (! passOk)
+        return { false, "delay: bypass passthrough window never ticked" };
+    if (! parked)
+        return { false, "delay: the parked line is not catching up as if the bypass never advanced it" };
+
+    return { true, "delay: passthrough exact, line parked across the bypass" };
+}
+
 int main()
 {
     // Flush every insert immediately: a crash mid-suite must not swallow the
@@ -2006,6 +2416,9 @@ int main()
     runTest ("Resonator strike", runResonatorStrikeProbe);
     runTest ("Feedback loop", runFeedbackLoopTest);
     runTest ("Sample hold grid", runSampleHoldGridTest);
+    runTest ("Bypass passthrough", runBypassPassthroughTest);
+    runTest ("Bypass envelope freeze", runBypassEnvelopeFreezeTest);
+    runTest ("Delay bypass freeze", runDelayBypassFreezeTest);
 
     return failures;
 }

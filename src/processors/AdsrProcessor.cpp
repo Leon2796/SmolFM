@@ -51,6 +51,17 @@ void AdsrProcessor::startNote()
 StereoFrame AdsrProcessor::processSample()
 {
     const StereoFrame sourceSample = input.getSample();
+
+    // Bypass: the gate opens fully — the raw input passes through neutrally
+    // and the envelope phase stays frozen (getNextSample is skipped), so
+    // un-bypassing resumes the envelope exactly where it left off within
+    // the same note.
+    if (isBypassed())
+    {
+        output.setSample (sourceSample);
+        return sourceSample;
+    }
+
     const float env = envelope.getNextSample();
 
     const StereoFrame sample { sourceSample.l * env, sourceSample.r * env };
@@ -71,7 +82,12 @@ void AdsrProcessor::reset() noexcept
 
 bool AdsrProcessor::isActive() const noexcept
 {
-    return envelope.isActive();
+    // Honest to the voice lifetime policy while bypassed: the frozen note
+    // (getNextSample skipped, see processSample) must not count as sounding,
+    // otherwise a bypassed envelope parked mid-release would keep the voice
+    // alive indefinitely.  A still-held key keeps the voice alive anyway
+    // (keyHeld), so un-bypassing resumption stays intact within a note.
+    return envelope.isActive() && ! isBypassed();
 }
 
 } // namespace smolfm

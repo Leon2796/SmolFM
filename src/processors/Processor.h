@@ -12,6 +12,7 @@
 #pragma once
 
 #include <juce_core/juce_core.h>
+#include <atomic>
 
 namespace smolfm
 {
@@ -137,6 +138,28 @@ public:
     virtual StereoFrame processSample() = 0;
 
     /**
+        Wire the optional bypass parameter (an APVTS bool raw value:
+        0 = process, non-zero = bypass).
+
+        A bypassed processor returns its signal/fq input frame unchanged and
+        does NOT advance its internal state — the state is remembered
+        (frozen), so un-bypassing resumes the DSP exactly where it left off
+        (delay tail, envelope phase, filter integrators).  A null pointer
+        (the default) means "always process": a processor that never receives
+        bypass wiring behaves byte-identically to before.
+    */
+    void setBypassParam (std::atomic<float>* bypassSource) noexcept
+    {
+        bypassParam = bypassSource;
+    }
+
+    /** True while the wired bypass parameter is set (non-zero). */
+    bool isBypassed() const noexcept
+    {
+        return bypassParam != nullptr && bypassParam->load() > 0.5f;
+    }
+
+    /**
         Return the role of this processor in the graph.
     */
     ProcessorRole getRole() const noexcept
@@ -146,6 +169,10 @@ public:
 
 private:
     ProcessorRole role;
+
+    // Optional bypass source (APVTS bool): non-zero = neutral passthrough
+    // with the internal state frozen (see setBypassParam).
+    std::atomic<float>* bypassParam = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Processor)
 };

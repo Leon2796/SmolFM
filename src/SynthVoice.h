@@ -78,6 +78,7 @@ struct SynthVoiceParameters
     std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrDecay;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrSustain;
         std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrRelease;
+        std::array<std::atomic<float>*, GraphNodeRegistry::maxAdsr> adsrBypass;
         std::array<std::atomic<float>*, GraphNodeRegistry::maxAmModulators> amAmount;
 
     // F-ADSR pitch-envelope parameters per instance (6 parameters per node).
@@ -87,18 +88,22 @@ struct SynthVoiceParameters
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFAdsr> fAdsrRelease;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFAdsr> fAdsrUp;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFAdsr> fAdsrDown;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxFAdsr> fAdsrBypass;
 
     // Gain parameters per instance (1 parameter per node).
     std::array<std::atomic<float>*, GraphNodeRegistry::maxGains> gainFactor;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxGains> gainBypass;
 
     // Waveshaper parameters per instance (2 parameters per node).
     std::array<std::atomic<float>*, GraphNodeRegistry::maxWaveshapers> shaperDrive;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxWaveshapers> shaperShape;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxWaveshapers> shaperBypass;
 
     // Filter parameters per instance (3 parameters per node).
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFilters> filterCutoff;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFilters> filterResonance;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxFilters> filterMode;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxFilters> filterBypass;
 
     // Delay parameters per instance (5 parameters per delay node).
     std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delayTimeMs;
@@ -106,6 +111,7 @@ struct SynthVoiceParameters
     std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delayMix;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delaySync;
     std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delayDivision;
+    std::array<std::atomic<float>*, GraphNodeRegistry::maxDelays> delayBypass;
 
     // Sample-hold parameters per instance (3 parameters per node).
     std::array<std::atomic<float>*, GraphNodeRegistry::maxSampleHolds> holdRate;

@@ -45,7 +45,9 @@ public:
     /**
         Add a box for one node TYPE ("osc", "fm", ...) and return its instance
         id (e.g. "osc2").  The content factory receives the instance id and
-        the APVTS so it can bind its own sliders.
+        the APVTS so it can bind its own sliders.  If the node's spec declares
+        a bypass parameter template, the box's title-bar bypass icon is wired
+        automatically (types without one keep a plain title bar).
 
         Returns nullptr when the budget for this type is exhausted.
     */

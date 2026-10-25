@@ -86,6 +86,8 @@ namespace
                     if (mixId .isNotEmpty()) specs.add ({ "mix",       mixId });
                     if (syncId.isNotEmpty()) specs.add ({ "sync",      syncId });
                     if (divId .isNotEmpty()) specs.add ({ "division",  divId });
+                    const auto bypassId = GraphNodeRegistry::bypassParameterIdFor (nodeId);
+                    if (bypassId.isNotEmpty()) specs.add ({ "bypass", bypassId });
                 }
         else if (baseId == "hold")
         {
@@ -117,6 +119,8 @@ namespace
                 const auto id = GraphNodeRegistry::adsrParameterIdFor (nodeId, which);
                 if (id.isNotEmpty()) specs.add ({ juce::String (which).toLowerCase(), id });
             }
+            const auto bypassId = GraphNodeRegistry::bypassParameterIdFor (nodeId);
+            if (bypassId.isNotEmpty()) specs.add ({ "bypass", bypassId });
         }
         else if (baseId == "fadsr")
         {
@@ -125,11 +129,15 @@ namespace
                 const auto id = GraphNodeRegistry::fAdsrParameterIdFor (nodeId, which);
                 if (id.isNotEmpty()) specs.add ({ juce::String (which).toLowerCase(), id });
             }
+            const auto bypassId = GraphNodeRegistry::bypassParameterIdFor (nodeId);
+            if (bypassId.isNotEmpty()) specs.add ({ "bypass", bypassId });
         }
         else if (baseId == "gain")
         {
             const auto factorId = GraphNodeRegistry::gainParameterIdFor (nodeId);
             if (factorId.isNotEmpty()) specs.add ({ "factor", factorId });
+            const auto bypassId = GraphNodeRegistry::bypassParameterIdFor (nodeId);
+            if (bypassId.isNotEmpty()) specs.add ({ "bypass", bypassId });
         }
         else if (baseId == "shape")
         {
@@ -137,6 +145,8 @@ namespace
             const auto shapeId = GraphNodeRegistry::shapeParameterIdFor (nodeId);
             if (driveId.isNotEmpty()) specs.add ({ "drive", driveId });
             if (shapeId.isNotEmpty()) specs.add ({ "shape", shapeId });
+            const auto bypassId = GraphNodeRegistry::bypassParameterIdFor (nodeId);
+            if (bypassId.isNotEmpty()) specs.add ({ "bypass", bypassId });
         }
         else if (baseId == "filter")
         {

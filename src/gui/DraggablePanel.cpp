@@ -99,6 +99,11 @@ DraggableComponent* DraggablePanel::addNodeOfType (const juce::String& baseId,
     // hidden until updateVisibilityFromConnections() proves they're needed.
     raw->setVisible (makeVisible);
 
+    // Optional bypass: signal/fq processors declare a "<base><N>Bypass"
+    // template; this wires it to the title-bar bypass icon.  Every other type
+    // gets an empty id back, so those nodes keep a plain title bar.
+    raw->setBypassParameter (apvts, smolfm::GraphNodeRegistry::bypassParameterIdFor (instanceId));
+
     // Attach the pins declared by this node's spec.  Side hints (L/R
     // badges) come from the spec and are display-only.
     auto sideFor = [] (const std::vector<smolfm::ChannelSide>& sides, int index)

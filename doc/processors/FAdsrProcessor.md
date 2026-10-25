@@ -34,6 +34,7 @@ Tabelle 1c: Daraus folgende echte Parameter (APVTS).
 | Release | `fadsr<N>Release` | Float, 0.001–10 s | Rückkehr der Tonhöhe nach Note-Off — wie lang das Pitch-Nachzirpen anhält. | `std::atomic<float>* release` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
 | Up Factor | `fadsr<N>Up` | Float 0–10 oder Intervallname (Name resolviert auf die exakte Ratio, z. B. `octave_up` = 2; Rechtsklick auf den Regler wählt einen Namen aus), Default 1 | Faktor am Kurvenscheitel (E = 1): wie weit der Ton über der Spielpitch schwingt (Pitch-Bling). | `std::atomic<float>* up` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
 | Down Factor | `fadsr<N>Down` | Float 0–10 oder Intervallname (Name resolviert auf die exakte Ratio, z. B. `fifth_down` ≈ 0.667420; Rechtsklick auf den Regler wählt einen Namen aus), Default 1 | Faktor am Kurvenfuß (E = 0): Startpunkt der Bewegung; 0 lässt den Ton erst stillstehen und beim Attack zur Spielpitch hinaufgleiten (umgekehrter Pitch-Drop). | `std::atomic<float>* down` | [src/processors/FAdsrProcessor.h](../../src/processors/FAdsrProcessor.h) |
+| Bypass | `fadsr<N>Bypass` | Bool, Default aus | Bypass-Hahn: 1 = die durchgelassene Frequenz ist Bit für Bit die Eingangsfrequenz (neutraler Durchlass); die Pitch-Envelope-Phase bleibt eingefroren, Un-Bypass setzt sie exakt fort. Während des Bypass zählt der Node für die Voice-Lebenszeit-Politik als nicht klingend (isActive ehrlich). | `std::atomic<float>*` via `Processor::setBypassParam` | [src/processors/Processor.h](../../src/processors/Processor.h) |
 
 `<N>` = Instanzindex 0–3.
 
@@ -42,6 +43,7 @@ Tabelle 1c: Daraus folgende echte Parameter (APVTS).
 | UI-Funktion | Bedeutung | UI-Symbol | Datei |
 |---|---|---|---|
 | Pitch-Envelope-Vorschau | Zeichnet die ADSR-Kurve aus den vier Timing-Slidern (linearer Attack, exponentieller Decay/Release via `quadraticTo`); Repaint bei Slider-Drag | `FAdsrComponent::CurveDisplay::paint` | [src/gui/components/FAdsrComponent.cpp](../../src/gui/components/FAdsrComponent.cpp) |
+| Bypass-Schalter | „Bypass": Ausgang = Eingangsfrequenz neutral, Phase eingefroren | `DraggableComponent::bypassButton` — ⊘-Icon links oben in der Node-Titel-Leiste; engagiert = Node ausgegraut | [src/gui/DraggableComponent.cpp](../../src/gui/DraggableComponent.cpp) |
 | *(Rest wie gehabt)* | sechs Rotary-Slider (A/D/S/R + Up/Down) | `FAdsrComponent::attackSlider` u. a. | [src/gui/components/FAdsrComponent.h](../../src/gui/components/FAdsrComponent.h) |
 
 ## Abschnitt 3 — Mathematische Beschreibung

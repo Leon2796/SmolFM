@@ -30,6 +30,7 @@ Tabelle 1c: Daraus folgende echte Parameter (APVTS).
 | Decay | `adsr<N>Decay` | Float, 0.001–5 s | Zeit, in der der Pegel vom Peak auf den Sustain-Halt zurückfällt — der „Nachfall" direkt hinter dem Einschlag. | `std::atomic<float>* decay` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
 | Sustain | `adsr<N>Sustain` | Float, 0–1 | Halt-Pegel, solange die Note klingt: 1 = volle Lautheit bis zum Loslassen, 0 = der Ton verklingt schon während des Decay. | `std::atomic<float>* sustain` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
 | Release | `adsr<N>Release` | Float, 0.001–10 s | Ausblendzeit nach Note-Off — wie lange der Ton hinter der losgelassenen Note noch nachhallt. | `std::atomic<float>* release` | [src/processors/AdsrProcessor.h](../../src/processors/AdsrProcessor.h) |
+| Bypass | `adsr<N>Bypass` | Bool, Default aus | Bypass-Hahn: 1 = das Tor steht ganz offen — Ausgang ist Bit für Bit der Eingang; die Envelope-Phase bleibt eingefroren (kein getNextSample), Un-Bypass setzt sie exakt fort. Während des Bypass gilt der Node für die Voice-Lebenszeit-Politik als nicht mehr klingend (ehrliches isActive). | `std::atomic<float>*` via `Processor::setBypassParam` | [src/processors/Processor.h](../../src/processors/Processor.h) |
 
 `<N>` = Instanzindex 0–3.
 
@@ -39,6 +40,7 @@ Tabelle 1c: Daraus folgende echte Parameter (APVTS).
 |---|---|---|---|
 | Envelope-Vorschau | Zeichnet die ADSR-Kurve aus den vier Slider-Werten; die vier Phasen teilen sich die Breite anteilig nach Dauer (linearer Attack, exponentieller Decay/Release via `quadraticTo`); Repaint bei jedem Slider-Drag | `AdsrPanel::CurveDisplay::paint` | [src/gui/components/AdsrPanel.cpp](../../src/gui/components/AdsrPanel.cpp) |
 | Kurven-Refresh | `Slider::Listener` des Panels löst `curveDisplay.repaint()` bei Wertänderung aus | `AdsrPanel::sliderValueChanged` | [src/gui/components/AdsrPanel.cpp](../../src/gui/components/AdsrPanel.cpp) |
+| Bypass-Schalter | „Bypass": Ausgang = Eingang neutral, Envelope-Phase eingefroren | `DraggableComponent::bypassButton` — ⊘-Icon links oben in der Node-Titel-Leiste; engagiert = Node ausgegraut | [src/gui/DraggableComponent.cpp](../../src/gui/DraggableComponent.cpp) |
 | *(Rest wie gehabt)* | vier Rotary-Slider (A/D/S/R) | `AdsrPanel::attackSlider` u. a. | [src/gui/components/AdsrPanel.h](../../src/gui/components/AdsrPanel.h) |
 
 ## Abschnitt 3 — Mathematische Beschreibung

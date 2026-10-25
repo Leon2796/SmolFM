@@ -56,6 +56,17 @@ void FAdsrProcessor::startNote()
 StereoFrame FAdsrProcessor::processSample()
 {
     const float sourceFrequency = freqInput.getSample().l;
+
+    // Bypass: pass the frequency through neutrally and skip the envelope
+    // update — the phase stays frozen (state remembered), so un-bypassing
+    // resumes the pitch envelope exactly where it left off.
+    if (isBypassed())
+    {
+        const StereoFrame passthrough = StereoFrame::centered (sourceFrequency);
+        output.setSample (passthrough);
+        return passthrough;
+    }
+
     const float env = envelope.getNextSample();
 
     // Velocity (accent depth): the connected vel input's stereo mean (0-1)
@@ -97,7 +108,9 @@ void FAdsrProcessor::reset() noexcept
 
 bool FAdsrProcessor::isActive() const noexcept
 {
-    return envelope.isActive();
+    // Honest to the voice lifetime policy while bypassed (see AdsrProcessor):
+    // the frozen envelope must not park the voice on its own.
+    return envelope.isActive() && ! isBypassed();
 }
 
 } // namespace smolfm

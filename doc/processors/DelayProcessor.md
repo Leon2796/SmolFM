@@ -30,6 +30,7 @@ Tabelle 1c: Daraus folgende echte Parameter (APVTS).
 | Mix | `delay<N>Mix` | Float 0–1, Default 0.3 | Mischhebel zwischen trockenem Original (0) und reinem Echo (1) — wie viel „Ferne" im Klang sitzt. | `std::atomic<float>* mix` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
 | Sync | `delay<N>SyncMode` | Bool, Default false | Schnürung der Echozeit an das Host-Tempo statt an freie Millisekunden — die Echos sitzen auf dem Takt statt einer Stoppuhr. | `std::atomic<float>* syncMode` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
 | Division | `delay<N>Division` | Choice 0–3 (1/2, 1/4, 1/8, 1/16), Default 1 | Der Taktanteil im Sync-Modus — von breiten Halben bis zum rastlosen Sechzehntel-Echo. | `std::atomic<float>* division` | [src/processors/DelayProcessor.h](../../src/processors/DelayProcessor.h) |
+| Bypass | `delay<N>Bypass` | Bool, Default aus | Bypass-Hahn: 1 = trockener Durchlass (Echo/Feedback/Mix pausieren); die Delay-Zeile (Schreibzeiger + Inhalt) friert ein — der Schwanz bleibt exakt liegen. Nur die Schwanz-Schätzung `tailPeak` klingt langsam ab, damit die Voice-Lebenszeit enden kann; Un-Bypass setzt die Zeile exakt dort fort. | `std::atomic<float>*` via `Processor::setBypassParam` | [src/processors/Processor.h](../../src/processors/Processor.h) |
 
 Der Prozessor benötigt zusätzlich den aktuellen Host-BPM, der über
 `setHostTempo(double)` vom `AudioPluginAudioProcessor` (via `getPlayHead`)
@@ -40,6 +41,7 @@ und `SynthVoice::setHostTempo` eingeschleust wird.
 | UI-Funktion | Bedeutung | UI-Symbol | Datei |
 |---|---|---|---|
 | Host-Sync Toggle | Wechselt zwischen freiem ms-Wert und BPM-abhängiger Notendivision; deaktiviert das Time-Textfeld im Sync-Modus | `DelayComponent::syncButton` | [src/gui/components/DelayComponent.cpp](../../src/gui/components/DelayComponent.cpp) |
+| Bypass-Schalter | „Bypass": Ausgang = Eingang neutral, Delay-Zeile eingefroren | `DraggableComponent::bypassButton` — ⊘-Icon links oben in der Node-Titel-Leiste; engagiert = Node ausgegraut | [src/gui/DraggableComponent.cpp](../../src/gui/DraggableComponent.cpp) |
 | Effektivwert-Anzeige (Ghost-Needle/Band) am Time-Regler | zeigt bei Tastendruck die wirksame Verzögerungszeit in ms — Statischer Reglerwert skaliert über `time_mod_in` plus Puffer-Deckel; im Sync-Modus die BPM-berechnete Zeit (die Nadel deckt beide Modi auf derselben ms-Skala ab; Telemetrie: Min/Max-Fenster ≈ 5 ms, die Nadel folgt dem Fensterband mit Pendel-Ballistik) | `DelayComponent::timeOverlay` (Typ `ModIndicatorOverlay`, Quelle `DelayProcessor::getEffectiveTimeMsRange`) | [src/gui/components/ModIndicatorOverlay.h](../../src/gui/components/ModIndicatorOverlay.h) |
 
 ## Abschnitt 3 — Mathematische Beschreibung

@@ -75,6 +75,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 "Sustain");
         voiceParameters.adsrRelease[static_cast<size_t> (i)] = parameters.getRawParameterValue ("adsr" + num + 
 "Release");
+        voiceParameters.adsrBypass  [static_cast<size_t> (i)] = parameters.getRawParameterValue ("adsr" + num + "Bypass");
     }
 
         for (int i = 0; i < smolfm::GraphNodeRegistry::maxFAdsr; ++i)
@@ -87,12 +88,14 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
         voiceParameters.fAdsrRelease[static_cast<size_t> (i)] = parameters.getRawParameterValue ("fadsr" + num + "Release");
         voiceParameters.fAdsrUp     [static_cast<size_t> (i)] = parameters.getRawParameterValue ("fadsr" + num + "Up");
         voiceParameters.fAdsrDown   [static_cast<size_t> (i)] = parameters.getRawParameterValue ("fadsr" + num + "Down");
+        voiceParameters.fAdsrBypass [static_cast<size_t> (i)] = parameters.getRawParameterValue ("fadsr" + num + "Bypass");
     }
 
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxGains; ++i)
     {
         const juce::String num (i);
         voiceParameters.gainFactor[static_cast<size_t> (i)] = parameters.getRawParameterValue ("gain" + num + "Factor");
+        voiceParameters.gainBypass[static_cast<size_t> (i)] = parameters.getRawParameterValue ("gain" + num + "Bypass");
     }
 
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxWaveshapers; ++i)
@@ -100,6 +103,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
         const juce::String num (i);
         voiceParameters.shaperDrive[static_cast<size_t> (i)] = parameters.getRawParameterValue ("shape" + num + "Drive");
         voiceParameters.shaperShape[static_cast<size_t> (i)] = parameters.getRawParameterValue ("shape" + num + "Shape");
+        voiceParameters.shaperBypass[static_cast<size_t> (i)] = parameters.getRawParameterValue ("shape" + num + "Bypass");
     }
 
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxFilters; ++i)
@@ -108,6 +112,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
         voiceParameters.filterCutoff   [static_cast<size_t> (i)] = parameters.getRawParameterValue ("filter" + num + "Cutoff");
         voiceParameters.filterResonance[static_cast<size_t> (i)] = parameters.getRawParameterValue ("filter" + num + "Resonance");
         voiceParameters.filterMode     [static_cast<size_t> (i)] = parameters.getRawParameterValue ("filter" + num + "Mode");
+        voiceParameters.filterBypass   [static_cast<size_t> (i)] = parameters.getRawParameterValue ("filter" + num + "Bypass");
     }
 
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxAmModulators; ++i)
@@ -124,6 +129,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
         voiceParameters.delayMix     [static_cast<size_t> (i)] = parameters.getRawParameterValue ("delay" + num + "Mix");
         voiceParameters.delaySync    [static_cast<size_t> (i)] = parameters.getRawParameterValue ("delay" + num + "SyncMode");
         voiceParameters.delayDivision[static_cast<size_t> (i)] = parameters.getRawParameterValue ("delay" + num + "Division");
+        voiceParameters.delayBypass  [static_cast<size_t> (i)] = parameters.getRawParameterValue ("delay" + num + "Bypass");
     }
 
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxSampleHolds; ++i)
@@ -515,6 +521,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "adsr" + num + "Release", "ADSR " + num + " Release",
             juce::NormalisableRange<float> (0.001f, 10.0f, 0.001f, 0.5f), 0.5f));
+
+        layout.add (std::make_unique<juce::AudioParameterBool> (
+            "adsr" + num + "Bypass", "ADSR " + num + " Bypass", false));
     }
 
     // -- F-ADSR pitch-envelope pool ----------------------------------------
@@ -548,6 +557,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "fadsr" + num + "Down", "F-ADSR " + num + " Down Factor",
             juce::NormalisableRange<float> (0.0f, 10.0f), 1.0f));
+
+        layout.add (std::make_unique<juce::AudioParameterBool> (
+            "fadsr" + num + "Bypass", "F-ADSR " + num + " Bypass", false));
     }
 
     // -- Gain pool ----------------------------------------------------------
@@ -593,6 +605,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "gain" + num + "Factor", "Gain " + num + " Factor",
             gainRange, 1.0f));
+
+        layout.add (std::make_unique<juce::AudioParameterBool> (
+            "gain" + num + "Bypass", "Gain " + num + " Bypass", false));
     }
 
     // -- Waveshaper pool ----------------------------------------------------
@@ -610,6 +625,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         layout.add (std::make_unique<juce::AudioParameterChoice> (
             "shape" + num + "Shape", "Waveshaper " + num + " Shape",
             juce::StringArray { "Soft", "Hard", "Fold", "Quantize" }, 0));
+
+        layout.add (std::make_unique<juce::AudioParameterBool> (
+            "shape" + num + "Bypass", "Waveshaper " + num + " Bypass", false));
     }
 
     // -- Filter pool --------------------------------------------------------
@@ -631,6 +649,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         layout.add (std::make_unique<juce::AudioParameterChoice> (
             "filter" + num + "Mode", "Filter " + num + " Mode",
             juce::StringArray { "LP", "BP", "HP", "Notch", "AP" }, 0));
+
+        layout.add (std::make_unique<juce::AudioParameterBool> (
+            "filter" + num + "Bypass", "Filter " + num + " Bypass", false));
     }
 
         // -- AM modulator pool ------------------------------------------------------
@@ -669,6 +690,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         layout.add (std::make_unique<juce::AudioParameterChoice> (
             "delay" + num + "Division", "Delay " + num + " Division",
             juce::StringArray { "1/2", "1/4", "1/8", "1/16" }, 1));
+
+        layout.add (std::make_unique<juce::AudioParameterBool> (
+            "delay" + num + "Bypass", "Delay " + num + " Bypass", false));
     }
 
     // -- Sample-hold pool ------------------------------------------------------

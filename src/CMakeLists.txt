@@ -110,6 +110,7 @@ add_executable(SmolFM_GraphTests
     processors/GainProcessor.cpp
     processors/WaveshaperProcessor.cpp
     processors/FilterProcessor.cpp
+    processors/DelayProcessor.cpp
     processors/SampleHoldProcessor.cpp
     processors/SplitterProcessor.cpp
     processors/MergerProcessor.cpp

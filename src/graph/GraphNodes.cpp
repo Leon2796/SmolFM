@@ -188,6 +188,7 @@ namespace
             delay.mixParameterTemplate      = "delay%Mix";
             delay.syncParameterTemplate     = "delay%SyncMode";
             delay.divisionParameterTemplate = "delay%Division";
+            delay.bypassParameterTemplate   = "delay%Bypass";
             specs.push_back (delay);
         }
         {
@@ -219,6 +220,7 @@ namespace
             adsr.inputTypes = { PortType::signal };
 
             adsr.adsrParameterTemplate = "adsr%";
+            adsr.bypassParameterTemplate = "adsr%Bypass";
 
             specs.push_back (adsr);
 
@@ -240,6 +242,7 @@ namespace
             fadsr.inputTypes = { PortType::frequency, PortType::velocity };
 
             fadsr.fAdsrParameterTemplate = "fadsr%";
+            fadsr.bypassParameterTemplate = "fadsr%Bypass";
 
             specs.push_back (fadsr);
 
@@ -264,6 +267,7 @@ namespace
             // createParameterLayout(), SynthVoice and the .smolfm loaders —
             // a drift here leaves the knob unattached (shows 0, drags no audio).
             gain.gainParameterTemplate = "gain%Factor";
+            gain.bypassParameterTemplate = "gain%Bypass";
 
             specs.push_back (gain);
 
@@ -285,6 +289,7 @@ namespace
             shaper.inputTypes = { PortType::signal, PortType::signal, PortType::velocity };
 
             shaper.driveParameterTemplate = "shape%";
+            shaper.bypassParameterTemplate = "shape%Bypass";
 
             specs.push_back (shaper);
 
@@ -308,6 +313,7 @@ namespace
             filt.cutoffParameterTemplate = "filter%Cutoff";
 
             filt.resonanceParameterTemplate = "filter%Resonance";
+            filt.bypassParameterTemplate = "filter%Bypass";
 
             specs.push_back (filt);
 
@@ -781,6 +787,24 @@ juce::String GraphNodeRegistry::gainParameterIdFor (const juce::String& nodeId)
 
 
     return withIndex (spec->gainParameterTemplate, indexOf (nodeId));
+
+}
+
+
+
+juce::String GraphNodeRegistry::bypassParameterIdFor (const juce::String& nodeId)
+
+{
+
+    const NodeSpec* spec = findSpec (baseIdOf (nodeId));
+
+    if (spec == nullptr || spec->bypassParameterTemplate.isEmpty())
+
+        return {};
+
+
+
+    return withIndex (spec->bypassParameterTemplate, indexOf (nodeId));
 
 }
 

@@ -5,6 +5,7 @@
 #include "DraggableComponent.h"
 #include "PinComponent.h"
 #include "DraggablePanel.h"
+#include "IconButton.h"
 
 namespace gui
 {
@@ -47,9 +48,14 @@ void DraggableComponent::paint (juce::Graphics& g)
     g.setColour (getLookAndFeel().findColour (juce::Slider::textBoxOutlineColourId));
     g.drawRect (getLocalBounds(), 1);
 
+    // A wired bypass icon occupies the left corner of the title bar; the
+    // title starts right of it.  Unwired nodes keep the original margin.
+    const int titleLeft = bypassButton != nullptr ? titleBarHeight + 4 : 6;
+
     g.setColour (juce::Colours::black);
     g.setFont (titleBarHeight - 6.0f);
-    g.drawText (title, 6, 0, getWidth() - 12, titleBarHeight, juce::Justification::centredLeft, true);
+    g.drawText (title, titleLeft, 0, getWidth() - titleLeft - 6, titleBarHeight,
+                juce::Justification::centredLeft, true);
 
     // Multi-select marker: bright frame around the whole box.
     if (selected)
@@ -66,8 +72,12 @@ void DraggableComponent::resized()
                         getWidth() - 2 * contentPadding,
                         getHeight() - titleBarHeight - 2 * contentPadding);
 
-    // Keep the little close × parked in the top-right corner of the title bar.
+    // Keep the little close × parked in the top-right corner of the title
+    // bar; the bypass icon (when wired) mirrors it at the top-left.
     closeButton.setBounds (getWidth() - titleBarHeight, 0, titleBarHeight, titleBarHeight);
+
+    if (bypassButton != nullptr)
+        bypassButton->setBounds (0, 0, titleBarHeight, titleBarHeight);
 
     layoutPins();
 }
@@ -237,6 +247,46 @@ void DraggableComponent::setSelected (bool shouldBeSelected)
 
     selected = shouldBeSelected;
     repaint();
+}
+
+void DraggableComponent::setBypassParameter (juce::AudioProcessorValueTreeState& apvts,
+                                             const juce::String& bypassParameterId)
+{
+    if (bypassParameterId.isEmpty())
+        return;                    // node type without a bypass option
+
+    auto* parameter = apvts.getParameter (bypassParameterId);
+    jassert (parameter != nullptr); // spec promises the param, layout must deliver it
+    if (parameter == nullptr)
+        return;
+
+    bypassButton.reset (new IconButton (icons::bypassGlyph(),
+                                        "Bypass this node (signal passes through, DSP state stays frozen)"));
+    bypassButton->setClickingTogglesState (true);
+    addAndMakeVisible (*bypassButton);
+    bypassButton->addListener (this);
+
+    bypassAttachment.reset (new juce::AudioProcessorValueTreeState::ButtonAttachment (apvts, bypassParameterId, *bypassButton));
+
+    resized();   // position the icon
+    repaint();   // shift the title right
+}
+
+void DraggableComponent::paintOverChildren (juce::Graphics& g)
+{
+    // Bypassed: grey out the whole node (title bar, content and pins) so the
+    // frozen passthrough state reads at a glance.  Paint-only overlay — the
+    // children stay active, the bypass icon remains clickable through it.
+    if (bypassButton != nullptr && bypassButton->getToggleState())
+        g.fillAll (juce::Colours::grey.withAlpha (0.45f));
+}
+
+void DraggableComponent::buttonStateChanged (juce::Button* button)
+{
+    // The icon's toggle state can flip from outside this component (host
+    // automation, loaded patch) — keep overlay and icon colouring in sync.
+    if (button == bypassButton.get())
+        repaint();
 }
 
 juce::Rectangle<int> DraggableComponent::getPreferredSize() const noexcept

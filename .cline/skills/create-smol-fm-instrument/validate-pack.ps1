@@ -34,6 +34,7 @@ $Range=@{
   'fadsr.up'=0,10;'fadsr.down'=0,10;'gain.factor'=0,10;'shape.drive'=0,1
   'filter.cutoff'=20,20000;'filter.resonance'=0,1;'delay.time'=1,2000;'am.amount'=0,1
   'delay.feedback'=0,0.95;'delay.mix'=0,1;'output.level'=0,1
+  'adsr.bypass'=0,1;'fadsr.bypass'=0,1;'gain.bypass'=0,1;'shape.bypass'=0,1;'filter.bypass'=0,1;'delay.bypass'=0,1
   'resonator.tune'=20,8000;'resonator.q'=0,1;'resonator.decay'=0.01,10;'resonator.spread'=0.25,4;'resonator.strikelevel'=0,2;'resonator.striketime'=0,0.2;'feedback.amount'=0,0.95;'vsc.scale'=0.25,4
 }
 # fadsr up/down additionally accept the interval names as the factor (exact-

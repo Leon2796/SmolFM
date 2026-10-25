@@ -544,6 +544,43 @@ int main()
         CHECK (h.parameters["division"] == 1.0f);
     }
 
+    // bypass (gain/shape/filter/adsr/fadsr/delay): plain 0/1 number, written
+    // by SmolFmFile::save as a number (enumValueText has no bypass branch);
+    // both flavours' whitelists accept it.
+    CHECK (enumValueText ("bypass", "gain", 1.0f) == "1");   // writer stays numeric
+    CHECK (enumValueText ("bypass", "delay", 0.0f) == "0");
+    const auto bypassXml = writeTemp ("bypass_node.smolfm",
+        "<SmolFM version=\"3\" name=\"BypassDemo\">\n"
+        "  <Graph>\n"
+        "    <Nodes>\n"
+        "      <Node id=\"gain0\" factor=\"2\" bypass=\"1\"/>\n"
+        "      <Node id=\"delay0\" time=\"250\" bypass=\"0\"/>\n"
+        "    </Nodes>\n"
+        "  </Graph>\n"
+        "</SmolFM>\n");
+    const auto bypassYaml = writeTemp ("bypass_node.yaml.smolfm",
+        "version: \"3\"\n"
+        "name: \"BypassDemo\"\n"
+        "graph:\n"
+        "  nodes:\n"
+        "    - id: \"gain0\"\n"
+        "      factor: 2\n"
+        "      bypass: 1\n"
+        "    - id: \"delay0\"\n"
+        "      time: 250\n"
+        "      bypass: 1\n");
+    SmolFmData bypassXData;
+    CHECK (xmlParser.parse (bypassXml, bypassXData) && bypassXData.nodes.size() == 2);
+    SmolFmData bypassYData;
+    CHECK (yamlParser.parse (bypassYaml, bypassYData) && bypassYData.nodes.size() == 2);
+    if (bypassXData.nodes.size() == 2)
+    {
+        CHECK (bypassXData.nodes[0].parameters["bypass"] == 1.0f);
+        CHECK (bypassXData.nodes[1].parameters["bypass"] == 0.0f);
+    }
+    if (bypassYData.nodes.size() == 2)
+        CHECK (bypassYData.nodes[0].parameters["bypass"] == 1.0f);
+
     if (failures == 0)
         std::cout << "SmolFM_ParserTests: all checks passed\n";
 

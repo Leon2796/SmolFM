@@ -456,6 +456,7 @@ void SynthVoice::buildGraph()
                                                      parameters.adsrSustain[static_cast<size_t> (i)],
                                                      parameters.adsrRelease[static_cast<size_t> (i)]);
         adsrProcessors[static_cast<size_t> (i)] = adsr.get();
+        adsr->setBypassParam (parameters.adsrBypass [static_cast<size_t> (i)]);
         graph.addProcessor (std::move (adsr));
     }
 
@@ -470,6 +471,7 @@ void SynthVoice::buildGraph()
                                                        parameters.fAdsrUp     [static_cast<size_t> (i)],
                                                        parameters.fAdsrDown   [static_cast<size_t> (i)]);
         fAdsrProcessors[static_cast<size_t> (i)] = fadsr.get();
+        fadsr->setBypassParam (parameters.fAdsrBypass [static_cast<size_t> (i)]);
         graph.addProcessor (std::move (fadsr));
     }
 
@@ -533,6 +535,7 @@ void SynthVoice::buildGraph()
                                                            parameters.delaySync    [static_cast<size_t> (i)],
                                                            parameters.delayDivision[static_cast<size_t> (i)]);
             delays[static_cast<size_t> (i)] = delay.get();
+            delay->setBypassParam (parameters.delayBypass [static_cast<size_t> (i)]);
             graph.addProcessor (std::move (delay));
         }
 
@@ -541,6 +544,7 @@ void SynthVoice::buildGraph()
         {
             auto g = std::make_unique<GainProcessor> (parameters.gainFactor[static_cast<size_t> (i)]);
             gainProcessors[static_cast<size_t> (i)] = g.get();
+            g->setBypassParam (parameters.gainBypass [static_cast<size_t> (i)]);
             graph.addProcessor (std::move (g));
         }
 
@@ -550,6 +554,7 @@ void SynthVoice::buildGraph()
             auto ws = std::make_unique<WaveshaperProcessor> (parameters.shaperDrive [static_cast<size_t> (i)],
                                                              parameters.shaperShape[static_cast<size_t> (i)]);
             waveshapers[static_cast<size_t> (i)] = ws.get();
+            ws->setBypassParam (parameters.shaperBypass [static_cast<size_t> (i)]);
             graph.addProcessor (std::move (ws));
         }
 
@@ -561,6 +566,7 @@ void SynthVoice::buildGraph()
                                                         parameters.filterResonance[static_cast<size_t> (i)],
                                                         parameters.filterMode     [static_cast<size_t> (i)]);
             filters[static_cast<size_t> (i)] = f.get();
+            f->setBypassParam (parameters.filterBypass [static_cast<size_t> (i)]);
             graph.addProcessor (std::move (f));
         }
 
