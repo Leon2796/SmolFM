@@ -11,6 +11,10 @@
 
 #include <juce_core/juce_core.h>
 
+// Interval name -> exact 12-TET ratio (single source of truth: the same table
+// the DSP reads; fadsr up="octave_up" must parse to 2.0, not to an index).
+#include "../processors/FrequencyScaleProcessor.h"
+
 #include <map>
 #include <vector>
 
@@ -135,6 +139,13 @@ inline float enumOrNumber (const juce::String& key, const juce::String& baseId, 
     if (k == "sync"     && baseId == "hold")   { const int i = syncNames().indexOf (name, true);        if (i >= 0) return (float) i; }
     if (k == "division" && baseId == "hold")   { const int i = divisionNames().indexOf (name, true);    if (i >= 0) return (float) i; }
     if (k == "interval" && baseId == "fscale") { const int i = fscaleIntervalNames().indexOf (name, true); if (i >= 0) return (float) i; }
+    // fadsr up/down: the interval names denote the frequency factor itself
+    // (name -> choice index -> exact 12-TET ratio), never the choice index.
+    if ((k == "up" || k == "down") && baseId == "fadsr")
+    {
+        const int i = fscaleIntervalNames().indexOf (name, true);
+        if (i >= 0) return fscaleIntervalRatioFromIndex (i);
+    }
     if (k == "curve"    && baseId == "vsc")    { const int i = vscCurveNames().indexOf (name, true);      if (i >= 0) return (float) i; }
 
     return name.getFloatValue();

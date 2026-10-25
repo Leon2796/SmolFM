@@ -54,8 +54,8 @@ namespace
         else if (line.startsWith ("decay:"))      node.parameters["decay"]      = value.getFloatValue();
         else if (line.startsWith ("sustain:"))    node.parameters["sustain"]    = value.getFloatValue();
         else if (line.startsWith ("release:"))    node.parameters["release"]    = value.getFloatValue();
-        else if (line.startsWith ("up:"))         node.parameters["up"]         = value.getFloatValue();
-        else if (line.startsWith ("down:"))       node.parameters["down"]       = value.getFloatValue();
+        else if (line.startsWith ("up:"))         node.parameters["up"]         = enumOrNumber ("up",   prefix, value);
+        else if (line.startsWith ("down:"))       node.parameters["down"]       = enumOrNumber ("down", prefix, value);
         else if (line.startsWith ("factor:"))     node.parameters["factor"]     = value.getFloatValue();
         else if (line.startsWith ("amount:"))     node.parameters["amount"]     = value.getFloatValue();
         else if (line.startsWith ("drive:"))      node.parameters["drive"]      = value.getFloatValue();

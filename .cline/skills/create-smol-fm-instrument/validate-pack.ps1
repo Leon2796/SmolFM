@@ -36,6 +36,9 @@ $Range=@{
   'delay.feedback'=0,0.95;'delay.mix'=0,1;'output.level'=0,1
   'resonator.tune'=20,8000;'resonator.q'=0,1;'resonator.decay'=0.01,10;'resonator.spread'=0.25,4;'resonator.strikelevel'=0,2;'resonator.striketime'=0,0.2;'feedback.amount'=0,0.95;'vsc.scale'=0.25,4
 }
+# fadsr up/down additionally accept the interval names as the factor (exact-
+# ratio shortcut, see enumOrNumber in ISmolFmParser.h); bare numbers stay valid.
+$IntervalNames=@('none','octave_up','octave_down','fifth_up','fifth_down','fourth_up','fourth_down','minor_third_up','major_third_up','semitone_up','semitone_down')
 $Enums=@{
   'osc.waveform'=@('sine','saw','square','triangle','noise','perlin','simplex');'osc.mode'=@('pitch','static','lfo')
   'shape.shape'=@('soft','hard','fold');'filter.mode'=@('lp','bp','hp','notch')
@@ -61,7 +64,9 @@ foreach ($f in $files)
     foreach ($attr in $n.Attributes) { if ($attr.Name -eq 'id') { continue }
       $key="$b.$($attr.Name)"
       if ($Range.ContainsKey($key)) { $v=0.0
-        if (-not [double]::TryParse($attr.Value, [System.Globalization.NumberStyles]::Float, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$v)) { $errs+="bad number: $($n.id) $($attr.Name)" }
+        if (-not [double]::TryParse($attr.Value, [System.Globalization.NumberStyles]::Float, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$v)) {
+          if (-not ($b -eq 'fadsr' -and ($attr.Name -eq 'up' -or $attr.Name -eq 'down') -and ($IntervalNames -contains $attr.Value))) { $errs+="bad number: $($n.id) $($attr.Name)" }
+        }
         elseif ($v -lt $Range[$key][0] -or $v -gt $Range[$key][1]) { $errs+="range: $($n.id) $($attr.Name)=$v" }
       } elseif ($Enums.ContainsKey($key)) { if ($Enums[$key] -notcontains $attr.Value) { $errs+="enum: $($n.id) $($attr.Name)=$($attr.Value)" } }
       else { $errs+="unknown attr: $($n.id) $($attr.Name)" }

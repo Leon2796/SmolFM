@@ -31,6 +31,7 @@ public:
     ~FAdsrComponent() override;
 
     void resized() override;
+    void mouseDown (const juce::MouseEvent& e) override;
 
 private:
     /** Draws the current ADSR shape from the four timing sliders. */

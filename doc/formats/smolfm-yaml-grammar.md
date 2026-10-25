@@ -94,6 +94,7 @@ layout:
 | `sync` (hold) | off, on |
 | `division` (hold) | half, quarter, eighth, sixteenth |
 | `interval` (fscale) | none, octave_up, octave_down, fifth_up, fifth_down, fourth_up, fourth_down, minor_third_up, major_third_up, semitone_up, semitone_down |
+| `up`, `down` (fadsr) | the same interval names as `interval` (fscale); as a value the name resolves to its exact 12-TET ratio (`none` = 1, `octave_up` = 2, `fifth_down` ≈ 0.667420), never to a choice index |
 
 The names match the APVTS choice order declared in
 `PluginProcessor::createParameterLayout()`.
@@ -132,7 +133,9 @@ for a node type are ignored by the parsers.
 - `attack`, `decay`: float, 0.001..5 s
 - `sustain`: float, 0..1
 - `release`: float, 0.001..10 s
-- `up`, `down`: float, 0..10 (frequency multiplier at E=1 / E=0; default 1)
+- `up`, `down`: float 0..10 (frequency multiplier at E=1 / E=0; default 1) or
+  an interval name from the Enumerations table; the name resolves to its
+  exact ratio (`none` = 1, `octave_up` = 2, `fifth_down` ≈ 0.667420)
 
 ### Gain (gain)
 - `factor`: float, 0..10 (default 1 = unity)

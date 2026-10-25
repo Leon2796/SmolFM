@@ -475,6 +475,17 @@
     </xs:complexContent>
   </xs:complexType>
 
+  <!-- fadsr up/down: free-range factor (0..10) or an interval-name shortcut;
+       the union keeps the numeric legacy spelling valid alongside the names. -->
+  <xs:simpleType name="FAdsrFactorType">
+    <xs:annotation>
+      <xs:appinfo xmlns="urn:smolfm:node-meta">
+        <purpose>Faktor eines fadsr-Ankers (up = E=1, down = E=0): eine Zahl 0-10 (multiplikativer Frequenzfaktor) oder ein Intervallname (FscaleIntervalType); der Name resolviert auf sein exaktes 12-TET-Verhältnis (z. B. octave_up = 2, fifth_down ≈ 0.667420), nie auf einen Index.</purpose>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:union memberTypes="EnvelopeFactorRangeType FscaleIntervalType"/>
+  </xs:simpleType>
+
   <!-- FADSR (fadsr) -->
   <xs:complexType name="FAdsrNodeType">
     <xs:annotation>
@@ -497,8 +508,8 @@
         <xs:attribute name="decay" type="EnvelopeTimeRangeType" use="optional"/>
         <xs:attribute name="sustain" type="EnvelopeSustainRangeType" use="optional"/>
         <xs:attribute name="release" type="EnvelopeReleaseRangeType" use="optional"/>
-        <xs:attribute name="up" type="EnvelopeFactorRangeType" use="optional"/>
-        <xs:attribute name="down" type="EnvelopeFactorRangeType" use="optional"/>
+        <xs:attribute name="up" type="FAdsrFactorType" use="optional"/>
+        <xs:attribute name="down" type="FAdsrFactorType" use="optional"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>

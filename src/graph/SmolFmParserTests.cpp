@@ -466,6 +466,43 @@ int main()
         CHECK (x.parameters["release"] == 0.4f && y.parameters["release"] == 0.4f);
     }
 
+    // fadsr up/down accept the interval NAME as the factor: the name maps to
+    // its exact 12-TET ratio (never the choice index), e.g. octave_up = 2 and
+    // fifth_down = 0.667420 (2^(-7/12)); unknown names fall back to the
+    // numeric parse.  The writer stays numeric (enumValueText has no fadsr
+    // branch), so saving a name-picked value yields "2", not "octave_up".
+    const auto fadsrNamesXml = writeTemp ("fadsr_names.smolfm",
+        "<SmolFM version=\"3\" name=\"FadsrNames\">\n"
+        "  <Graph>\n"
+        "    <Nodes>\n"
+        "      <Node id=\"fadsr0\" up=\"octave_up\" down=\"fifth_down\"/>\n"
+        "    </Nodes>\n"
+        "  </Graph>\n"
+        "</SmolFM>\n");
+    const auto fadsrNamesYaml = writeTemp ("fadsr_names.yaml.smolfm",
+        "version: \"3\"\n"
+        "name: \"FadsrNames\"\n"
+        "graph:\n"
+        "  nodes:\n"
+        "    - id: \"fadsr0\"\n"
+        "      up: octave_up\n"
+        "      down: fifth_down\n");
+    SmolFmData fadsrNamesData;
+    CHECK (xmlParser.parse (fadsrNamesXml, fadsrNamesData) && fadsrNamesData.nodes.size() == 1);
+    SmolFmData fadsrNamesYData;
+    CHECK (yamlParser.parse (fadsrNamesYaml, fadsrNamesYData) && fadsrNamesYData.nodes.size() == 1);
+    if (fadsrNamesData.nodes.size() == 1 && fadsrNamesYData.nodes.size() == 1)
+    {
+        auto& fx = fadsrNamesData.nodes[0];
+        auto& fy = fadsrNamesYData.nodes[0];
+        CHECK (fx.parameters["up"]   == 2.0f      && fy.parameters["up"]   == 2.0f);
+        CHECK (fx.parameters["down"] == 0.667420f && fy.parameters["down"] == 0.667420f);
+    }
+    CHECK (enumOrNumber ("up",   "fadsr", "none")   == 1.0f);  // no shift
+    CHECK (enumOrNumber ("down", "fadsr", "fourth_down") == fscaleIntervalRatioFromIndex (6));
+    CHECK (enumOrNumber ("up",   "fadsr", "bogus") == 0.0f);  // falls back to numeric parse
+    CHECK (enumValueText ("up",   "fadsr", 2.0f) == "2");   // writer stays numeric
+
     // hold: rate float + sync/division enums round-trip through both
     // flavours' whitelists (mirrors the resonator/feedback checks).
     CHECK (enumOrNumber ("sync", "hold", "on") == 1.0f);

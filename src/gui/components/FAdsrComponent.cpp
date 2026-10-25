@@ -4,6 +4,9 @@
 
 #include "FAdsrComponent.h"
 #include "SliderUtils.h"
+// Interval names + exact ratios: fscaleIntervalNames lives in the graph header
+// (ISmolFmParser.h), which pulls in FrequencyScaleProcessor.h for the ratio table.
+#include "../../graph/ISmolFmParser.h"
 
 namespace gui
 {
@@ -95,6 +98,11 @@ FAdsrComponent::FAdsrComponent (juce::AudioProcessorValueTreeState& apvts,
     addAndMakeVisible (releaseSlider);
     addAndMakeVisible (upSlider);
     addAndMakeVisible (downSlider);
+
+    // Right-click on the two factor knobs opens the interval preset menu
+    // (see mouseDown); JUCE's own slider pop-up menu stays off by default.
+    upSlider.addMouseListener (this, false);
+    downSlider.addMouseListener (this, false);
     addAndMakeVisible (curveDisplay);
 
     attackSlider.addListener (this);
@@ -121,6 +129,32 @@ FAdsrComponent::~FAdsrComponent()
 void FAdsrComponent::sliderValueChanged (juce::Slider*)
 {
     curveDisplay.repaint();
+}
+
+/*
+    Right-click on an up/down knob: popup with the 11 interval names; picking
+    one writes its exact 12-TET ratio (fscaleIntervalRatios) as the knob value,
+    sendNotification lets the APVTS attachment forward it to the DSP.
+*/
+void FAdsrComponent::mouseDown (const juce::MouseEvent& e)
+{
+    if (! e.mods.isRightButtonDown())
+        return;
+
+    // The mouse listeners above are attached only to the two factor knobs.
+    juce::Slider* factorSlider = (e.eventComponent == &upSlider ? &upSlider : &downSlider);
+
+    const juce::StringArray names = smolfm::fscaleIntervalNames();
+    juce::PopupMenu menu;
+    for (int i = 0; i < smolfm::numFscaleIntervals; ++i)
+        menu.addItem (i + 1, names[i] + "  (" + juce::String (smolfm::fscaleIntervalRatios[i], 4) + "x)");
+
+    menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (factorSlider),
+        [this, factorSlider] (int result)
+        {
+            if (result > 0)
+                factorSlider->setValue (smolfm::fscaleIntervalRatios[result - 1], juce::sendNotification);
+        });
 }
 
 void FAdsrComponent::CurveDisplay::paint (juce::Graphics& g)
