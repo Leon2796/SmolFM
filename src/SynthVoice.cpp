@@ -416,6 +416,7 @@ void SynthVoice::buildGraph()
                                                           parameters.oscStaticFreq [static_cast<size_t> (i)],
                                                           parameters.oscLfoRate    [static_cast<size_t> (i)]);
         oscillators[static_cast<size_t> (i)] = osc.get();
+        osc->setBypassParam (parameters.oscBypass [static_cast<size_t> (i)]);
         graph.addProcessor (std::move (osc));
     }
 

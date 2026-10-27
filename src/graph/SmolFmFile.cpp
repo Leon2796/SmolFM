@@ -68,6 +68,8 @@ namespace
             if (modeId.isNotEmpty()) specs.add ({ "mode",      modeId });
             if (statId.isNotEmpty()) specs.add ({ "staticfreq", statId });
             if (rateId.isNotEmpty()) specs.add ({ "lforate",   rateId });
+            const auto bypassId = GraphNodeRegistry::bypassParameterIdFor (nodeId);
+            if (bypassId.isNotEmpty()) specs.add ({ "bypass",  bypassId });
         }
                 else if (baseId == "fm" || baseId == "am")
                 {
@@ -156,6 +158,11 @@ namespace
             if (cutoffId.isNotEmpty()) specs.add ({ "cutoff", cutoffId });
             if (resId.isNotEmpty())    specs.add ({ "resonance", resId });
             if (modeId.isNotEmpty())   specs.add ({ "mode", modeId });
+            // filter.bypass is declared by the xsd and allowed by
+            // validate-pack — without this spec it was silently dropped on
+            // save AND load (the whitelist route is the only persistence).
+            const auto bypassId = GraphNodeRegistry::bypassParameterIdFor (nodeId);
+            if (bypassId.isNotEmpty()) specs.add ({ "bypass", bypassId });
         }
         else if (baseId == "output")
         {

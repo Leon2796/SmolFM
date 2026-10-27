@@ -72,10 +72,11 @@
     </xs:restriction>
   </xs:simpleType>
 
-  <!-- Bypass toggle (gain/shape/filter/adsr/fadsr/delay): 1 = neutral
+  <!-- Bypass toggle (gain/shape/filter/osc/adsr/fadsr/delay): 1 = neutral
        passthrough; the processor's internal state is remembered (frozen:
-       delay line, envelope phase, filter integrators) and un-bypassing
-       resumes where it left off.  SmolFmFile::save writes 0/1. -->
+       delay line, envelope phase, filter integrators, oscillator phase) and
+       un-bypassing resumes where it left off.  A bypassed osc, having no
+       input frame, silences its output instead.  SmolFmFile::save writes 0/1. -->
   <xs:simpleType name="BypassType">
     <xs:restriction base="xs:integer">
       <xs:minInclusive value="0"/>
@@ -378,6 +379,7 @@
         <xs:attribute name="mode" type="OscModeType" use="optional"/>
         <xs:attribute name="staticfreq" type="StaticFreqRangeType" use="optional"/>
         <xs:attribute name="lforate" type="LfoRateRangeType" use="optional"/>
+        <xs:attribute name="bypass" type="BypassType" use="optional"/>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>

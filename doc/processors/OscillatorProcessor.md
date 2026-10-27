@@ -29,6 +29,7 @@ Tabelle 1c: Daraus folgende echte Parameter (APVTS).
 | Modus | `osc<N>Mode` | Choice: Pitch/Static/LFO, Default Pitch | Wem die Frequenz gehört: der Note-/FM-Kette (Pitch — der übliche Carrier), dem eigenen Hz-Regler (Static — feststehende Tonquelle) oder dem langsamen Pendel (LFO — feste Modulationsquelle für Effekt-Ports, z. B. Tremolo/Wobble). | `std::atomic<float>* mode` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
 | Statische Frequenz | `osc<N>StaticFreq` | Float, 20–20000 Hz, Default 440 | Der feste Ton im Static-Modus (20–20000 Hz) — die Grundstimmung, wenn keine Note die Frequenz übernimmt. | `std::atomic<float>* staticFreq` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
 | LFO-Rate | `osc<N>LfoRate` | Float, 0.01–50 Hz, Default 1 | Das Pendeltempo im LFO-Modus (0.01–50 Hz) — wie schnell die Quelle auf- und abwippt, wenn sie als Modulator für Tremolo/Wobble dient. | `std::atomic<float>* lfoRate` | [src/processors/OscillatorProcessor.h](../../src/processors/OscillatorProcessor.h) |
+| Bypass | `osc<N>Bypass` | Bool, Default aus | Bypass-Hahn: 1 = der Oszillator schaltet ab — der Ausgang schreibt exakt 0 (Stille statt eines veralteten Frames) und die Phase parkt; Un-Bypass setzt die geparkte Phase fort. | `std::atomic<float>*` via `Processor::setBypassParam` | [src/processors/Processor.h](../../src/processors/Processor.h) |
 
 `<N>` = Instanzindex 0–7.
 
@@ -50,6 +51,7 @@ Frequenzquellen:
 | Frequenz-Modus-Umschalter | Wählt zwischen Pitch (note_in getrieben), Static (feste Audio-Frequenz) und LFO (feste Niedrigfrequenz) | `OscillatorPanel::modeBox` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
 | Static-Freq-Regler | Feste Frequenz im Audiorange, 20–20000 Hz; nur im Static-Modus sichtbar | `OscillatorPanel::staticFreqSlider` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
 | LFO-Rate-Regler | Feste LFO-Frequenz, 0.01–50 Hz; nur im LFO-Modus sichtbar | `OscillatorPanel::lfoRateSlider` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
+| Bypass-Schalter | „Bypass": Ausgang = Stille (Quelle abgeschaltet), Phase parkt; Un-Bypass setzt die geparkte Phase fort | `DraggableComponent::bypassButton` — ⊘-Icon links oben in der Node-Titel-Leiste; engagiert = Node ausgegraut | [src/gui/DraggableComponent.cpp](../../src/gui/DraggableComponent.cpp) |
 | *(Basis)* | ComboBox (Wellenform) mit 7 Optionen: Sine, Saw, Square, Triangle, Noise, Perlin Noise, Simplex Noise | `OscillatorPanel::waveformBox` | [src/gui/components/OscillatorPanel.h](../../src/gui/components/OscillatorPanel.h) |
 
 ## Abschnitt 3 — Mathematische Beschreibung

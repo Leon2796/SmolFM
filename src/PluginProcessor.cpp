@@ -41,6 +41,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
         voiceParameters.oscMode      [static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "Mode");
         voiceParameters.oscStaticFreq[static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "StaticFreq");
         voiceParameters.oscLfoRate   [static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "LfoRate");
+        voiceParameters.oscBypass    [static_cast<size_t> (i)] = parameters.getRawParameterValue ("osc" + num + "Bypass");
     }
 
     for (int i = 0; i < smolfm::GraphNodeRegistry::maxFmAmounts; ++i)
@@ -443,6 +444,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         layout.add (std::make_unique<juce::AudioParameterFloat> (
             "osc" + num + "LfoRate", "Oscillator " + num + " LFO Rate",
             juce::NormalisableRange<float> (0.01f, 50.0f, 0.01f, 0.35f), 1.0f));
+
+        layout.add (std::make_unique<juce::AudioParameterBool> (
+            "osc" + num + "Bypass", "Oscillator " + num + " Bypass", false));
     }
 
     // -- FM pool ------------------------------------------------------------

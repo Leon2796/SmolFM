@@ -76,6 +76,9 @@ namespace
 
             osc.waveformParameterTemplate  = "osc%Waveform";
 
+            // Source bypass: 1 = off (exact-zero output, phase parked).
+            osc.bypassParameterTemplate    = "osc%Bypass";
+
             specs.push_back (osc);
 
         }

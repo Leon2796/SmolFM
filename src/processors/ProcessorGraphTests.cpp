@@ -2379,6 +2379,88 @@ TestResult runDelayBypassFreezeTest()
     return { true, "delay: passthrough exact, line parked across the bypass" };
 }
 
+/*
+    Oscillator bypass: a bypassed osc switches the source off — the output
+    port writes an exact zero frame (no stale reads downstream) and the
+    phase is not advanced.  Reference: an identical free-running osc.  From
+    the un-bypass on, the toggled node must reproduce the free-runner's
+    waveform bitwise from the frozen point, proving the phase parked instead
+    of resetting or racing ahead.
+*/
+TestResult runOscillatorBypassSilenceTest()
+{
+    std::atomic<float> waveform   { 0.0f };   // sine: deterministic twins
+    std::atomic<float> mode       { 1.0f };   // Static: note_in is the gate
+    std::atomic<float> staticFreq { 440.0f };
+    std::atomic<float> bypassB    { 0.0f };
+
+    smolfm::SignalGraph graph;
+    auto note = std::make_unique<smolfm::NoteProcessor>();
+    smolfm::NoteProcessor* notePtr = note.get();
+    notePtr->setMidiNoteNumber (69);
+
+    auto oscA = std::make_unique<smolfm::OscillatorProcessor> (&waveform, &mode, &staticFreq, nullptr);
+    smolfm::OscillatorProcessor* aPtr = oscA.get();
+    auto oscB = std::make_unique<smolfm::OscillatorProcessor> (&waveform, &mode, &staticFreq, nullptr);
+    smolfm::OscillatorProcessor* bPtr = oscB.get();
+    bPtr->setBypassParam (&bypassB);
+
+    if (! aPtr->getNoteInput().connect (notePtr->getOutput()))
+        return { false, "osc: failed to connect the note gate to A" };
+    if (! bPtr->getNoteInput().connect (notePtr->getOutput()))
+        return { false, "osc: failed to connect the note gate to B" };
+
+    graph.addProcessor (std::move (note));
+    graph.addProcessor (std::move (oscA));
+    graph.addProcessor (std::move (oscB));
+    graph.prepare (48000.0);
+    graph.startNote();
+
+    float outAHistory [460] = {};
+    bool resumed = false;
+
+    for (int t = 0; t < 460; ++t)
+    {
+        if (t == 100)
+            bypassB.store (1.0f);
+        else if (t == 200)
+            bypassB.store (0.0f);
+
+        graph.processSample();
+
+        const float a = aPtr->getOutput().getSample().l;
+        const float b = bPtr->getOutput().getSample().l;
+        outAHistory[static_cast<size_t> (t)] = a;
+
+        // Identical params and state before the bypass: the twins must agree.
+        if (t >= 20 && t < 100 && a != b)
+            return { false, "osc: the twins diverged before the bypass" };
+
+        // Bypassed: exact silence in both channels, no stale frame.
+        if (t >= 110 && t < 190)
+        {
+            const auto frame = bPtr->getOutput().getSample();
+            if (frame.l != 0.0f || frame.r != 0.0f)
+                return { false, "osc: bypassed output is not exact silence" };
+        }
+
+        // Parked catch-up: B restarts one wall-clock block late at the frozen
+        // phase, so out_B(t) equals out_A(t - 100) bitwise — the same check
+        // as the delay's parked line.
+        if (t >= 210 && t < 300)
+        {
+            resumed = resumed || b != 0.0f;
+            if (b != outAHistory[static_cast<size_t> (t - 100)])
+                return { false, "osc: the parked phase did not resume bitwise" };
+        }
+    }
+
+    if (! resumed)
+        return { false, "osc: signal never resumed after the un-bypass" };
+
+    return { true, "osc: exact silence while bypassed, parked phase resumes" };
+}
+
 int main()
 {
     // Flush every insert immediately: a crash mid-suite must not swallow the
@@ -2419,6 +2501,7 @@ int main()
     runTest ("Bypass passthrough", runBypassPassthroughTest);
     runTest ("Bypass envelope freeze", runBypassEnvelopeFreezeTest);
     runTest ("Delay bypass freeze", runDelayBypassFreezeTest);
+    runTest ("Oscillator bypass silence", runOscillatorBypassSilenceTest);
 
     return failures;
 }

@@ -39,6 +39,18 @@ void OscillatorProcessor::startNote()
 
 StereoFrame OscillatorProcessor::processSample()
 {
+    // Bypass: a source has no signal input to pass through, so "bypass" means
+    // the oscillator switches off: the output port writes an exact zero frame
+    // (downstream must not read a stale frame) while the phase is not
+    // advanced — parked, never reset.  Un-bypassing resumes the parked phase,
+    // so the operator picks up exactly where the bypass caught it.
+    if (isBypassed())
+    {
+        const StereoFrame silence = StereoFrame::centered (0.0f);
+        output.setSample (silence);
+        return silence;
+    }
+
     // Three frequency sources, chosen by the mode parameter:
     //   Pitch:  the note_in port supplies Hz directly (no hidden fallback).
     //   Static: note_in acts as a GATE only — the oscillator fires while a

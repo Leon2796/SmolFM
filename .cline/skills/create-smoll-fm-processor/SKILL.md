@@ -386,7 +386,9 @@ show it, but no generated instrument will ever wire it in.
 ## Bypass option for signal/fq processors (binding)
 
 Signal/frequency processors with a state worth remembering — currently
-`gain`, `shape`, `filter`, `adsr`, `fadsr`, `delay` — own a bypass parameter
+`gain`, `shape`, `filter`, `adsr`, `fadsr`, `delay` — and the `osc` source
+(whose bypass means "off": it has no input frame to pass through) own a
+bypass parameter
 (`bypassParameterTemplate` in their GraphNodes spec, one `AudioParameterBool`
 `<base><N>Bypass` per instance in `createParameterLayout`, cached in
 `SynthVoiceParameters`, wired to the processor with
@@ -396,9 +398,12 @@ binding for every processor that carries the option:
 - `processSample()` starts with the bypass branch: the signal/fq input frame
   comes out **bit for bit unchanged** — and the output port is set too
   (skipping `output.setSample` would let downstream read a stale frame).
+  The `osc` source has no input frame: its bypass branch writes an exact
+  zero frame (silence) instead — same stale-frame rule.
 - The DSP state is **not advanced** while bypassed — frozen, never reset:
   delay line + write pointer parked, envelope phase parked
-  (`getNextSample` skipped), TPT integrators parked.
+  (`getNextSample` skipped), TPT integrators parked, oscillator phase parked
+  (its `getNextSample` skipped too).
 - Un-bypassing resumes exactly where the DSP left off ("der Prozessor merkt
   sich seinen Zustand").
 - The bypass state must not lie to the voice lifetime policy: a frozen

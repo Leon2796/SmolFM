@@ -544,9 +544,9 @@ int main()
         CHECK (h.parameters["division"] == 1.0f);
     }
 
-    // bypass (gain/shape/filter/adsr/fadsr/delay): plain 0/1 number, written
-    // by SmolFmFile::save as a number (enumValueText has no bypass branch);
-    // both flavours' whitelists accept it.
+    // bypass (gain/shape/filter/osc/adsr/fadsr/delay): plain 0/1 number,
+    // written by SmolFmFile::save as a number (enumValueText has no bypass
+    // branch); both flavours' whitelists accept it.
     CHECK (enumValueText ("bypass", "gain", 1.0f) == "1");   // writer stays numeric
     CHECK (enumValueText ("bypass", "delay", 0.0f) == "0");
     const auto bypassXml = writeTemp ("bypass_node.smolfm",
@@ -555,6 +555,8 @@ int main()
         "    <Nodes>\n"
         "      <Node id=\"gain0\" factor=\"2\" bypass=\"1\"/>\n"
         "      <Node id=\"delay0\" time=\"250\" bypass=\"0\"/>\n"
+        "      <Node id=\"filter0\" cutoff=\"500\" bypass=\"1\"/>\n"
+        "      <Node id=\"osc0\" bypass=\"0\"/>\n"
         "    </Nodes>\n"
         "  </Graph>\n"
         "</SmolFM>\n");
@@ -568,18 +570,30 @@ int main()
         "      bypass: 1\n"
         "    - id: \"delay0\"\n"
         "      time: 250\n"
-        "      bypass: 1\n");
+        "      bypass: 1\n"
+        "    - id: \"filter0\"\n"
+        "      cutoff: 500\n"
+        "      bypass: 1\n"
+        "    - id: \"osc0\"\n"
+        "      bypass: 0\n");
     SmolFmData bypassXData;
-    CHECK (xmlParser.parse (bypassXml, bypassXData) && bypassXData.nodes.size() == 2);
+    CHECK (xmlParser.parse (bypassXml, bypassXData) && bypassXData.nodes.size() == 4);
     SmolFmData bypassYData;
-    CHECK (yamlParser.parse (bypassYaml, bypassYData) && bypassYData.nodes.size() == 2);
-    if (bypassXData.nodes.size() == 2)
+    CHECK (yamlParser.parse (bypassYaml, bypassYData) && bypassYData.nodes.size() == 4);
+    if (bypassXData.nodes.size() == 4)
     {
         CHECK (bypassXData.nodes[0].parameters["bypass"] == 1.0f);
         CHECK (bypassXData.nodes[1].parameters["bypass"] == 0.0f);
+        CHECK (bypassXData.nodes[2].parameters["bypass"] == 1.0f);   // filter
+        CHECK (bypassXData.nodes[3].parameters["bypass"] == 0.0f);   // osc
     }
-    if (bypassYData.nodes.size() == 2)
+    if (bypassYData.nodes.size() == 4)
+    {
         CHECK (bypassYData.nodes[0].parameters["bypass"] == 1.0f);
+        CHECK (bypassYData.nodes[1].parameters["bypass"] == 1.0f);
+        CHECK (bypassYData.nodes[2].parameters["bypass"] == 1.0f);   // filter
+        CHECK (bypassYData.nodes[3].parameters["bypass"] == 0.0f);   // osc
+    }
 
     if (failures == 0)
         std::cout << "SmolFM_ParserTests: all checks passed\n";

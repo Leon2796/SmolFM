@@ -144,7 +144,9 @@ public:
         A bypassed processor returns its signal/fq input frame unchanged and
         does NOT advance its internal state — the state is remembered
         (frozen), so un-bypassing resumes the DSP exactly where it left off
-        (delay tail, envelope phase, filter integrators).  A null pointer
+        (delay tail, envelope phase, filter integrators).  A bypassed source
+        (oscillator) has no input frame to pass through: it writes an exact
+        zero frame and parks its phase the same way.  A null pointer
         (the default) means "always process": a processor that never receives
         bypass wiring behaves byte-identically to before.
     */

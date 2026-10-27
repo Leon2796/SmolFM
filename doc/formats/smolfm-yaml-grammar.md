@@ -109,6 +109,9 @@ for a node type are ignored by the parsers.
 - `mode`: pitch | static | lfo
 - `staticfreq`: float, 20..20000 Hz (log scale; default 440)
 - `lforate`: float, 0.01..50 Hz (default 1)
+- `bypass`: 0 | 1 (default 0; 1 = source off — the output writes an exact 0
+  (never a stale frame) and the phase is parked; un-bypass resumes the parked
+  phase)
 
 ### FM Modulator (fm)
 - `amount`: float, 0..10
